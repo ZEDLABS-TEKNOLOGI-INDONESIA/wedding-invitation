@@ -1,6 +1,4 @@
 import type { WeddingConfig } from "./types";
-
-// Helper khusus untuk parsing JSON aman (tetap butuh value string langsung)
 const parseJson = <T,>(jsonString: string | undefined, defaultValue: T): T => {
   if (!jsonString) return defaultValue;
   try {
@@ -10,12 +8,9 @@ const parseJson = <T,>(jsonString: string | undefined, defaultValue: T): T => {
     return defaultValue;
   }
 };
-
-// --- DATA CONSTANTS ---
-
 export const MAX_GUESTS = parseInt(
   import.meta.env.PUBLIC_RSVP_MAX_GUESTS ?? "5",
-  10
+  10,
 );
 
 export const MUSIC_URL =
@@ -61,10 +56,10 @@ export const WEDDING_CONFIG: WeddingConfig = {
       startTime: import.meta.env.PUBLIC_AKAD_START ?? "08:00",
       endTime: import.meta.env.PUBLIC_AKAD_END ?? "10:00",
       startDateTime: new Date(
-        import.meta.env.PUBLIC_AKAD_ISO_START ?? "2025-10-11T08:00:00+07:00"
+        import.meta.env.PUBLIC_AKAD_ISO_START ?? "2025-10-11T08:00:00+07:00",
       ),
       endDateTime: new Date(
-        import.meta.env.PUBLIC_AKAD_ISO_END ?? "2025-10-11T10:00:00+07:00"
+        import.meta.env.PUBLIC_AKAD_ISO_END ?? "2025-10-11T10:00:00+07:00",
       ),
     },
     resepsi: {
@@ -74,12 +69,18 @@ export const WEDDING_CONFIG: WeddingConfig = {
       startTime: import.meta.env.PUBLIC_RESEPSI_START ?? "11:00",
       endTime: import.meta.env.PUBLIC_RESEPSI_END ?? "14:00",
       startDateTime: new Date(
-        import.meta.env.PUBLIC_RESEPSI_ISO_START ?? "2025-10-11T11:00:00+07:00"
+        import.meta.env.PUBLIC_RESEPSI_ISO_START ?? "2025-10-11T11:00:00+07:00",
       ),
       endDateTime: new Date(
-        import.meta.env.PUBLIC_RESEPSI_ISO_END ?? "2025-10-11T14:00:00+07:00"
+        import.meta.env.PUBLIC_RESEPSI_ISO_END ?? "2025-10-11T14:00:00+07:00",
       ),
     },
+  },
+  hero: {
+    image:
+      import.meta.env.PUBLIC_HERO_IMAGE ??
+      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop",
+    city: import.meta.env.PUBLIC_HERO_CITY ?? "Pandeglang, Banten",
   },
 };
 

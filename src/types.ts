@@ -49,6 +49,10 @@ export interface WeddingConfig {
     akad: WeddingEvent;
     resepsi: WeddingEvent;
   };
+  hero: {
+    image: string;
+    city: string;
+  };
 }
 
 export interface WeddingEvent {

@@ -9,8 +9,6 @@ const Hero: React.FC = () => {
     minutes: 0,
     seconds: 0,
   });
-
-  // PERBAIKAN DISINI: Menambahkan variabel guestName
   const [guestName, setGuestName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,7 +23,7 @@ const Hero: React.FC = () => {
         setTimeLeft({
           days: Math.floor(distance / (1000 * 60 * 60 * 24)),
           hours: Math.floor(
-            (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+            (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
           ),
           minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
           seconds: Math.floor((distance % (1000 * 60)) / 1000),
@@ -43,7 +41,7 @@ const Hero: React.FC = () => {
     <section className="relative flex h-screen w-full items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop"
+          src={WEDDING_CONFIG.hero.image}
           className="animate-subtle-zoom h-full w-full object-cover"
           alt="Wedding Backdrop"
         />
@@ -67,7 +65,6 @@ const Hero: React.FC = () => {
             {WEDDING_CONFIG.couple.groom.name}
           </h1>
 
-          {/* Opsional: Jika ingin menampilkan nama tamu di Hero */}
           {guestName && (
             <p className="animate-reveal mt-4 font-serif text-xl text-white/80 italic">
               Kepada Yth. {guestName}
@@ -81,7 +78,7 @@ const Hero: React.FC = () => {
             <div className="flex items-center justify-center gap-3 md:gap-4">
               <Sparkles className="text-accent/40 h-3 w-3 animate-pulse md:h-4 md:w-4" />
               <p className="text-accent/70 text-[9px] font-medium tracking-widest uppercase md:text-[13px]">
-                Pandeglang, Banten
+                {WEDDING_CONFIG.hero.city}
               </p>
               <Sparkles className="text-accent/40 h-3 w-3 animate-pulse md:h-4 md:w-4" />
             </div>
