@@ -4,9 +4,6 @@ import {
   CheckCircle2,
   Heart,
   Users,
-  UserCheck,
-  UserX,
-  HelpCircle,
   Clock,
   RefreshCcw,
   Minus,
@@ -14,13 +11,14 @@ import {
 } from "lucide-react";
 import { dbService } from "../services/dbService";
 import { AttendanceStatus, type RSVP } from "../types";
+import { MAX_GUESTS } from "../constants";
 
 const RSVPForm: React.FC = () => {
   const [formData, setFormData] = useState({
     guest_name: "",
     phone: "",
     attendance: AttendanceStatus.HADIR,
-    guest_count: 1, // Default 1 orang
+    guest_count: 1,
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,6 +44,7 @@ const RSVPForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.guest_name) return;
+
     setIsSubmitting(true);
     try {
       await dbService.saveRSVP(formData);
@@ -62,8 +61,8 @@ const RSVPForm: React.FC = () => {
     setFormData((prev) => {
       const current = prev.guest_count;
       let next = current;
-      if (operation === "inc" && current < 5) next = current + 1; // Max 5
-      if (operation === "dec" && current > 1) next = current - 1; // Min 1
+      if (operation === "inc" && current < MAX_GUESTS) next = current + 1;
+      if (operation === "dec" && current > 1) next = current - 1;
       return { ...prev, guest_count: next };
     });
   };
@@ -101,6 +100,7 @@ const RSVPForm: React.FC = () => {
             Mohon konfirmasi kehadiran Anda
           </p>
         </div>
+
         <div className="grid lg:grid-cols-12 gap-8 md:gap-14 items-stretch">
           <div className="lg:col-span-5 space-y-6">
             <div className="editorial-card h-full p-6 md:p-14 rounded-[1.5rem] md:rounded-[3.5rem] relative overflow-hidden group shadow-lg flex flex-col justify-center">
@@ -223,7 +223,7 @@ const RSVPForm: React.FC = () => {
                       {formData.attendance === AttendanceStatus.HADIR && (
                         <div className="space-y-3 animate-reveal">
                           <p className="text-[8px] md:text-[9px] uppercase tracking-editorial text-slate-400 font-bold mb-1">
-                            Jumlah Tamu
+                            Jumlah Tamu (Max {MAX_GUESTS})
                           </p>
                           <div className="flex items-center gap-4">
                             <button
@@ -241,7 +241,7 @@ const RSVPForm: React.FC = () => {
                               type="button"
                               onClick={() => handleGuestCount("inc")}
                               className="w-10 h-10 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
-                              disabled={formData.guest_count >= 10}
+                              disabled={formData.guest_count >= MAX_GUESTS}
                             >
                               <Plus className="w-4 h-4" />
                             </button>
@@ -268,6 +268,7 @@ const RSVPForm: React.FC = () => {
             </div>
           </div>
 
+          {/* --- RIGHT COLUMN: LIST & STATS --- */}
           <div className="lg:col-span-7 space-y-6">
             <div className="grid grid-cols-3 gap-3 md:gap-6">
               {[
@@ -316,6 +317,7 @@ const RSVPForm: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Scrollable Container dengan ketinggian tetap */}
                 <div className="flex-grow overflow-y-auto pr-2 -mr-2 custom-scrollbar h-96 md:h-[450px]">
                   {rsvps.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full opacity-40">

@@ -22,6 +22,8 @@ export const MUSIC_URL = getEnv(
   "https://www.bensound.com/bensound-music/bensound-love.mp3"
 );
 
+export const MAX_GUESTS = parseInt(getEnv("PUBLIC_RSVP_MAX_GUESTS", "20"), 10);
+
 export const WEDDING_CONFIG: WeddingConfig = {
   couple: {
     bride: {
