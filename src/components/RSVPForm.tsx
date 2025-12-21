@@ -4,6 +4,9 @@ import {
   CheckCircle2,
   Heart,
   Users,
+  UserCheck,
+  UserX,
+  HelpCircle,
   Clock,
   RefreshCcw,
   Minus,
@@ -11,7 +14,7 @@ import {
 } from "lucide-react";
 import { dbService } from "../services/dbService";
 import { AttendanceStatus, type RSVP } from "../types";
-import { MAX_GUESTS } from "../constants";
+import { MAX_GUESTS } from "../constants"; // Import konfigurasi Max Tamu
 
 const RSVPForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -68,7 +71,9 @@ const RSVPForm: React.FC = () => {
   };
 
   const stats = {
-    hadir: rsvps.filter((r) => r.attendance === AttendanceStatus.HADIR).length,
+    hadir: rsvps
+      .filter((r) => r.attendance === AttendanceStatus.HADIR)
+      .reduce((total, r) => total + (r.guest_count || 1), 0),
     ragu: rsvps.filter((r) => r.attendance === AttendanceStatus.RAGU).length,
     tidak: rsvps.filter((r) => r.attendance === AttendanceStatus.TIDAK_HADIR)
       .length,
@@ -220,6 +225,7 @@ const RSVPForm: React.FC = () => {
                         </div>
                       </div>
 
+                      {/* Input Jumlah Tamu (Conditional) */}
                       {formData.attendance === AttendanceStatus.HADIR && (
                         <div className="space-y-3 animate-reveal">
                           <p className="text-[8px] md:text-[9px] uppercase tracking-editorial text-slate-400 font-bold mb-1">
