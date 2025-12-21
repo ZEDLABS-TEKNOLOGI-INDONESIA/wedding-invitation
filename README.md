@@ -1,202 +1,262 @@
 # Wedding Invitation Website
 
-Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun menggunakan **Astro**, **React**, **Tailwind CSS**, dan **SQLite**. Website ini mendukung mode gelap (dark mode), animasi halus, musik latar otomatis, dan sistem manajemen tamu yang terintegrasi.
+An elegant, modern, and interactive wedding invitation website built with Astro, React, Tailwind CSS, and SQLite. Features comprehensive guest management, real-time RSVP tracking, automated notifications, and professional design tools.
 
 ![Banner](./public/thumbnail.png)
 
 ---
 
-## Fitur Utama
+## Core Features
 
-### Pengalaman Pengguna (User Experience)
+### User Experience
 
-- **Amplop Digital**: Animasi pembuka undangan yang elegan dengan personalisasi nama tamu.
-- **Tema Siang & Malam**: Dukungan Dark Mode yang menyesuaikan preferensi sistem atau pilihan pengguna.
-- **Musik Latar**: Pemutar musik otomatis (dengan interaksi pengguna) untuk suasana romantis.
-- **Animasi Halus**: Efek _reveal_ saat scroll, _floating petals_, dan transisi antar elemen.
-- **Countdown Timer**: Hitung mundur waktu nyata menuju acara pernikahan.
+- **Digital Envelope**: Elegant opening animation with personalized guest names
+- **Light & Dark Mode**: Automatic theme switching based on system preferences
+- **Background Music**: Auto-playing ambient music with user interaction controls
+- **Smooth Animations**: Scroll-triggered reveals, floating petals, and seamless transitions
+- **Live Countdown**: Real-time timer counting down to the wedding ceremony
 
-### Fungsionalitas
+### Functionality
 
-- **Personalisasi Tamu**: Nama tamu dapat diambil otomatis dari parameter URL (`?to=Nama Tamu Bisa Pakai Spasi`).
-- **RSVP Online**: Formulir konfirmasi kehadiran yang terhubung langsung ke database.
-  - _Smart Update_: Jika tamu dengan nama yang sama mengisi ulang, data lama akan diperbarui (tidak duplikat).
-  - _Dashboard_: Menampilkan statistik kehadiran secara _real-time_ di halaman form.
-  - _Input Counter_: Input jumlah tamu dengan batasan maksimum yang bisa dikonfigurasi.
-  - _Rate Limiting_: Proteksi spam sederhana berdasarkan IP.
-- **Buku Tamu (Wishes)**: Fitur kirim ucapan dan doa dengan paginasi dan input yang terkunci jika diakses lewat link khusus.
-- **Integrasi Peta & Kalender**: Tautan langsung ke Google Maps dan fitur "Add to Calendar" (Google/ICS).
-- **Galeri Foto**: Penampil foto interaktif (lightbox) dengan navigasi keyboard.
-- **Informasi Kado**: Fitur _copy-to-clipboard_ untuk nomor rekening dan alamat kirim kado.
+- **Guest Personalization**: Automatic name extraction from URL parameters
+- **RSVP Management**:
+  - Smart update system preventing duplicate entries
+  - Real-time attendance statistics dashboard
+  - Configurable guest count limits
+  - IP-based rate limiting for spam protection
+- **Guest Book**: Message collection with pagination and locked inputs for personalized links
+- **Location Integration**: Direct links to Google Maps and calendar event creation
+- **Photo Gallery**: Interactive lightbox viewer with keyboard navigation
+- **Gift Registry**: One-click copy functionality for bank accounts and shipping addresses
 
-### Teknis
+### Technical Implementation
 
-- **Dynamic Configuration**: Mengubah data pengantin, lokasi, musik, dan acara cukup melalui file `.env` tanpa perlu build ulang.
-- **Server-Side Rendering (SSR)**: Menggunakan Astro Node Adapter dalam mode `standalone` untuk performa optimal dan SEO.
-- **Database SQLite**: Penyimpanan data tamu dan ucapan yang ringan, cepat, dan mandiri (menggunakan `better-sqlite3`).
-- **Optimasi Deployment**: Konfigurasi siap pakai untuk deploy menggunakan PM2 dan Nginx Reverse Proxy.
+- **Dynamic Configuration**: Complete customization through environment variables
+- **Server-Side Rendering**: Astro Node Adapter in standalone mode for optimal performance
+- **SQLite Database**: Lightweight, fast, and self-contained data storage
+- **Production Ready**: Pre-configured PM2 and Nginx deployment setup
+- **PWA Support**: Installable web app with offline capabilities
+- **Telegram Integration**: Real-time notifications for new RSVPs and messages
+
+### Admin Dashboard
+
+- **Protected Access**: Cookie-based authentication system
+- **Data Management**:
+  - View, edit, and delete RSVP entries
+  - Manage guest messages and wishes
+  - Bulk operations with confirmation dialogs
+  - Real-time statistics overview
+- **Export Capabilities**: CSV export for both RSVP and wishes data
+- **QR Code Generator**:
+  - Single guest QR code creation
+  - Bulk generation from CSV import
+  - Premium logo integration
+  - ZIP download for batch processing
+- **PDF Invitation Designer**:
+  - Professional 4-page A5 floral template
+  - Vector-based ornamental decorations
+  - Multi-theme color schemes (Sage Green, Maroon, Gold, Dusty Blue)
+  - Embedded QR codes for digital invitations
+  - Bulk generation with progress tracking
+  - Single and batch export options
 
 ---
 
-## Struktur Proyek
+## Project Structure
 
-```txt
+```
 .
 ├── src/
-│   ├── components/         # Komponen UI (React: Hero, RSVP, Gallery, dll)
-│   ├── layouts/            # Layout dasar halaman (Astro)
-│   ├── lib/                # Konfigurasi Database (SQLite) & Rate Limiter
+│   ├── components/
+│   │   ├── Admin/                  # Admin dashboard components
+│   │   ├── Hero.tsx               # Landing section
+│   │   ├── CoupleProfile.tsx      # Bride & groom profiles
+│   │   ├── EventDetails.tsx       # Ceremony information
+│   │   ├── Gallery.tsx            # Photo gallery
+│   │   ├── RSVPForm.tsx           # RSVP management
+│   │   ├── Wishes.tsx             # Guest book
+│   │   ├── GiftInfo.tsx           # Gift registry
+│   │   ├── QRCodeGenerator.tsx    # Single QR creation
+│   │   ├── QRCodeManager.tsx      # Bulk QR management
+│   │   └── InvitationManager.tsx  # PDF designer
+│   ├── layouts/                   # Page layouts
+│   ├── lib/
+│   │   ├── db.ts                  # Database configuration
+│   │   └── rateLimit.ts           # Rate limiting
 │   ├── pages/
-│   │   ├── api/            # API Endpoints (RSVP, Wishes, Export)
-│   │   └── index.astro     # Halaman utama
-│   ├── services/           # Logic penghubung Frontend ke API
-│   ├── styles/             # Global CSS & Tailwind Theme
-│   ├── utils/              # Helper functions (Calendar, etc)
-│   └── types.ts            # Definisi Tipe TypeScript
-├── public/                 # Aset statis (Favicon, Images)
-├── .env                    # Konfigurasi Data (PENTING)
-├── astro.config.mjs        # Konfigurasi Astro
-├── ecosystem.config.cjs    # Konfigurasi PM2 untuk Production
-├── nginx.conf              # Contoh konfigurasi Nginx
-└── package.json            # Daftar dependensi & Scripts
+│   │   ├── api/                   # API endpoints
+│   │   ├── admin.astro            # Admin panel
+│   │   ├── qrcode.astro           # QR generator page
+│   │   └── index.astro            # Main page
+│   ├── services/                  # API service layer
+│   ├── styles/                    # Global CSS
+│   ├── utils/
+│   │   ├── calendarUtils.ts       # Calendar integration
+│   │   └── telegram.ts            # Notification system
+│   └── types.ts                   # TypeScript definitions
+├── database/                      # SQLite database location
+├── public/                        # Static assets
+├── .env                          # Configuration file
+├── astro.config.mjs              # Astro configuration
+├── ecosystem.config.cjs          # PM2 configuration
+├── nginx.conf                    # Nginx configuration
+└── package.json                  # Dependencies
 ```
 
 ---
 
-## Konfigurasi (.env)
+## Configuration
 
-Proyek ini menggunakan variabel lingkungan untuk menyimpan semua data teks dan pengaturan. Salin file `.env.example` menjadi `.env` di root folder dan isi sesuai kebutuhan.
+All website content is managed through environment variables. Copy `.env.example` to `.env` and customize accordingly.
 
-**Penting:** Data kompleks seperti _Bank Accounts_, _Love Story_, dan _Gallery_ harus ditulis dalam format JSON satu baris.
+### Basic Settings
 
 ```properties
-# --- SERVER CONFIG ---
 HOST=0.0.0.0
 PORT=4321
 DB_NAME=wedding.db
+ADMIN_PASSWORD=your_secure_password
+```
 
-# --- RSVP CONFIG ---
+### Telegram Notifications
+
+```properties
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+```
+
+### Public Information
+
+```properties
+PUBLIC_HERO_IMAGE=https://your-image-url.jpg
+PUBLIC_HERO_CITY=City, Country
+PUBLIC_MUSIC_URL=https://your-music-url.mp3
 PUBLIC_RSVP_MAX_GUESTS=5
+```
 
-# --- MUSIC ---
-PUBLIC_MUSIC_URL=https://link-to-your-music.mp3
+### Couple Details
 
-# --- COUPLE DETAILS ---
-PUBLIC_BRIDE_NICKNAME=Fey
-PUBLIC_BRIDE_FULLNAME=Fera Oktapia
-PUBLIC_BRIDE_PARENTS=Putri ke ... dari Bapak ... & Ibu ...
-PUBLIC_BRIDE_INSTAGRAM=feraoktapia___
-PUBLIC_BRIDE_IMAGE=https://placehold.co/600x800?text=Fey+Portrait
+```properties
+PUBLIC_BRIDE_NICKNAME=Name
+PUBLIC_BRIDE_FULLNAME=Full Name
+PUBLIC_BRIDE_PARENTS=Daughter of...
+PUBLIC_BRIDE_INSTAGRAM=username
+PUBLIC_BRIDE_IMAGE=https://image-url.jpg
 
-PUBLIC_GROOM_NICKNAME=Yaya
-PUBLIC_GROOM_FULLNAME=Yahya Zulfikri
-PUBLIC_GROOM_PARENTS=Putra ke ... dari Bapak ... & Ibu ...
-PUBLIC_GROOM_INSTAGRAM=zulfikriyahya_
-PUBLIC_GROOM_IMAGE=https://placehold.co/600x800?text=Yaya+Portrait
+PUBLIC_GROOM_NICKNAME=Name
+PUBLIC_GROOM_FULLNAME=Full Name
+PUBLIC_GROOM_PARENTS=Son of...
+PUBLIC_GROOM_INSTAGRAM=username
+PUBLIC_GROOM_IMAGE=https://image-url.jpg
+```
 
-# --- VENUE ---
-PUBLIC_VENUE_NAME=The Royal Azure Ballroom
-PUBLIC_VENUE_ADDRESS=Jl. Elok No. 77, Kab. Pandeglang, Banten
+### Venue Information
+
+```properties
+PUBLIC_VENUE_NAME=Venue Name
+PUBLIC_VENUE_ADDRESS=Complete Address
 PUBLIC_VENUE_LAT=-6.2088
 PUBLIC_VENUE_LNG=106.8456
+```
 
-# --- EVENTS (AKAD) ---
-PUBLIC_AKAD_TITLE=Janji Suci
-PUBLIC_AKAD_DAY=Minggu
-PUBLIC_AKAD_DATE=11 Oktober 2025
+### Event Schedule
+
+```properties
+PUBLIC_AKAD_TITLE=Ceremony Title
+PUBLIC_AKAD_DAY=Sunday
+PUBLIC_AKAD_DATE=11 October 2025
 PUBLIC_AKAD_START=08:00
 PUBLIC_AKAD_END=10:00
-# Format ISO Wajib: YYYY-MM-DDTHH:mm:ss+07:00
 PUBLIC_AKAD_ISO_START=2025-10-11T08:00:00+07:00
 PUBLIC_AKAD_ISO_END=2025-10-11T10:00:00+07:00
 
-# --- EVENTS (RESEPSI) ---
-PUBLIC_RESEPSI_TITLE=Perayaan Cinta
-PUBLIC_RESEPSI_DAY=Minggu
-PUBLIC_RESEPSI_DATE=11 Oktober 2025
+PUBLIC_RESEPSI_TITLE=Reception Title
+PUBLIC_RESEPSI_DAY=Sunday
+PUBLIC_RESEPSI_DATE=11 October 2025
 PUBLIC_RESEPSI_START=11:00
 PUBLIC_RESEPSI_END=14:00
 PUBLIC_RESEPSI_ISO_START=2025-10-11T11:00:00+07:00
 PUBLIC_RESEPSI_ISO_END=2025-10-11T14:00:00+07:00
+```
 
-# --- COMPLEX DATA (Format JSON Satu Baris) ---
-PUBLIC_BANK_ACCOUNTS=[{"bank":"Bank BCA","number":"1234567890","name":"Fera Oktapia"},{"bank":"Bank Mandiri","number":"0987654321","name":"Yahya Zulfikri"}]
+### Complex Data (JSON Format)
 
-PUBLIC_LOVE_STORY=[{"date":"Musim Gugur, 2020","title":"Pertemuan Pertama","desc":"Berawal dari sebuah diskusi kecil..."},{"date":"Maret, 2022","title":"Sebuah Komitmen","desc":"Memutuskan untuk saling menguatkan..."}]
+```properties
+PUBLIC_BANK_ACCOUNTS=[{"bank":"Bank Name","number":"1234567890","name":"Account Name"}]
 
-PUBLIC_GALLERY_IMAGES=["https://placehold.co/800x1200?text=Moment+1","https://placehold.co/1200x800?text=Moment+2"]
+PUBLIC_LOVE_STORY=[{"date":"2020","title":"First Meeting","desc":"Description..."}]
+
+PUBLIC_GALLERY_IMAGES=["https://image1.jpg","https://image2.jpg"]
 ```
 
 ---
 
-## Cara Instalasi & Menjalankan (Development)
+## Installation & Development
 
-Pastikan Anda sudah menginstal **Node.js** (v18+) dan **Yarn** atau **NPM**.
+### Prerequisites
 
-1.  **Clone Repository**
+- Node.js v18 or higher
+- Yarn or NPM package manager
 
-    ```bash
-    git clone https://github.com/username/wedding-invitation.git
-    cd wedding-invitation
-    ```
+### Setup
 
-2.  **Buat File .env**
-    Salin contoh konfigurasi di atas ke dalam file baru bernama `.env`.
+1. Clone the repository
 
-3.  **Install Dependencies**
+```bash
+git clone https://github.com/zulfikriyahya/wedding-invitation.git
+cd wedding-invitation
+```
 
-    ```bash
-    yarn install
-    # atau
-    npm install
-    ```
+2. Create configuration file
 
-4.  **Jalankan Server Development**
-    ```bash
-    yarn dev
-    ```
-    Website akan berjalan di `http://localhost:4321`. File database `wedding.db` akan otomatis dibuat saat pertama kali aplikasi dijalankan.
+```bash
+cp .env.example .env
+```
+
+3. Install dependencies
+
+```bash
+yarn install
+```
+
+4. Start development server
+
+```bash
+yarn dev
+```
+
+The website will be available at `http://localhost:4321`
 
 ---
 
-## Deployment ke Production (VPS / Dedicated Server)
+## Production Deployment
 
-Proyek ini menggunakan adapter **Node.js Standalone** dan database **SQLite**. Berikut langkah-langkah deploy ke server Ubuntu/CentOS/Debian:
+### Build Process
 
-### 1. Build Project
-
-Di komputer lokal Anda, jalankan perintah build:
+1. Generate production build
 
 ```bash
 yarn build
 ```
 
-Ini akan menghasilkan folder `dist/` dan `node_modules/` (opsional, tergantung config, tapi lebih baik install ulang di server).
+2. Upload to server
 
-### 2. Upload File ke Server
+```
+- dist/
+- .env
+- package.json
+- ecosystem.config.cjs
+- yarn.lock
+```
 
-Upload file/folder berikut ke direktori server (misal: `/var/www/wedding.example.com`):
-
-- Folder `dist/`
-- File `.env` (**Penting**: Pastikan file ini ada di server)
-- File `package.json`
-- File `ecosystem.config.cjs`
-- File `yarn.lock` atau `package-lock.json`
-
-### 3. Install Production Dependencies di Server
-
-Masuk ke terminal server dan jalankan:
+3. Install production dependencies
 
 ```bash
-cd /var/www/wedding.example.com
+cd /var/www/your-domain
 yarn install --production
 ```
 
-_Langkah ini penting agar driver SQLite (`better-sqlite3`) terkompilasi sesuai sistem operasi server._
-
-### 4. Jalankan dengan PM2
-
-Gunakan PM2 untuk menjalankan aplikasi di background.
+4. Start with PM2
 
 ```bash
 pm2 start ecosystem.config.cjs
@@ -204,46 +264,71 @@ pm2 save
 pm2 startup
 ```
 
-### 5. Konfigurasi Nginx (Reverse Proxy)
-
-Buat file konfigurasi Nginx (biasanya di `/etc/nginx/sites-available/wedding`) menggunakan contoh dari file `nginx.conf` di repo ini.
+5. Configure Nginx
 
 ```bash
-# Link konfigurasi
 sudo ln -s /etc/nginx/sites-available/wedding /etc/nginx/sites-enabled/
-
-# Test & Restart Nginx
 sudo nginx -t
 sudo systemctl restart nginx
 ```
 
 ---
 
-## Personalisasi Undangan
+## Personalized Invitations
 
-Untuk membuat link undangan spesifik untuk tamu tertentu, tambahkan parameter `?to=` di akhir URL. URL di-encode secara otomatis oleh browser untuk spasi.
+Create unique invitation links for each guest by adding the `to` parameter:
 
-**Contoh:**
-`https://wedding.example.com/?to=Budi+Santoso`
+```
+https://your-domain.com/?to=Guest+Name
+```
 
-**Efek:**
+This will:
 
-1. Nama "Budi Santoso" muncul di **Amplop Depan**.
-2. Nama "Budi Santoso" muncul di **Hero Section**.
-3. Input Nama di form **RSVP** otomatis terisi "Budi Santoso" dan **terkunci**.
-4. Input Nama di form **Wishes** otomatis terisi "Budi Santoso" dan **terkunci**.
-
----
-
-## Ekspor Data
-
-Data tamu dan ucapan dapat diekspor ke format CSV melalui API endpoint berikut:
-
-- **Data RSVP**: [https://wedding.example.com/api/export-rsvp](https://wedding.example.com/api/export-rsvp)
-- **Data Wishes**: [https://wedding.example.com/api/export-wishes](https://wedding.example.com/api/export-wishes)
+- Display guest name on envelope
+- Pre-fill RSVP form with locked name field
+- Pre-fill guest book with locked name field
+- Personalize hero section greeting
 
 ---
 
-## Lisensi
+## Admin Panel
 
-[MIT License](LICENSE) - Dibuat dengan ❤️ oleh **Yahya Zulfikri**.
+Access the admin dashboard at `/admin` using the password configured in `.env`.
+
+### Features
+
+- Real-time RSVP statistics
+- Guest management with edit and delete capabilities
+- Bulk operations for data management
+- CSV export functionality
+- QR code generation (single and bulk)
+- PDF invitation designer with multiple themes
+
+---
+
+## Data Export
+
+Export guest data in CSV format:
+
+- RSVP Data: `/api/export-rsvp`
+- Guest Wishes: `/api/export-wishes`
+
+---
+
+## Technology Stack
+
+- **Framework**: Astro with SSR
+- **UI Library**: React
+- **Styling**: Tailwind CSS v4
+- **Database**: SQLite with better-sqlite3
+- **Process Manager**: PM2
+- **Web Server**: Nginx
+- **PDF Generation**: jsPDF
+- **QR Codes**: qrcode.react
+- **File Processing**: PapaParse, JSZip
+
+---
+
+## License
+
+MIT License - Created by Yahya Zulfikri
