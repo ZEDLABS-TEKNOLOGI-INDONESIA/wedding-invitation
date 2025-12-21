@@ -27,3 +27,4 @@ pnpm-debug.log*
 !.yarn/sdks
 !.yarn/versions
 .draft.md
+logs/*
