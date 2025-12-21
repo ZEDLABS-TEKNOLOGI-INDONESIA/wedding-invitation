@@ -11,6 +11,7 @@ export default defineConfig({
   }),
   vite: {
     plugins: [tailwind()],
+    envPrefix: "PUBLIC_",
     build: {
       rollupOptions: {
         onwarn(warning, warn) {

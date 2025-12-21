@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from "react";
+import { MUSIC_URL } from "../constants";
+
 const MusicPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     const handlePlay = () => {
       if (audioRef.current) {
@@ -12,19 +15,23 @@ const MusicPlayer: React.FC = () => {
         });
       }
     };
+
     window.addEventListener("play-wedding-music", handlePlay);
+
     return () => {
       window.removeEventListener("play-wedding-music", handlePlay);
     };
   }, []);
+
   return (
     <audio
       ref={audioRef}
-      src="https://www.bensound.com/bensound-music/bensound-love.mp3"
+      src={MUSIC_URL}
       loop
       preload="auto"
       className="hidden"
     />
   );
 };
+
 export default MusicPlayer;

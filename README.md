@@ -29,6 +29,7 @@ Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun 
 
 ### Teknis
 
+- **Dynamic Configuration**: Mengubah data pengantin, lokasi, dan acara cukup melalui file `.env` tanpa perlu build ulang.
 - **Server-Side Rendering (SSR)**: Menggunakan Astro Node Adapter untuk performa optimal dan SEO.
 - **Database SQLite**: Penyimpanan data tamu dan ucapan yang ringan, cepat, dan mandiri (tanpa perlu setup MySQL/PostgreSQL terpisah).
 - **Optimasi Deployment**: Konfigurasi siap pakai untuk deploy menggunakan PM2 dan Nginx Reverse Proxy.
@@ -50,11 +51,69 @@ Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun 
 │   ├── styles/ # Global CSS & Tailwind Config
 │   └── types.ts # Definisi Tipe TypeScript
 ├── public/ # Aset statis
+├── .env # Konfigurasi Data (PENTING)
 ├── astro.config.mjs # Konfigurasi Astro
 ├── ecosystem.config.cjs # Konfigurasi PM2 untuk Production
 ├── nginx.conf # Contoh konfigurasi Nginx
 └── package.json # Daftar dependensi
+```
 
+---
+
+## Konfigurasi (.env)
+
+Proyek ini menggunakan variabel lingkungan untuk menyimpan semua data teks dan pengaturan. Buat file `.env` di root folder dan isi sesuai kebutuhan:
+
+```properties
+# --- SERVER CONFIG ---
+HOST=0.0.0.0
+PORT=4321
+DB_NAME=wedding.db
+
+# --- MUSIC ---
+PUBLIC_MUSIC_URL=https://link-to-your-music.mp3
+
+# --- COUPLE DETAILS ---
+PUBLIC_BRIDE_NICKNAME=Fey
+PUBLIC_BRIDE_FULLNAME=Fera Oktapia
+PUBLIC_BRIDE_PARENTS=Putri ke ... dari Bapak ... & Ibu ...
+PUBLIC_BRIDE_INSTAGRAM=username_bride
+PUBLIC_BRIDE_IMAGE=https://url-to-bride-image.jpg
+
+PUBLIC_GROOM_NICKNAME=Yaya
+PUBLIC_GROOM_FULLNAME=Yahya Zulfikri
+PUBLIC_GROOM_PARENTS=Putra ke ... dari Bapak ... & Ibu ...
+PUBLIC_GROOM_INSTAGRAM=username_groom
+PUBLIC_GROOM_IMAGE=https://url-to-groom-image.jpg
+
+# --- VENUE ---
+PUBLIC_VENUE_NAME=Nama Gedung / Hotel
+PUBLIC_VENUE_ADDRESS=Alamat Lengkap
+PUBLIC_VENUE_LAT=-6.2088
+PUBLIC_VENUE_LNG=106.8456
+
+# --- EVENTS (AKAD) ---
+PUBLIC_AKAD_TITLE=Janji Suci
+PUBLIC_AKAD_DAY=Minggu
+PUBLIC_AKAD_DATE=11 Oktober 2025
+PUBLIC_AKAD_START=08:00
+PUBLIC_AKAD_END=10:00
+PUBLIC_AKAD_ISO_START=2025-10-11T08:00:00+07:00
+PUBLIC_AKAD_ISO_END=2025-10-11T10:00:00+07:00
+
+# --- EVENTS (RESEPSI) ---
+PUBLIC_RESEPSI_TITLE=Perayaan Cinta
+PUBLIC_RESEPSI_DAY=Minggu
+PUBLIC_RESEPSI_DATE=11 Oktober 2025
+PUBLIC_RESEPSI_START=11:00
+PUBLIC_RESEPSI_END=14:00
+PUBLIC_RESEPSI_ISO_START=2025-10-11T11:00:00+07:00
+PUBLIC_RESEPSI_ISO_END=2025-10-11T14:00:00+07:00
+
+# --- COMPLEX DATA (Format JSON Satu Baris) ---
+PUBLIC_BANK_ACCOUNTS=[{"bank":"BCA","number":"123456","name":"Nama"},{"bank":"Mandiri","number":"098765","name":"Nama"}]
+PUBLIC_LOVE_STORY=[{"date":"2020","title":"Bertemu","desc":"Cerita..."},{"date":"2025","title":"Menikah","desc":"Cerita..."}]
+PUBLIC_GALLERY_IMAGES=["https://img1.jpg","https://img2.jpg"]
 ```
 
 ---
@@ -70,7 +129,10 @@ Pastikan Anda sudah menginstal **Node.js** (v18+) dan **Yarn** atau **NPM**.
     cd wedding-invitation
     ```
 
-2.  **Install Dependencies**
+2.  **Buat File .env**
+    Salin contoh konfigurasi di atas ke dalam file baru bernama `.env`.
+
+3.  **Install Dependencies**
 
     ```bash
     yarn install
@@ -78,7 +140,7 @@ Pastikan Anda sudah menginstal **Node.js** (v18+) dan **Yarn** atau **NPM**.
     npm install
     ```
 
-3.  **Jalankan Server Development**
+4.  **Jalankan Server Development**
     ```bash
     yarn dev
     ```
@@ -105,6 +167,7 @@ Ini akan menghasilkan folder `dist/`.
 Upload file/folder berikut ke direktori server (misal: `/var/www/wedding.feyaya.com`):
 
 - Folder `dist/`
+- File `.env` (**Penting**: Pastikan file ini ada di server)
 - File `package.json`
 - File `ecosystem.config.cjs`
 - File `yarn.lock` atau `package-lock.json`
@@ -122,7 +185,7 @@ _Langkah ini penting untuk meng-compile driver SQLite (`better-sqlite3`) sesuai 
 
 ### 4. Jalankan dengan PM2
 
-Gunakan PM2 untuk menjalankan aplikasi di background:
+Gunakan PM2 untuk menjalankan aplikasi di background. Konfigurasi `ecosystem.config.cjs` sudah diset untuk membaca file `.env`.
 
 ```bash
 pm2 start ecosystem.config.cjs

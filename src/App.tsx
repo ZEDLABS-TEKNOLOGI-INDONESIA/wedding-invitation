@@ -9,14 +9,13 @@ import Wishes from "./components/Wishes";
 import GiftInfo from "./components/GiftInfo";
 import MusicPlayer from "./components/MusicPlayer";
 import Navbar from "./components/Navbar";
-import FloatingPetals from "./components/BirdsAnimation";
+import FloatingPetals from "./components/FloatingPetals";
 import Envelope from "./components/Envelope";
 import { Heart, Quote, ChevronUp } from "lucide-react";
 import { dbService } from "./services/dbService";
 import { WEDDING_CONFIG } from "./constants";
 
 const App: React.FC = () => {
-  // State theme, default ambil dari localStorage atau system
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("theme") as "light" | "dark";
@@ -30,7 +29,6 @@ const App: React.FC = () => {
 
   const [isOpened, setIsOpened] = useState(false);
 
-  // Effect untuk mengaplikasikan class 'dark' ke elemen HTML
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
@@ -93,6 +91,16 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Helper untuk format tanggal footer (contoh: 11 • 10 • 2025)
+  // Mengambil dari konfigurasi ISO string agar akurat
+  const footerDate = (() => {
+    const d = WEDDING_CONFIG.events.akad.startDateTime;
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day} • ${month} • ${year}`;
+  })();
+
   return (
     <div className="min-h-screen relative selection:bg-accent/30 selection:text-primary overflow-x-hidden">
       {!isOpened && <Envelope onOpen={handleOpenInvitation} />}
@@ -142,8 +150,9 @@ const App: React.FC = () => {
             </h2>
             <div className="flex items-center justify-center gap-4 md:gap-6">
               <div className="h-[1px] w-10 md:w-20 bg-accent/30"></div>
+              {/* DATE SEKARANG DINAMIS */}
               <p className="text-[12px] md:text-[20px] uppercase tracking-[0.4em] font-black text-accentDark dark:text-accent italic">
-                11 • 10 • 2025
+                {footerDate}
               </p>
               <div className="h-[1px] w-10 md:w-20 bg-accent/30"></div>
             </div>

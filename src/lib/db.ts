@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
-const db = new Database("wedding.db");
+const DB_NAME = import.meta.env.DB_NAME || process.env.DB_NAME || "wedding.db";
+const db = new Database(DB_NAME);
 db.pragma("journal_mode = WAL");
 db.exec(`
   CREATE TABLE IF NOT EXISTS rsvps (
@@ -18,4 +19,5 @@ db.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 `);
+
 export default db;

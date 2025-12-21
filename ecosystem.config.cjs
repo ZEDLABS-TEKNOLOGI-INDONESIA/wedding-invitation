@@ -5,6 +5,7 @@ module.exports = {
       script: "./dist/server/entry.mjs",
       instances: 1,
       exec_mode: "fork",
+      env_file: ".env",
       env: {
         NODE_ENV: "production",
         HOST: "0.0.0.0",
@@ -20,6 +21,7 @@ module.exports = {
         "wedding.db",
         "wedding.db-journal",
         "logs",
+        ".env",
       ],
     },
   ],
