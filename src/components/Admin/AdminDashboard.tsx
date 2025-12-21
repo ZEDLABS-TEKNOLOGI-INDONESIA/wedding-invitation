@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Search,
   Trash2,
@@ -14,13 +14,11 @@ import {
   Loader2,
   X,
   Database,
-  Upload,
-  AlertTriangle,
-  FileDown,
   History,
   Clock,
+  RotateCcw,
   CheckCircle2,
-  RefreshCcw,
+  AlertTriangle,
 } from "lucide-react";
 import QRCodeManager from "../QRCodeManager";
 import InvitationManager from "../InvitationManager";
@@ -46,12 +44,12 @@ interface HistoryLog {
   id: number;
   action_type: string;
   filename: string;
-  status: string;
+  status: "SUCCESS" | "FAILED";
   details?: string;
   created_at: string;
 }
 
-// --- SHARED TABLE COMPONENT (DIPERBAIKI) ---
+// --- REUSABLE TABLE COMPONENT ---
 const DataTable = <T extends { id: number }>({
   data,
   columns,
@@ -74,7 +72,7 @@ const DataTable = <T extends { id: number }>({
   const [pageSize, setPageSize] = useState(10);
   const [selected, setSelected] = useState<number[]>([]);
 
-  // Filter & Search
+  // Filter Search
   const filteredData = useMemo(() => {
     return data.filter((item) =>
       Object.values(item).some((val) =>
@@ -83,17 +81,14 @@ const DataTable = <T extends { id: number }>({
     );
   }, [data, search]);
 
-  // Reset page if search changes
   useEffect(() => {
     setPage(1);
   }, [search]);
 
-  // Reset selection if data changes
   useEffect(() => {
     setSelected([]);
   }, [data]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (page - 1) * pageSize,
@@ -115,23 +110,17 @@ const DataTable = <T extends { id: number }>({
   };
 
   const executeBulkDelete = () => {
-    if (!onBulkDelete) return;
-    if (selected.length === 0) {
-      alert("Pilih data terlebih dahulu!");
-      return;
-    }
-    const confirmed = window.confirm(
-      `Yakin ingin menghapus ${selected.length} data terpilih?`,
-    );
-    if (confirmed) {
-      onBulkDelete(selected);
-      setSelected([]); // Reset selection immediately
+    if (onBulkDelete && selected.length > 0) {
+      if (confirm(`Yakin hapus ${selected.length} data terpilih?`)) {
+        onBulkDelete(selected);
+        setSelected([]);
+      }
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Controls */}
+      {/* Table Controls */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-2">
           <select
@@ -142,18 +131,17 @@ const DataTable = <T extends { id: number }>({
             }}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
           >
-            {[5, 10, 25, 50, 100].map((size) => (
+            {[5, 10, 25, 50].map((size) => (
               <option key={size} value={size}>
                 {size} Data
               </option>
             ))}
           </select>
-
           {onBulkDelete && selected.length > 0 && (
             <button
               type="button"
               onClick={executeBulkDelete}
-              className="flex items-center gap-2 rounded-lg bg-red-100 px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 cursor-pointer"
+              className="flex items-center gap-2 rounded-lg bg-red-100 px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400"
             >
               <Trash2 className="h-3.5 w-3.5" /> Hapus ({selected.length})
             </button>
@@ -171,7 +159,7 @@ const DataTable = <T extends { id: number }>({
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table Content */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -259,7 +247,7 @@ const DataTable = <T extends { id: number }>({
                               type="button"
                               onClick={() => {
                                 if (
-                                  window.confirm(
+                                  confirm(
                                     "Yakin hapus data ini secara permanen?",
                                   )
                                 )
@@ -282,7 +270,7 @@ const DataTable = <T extends { id: number }>({
         </div>
       </div>
 
-      {/* Pagination */}
+      {/* Simple Pagination */}
       <div className="flex items-center justify-between">
         <div className="text-xs text-slate-500">
           Halaman {filteredData.length === 0 ? 0 : page} dari {totalPages}{" "}
@@ -324,41 +312,42 @@ const AdminDashboard = ({
   const [activeTab, setActiveTab] = useState<
     "rsvp" | "wishes" | "qr" | "pdf" | "db"
   >("rsvp");
+
+  // Data States
   const [rsvps, setRsvps] = useState(initialRsvps);
   const [wishes, setWishes] = useState(initialWishes);
   const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
+
+  // UI/Loading States
+  const [isProcessing, setIsProcessing] = useState(false); // Untuk Backup/Restore
+  const [processMsg, setProcessMsg] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false); // Untuk Hapus Data
+  const [isSaving, setIsSaving] = useState(false); // Untuk Edit Form
+
+  // Edit Modal State
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
-  const [isRestoring, setIsRestoring] = useState(false);
-  const [restoreProgress, setRestoreProgress] = useState(0);
-  const [isBackingUp, setIsBackingUp] = useState(false);
-
-  // STATE LOADING UNTUK DELETE
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+  // Fetch History saat tab DB dibuka
   useEffect(() => {
     if (activeTab === "db") {
-      fetch("/api/history")
-        .then((res) => res.json())
-        .then((data) => setHistoryLogs(data))
-        .catch(console.error);
+      fetchHistory();
     }
   }, [activeTab]);
 
-  // FUNGSI DELETE UTAMA (PERBAIKAN LOGGING)
+  const fetchHistory = () => {
+    fetch("/api/history")
+      .then((res) => res.json())
+      .then((data) => setHistoryLogs(data))
+      .catch((err) => console.error("Failed to load history:", err));
+  };
+
+  // --- GENERIC DELETE HANDLER ---
   const handleDelete = async (
     type: "rsvp" | "wish" | "history",
     ids: number[],
   ) => {
     if (ids.length === 0) return;
-
-    // Konfirmasi ulang untuk bulk delete
-    console.log(`[CLIENT] Memulai hapus ${type}, IDs:`, ids);
-
     setIsDeleting(true);
 
     try {
@@ -371,40 +360,30 @@ const AdminDashboard = ({
 
       const res = await fetch("/api/admin", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json", // Header Wajib
-        },
-        body: JSON.stringify({
-          action: actionKey,
-          ids: ids, // Pastikan dikirim sebagai array number
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: actionKey, ids }),
       });
 
       const json = await res.json();
-      console.log("[CLIENT] Respon Server:", json);
 
       if (res.ok && json.success) {
-        // Update State UI Secara Langsung
-        if (type === "rsvp") {
-          setRsvps((prev) => prev.filter((item) => !ids.includes(item.id)));
-        } else if (type === "wish") {
-          setWishes((prev) => prev.filter((item) => !ids.includes(item.id)));
-        } else if (type === "history") {
-          setHistoryLogs((prev) =>
-            prev.filter((item) => !ids.includes(item.id)),
-          );
-        }
+        if (type === "rsvp")
+          setRsvps((prev) => prev.filter((i) => !ids.includes(i.id)));
+        if (type === "wish")
+          setWishes((prev) => prev.filter((i) => !ids.includes(i.id)));
+        if (type === "history")
+          setHistoryLogs((prev) => prev.filter((i) => !ids.includes(i.id)));
       } else {
-        alert("Gagal menghapus data: " + (json.error || "Unknown Error"));
+        alert("Gagal menghapus: " + (json.error || "Unknown Error"));
       }
-    } catch (error) {
-      console.error(error);
-      alert("Gagal menghubungi server. Periksa koneksi internet.");
+    } catch (e) {
+      alert("Error Network: Gagal menghubungi server.");
     } finally {
       setIsDeleting(false);
     }
   };
 
+  // --- GENERIC UPDATE HANDLER ---
   const handleUpdate = async (type: "rsvp" | "wish", id: number, data: any) => {
     setIsSaving(true);
     try {
@@ -417,6 +396,7 @@ const AdminDashboard = ({
           data,
         }),
       });
+
       if (res.ok) {
         if (type === "rsvp") {
           setRsvps((prev) =>
@@ -431,106 +411,107 @@ const AdminDashboard = ({
       } else {
         alert("Gagal update data.");
       }
-    } catch (error) {
-      alert("Gagal menyimpan data");
+    } catch (e) {
+      alert("Gagal menyimpan perubahan.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // ... (Sisa fungsi handleRestore dan handleDownloadBackup sama seperti sebelumnya, pastikan xhr upload ada) ...
-  const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // --- DATABASE: CREATE BACKUP ---
+  const handleCreateBackup = async () => {
+    setIsProcessing(true);
+    setProcessMsg("Membuat Backup di Server...");
+    try {
+      const res = await fetch("/api/backup", { method: "POST" });
+      const json = await res.json();
+      if (res.ok) {
+        alert("Backup Berhasil! File tersimpan di server.");
+        fetchHistory(); // Refresh list
+      } else {
+        alert("Gagal Backup: " + json.error);
+      }
+    } catch (e) {
+      alert("Server Error saat backup.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
+  // --- DATABASE: RESTORE ---
+  const handleRestoreFromHistory = async (filename: string) => {
     if (
       !confirm(
-        "PERINGATAN: Database akan ditimpa dengan file ini. Data baru mungkin akan hilang jika tidak ada di backup. Lanjutkan?",
+        `PERINGATAN: Database aktif akan DITIMPA dengan backup "${filename}".\n\nData yang masuk setelah tanggal backup ini akan HILANG.\n\nLanjutkan?`,
       )
-    ) {
-      if (fileInputRef.current) fileInputRef.current.value = "";
+    )
       return;
-    }
 
-    setIsRestoring(true);
-    setRestoreProgress(0);
+    setIsProcessing(true);
+    setProcessMsg("Merestore Database...");
 
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      const res = await fetch("/api/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename }),
+      });
+      const json = await res.json();
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/restore", true);
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        setRestoreProgress(Math.round((event.loaded / event.total) * 100));
-      }
-    };
-
-    xhr.onload = () => {
-      setIsRestoring(false);
-      setRestoreProgress(0);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-
-      if (xhr.status === 200) {
-        alert("Database berhasil direstore! Halaman akan direfresh.");
+      if (res.ok) {
+        alert("Restore Berhasil! Halaman akan dimuat ulang.");
         window.location.reload();
       } else {
-        try {
-          const resp = JSON.parse(xhr.responseText);
-          alert("Error: " + resp.error);
-        } catch (e) {
-          alert("Error Server");
-        }
+        alert("Gagal Restore: " + json.error);
       }
-    };
-
-    xhr.onerror = () => {
-      setIsRestoring(false);
-      alert("Gagal Upload");
-    };
-
-    xhr.send(formData);
+    } catch (e) {
+      alert("Gagal menghubungi server.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleDownloadBackup = () => {
-    setIsBackingUp(true);
-    setTimeout(() => {
-      setIsBackingUp(false);
-      fetch("/api/history")
-        .then((res) => res.json())
-        .then((data) => setHistoryLogs(data))
-        .catch(console.error);
-    }, 3000);
+  // --- DATABASE: CLEAR LOGS ---
+  const handleClearLogs = () => {
+    if (
+      confirm(
+        "Hapus semua riwayat log? File backup fisik di server tidak akan terhapus.",
+      )
+    ) {
+      handleDelete(
+        "history",
+        historyLogs.map((h) => h.id),
+      );
+    }
   };
 
+  // --- TABS CONFIG ---
   const tabs = [
     { id: "rsvp", label: "Data RSVP", icon: Users },
     { id: "wishes", label: "Ucapan & Doa", icon: MessageCircle },
     { id: "qr", label: "QR Generator", icon: QrCode },
     { id: "pdf", label: "Design PDF", icon: Printer },
-    { id: "db", label: "Database", icon: Database },
+    { id: "db", label: "Database Center", icon: Database },
   ];
 
   return (
     <div>
-      {/* OVERLAY LOADING SAAT MENGHAPUS */}
-      {isDeleting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
-          <div className="rounded-xl bg-white p-5 shadow-2xl dark:bg-slate-800 flex items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-            <span className="font-bold text-slate-700 dark:text-white">
-              Menghapus Data...
+      {/* LOADING OVERLAY */}
+      {(isProcessing || isDeleting) && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="flex items-center gap-4 rounded-xl bg-white p-6 shadow-2xl">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="text-lg font-bold text-slate-700">
+              {isDeleting ? "Menghapus Data..." : processMsg}
             </span>
           </div>
         </div>
       )}
 
-      {/* Tab Navigation */}
+      {/* NAVIGATION */}
       <div className="mb-8 flex gap-2 overflow-x-auto border-b border-slate-200 pb-1 dark:border-slate-700">
         {tabs.map((tab) => (
           <button
-            type="button"
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-bold whitespace-nowrap transition-colors ${
@@ -545,7 +526,7 @@ const AdminDashboard = ({
         ))}
       </div>
 
-      {/* CONTENT: RSVP */}
+      {/* --- TAB: RSVP --- */}
       {activeTab === "rsvp" && (
         <div className="space-y-6 animate-reveal">
           <div className="flex justify-end">
@@ -593,7 +574,7 @@ const AdminDashboard = ({
               {
                 header: "Waktu",
                 accessor: (item) =>
-                  new Date(item.created_at).toLocaleDateString(),
+                  new Date(item.created_at).toLocaleDateString("id-ID"),
               },
             ]}
             onEdit={(item) => {
@@ -606,7 +587,7 @@ const AdminDashboard = ({
         </div>
       )}
 
-      {/* CONTENT: WISHES */}
+      {/* --- TAB: WISHES --- */}
       {activeTab === "wishes" && (
         <div className="space-y-6 animate-reveal">
           <div className="flex justify-end">
@@ -637,7 +618,7 @@ const AdminDashboard = ({
               {
                 header: "Waktu",
                 accessor: (item) =>
-                  new Date(item.created_at).toLocaleDateString(),
+                  new Date(item.created_at).toLocaleDateString("id-ID"),
               },
             ]}
             onEdit={(item) => {
@@ -650,220 +631,267 @@ const AdminDashboard = ({
         </div>
       )}
 
-      {/* CONTENT: QR */}
+      {/* --- TAB: QR --- */}
       {activeTab === "qr" && (
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800 animate-reveal">
           <QRCodeManager siteUrl={siteUrl} />
         </div>
       )}
 
-      {/* CONTENT: PDF */}
+      {/* --- TAB: PDF --- */}
       {activeTab === "pdf" && (
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800 animate-reveal">
           <InvitationManager />
         </div>
       )}
 
-      {/* CONTENT: DATABASE */}
+      {/* --- TAB: DATABASE --- */}
       {activeTab === "db" && (
         <div className="animate-reveal space-y-8">
-          <div className="grid gap-8 md:grid-cols-2">
-            {/* BACKUP */}
-            <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-900/20">
-                <FileDown className="h-8 w-8" />
-              </div>
-              <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white">
-                Backup Database
-              </h3>
-              <p className="mb-6 text-sm text-slate-500">
-                Download file .db terbaru (Snapshot aman).
+          {/* Header & Create Backup */}
+          <div className="flex flex-col items-center justify-between gap-6 rounded-3xl border border-blue-100 bg-blue-50 p-8 md:flex-row dark:border-blue-900/30 dark:bg-blue-900/10">
+            <div className="space-y-2 text-center md:text-left">
+              <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                Database Center
+              </h2>
+              <p className="max-w-md text-sm text-blue-700/80 dark:text-blue-200">
+                Buat titik pengembalian (restore point) aman. Data akan disimpan
+                di folder <code>/database/backup/</code> di server.
               </p>
-              <a
-                href="/api/backup"
-                target="_blank"
-                onClick={handleDownloadBackup}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition-all hover:bg-slate-800 hover:-translate-y-1 dark:bg-white dark:text-slate-900"
-              >
-                {isBackingUp ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                {isBackingUp ? "Processing..." : "Download Backup"}
-              </a>
             </div>
-
-            {/* RESTORE */}
-            <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-orange-600 dark:bg-orange-900/20">
-                <Upload className="h-8 w-8" />
-              </div>
-              <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white">
-                Restore Database
-              </h3>
-              <p className="mb-6 text-sm text-slate-500">
-                Upload .db untuk menimpa data saat ini.
-              </p>
-
-              {isRestoring ? (
-                <div className="w-full space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-orange-600">
-                    <span>Uploading...</span>
-                    <span>{restoreProgress}%</span>
-                  </div>
-                  <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-orange-500 transition-all duration-200"
-                      style={{ width: `${restoreProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ) : (
-                <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50 py-3 text-sm font-bold text-orange-600 hover:bg-orange-100 dark:border-orange-900/50 dark:bg-orange-900/10">
-                  <AlertTriangle className="h-4 w-4" /> Pilih File & Restore
-                  <input
-                    type="file"
-                    accept=".db"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleRestore}
-                  />
-                </label>
-              )}
-            </div>
+            <button
+              onClick={handleCreateBackup}
+              className="flex items-center gap-3 rounded-xl bg-blue-600 px-8 py-4 font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:scale-105 hover:bg-blue-700 active:scale-95"
+            >
+              <Save className="h-5 w-5" />
+              BUAT BACKUP BARU
+            </button>
           </div>
 
-          {/* HISTORY */}
+          {/* History List */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-lg font-bold text-slate-700 dark:text-slate-300">
-                <History className="h-5 w-5" /> Riwayat Backup
+                <History className="h-5 w-5" /> Riwayat Backup Server
               </h3>
               {historyLogs.length > 0 && (
                 <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm("Hapus semua log riwayat?")) {
-                      handleDelete(
-                        "history",
-                        historyLogs.map((h) => h.id),
-                      );
-                    }
-                  }}
-                  className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-red-500"
+                  onClick={handleClearLogs}
+                  className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors"
                 >
-                  <RefreshCcw className="h-3 w-3" /> Bersihkan Log
+                  <Trash2 className="h-3 w-3" /> Bersihkan Log
                 </button>
               )}
             </div>
+
             <DataTable
               data={historyLogs}
               columns={[
                 {
-                  header: "Tipe",
+                  header: "Waktu Backup",
                   accessor: (item) => (
-                    <span className="font-bold uppercase text-xs">
-                      {item.action_type}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">
+                        {new Date(item.created_at).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-slate-400">
+                        <Clock className="h-3 w-3" />
+                        {new Date(item.created_at).toLocaleTimeString("id-ID")}
+                      </span>
+                    </div>
                   ),
                 },
-                { header: "File", accessor: "filename" },
-                { header: "Status", accessor: "status" },
                 {
-                  header: "Waktu",
+                  header: "Nama File",
+                  accessor: "filename",
+                  className: "font-mono text-xs text-slate-500",
+                },
+                {
+                  header: "Status",
+                  accessor: (item) => (
+                    <div className="flex items-center gap-1.5">
+                      {item.status === "SUCCESS" ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                      )}
+                      <span
+                        className={`text-xs font-bold ${item.status === "SUCCESS" ? "text-green-600" : "text-red-600"}`}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+                  ),
+                },
+                {
+                  header: "Aksi",
                   accessor: (item) =>
-                    new Date(item.created_at).toLocaleString(),
+                    item.action_type === "BACKUP" &&
+                    item.status === "SUCCESS" ? (
+                      <div className="flex gap-2">
+                        {/* Tombol Restore */}
+                        <button
+                          onClick={() =>
+                            handleRestoreFromHistory(item.filename)
+                          }
+                          className="flex items-center gap-1.5 rounded-lg bg-orange-100 px-3 py-1.5 text-xs font-bold text-orange-700 transition-colors hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400"
+                          title="Kembalikan database ke titik ini"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" /> Restore
+                        </button>
+
+                        {/* Tombol Download */}
+                        <a
+                          href={`/api/download-backup?file=${item.filename}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300"
+                          title="Download file fisik"
+                        >
+                          <Download className="h-3.5 w-3.5" /> Unduh
+                        </a>
+                      </div>
+                    ) : (
+                      <span className="text-xs italic text-slate-400">
+                        {item.details}
+                      </span>
+                    ),
                 },
               ]}
               onDelete={(id) => handleDelete("history", [id])}
-              onBulkDelete={(ids) => handleDelete("history", ids)}
             />
           </div>
         </div>
       )}
 
-      {/* EDIT MODAL (Simplified for brevity, ensure form logic matches handleUpdate) */}
+      {/* --- EDIT MODAL (RSVP & WISHES) --- */}
       {isModalOpen && editingItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold dark:text-white">Edit Data</h3>
+              <button onClick={() => setIsModalOpen(false)}>
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
+                const data = Object.fromEntries(formData.entries());
                 handleUpdate(
                   activeTab === "rsvp" ? "rsvp" : "wish",
                   editingItem.id,
-                  Object.fromEntries(formData),
+                  data,
                 );
               }}
+              className="space-y-4"
             >
-              <h3 className="text-lg font-bold mb-4">Edit Data</h3>
-              {/* Render input fields based on activeTab (like previous code) */}
               {activeTab === "rsvp" ? (
-                <div className="space-y-4">
-                  <input
-                    name="guest_name"
-                    defaultValue={editingItem.guest_name}
-                    className="w-full border p-2 rounded"
-                    placeholder="Nama"
-                    required
-                  />
-                  <select
-                    name="attendance"
-                    defaultValue={editingItem.attendance}
-                    className="w-full border p-2 rounded"
-                  >
-                    <option value="hadir">Hadir</option>
-                    <option value="ragu">Ragu</option>
-                    <option value="tidak_hadir">Tidak Hadir</option>
-                  </select>
-                  <input
-                    type="number"
-                    name="guest_count"
-                    defaultValue={editingItem.guest_count}
-                    className="w-full border p-2 rounded"
-                    placeholder="Pax"
-                  />
-                  <textarea
-                    name="message"
-                    defaultValue={editingItem.message}
-                    className="w-full border p-2 rounded"
-                    placeholder="Pesan"
-                  ></textarea>
-                </div>
+                <>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">
+                      Nama Tamu
+                    </label>
+                    <input
+                      name="guest_name"
+                      defaultValue={editingItem.guest_name}
+                      className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase text-slate-500">
+                        Status
+                      </label>
+                      <select
+                        name="attendance"
+                        defaultValue={editingItem.attendance}
+                        className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                      >
+                        <option value="hadir">Hadir</option>
+                        <option value="ragu">Ragu</option>
+                        <option value="tidak_hadir">Tidak Hadir</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase text-slate-500">
+                        Pax
+                      </label>
+                      <input
+                        type="number"
+                        name="guest_count"
+                        defaultValue={editingItem.guest_count}
+                        min={1}
+                        className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">
+                      Pesan
+                    </label>
+                    <textarea
+                      name="message"
+                      defaultValue={editingItem.message}
+                      className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                      rows={3}
+                    ></textarea>
+                  </div>
+                </>
               ) : (
-                <div className="space-y-4">
-                  <input
-                    name="name"
-                    defaultValue={editingItem.name}
-                    className="w-full border p-2 rounded"
-                    placeholder="Nama"
-                    required
-                  />
-                  <textarea
-                    name="message"
-                    defaultValue={editingItem.message}
-                    className="w-full border p-2 rounded"
-                    placeholder="Ucapan"
-                    required
-                  ></textarea>
-                </div>
+                <>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">
+                      Nama Pengirim
+                    </label>
+                    <input
+                      name="name"
+                      defaultValue={editingItem.name}
+                      className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">
+                      Ucapan
+                    </label>
+                    <textarea
+                      name="message"
+                      defaultValue={editingItem.message}
+                      className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                      rows={5}
+                      required
+                    ></textarea>
+                  </div>
+                </>
               )}
-              <div className="mt-6 flex justify-end gap-2">
+
+              <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded text-slate-500"
+                  className="rounded-lg px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="bg-blue-600 text-white px-4 py-2 rounded font-bold"
+                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {isSaving ? "Menyimpan..." : "Simpan"}
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}{" "}
+                  Simpan
                 </button>
               </div>
             </form>
