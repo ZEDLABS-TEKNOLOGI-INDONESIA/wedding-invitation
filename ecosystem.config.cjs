@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "wedding.zedlabs.id",
+      name: "wedding.example.com",
       script: "./dist/server/entry.mjs",
       instances: 1,
       exec_mode: "fork",

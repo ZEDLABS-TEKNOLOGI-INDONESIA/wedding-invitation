@@ -1,5 +1,5 @@
 {
-  "name": "wedding",
+  "name": "wedding-invitation",
   "type": "module",
   "version": "1.0.0",
   "license": "MIT",
@@ -7,7 +7,7 @@
   "author": {
     "name": "Yahya Zulfikri",
     "email": "zulfikriyahya18@gmail.com",
-    "url": "https://feyaya.com"
+    "url": "https://wedding.feyaya.com"
   },
   "scripts": {
     "dev": "astro dev",
