@@ -14,6 +14,7 @@ import Envelope from "./components/Envelope";
 import { Heart, Quote, ChevronUp } from "lucide-react";
 import { dbService } from "./services/dbService";
 import { WEDDING_CONFIG } from "./constants";
+import InstallPrompt from "./components/InstallPrompt";
 
 const App: React.FC = () => {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -68,7 +69,7 @@ const App: React.FC = () => {
           "opacity-0",
           "transition-all",
           "duration-[1.5s]",
-          "ease-out"
+          "ease-out",
         );
         observer.observe(section);
       });
@@ -102,6 +103,8 @@ const App: React.FC = () => {
   return (
     <div className="selection:bg-accent/30 selection:text-primary relative min-h-screen overflow-x-hidden">
       {!isOpened && <Envelope onOpen={handleOpenInvitation} />}
+
+      <InstallPrompt />
 
       <FloatingPetals />
 

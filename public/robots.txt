@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Ganti domain sesuai domain asli Anda
+Sitemap: http://localhost:4321/sitemap-index.xml
+Robots: http://localhost:4321/robots.txt

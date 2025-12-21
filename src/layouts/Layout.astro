@@ -8,11 +8,10 @@ interface Props {
   image?: string;
 }
 
-// Ambil data dari Config
 const {
   title = `The Wedding of ${WEDDING_CONFIG.couple.bride.name} & ${WEDDING_CONFIG.couple.groom.name}`,
   description = `Kami mengundang Anda untuk hadir di pernikahan kami pada ${WEDDING_CONFIG.events.akad.date}.`,
-  image = "/og-image.png",
+  image = "/thumbnail.png",
 } = Astro.props;
 
 const canonicalURL = new URL(
@@ -48,6 +47,16 @@ const canonicalURL = new URL(
     <meta property="twitter:title" content={title} />
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={image} />
+
+    <!-- PWA Theme Color (Sama dengan bg di manifest) -->
+    <meta name="theme-color" content="#020617" />
+    
+    <!-- PWA Link Manifest (Otomatis digenerate plugin, tapi baiknya didefinisikan untuk fallback) -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    
+    <!-- Untuk iOS Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
