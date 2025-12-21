@@ -21,15 +21,16 @@ Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun 
 - **Personalisasi Tamu**: Nama tamu dapat diambil otomatis dari parameter URL (`?to=Nama Tamu Bisa Pakai Spasi`).
 - **RSVP Online**: Formulir konfirmasi kehadiran yang terhubung langsung ke database.
   - _Smart Update_: Jika tamu dengan nama yang sama mengisi ulang, data lama akan diperbarui (tidak duplikat).
-  - _Dashboard_: Menampilkan statistik kehadiran secara _real-time_.
-- **Buku Tamu (Wishes)**: Fitur kirim ucapan dan doa dengan paginasi.
+  - _Dashboard_: Menampilkan statistik kehadiran secara _real-time_ di halaman form.
+  - _Input Counter_: Input jumlah tamu dengan batasan maksimum yang bisa dikonfigurasi.
+- **Buku Tamu (Wishes)**: Fitur kirim ucapan dan doa dengan paginasi dan input yang terkunci jika diakses lewat link khusus.
 - **Integrasi Peta & Kalender**: Tautan langsung ke Google Maps dan fitur "Add to Calendar" (Google/ICS).
-- **Galeri Foto**: Penampil foto interaktif (lightbox).
+- **Galeri Foto**: Penampil foto interaktif (lightbox) dengan navigasi keyboard.
 - **Informasi Kado**: Fitur _copy-to-clipboard_ untuk nomor rekening dan alamat kirim kado.
 
 ### Teknis
 
-- **Dynamic Configuration**: Mengubah data pengantin, lokasi, dan acara cukup melalui file `.env` tanpa perlu build ulang.
+- **Dynamic Configuration**: Mengubah data pengantin, lokasi, musik, dan acara cukup melalui file `.env` tanpa perlu build ulang.
 - **Server-Side Rendering (SSR)**: Menggunakan Astro Node Adapter untuk performa optimal dan SEO.
 - **Database SQLite**: Penyimpanan data tamu dan ucapan yang ringan, cepat, dan mandiri (tanpa perlu setup MySQL/PostgreSQL terpisah).
 - **Optimasi Deployment**: Konfigurasi siap pakai untuk deploy menggunakan PM2 dan Nginx Reverse Proxy.
@@ -41,21 +42,22 @@ Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun 
 ```txt
 .
 ├── src/
-│   ├── components/ # Komponen UI (React)
-│   ├── layouts/ # Layout dasar halaman (Astro)
-│   ├── lib/ # Konfigurasi Database (SQLite)
+│   ├── components/         # Komponen UI (React)
+│   ├── layouts/            # Layout dasar halaman (Astro)
+│   ├── lib/                # Konfigurasi Database (SQLite)
 │   ├── pages/
-│   │   ├── api/ # API Endpoints (RSVP & Wishes)
-│   │   └── index.astro # Halaman utama
-│   ├── services/ # Logic penghubung Frontend ke API
-│   ├── styles/ # Global CSS & Tailwind Config
-│   └── types.ts # Definisi Tipe TypeScript
-├── public/ # Aset statis
-├── .env # Konfigurasi Data (PENTING)
-├── astro.config.mjs # Konfigurasi Astro
-├── ecosystem.config.cjs # Konfigurasi PM2 untuk Production
-├── nginx.conf # Contoh konfigurasi Nginx
-└── package.json # Daftar dependensi
+│   │   ├── api/            # API Endpoints (RSVP & Wishes)
+│   │   └── index.astro     # Halaman utama
+│   ├── services/           # Logic penghubung Frontend ke API
+│   ├── styles/             # Global CSS & Tailwind Config
+│   ├── utils/              # Helper functions (Calendar, etc)
+│   └── types.ts            # Definisi Tipe TypeScript
+├── public/                 # Aset statis
+├── .env                    # Konfigurasi Data (PENTING)
+├── astro.config.mjs        # Konfigurasi Astro
+├── ecosystem.config.cjs    # Konfigurasi PM2 untuk Production
+├── nginx.conf              # Contoh konfigurasi Nginx
+└── package.json            # Daftar dependensi
 ```
 
 ---
@@ -70,6 +72,9 @@ HOST=0.0.0.0
 PORT=4321
 DB_NAME=wedding.db
 
+# --- RSVP CONFIG ---
+PUBLIC_RSVP_MAX_GUESTS=5
+
 # --- MUSIC ---
 PUBLIC_MUSIC_URL=https://link-to-your-music.mp3
 
@@ -77,18 +82,18 @@ PUBLIC_MUSIC_URL=https://link-to-your-music.mp3
 PUBLIC_BRIDE_NICKNAME=Fey
 PUBLIC_BRIDE_FULLNAME=Fera Oktapia
 PUBLIC_BRIDE_PARENTS=Putri ke ... dari Bapak ... & Ibu ...
-PUBLIC_BRIDE_INSTAGRAM=username_bride
-PUBLIC_BRIDE_IMAGE=https://url-to-bride-image.jpg
+PUBLIC_BRIDE_INSTAGRAM=feraoktapia___
+PUBLIC_BRIDE_IMAGE=https://placehold.co/600x800?text=Fey+Portrait
 
 PUBLIC_GROOM_NICKNAME=Yaya
 PUBLIC_GROOM_FULLNAME=Yahya Zulfikri
 PUBLIC_GROOM_PARENTS=Putra ke ... dari Bapak ... & Ibu ...
-PUBLIC_GROOM_INSTAGRAM=username_groom
-PUBLIC_GROOM_IMAGE=https://url-to-groom-image.jpg
+PUBLIC_GROOM_INSTAGRAM=zulfikriyahya_
+PUBLIC_GROOM_IMAGE=https://placehold.co/600x800?text=Yaya+Portrait
 
 # --- VENUE ---
-PUBLIC_VENUE_NAME=Nama Gedung / Hotel
-PUBLIC_VENUE_ADDRESS=Alamat Lengkap
+PUBLIC_VENUE_NAME=The Royal Azure Ballroom
+PUBLIC_VENUE_ADDRESS=Jl. Elok No. 77, Kab. Pandeglang, Banten
 PUBLIC_VENUE_LAT=-6.2088
 PUBLIC_VENUE_LNG=106.8456
 
@@ -111,9 +116,11 @@ PUBLIC_RESEPSI_ISO_START=2025-10-11T11:00:00+07:00
 PUBLIC_RESEPSI_ISO_END=2025-10-11T14:00:00+07:00
 
 # --- COMPLEX DATA (Format JSON Satu Baris) ---
-PUBLIC_BANK_ACCOUNTS=[{"bank":"BCA","number":"123456","name":"Nama"},{"bank":"Mandiri","number":"098765","name":"Nama"}]
-PUBLIC_LOVE_STORY=[{"date":"2020","title":"Bertemu","desc":"Cerita..."},{"date":"2025","title":"Menikah","desc":"Cerita..."}]
-PUBLIC_GALLERY_IMAGES=["https://img1.jpg","https://img2.jpg"]
+PUBLIC_BANK_ACCOUNTS=[{"bank":"Bank BCA","number":"1234567890","name":"Fera Oktapia"},{"bank":"Bank Mandiri","number":"0987654321","name":"Yahya Zulfikri"}]
+
+PUBLIC_LOVE_STORY=[{"date":"Musim Gugur, 2020","title":"Pertemuan Pertama","desc":"Berawal dari sebuah diskusi kecil..."},{"date":"Maret, 2022","title":"Sebuah Komitmen","desc":"Memutuskan untuk saling menguatkan..."}]
+
+PUBLIC_GALLERY_IMAGES=["https://placehold.co/800x1200?text=Moment+1","https://placehold.co/1200x800?text=Moment+2"]
 ```
 
 ---
