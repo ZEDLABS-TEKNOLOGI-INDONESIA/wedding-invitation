@@ -6,7 +6,7 @@ import sitemap from "@astrojs/sitemap";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  site: "http://localhost:4321",
+  site: "http://127.0.0.1:4321",
   integrations: [react(), sitemap()],
   output: "server",
   adapter: node({

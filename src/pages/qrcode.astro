@@ -1,0 +1,45 @@
+---
+import Layout from "../layouts/Layout.astro";
+import QRCodeGenerator from "../components/QRCodeGenerator";
+
+// Proteksi Halaman (Sama seperti Admin)
+const COOKIE_NAME = "wedding_admin_auth";
+const isAuthenticated = Astro.cookies.has(COOKIE_NAME);
+
+if (!isAuthenticated) {
+  return Astro.redirect("/admin");
+}
+---
+
+<Layout title="QR Code Generator">
+  <div class="min-h-screen bg-slate-50 px-4 py-20 dark:bg-slate-900">
+    <div class="mx-auto max-w-4xl space-y-8">
+      <div class="space-y-2 text-center">
+        <h1 class="font-serif text-4xl italic dark:text-white">
+          QR Code Generator
+        </h1>
+        <p class="text-slate-500">
+          Buat QR Code unik untuk setiap tamu undangan
+        </p>
+      </div>
+
+      <div
+        class="rounded-3xl border border-slate-100 bg-white p-8 shadow-xl dark:border-white/5 dark:bg-slate-800"
+      >
+        <QRCodeGenerator
+          client:load
+          siteUrl={Astro.site?.toString() || "https://wedding.feyaya.com"}
+        />
+      </div>
+
+      <div class="text-center">
+        <a
+          href="/admin"
+          class="text-sm font-bold tracking-widest text-slate-400 uppercase hover:text-slate-600"
+        >
+          &larr; Kembali ke Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>
