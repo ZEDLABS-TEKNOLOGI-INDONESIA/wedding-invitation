@@ -1,12 +1,5 @@
 @import "tailwindcss";
-
-/* 
-  PENTING: Override default dark mode Tailwind v4.
-  Secara default v4 menggunakan 'media' (system preference).
-  Baris ini memaksanya menggunakan class .dark pada elemen root.
-*/
 @variant dark (&:where(.dark, .dark *));
-
 @theme {
   /* Colors */
   --color-primary: #0f172a;
@@ -25,7 +18,7 @@
   --animate-reveal: reveal 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   --animate-float: float 6s ease-in-out infinite;
   --animate-pulse-soft: pulseSoft 4s ease-in-out infinite;
-  --animate-spin-slow: spin 8s linear infinite; /* Tambahan untuk Envelope */
+  --animate-spin-slow: spin 8s linear infinite;
 
   /* Keyframes */
   @keyframes subtleZoom {
@@ -87,7 +80,6 @@
 }
 
 @layer base {
-  /* Default transisi warna untuk semua elemen agar smooth saat ganti tema */
   *,
   ::before,
   ::after {

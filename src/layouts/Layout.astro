@@ -8,9 +8,7 @@ interface Props {
 
 const { title, description } = Astro.props;
 ---
-
 <!doctype html>
-<!-- Tambahkan class 'scroll-smooth' agar navigasi enak -->
 <html lang="id" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
@@ -18,7 +16,6 @@ const { title, description } = Astro.props;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
-
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -26,12 +23,7 @@ const { title, description } = Astro.props;
       rel="stylesheet"
     />
   </head>
-  <!-- Class bg dan text dihapus dari sini karena sudah dihandle di global.css layer base -->
   <body>
-    <!-- 
-      Script kecil untuk mencegah FOUC (Flash of Unstyled Content) saat reload.
-      Ini akan set tema sebelum React di-hydrate. 
-    -->
     <script is:inline>
       const theme = (() => {
         if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
@@ -42,14 +34,12 @@ const { title, description } = Astro.props;
         }
         return 'light';
       })();
-    
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.remove('dark');
       }
     </script>
-
     <slot />
   </body>
 </html>

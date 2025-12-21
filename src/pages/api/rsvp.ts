@@ -1,16 +1,13 @@
 import type { APIRoute } from "astro";
 import db from "../../lib/db";
-
 export const GET: APIRoute = async () => {
   try {
-    // Ambil data terbaru, sembunyikan no HP untuk privasi publik
     const stmt = db.prepare(`
       SELECT id, guest_name, attendance, guest_count, created_at 
       FROM rsvps 
       ORDER BY created_at DESC
     `);
     const rsvps = stmt.all();
-
     return new Response(JSON.stringify(rsvps), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -21,26 +18,20 @@ export const GET: APIRoute = async () => {
     });
   }
 };
-
 export const POST: APIRoute = async ({ request }) => {
   try {
     const data = await request.json();
     const { guest_name, phone, attendance, guest_count, message } = data;
-
-    // 1. Cek apakah nama tamu sudah ada di database
     const checkStmt = db.prepare("SELECT id FROM rsvps WHERE guest_name = ?");
     const existingGuest = checkStmt.get(guest_name) as
       | { id: number }
       | undefined;
-
     if (existingGuest) {
-      // 2. Jika ada, UPDATE data berdasarkan ID yang ditemukan
       const updateStmt = db.prepare(`
         UPDATE rsvps 
         SET phone = ?, attendance = ?, guest_count = ?, message = ?, created_at = ?
         WHERE id = ?
       `);
-
       updateStmt.run(
         phone,
         attendance,
@@ -49,7 +40,6 @@ export const POST: APIRoute = async ({ request }) => {
         new Date().toISOString(),
         existingGuest.id
       );
-
       return new Response(
         JSON.stringify({
           success: true,
@@ -59,12 +49,10 @@ export const POST: APIRoute = async ({ request }) => {
         { status: 200 }
       );
     } else {
-      // 3. Jika tidak ada, INSERT data baru
       const insertStmt = db.prepare(`
         INSERT INTO rsvps (guest_name, phone, attendance, guest_count, message, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
       `);
-
       const result = insertStmt.run(
         guest_name,
         phone,
@@ -73,7 +61,6 @@ export const POST: APIRoute = async ({ request }) => {
         message || "",
         new Date().toISOString()
       );
-
       return new Response(
         JSON.stringify({
           success: true,

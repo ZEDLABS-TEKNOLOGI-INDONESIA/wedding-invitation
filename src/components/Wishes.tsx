@@ -10,18 +10,15 @@ import {
   Sparkles,
   Check,
 } from "lucide-react";
-
 const Wishes: React.FC = () => {
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const wishesPerPage = 6;
-
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isNameLocked, setIsNameLocked] = useState(false);
   const [postSuccess, setPostSuccess] = useState(false);
-
   useEffect(() => {
     loadWishes();
     const params = new URLSearchParams(window.location.search);
@@ -31,31 +28,20 @@ const Wishes: React.FC = () => {
       setIsNameLocked(true);
     }
   }, []);
-
   const loadWishes = async () => {
     const data = await dbService.getWishes();
     setWishes(data);
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
-    // 1. MENCEGAH RELOAD HALAMAN
     e.preventDefault();
-
     if (!name.trim() || !message.trim()) return;
-
     setIsSending(true);
     try {
       await dbService.saveWish({ name, message });
-
       setMessage("");
-      // Jika locked, jangan hapus namanya
       if (!isNameLocked) setName("");
-
-      // 2. Refresh list tanpa reload
       await loadWishes();
       setCurrentPage(1);
-
-      // 3. Efek visual sukses
       setPostSuccess(true);
       setTimeout(() => setPostSuccess(false), 3000);
     } catch (err) {
@@ -64,13 +50,11 @@ const Wishes: React.FC = () => {
       setIsSending(false);
     }
   };
-
   const totalPages = Math.ceil(wishes.length / wishesPerPage);
   const currentWishes = useMemo(() => {
     const start = (currentPage - 1) * wishesPerPage;
     return wishes.slice(start, start + wishesPerPage);
   }, [wishes, currentPage]);
-
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     const header = document.getElementById("wishes-header");
@@ -78,7 +62,6 @@ const Wishes: React.FC = () => {
       header.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
-
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = window.innerWidth < 768 ? 3 : 5;
@@ -90,7 +73,6 @@ const Wishes: React.FC = () => {
     for (let i = startPage; i <= endPage; i++) pages.push(i);
     return pages;
   };
-
   return (
     <section
       id="wishes"
@@ -113,13 +95,10 @@ const Wishes: React.FC = () => {
             Untaian doa dan harapan tulus dari orang-orang tersayang
           </p>
         </div>
-
         <div className="grid lg:grid-cols-12 gap-10 md:gap-24 items-start">
-          {/* Form Section */}
           <div className="lg:col-span-4 lg:sticky lg:top-32">
             <div className="frosted-glass p-8 md:p-14 rounded-[2.5rem] md:rounded-[4rem] shadow-2xl relative overflow-hidden group border border-slate-200/50 dark:border-white/5">
               <div className="absolute -top-20 -right-20 w-64 h-64 bg-accent/5 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-[3s]"></div>
-
               <div className="relative z-10 space-y-10 md:space-y-16">
                 <div className="space-y-4">
                   <span className="text-[10px] md:text-[12px] font-black uppercase tracking-luxury text-accentDark dark:text-accent">
@@ -129,7 +108,6 @@ const Wishes: React.FC = () => {
                     Kirim Ucapan
                   </h3>
                 </div>
-
                 <form
                   onSubmit={handleSubmit}
                   className="space-y-8 md:space-y-14"
@@ -164,8 +142,6 @@ const Wishes: React.FC = () => {
                       </label>
                     </div>
                   </div>
-
-                  {/* STYLE TOMBOL DISAMAKAN PERSIS DENGAN RSVP */}
                   <button
                     disabled={isSending || postSuccess}
                     type="submit"
@@ -194,8 +170,6 @@ const Wishes: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* List Section */}
           <div className="lg:col-span-8 space-y-12 md:space-y-20">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
               {currentWishes.map((wish) => (
@@ -214,7 +188,6 @@ const Wishes: React.FC = () => {
                       "{wish.message}"
                     </p>
                   </div>
-
                   <div className="mt-8 md:mt-16 flex items-center gap-4 md:gap-6 border-t border-slate-50 dark:border-white/5 pt-6 md:pt-10">
                     <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-[12px] md:text-[18px] font-black text-accentDark dark:text-accent border border-slate-100 dark:border-white/10 shadow-inner">
                       {wish.name.charAt(0).toUpperCase()}
@@ -235,8 +208,6 @@ const Wishes: React.FC = () => {
                 </div>
               ))}
             </div>
-
-            {/* Pagination Controls */}
             {totalPages > 1 && (
               <div className="flex flex-col items-center gap-8 md:gap-12">
                 <div className="flex items-center justify-center gap-3 md:gap-6">
@@ -247,7 +218,6 @@ const Wishes: React.FC = () => {
                   >
                     <ChevronLeft className="w-6 h-6 md:w-10 md:h-10" />
                   </button>
-
                   <div className="flex gap-2 md:gap-4 px-4 py-2 bg-white/50 dark:bg-white/5 rounded-full backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-inner">
                     {getPageNumbers().map((pageNum) => (
                       <button
@@ -263,7 +233,6 @@ const Wishes: React.FC = () => {
                       </button>
                     ))}
                   </div>
-
                   <button
                     onClick={() =>
                       paginate(Math.min(totalPages, currentPage + 1))
@@ -282,5 +251,4 @@ const Wishes: React.FC = () => {
     </section>
   );
 };
-
 export default Wishes;

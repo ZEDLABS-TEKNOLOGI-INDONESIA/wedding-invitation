@@ -1,6 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
-
+import React, { useEffect, useState } from "react";
 interface Petal {
   id: number;
   left: string;
@@ -9,10 +7,8 @@ interface Petal {
   size: string;
   rotation: string;
 }
-
 const FloatingPetals: React.FC = () => {
   const [petals, setPetals] = useState<Petal[]>([]);
-
   useEffect(() => {
     const petalCount = 15;
     const newPetals = Array.from({ length: petalCount }).map((_, i) => ({
@@ -25,7 +21,6 @@ const FloatingPetals: React.FC = () => {
     }));
     setPetals(newPetals);
   }, []);
-
   return (
     <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
       {petals.map((p) => (
@@ -56,5 +51,4 @@ const FloatingPetals: React.FC = () => {
     </div>
   );
 };
-
 export default FloatingPetals;

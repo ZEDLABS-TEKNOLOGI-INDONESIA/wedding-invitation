@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { dbService } from "../services/dbService";
 import { AttendanceStatus, type RSVP } from "../types";
-
 const RSVPForm: React.FC = () => {
   const [formData, setFormData] = useState({
     guest_name: "",
@@ -21,18 +20,14 @@ const RSVPForm: React.FC = () => {
     guest_count: 1,
     message: "",
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isNameLocked, setIsNameLocked] = useState(false);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
-
-  // Function load data
   const loadRSVPs = async () => {
     const data = await dbService.getRSVPs();
     setRsvps(data);
   };
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const to = params.get("to");
@@ -42,21 +37,13 @@ const RSVPForm: React.FC = () => {
     }
     loadRSVPs();
   }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
-    // 1. MENCEGAH RELOAD HALAMAN
     e.preventDefault();
-
     if (!formData.guest_name) return;
     setIsSubmitting(true);
-
     try {
       await dbService.saveRSVP(formData);
-
-      // 2. Update UI ke state "Submitted" tanpa reload
       setSubmitted(true);
-
-      // 3. Refresh daftar tamu di sebelah kanan secara background
       await loadRSVPs();
     } catch (err) {
       console.error(err);
@@ -64,14 +51,12 @@ const RSVPForm: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
   const stats = {
     hadir: rsvps.filter((r) => r.attendance === AttendanceStatus.HADIR).length,
     ragu: rsvps.filter((r) => r.attendance === AttendanceStatus.RAGU).length,
     tidak: rsvps.filter((r) => r.attendance === AttendanceStatus.TIDAK_HADIR)
       .length,
   };
-
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
       case AttendanceStatus.HADIR:
@@ -82,7 +67,6 @@ const RSVPForm: React.FC = () => {
         return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700";
     }
   };
-
   const getStatusIcon = (status: AttendanceStatus) => {
     switch (status) {
       case AttendanceStatus.HADIR:
@@ -93,7 +77,6 @@ const RSVPForm: React.FC = () => {
         return <HelpCircle className="w-3 h-3 md:w-4 md:h-4" />;
     }
   };
-
   return (
     <section
       id="rsvp"
@@ -109,13 +92,10 @@ const RSVPForm: React.FC = () => {
             Mohon konfirmasi kehadiran Anda
           </p>
         </div>
-
         <div className="grid lg:grid-cols-12 gap-8 md:gap-14 items-stretch">
-          {/* --- LEFT COLUMN: FORM --- */}
           <div className="lg:col-span-5 space-y-6">
             <div className="editorial-card h-full p-6 md:p-14 rounded-[1.5rem] md:rounded-[3.5rem] relative overflow-hidden group shadow-lg flex flex-col justify-center">
               {submitted ? (
-                // Tampilan Sukses (Tanpa Reload)
                 <div className="text-center space-y-6 animate-reveal">
                   <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto text-green-600 dark:text-green-400">
                     <CheckCircle2 className="w-10 h-10" />
@@ -137,10 +117,8 @@ const RSVPForm: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                // Tampilan Form
                 <>
                   <div className="absolute top-0 right-0 w-32 h-32 bg-accentDark/5 dark:bg-accent/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-1000 pointer-events-none"></div>
-
                   <div className="relative z-10 space-y-8 md:space-y-12">
                     <div className="flex items-center gap-4 border-b border-slate-50 dark:border-white/5 pb-4 md:pb-10">
                       <div className="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-accentDark dark:text-accent border border-slate-100 dark:border-white/10">
@@ -155,7 +133,6 @@ const RSVPForm: React.FC = () => {
                         </p>
                       </div>
                     </div>
-
                     <form
                       onSubmit={handleSubmit}
                       className="space-y-6 md:space-y-10"
@@ -184,7 +161,6 @@ const RSVPForm: React.FC = () => {
                             Nama {isNameLocked && "(Locked)"}
                           </label>
                         </div>
-
                         <div className="relative group/input">
                           <input
                             type="text"
@@ -203,7 +179,6 @@ const RSVPForm: React.FC = () => {
                           </label>
                         </div>
                       </div>
-
                       <div className="space-y-3 md:space-y-6">
                         <p className="text-[8px] md:text-[9px] uppercase tracking-editorial text-slate-400 font-bold mb-1">
                           Status Kehadiran
@@ -234,7 +209,6 @@ const RSVPForm: React.FC = () => {
                           ))}
                         </div>
                       </div>
-
                       <button
                         disabled={isSubmitting}
                         type="submit"
@@ -253,10 +227,7 @@ const RSVPForm: React.FC = () => {
               )}
             </div>
           </div>
-
-          {/* --- RIGHT COLUMN: LIST & STATS --- */}
           <div className="lg:col-span-7 space-y-6">
-            {/* STATISTIK */}
             <div className="grid grid-cols-3 gap-3 md:gap-6">
               {[
                 {
@@ -290,11 +261,8 @@ const RSVPForm: React.FC = () => {
                 </div>
               ))}
             </div>
-
-            {/* DAFTAR NAMA */}
             <div className="editorial-card p-6 md:p-14 rounded-[2rem] md:rounded-[4rem] min-h-[400px] max-h-[600px] flex flex-col relative overflow-hidden group shadow-lg border border-slate-100 dark:border-white/5">
               <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-50"></div>
-
               <div className="relative z-10 flex flex-col h-full">
                 <div className="mb-8 flex items-center justify-between">
                   <h3 className="text-xl md:text-3xl font-serif italic text-slate-900 dark:text-white">
@@ -305,7 +273,6 @@ const RSVPForm: React.FC = () => {
                     <span>Terbaru</span>
                   </div>
                 </div>
-
                 <div className="flex-grow overflow-y-auto pr-2 space-y-3 md:space-y-4 custom-scrollbar">
                   {rsvps.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 opacity-40">
@@ -336,7 +303,6 @@ const RSVPForm: React.FC = () => {
                             </span>
                           </div>
                         </div>
-
                         <div
                           className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full border ${getStatusColor(
                             rsvp.attendance
@@ -359,5 +325,4 @@ const RSVPForm: React.FC = () => {
     </section>
   );
 };
-
 export default RSVPForm;

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { WEDDING_CONFIG } from "../constants";
-
 const Hero: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -10,11 +9,9 @@ const Hero: React.FC = () => {
     seconds: 0,
   });
   const [guestName, setGuestName] = useState<string | null>(null);
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setGuestName(params.get("to"));
-
     const timer = setInterval(() => {
       const distance =
         WEDDING_CONFIG.events.akad.startDateTime.getTime() -
@@ -32,12 +29,9 @@ const Hero: React.FC = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
   const handleScrollToContent = () => {
-    // Hanya scroll, tidak memicu musik lagi karena sudah dilakukan di Envelope
     document.getElementById("couple")?.scrollIntoView({ behavior: "smooth" });
   };
-
   return (
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
@@ -46,11 +40,9 @@ const Hero: React.FC = () => {
           className="w-full h-full object-cover animate-subtle-zoom"
           alt="Wedding Backdrop"
         />
-        {/* Overlay yang selalu memberikan kegelapan sedikit agar teks putih di atasnya terbaca */}
         <div className="absolute inset-0 bg-slate-950/40 dark:bg-slate-950/60 backdrop-blur-[0.5px]"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/80"></div>
       </div>
-
       <div className="z-10 container mx-auto px-6 flex flex-col items-center text-center">
         <div className="animate-reveal [animation-delay:200ms] space-y-4 md:space-y-10 w-full">
           <div className="flex items-center justify-center gap-3 md:gap-4">
@@ -60,13 +52,11 @@ const Hero: React.FC = () => {
             </span>
             <div className="h-[1px] w-6 md:w-20 bg-white/30"></div>
           </div>
-
           <h1 className="text-white text-5xl sm:text-7xl md:text-[9rem] font-serif italic leading-tight md:leading-none tracking-tight break-words">
             {WEDDING_CONFIG.couple.bride.name}
             <span className="text-accent/30 mx-2 md:mx-6">&</span>
             {WEDDING_CONFIG.couple.groom.name}
           </h1>
-
           <div className="space-y-3 md:space-y-6">
             <p className="text-white font-serif italic text-xl sm:text-2xl md:text-5xl tracking-widest opacity-90">
               {WEDDING_CONFIG.events.akad.date}
@@ -80,8 +70,6 @@ const Hero: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Improved Countdown Section with Theme Awareness */}
         <div className="mt-8 md:mt-16 animate-reveal [animation-delay:600ms] flex items-center justify-center gap-4 md:gap-14 frosted-glass px-6 md:px-10 py-5 md:py-8 rounded-[1.5rem] md:rounded-[2.2rem] shadow-2xl border border-white/40 dark:border-white/10">
           {Object.entries(timeLeft).map(([label, value]) => (
             <div
@@ -97,7 +85,6 @@ const Hero: React.FC = () => {
             </div>
           ))}
         </div>
-
         <button
           onClick={handleScrollToContent}
           className="mt-12 md:mt-20 group flex flex-col items-center gap-3 md:gap-4 text-white/40 hover:text-white transition-all duration-500"
@@ -113,5 +100,4 @@ const Hero: React.FC = () => {
     </section>
   );
 };
-
 export default Hero;
