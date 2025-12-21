@@ -1,6 +1,5 @@
 node_modules
 /.git
-/.vscode
 /.astro
 /dist
 .draft.md
