@@ -1,3 +1,4 @@
+```bash
 set -euo pipefail
 OUT=".draft.md"
 ROOT="."
@@ -112,3 +113,4 @@ for top in $(printf '%s\n' "${!groups[@]}" | sort -V); do
   done
 done
 echo "Selesai. File '$OUT' telah dibuat/diupdate (Mode: Astro Project)."
+```
