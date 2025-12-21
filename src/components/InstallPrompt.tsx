@@ -39,7 +39,7 @@ const InstallPrompt: React.FC = () => {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed right-4 bottom-24 left-4 z-[9999] flex justify-center md:bottom-8 md:right-8 md:left-auto md:w-96">
+    <div className="fixed right-4 bottom-24 left-4 z-[9999] flex justify-center md:right-8 md:bottom-8 md:left-auto md:w-96">
       <div className="frosted-glass animate-reveal relative w-full overflow-hidden rounded-3xl border border-white/20 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/80">
         <div className="bg-accent/10 absolute -top-10 -right-10 h-32 w-32 rounded-full blur-2xl"></div>
 
@@ -51,7 +51,7 @@ const InstallPrompt: React.FC = () => {
         </button>
 
         <div className="relative z-10 flex gap-5">
-          <div className="bg-accentDark/10 dark:bg-white/10 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl">
+          <div className="bg-accentDark/10 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl dark:bg-white/10">
             <Smartphone className="text-accentDark dark:text-accent h-7 w-7 animate-pulse" />
           </div>
 

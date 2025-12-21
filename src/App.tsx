@@ -69,7 +69,7 @@ const App: React.FC = () => {
           "opacity-0",
           "transition-all",
           "duration-[1.5s]",
-          "ease-out",
+          "ease-out"
         );
         observer.observe(section);
       });
