@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
 
-// --- TYPES ---
 interface GuestData {
   name: string;
   address: string;
@@ -26,13 +25,11 @@ interface ThemeColor {
   name: string;
   id: string;
   bg: [number, number, number];
-  primary: [number, number, number]; // Warna Border/Outline Bunga/Teks Gelap
-  secondary: [number, number, number]; // Warna Daun/Fill Aksen
-  textMain: [number, number, number]; // Teks Utama
-  textMuted: [number, number, number]; // Teks Sekunder
+  primary: [number, number, number];
+  secondary: [number, number, number];
+  textMain: [number, number, number];
+  textMuted: [number, number, number];
 }
-
-// --- THEME PRESETS ---
 const THEMES: ThemeColor[] = [
   {
     name: "Sage Green (Original)",
@@ -83,8 +80,6 @@ const InvitationManager: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
 
-  // --- VECTOR FLORAL ENGINE ---
-
   const drawLeaf = (
     doc: jsPDF,
     x: number,
@@ -113,20 +108,17 @@ const InvitationManager: React.FC = () => {
       currentTheme.primary[1],
       currentTheme.primary[2],
     );
-    doc.setLineWidth(0.2);
+    doc.setLineWidth(0.15);
 
     const p1 = t(0, 0);
-    const p2 = t(5, 2);
+    const p2 = t(5, 2.5);
     const p3 = t(10, 0);
-    const p4 = t(5, -2);
+    const p4 = t(5, -2.5);
 
-    doc.triangle(p1.x, p1.y, p3.x, p3.y, p2.x, p2.y, "F");
-    doc.triangle(p1.x, p1.y, p3.x, p3.y, p4.x, p4.y, "F");
+    doc.triangle(p1.x, p1.y, p3.x, p3.y, p2.x, p2.y, "FD");
+    doc.triangle(p1.x, p1.y, p3.x, p3.y, p4.x, p4.y, "FD");
 
-    doc.line(p1.x, p1.y, p2.x, p2.y);
-    doc.line(p2.x, p2.y, p3.x, p3.y);
-    doc.line(p3.x, p3.y, p4.x, p4.y);
-    doc.line(p4.x, p4.y, p1.x, p1.y);
+    doc.setLineWidth(0.1);
     doc.line(p1.x, p1.y, p3.x, p3.y);
   };
 
@@ -137,22 +129,23 @@ const InvitationManager: React.FC = () => {
       currentTheme.primary[1],
       currentTheme.primary[2],
     );
-    doc.setLineWidth(0.3);
+    doc.setLineWidth(0.25);
 
     doc.circle(x, y, size, "FD");
 
-    const steps = 15;
-    let radius = 1;
+    const steps = 18;
+    let radius = 0.8;
     let angle = 0;
     let prevX = x;
     let prevY = y;
 
     for (let i = 0; i < steps; i++) {
-      angle += 0.8;
+      angle += 0.7;
       radius += size / steps;
       const nextX = x + Math.cos(angle) * radius;
       const nextY = y + Math.sin(angle) * radius;
-      if (i > 2) {
+      if (i > 1) {
+        doc.setLineWidth(0.15 - i * 0.005);
         doc.line(prevX, prevY, nextX, nextY);
       }
       prevX = nextX;
@@ -167,11 +160,12 @@ const InvitationManager: React.FC = () => {
     rot: number,
   ) => {
     const leaves = [
-      { s: 1.5, a: rot + 10, d: 8 },
-      { s: 1.2, a: rot + 40, d: 8 },
-      { s: 1.5, a: rot + 80, d: 8 },
-      { s: 1.0, a: rot + 25, d: 12 },
-      { s: 1.0, a: rot + 65, d: 12 },
+      { s: 1.6, a: rot + 5, d: 9 },
+      { s: 1.3, a: rot + 35, d: 9 },
+      { s: 1.6, a: rot + 75, d: 9 },
+      { s: 1.1, a: rot + 20, d: 13 },
+      { s: 1.1, a: rot + 60, d: 13 },
+      { s: 0.9, a: rot + 45, d: 15 },
     ];
 
     leaves.forEach((l) => {
@@ -180,15 +174,19 @@ const InvitationManager: React.FC = () => {
       drawLeaf(doc, lx, ly, l.s, l.a);
     });
 
-    drawRose(doc, cx, cy, 7);
+    drawRose(doc, cx, cy, 7.5);
 
-    const bx1 = cx + Math.cos(((rot + 20) * Math.PI) / 180) * 9;
-    const by1 = cy + Math.sin(((rot + 20) * Math.PI) / 180) * 9;
-    drawRose(doc, bx1, by1, 3.5);
+    const buds = [
+      { a: rot + 15, d: 10 },
+      { a: rot + 65, d: 10 },
+      { a: rot + 40, d: 12 },
+    ];
 
-    const bx2 = cx + Math.cos(((rot + 70) * Math.PI) / 180) * 9;
-    const by2 = cy + Math.sin(((rot + 70) * Math.PI) / 180) * 9;
-    drawRose(doc, bx2, by2, 3.5);
+    buds.forEach((b) => {
+      const bx = cx + Math.cos((b.a * Math.PI) / 180) * b.d;
+      const by = cy + Math.sin((b.a * Math.PI) / 180) * b.d;
+      drawRose(doc, bx, by, 3.5);
+    });
   };
 
   const drawBorder = (doc: jsPDF, w: number, h: number) => {
@@ -198,25 +196,44 @@ const InvitationManager: React.FC = () => {
       currentTheme.primary[1],
       currentTheme.primary[2],
     );
-    doc.setLineWidth(0.4);
+
+    doc.setLineWidth(0.5);
     doc.rect(m, m, w - m * 2, h - m * 2);
-    doc.setLineWidth(0.2);
+
+    doc.setLineWidth(0.15);
     doc.rect(m + 1.5, m + 1.5, w - (m + 1.5) * 2, h - (m + 1.5) * 2);
+
+    doc.setLineWidth(0.15);
+    doc.rect(m + 2.5, m + 2.5, w - (m + 2.5) * 2, h - (m + 2.5) * 2);
   };
 
   const drawCornerDecorations = (doc: jsPDF, width: number, height: number) => {
     const offset = 12;
-    // Kiri Atas
-    drawFloralCluster(doc, offset, offset, 0);
-    // Kanan Atas
-    drawFloralCluster(doc, width - offset, offset, 90);
-    // Kanan Bawah
-    drawFloralCluster(doc, width - offset, height - offset, 180);
-    // Kiri Bawah
-    drawFloralCluster(doc, offset, height - offset, 270);
-  };
 
-  // --- PDF GENERATION LOGIC ---
+    drawFloralCluster(doc, offset, offset, 0);
+    drawFloralCluster(doc, width - offset, offset, 90);
+    drawFloralCluster(doc, width - offset, height - offset, 180);
+    drawFloralCluster(doc, offset, height - offset, 270);
+
+    doc.setDrawColor(
+      currentTheme.secondary[0],
+      currentTheme.secondary[1],
+      currentTheme.secondary[2],
+    );
+    doc.setLineWidth(0.1);
+
+    const midTop = { x: width / 2, y: 8 };
+    const midBottom = { x: width / 2, y: height - 8 };
+    const midLeft = { x: 8, y: height / 2 };
+    const midRight = { x: width - 8, y: height / 2 };
+
+    [midTop, midBottom, midLeft, midRight].forEach((pos) => {
+      for (let i = 0; i < 3; i++) {
+        const size = 0.8 - i * 0.2;
+        doc.circle(pos.x, pos.y, size, "D");
+      }
+    });
+  };
 
   const generatePDFDoc = async (guest: GuestData): Promise<jsPDF> => {
     const doc = new jsPDF({
@@ -224,7 +241,7 @@ const InvitationManager: React.FC = () => {
       unit: "mm",
       format: "a5",
     });
-    const width = doc.internal.pageSize.getWidth(); // 148mm
+    const width = doc.internal.pageSize.getWidth();
     const height = doc.internal.pageSize.getHeight();
     const cx = width / 2;
 
@@ -240,7 +257,6 @@ const InvitationManager: React.FC = () => {
       color: { dark: "#2f3d1a", light: "#ffffff" },
     });
 
-    // Background
     doc.setFillColor(
       currentTheme.bg[0],
       currentTheme.bg[1],
@@ -248,15 +264,11 @@ const InvitationManager: React.FC = () => {
     );
     doc.rect(0, 0, width, height, "F");
 
-    // ==========================================
-    // PAGE 1: COVER
-    // ==========================================
     drawBorder(doc, width, height);
     drawCornerDecorations(doc, width, height);
 
-    // 1. THE WEDDING OF
-    doc.setFont("times", "normal");
-    doc.setFontSize(9);
+    doc.setFont("times", "bold");
+    doc.setFontSize(12);
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
@@ -266,7 +278,6 @@ const InvitationManager: React.FC = () => {
       align: "center",
     });
 
-    // Nama Mempelai
     doc.setFont("times", "italic");
     doc.setFontSize(40);
     doc.setTextColor(
@@ -294,7 +305,14 @@ const InvitationManager: React.FC = () => {
     );
     doc.text(WEDDING_CONFIG.couple.groom.name, cx, 105, { align: "center" });
 
-    // 2. TANGGAL
+    doc.setDrawColor(
+      currentTheme.secondary[0],
+      currentTheme.secondary[1],
+      currentTheme.secondary[2],
+    );
+    doc.setLineWidth(0.2);
+    doc.line(cx - 20, 115, cx + 20, 115);
+
     doc.setFont("times", "bold");
     doc.setFontSize(9);
     doc.setTextColor(
@@ -306,10 +324,18 @@ const InvitationManager: React.FC = () => {
       align: "center",
     });
 
-    // Kotak Tamu
     const boxY = 155;
     const boxW = 85;
     const boxH = 30;
+
+    doc.setFillColor(250, 250, 250);
+    doc.setDrawColor(
+      currentTheme.secondary[0],
+      currentTheme.secondary[1],
+      currentTheme.secondary[2],
+    );
+    doc.setLineWidth(0.3);
+    doc.roundedRect(cx - boxW / 2 + 0.5, boxY + 0.5, boxW, boxH, 2, 2, "F");
 
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(
@@ -348,9 +374,6 @@ const InvitationManager: React.FC = () => {
       doc.text(guest.address, cx, boxY + 26, { align: "center" });
     }
 
-    // ==========================================
-    // PAGE 2: OPENING & PARENTS
-    // ==========================================
     doc.addPage();
     drawBorder(doc, width, height);
     drawCornerDecorations(doc, width, height);
@@ -383,7 +406,6 @@ const InvitationManager: React.FC = () => {
       { align: "center" },
     );
 
-    // Detail Mempelai
     doc.setFont("times", "bold");
     doc.setFontSize(16);
     doc.setTextColor(
@@ -428,9 +450,6 @@ const InvitationManager: React.FC = () => {
     );
     doc.text(WEDDING_CONFIG.couple.groom.parents, cx, 144, { align: "center" });
 
-    // ==========================================
-    // PAGE 3: EVENTS
-    // ==========================================
     doc.addPage();
     drawBorder(doc, width, height);
     drawCornerDecorations(doc, width, height);
@@ -446,7 +465,6 @@ const InvitationManager: React.FC = () => {
       align: "center",
     });
 
-    // Akad
     doc.setFont("times", "bold");
     doc.setFontSize(14);
     doc.setTextColor(
@@ -476,11 +494,24 @@ const InvitationManager: React.FC = () => {
       { align: "center" },
     );
 
-    // Separator
-    doc.setLineWidth(0.2);
-    doc.line(cx - 15, 70, cx + 15, 70);
+    doc.setDrawColor(
+      currentTheme.secondary[0],
+      currentTheme.secondary[1],
+      currentTheme.secondary[2],
+    );
+    doc.setLineWidth(0.15);
+    doc.line(cx - 20, 70, cx - 5, 70);
+    doc.line(cx + 5, 70, cx + 20, 70);
 
-    // Resepsi
+    doc.setFillColor(
+      currentTheme.primary[0],
+      currentTheme.primary[1],
+      currentTheme.primary[2],
+    );
+    for (let i = 0; i < 3; i++) {
+      doc.circle(cx - 2 + i, 70, 0.3, "F");
+    }
+
     doc.setFont("times", "bold");
     doc.setFontSize(14);
     doc.setTextColor(
@@ -510,7 +541,6 @@ const InvitationManager: React.FC = () => {
       { align: "center" },
     );
 
-    // Lokasi
     doc.setFont("times", "bold");
     doc.setFontSize(12);
     doc.setTextColor(
@@ -533,20 +563,31 @@ const InvitationManager: React.FC = () => {
     const addr = doc.splitTextToSize(WEDDING_CONFIG.venue.address, 80);
     doc.text(addr, cx, 128, { align: "center" });
 
-    // QR Maps
     const qrSize = 22;
     const qrY = 145;
+
+    doc.setDrawColor(
+      currentTheme.secondary[0],
+      currentTheme.secondary[1],
+      currentTheme.secondary[2],
+    );
+    doc.setLineWidth(0.3);
+    doc.roundedRect(
+      cx - qrSize / 2 - 1.5,
+      qrY - 1.5,
+      qrSize + 3,
+      qrSize + 3,
+      1,
+      1,
+    );
+
     doc.addImage(qrMapsImg, "PNG", cx - qrSize / 2, qrY, qrSize, qrSize);
     doc.text("Scan Google Maps", cx, qrY + qrSize + 5, { align: "center" });
 
-    // ==========================================
-    // PAGE 4: DIGITAL ACCESS & CLOSING
-    // ==========================================
     doc.addPage();
     drawBorder(doc, width, height);
     drawCornerDecorations(doc, width, height);
 
-    // 3. E-INVITATION & RSVP
     doc.setFont("times", "bold");
     doc.setFontSize(10);
     doc.setTextColor(
@@ -561,20 +602,43 @@ const InvitationManager: React.FC = () => {
     const qrDigiSize = 40;
     const digiY = 60;
 
-    // Frame QR
+    doc.setFillColor(
+      currentTheme.bg[0],
+      currentTheme.bg[1],
+      currentTheme.bg[2],
+    );
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
       currentTheme.secondary[2],
     );
+    doc.setLineWidth(0.3);
+    doc.roundedRect(
+      cx - qrDigiSize / 2 - 2.5,
+      digiY - 2.5,
+      qrDigiSize + 5,
+      qrDigiSize + 5,
+      2,
+      2,
+      "FD",
+    );
+
+    doc.setDrawColor(
+      currentTheme.primary[0],
+      currentTheme.primary[1],
+      currentTheme.primary[2],
+    );
+    doc.setLineWidth(0.4);
     doc.roundedRect(
       cx - qrDigiSize / 2 - 2,
       digiY - 2,
       qrDigiSize + 4,
       qrDigiSize + 4,
-      1,
-      1,
+      1.5,
+      1.5,
+      "D",
     );
+
     doc.addImage(
       qrGuestImg,
       "PNG",
@@ -598,7 +662,6 @@ const InvitationManager: React.FC = () => {
       { align: "center" },
     );
 
-    // Closing
     const closingY = 135;
     doc.setFont("times", "normal");
     doc.setFontSize(10);
@@ -635,10 +698,19 @@ const InvitationManager: React.FC = () => {
       { align: "center" },
     );
 
+    doc.setDrawColor(
+      currentTheme.secondary[0],
+      currentTheme.secondary[1],
+      currentTheme.secondary[2],
+    );
+    doc.setLineWidth(0.1);
+    for (let i = 0; i < 5; i++) {
+      const xOffset = -10 + i * 5;
+      doc.circle(cx + xOffset, closingY + 48, 0.4, "D");
+    }
+
     return doc;
   };
-
-  // --- ACTIONS ---
 
   const handlePreview = async () => {
     if (!singleData.name) return;
@@ -720,17 +792,22 @@ const InvitationManager: React.FC = () => {
 
   return (
     <div className="animate-reveal space-y-8">
-      {/* Header */}
-      <div className="space-y-2 text-center">
-        <h3 className="font-serif text-2xl font-bold dark:text-white">
+      <div className="space-y-3 text-center">
+        <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-slate-100 to-slate-50 px-4 py-1.5 shadow-sm dark:from-slate-800 dark:to-slate-900">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></div>
+          <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            Premium Edition
+          </span>
+        </div>
+        <h3 className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text font-serif text-3xl font-bold text-transparent dark:from-white dark:to-slate-300">
           Floral PDF Invitation
         </h3>
-        <p className="text-sm text-slate-500">
-          Template Floral Elegan (4 Halaman A5) dengan Ornamen Vektor & QR Code.
+        <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+          Template Floral Elegan (4 Halaman A5) dengan Ornamen Vektor, QR Code &
+          Multi-Theme Support
         </p>
       </div>
 
-      {/* --- THEME SELECTOR --- */}
       <div className="flex flex-col items-center gap-4">
         <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
           Pilih Nuansa Warna
@@ -743,26 +820,25 @@ const InvitationManager: React.FC = () => {
                 setCurrentTheme(theme);
                 setPreviewUri(null);
               }}
-              className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-2 shadow-sm transition-all hover:scale-110 ${
+              className={`group relative flex h-16 w-16 items-center justify-center rounded-full border-2 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl ${
                 currentTheme.id === theme.id
-                  ? "scale-110 border-slate-800 dark:border-white"
-                  : "border-transparent"
+                  ? "scale-110 border-slate-800 ring-4 ring-slate-200 dark:border-white dark:ring-slate-700"
+                  : "border-transparent hover:border-slate-300 dark:hover:border-slate-600"
               }`}
               style={{
                 backgroundColor: `rgb(${theme.bg[0]},${theme.bg[1]},${theme.bg[2]})`,
               }}
               title={theme.name}
             >
-              {/* Preview Warna Bunga & Daun */}
-              <div className="relative h-8 w-8">
+              <div className="relative h-9 w-9">
                 <div
-                  className="absolute top-0 right-0 h-5 w-5 rounded-full border shadow-sm"
+                  className="absolute top-0 right-0 h-6 w-6 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-110 dark:border-slate-900"
                   style={{
                     backgroundColor: `rgb(${theme.primary[0]},${theme.primary[1]},${theme.primary[2]})`,
                   }}
                 />
                 <div
-                  className="absolute bottom-0 left-0 h-5 w-5 rounded-tl-xl rounded-br-xl shadow-sm"
+                  className="absolute bottom-0 left-0 h-6 w-6 rounded-tl-xl rounded-br-xl border-2 border-white shadow-md transition-transform group-hover:scale-110 dark:border-slate-900"
                   style={{
                     backgroundColor: `rgb(${theme.secondary[0]},${theme.secondary[1]},${theme.secondary[2]})`,
                   }}
@@ -770,7 +846,7 @@ const InvitationManager: React.FC = () => {
               </div>
 
               {currentTheme.id === theme.id && (
-                <div className="absolute -bottom-2 whitespace-nowrap rounded-md bg-slate-800 px-2 py-0.5 text-[9px] font-bold text-white shadow-md dark:bg-white dark:text-slate-900">
+                <div className="absolute -bottom-3 whitespace-nowrap rounded-lg bg-gradient-to-r from-slate-800 to-slate-700 px-3 py-1 text-[10px] font-bold text-white shadow-lg dark:from-white dark:to-slate-100 dark:text-slate-900">
                   {theme.name}
                 </div>
               )}
@@ -779,7 +855,6 @@ const InvitationManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Tab Switcher */}
       <div className="flex justify-center">
         <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
           <button
@@ -805,7 +880,6 @@ const InvitationManager: React.FC = () => {
         </div>
       </div>
 
-      {/* --- MODE SINGLE --- */}
       {activeTab === "single" && (
         <div className="grid items-start gap-8 md:grid-cols-2">
           <div className="space-y-6">
@@ -878,7 +952,6 @@ const InvitationManager: React.FC = () => {
         </div>
       )}
 
-      {/* --- MODE BULK --- */}
       {activeTab === "bulk" && (
         <div className="animate-reveal space-y-8">
           {bulkData.length === 0 ? (
@@ -978,7 +1051,7 @@ const InvitationManager: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    {/* Visual check */}
+
                     <Check className="h-4 w-4 text-green-500" />
                   </div>
                 ))}
