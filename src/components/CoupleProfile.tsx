@@ -1,6 +1,6 @@
 import React from "react";
 import { Instagram, Heart } from "lucide-react";
-import { WEDDING_CONFIG } from "../constants";
+import { WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
 const CoupleProfile: React.FC = () => {
   const { bride, groom } = WEDDING_CONFIG.couple;
   return (
@@ -11,13 +11,31 @@ const CoupleProfile: React.FC = () => {
       <div className="relative z-10 container mx-auto max-w-6xl px-6">
         <div className="mb-24 space-y-6 text-center md:mb-32">
           <Heart className="text-accentDark/30 dark:text-accent/20 mx-auto mb-6 h-6 w-6 animate-pulse" />
-          <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-7xl dark:text-white">
+          {/* <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-7xl dark:text-white">
             Pasangan Berbahagia
+          </h2> */}
+          {/* Salam Pembuka */}
+          <span className="font-serif text-lg italic text-accentDark dark:text-accent">
+            {WEDDING_TEXT.opening.salam}
+          </span>
+
+          <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-7xl dark:text-white">
+            Pasangan Mempelai
           </h2>
           <div className="bg-accent/30 mx-auto h-[1px] w-20"></div>
-          <p className="mx-auto max-w-2xl text-lg leading-relaxed font-light text-balance text-slate-500 italic md:text-xl dark:text-slate-400">
+
+          {/* <p className="mx-auto max-w-2xl text-lg leading-relaxed font-light text-balance text-slate-500 italic md:text-xl dark:text-slate-400">
             "Membangun istana di dunia, melangkah bersama menuju surga-Nya. Atas
             izin Allah SWT, kami mengikat janji suci."
+          </p> */}
+          {/* Ayat Ar-Rum */}
+          <p className="mx-auto max-w-3xl text-lg leading-relaxed font-light text-balance text-slate-600 italic md:text-xl dark:text-slate-300">
+            {WEDDING_TEXT.quote.ar_rum}
+          </p>
+
+          {/* Sumber Ayat */}
+          <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400">
+            {WEDDING_TEXT.quote.source}
           </p>
         </div>
         <div className="grid items-start gap-20 md:grid-cols-2 md:gap-24">

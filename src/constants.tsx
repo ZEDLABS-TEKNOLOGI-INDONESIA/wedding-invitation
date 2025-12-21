@@ -10,12 +10,45 @@ const parseJson = <T,>(jsonString: string | undefined, defaultValue: T): T => {
 };
 export const MAX_GUESTS = parseInt(
   import.meta.env.PUBLIC_RSVP_MAX_GUESTS ?? "5",
-  10
+  10,
 );
 
 export const MUSIC_URL =
   import.meta.env.PUBLIC_MUSIC_URL ??
   "https://www.bensound.com/bensound-music/bensound-love.mp3";
+
+export const WEDDING_TEXT = {
+  // 1. Salam Pembuka (Hero / Profile)
+  opening: {
+    salam: "Assalamu’alaikum Warahmatullahi Wabarakatuh",
+    intro:
+      "Maha Suci Allah yang telah menciptakan makhluk-Nya berpasang-pasangan. Ya Allah, perkenankanlah kami merangkai kasih sayang yang Engkau ciptakan ini dalam ikatan suci pernikahan.",
+  },
+
+  // 2. Ayat Suci / Quotes (Ar-Rum: 21 adalah standar emas yang penuh doa)
+  quote: {
+    ar_rum: `"Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang. Sesungguhnya pada yang demikian itu benar-benar terdapat tanda-tanda (kebesaran Allah) bagi kaum yang berpikir."`,
+    source: "QS. Ar-Rum: 21",
+  },
+
+  // 3. Kalimat Undangan (Sangat Rendah Hati)
+  invitation:
+    "Tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i, kawan, dan sahabat, untuk memberikan doa restu pada acara pernikahan kami:",
+
+  // 4. Penutup (Footer)
+  closing: {
+    text: "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir untuk memberikan doa restu kepada kami.",
+    salam: "Wassalamu’alaikum Warahmatullahi Wabarakatuh",
+    signature: "Kami yang berbahagia,",
+    family: "Kel. Bpk [Ayah Pria] & Kel. Bpk [Ayah Wanita]",
+  },
+
+  // 5. Disclaimer Kado (Halus & Sopan)
+  gift: {
+    title: "Tanda Kasih",
+    desc: "Kehadiran dan doa restu Anda adalah hadiah terbaik bagi kami. Namun, jika Anda ingin memberikan tanda kasih dalam bentuk lain, kami menerimanya dengan segala kerendahan hati.",
+  },
+};
 
 export const WEDDING_CONFIG: WeddingConfig = {
   couple: {
@@ -56,10 +89,10 @@ export const WEDDING_CONFIG: WeddingConfig = {
       startTime: import.meta.env.PUBLIC_AKAD_START ?? "08:00",
       endTime: import.meta.env.PUBLIC_AKAD_END ?? "10:00",
       startDateTime: new Date(
-        import.meta.env.PUBLIC_AKAD_ISO_START ?? "2025-10-11T08:00:00+07:00"
+        import.meta.env.PUBLIC_AKAD_ISO_START ?? "2025-10-11T08:00:00+07:00",
       ),
       endDateTime: new Date(
-        import.meta.env.PUBLIC_AKAD_ISO_END ?? "2025-10-11T10:00:00+07:00"
+        import.meta.env.PUBLIC_AKAD_ISO_END ?? "2025-10-11T10:00:00+07:00",
       ),
     },
     resepsi: {
@@ -69,10 +102,10 @@ export const WEDDING_CONFIG: WeddingConfig = {
       startTime: import.meta.env.PUBLIC_RESEPSI_START ?? "11:00",
       endTime: import.meta.env.PUBLIC_RESEPSI_END ?? "14:00",
       startDateTime: new Date(
-        import.meta.env.PUBLIC_RESEPSI_ISO_START ?? "2025-10-11T11:00:00+07:00"
+        import.meta.env.PUBLIC_RESEPSI_ISO_START ?? "2025-10-11T11:00:00+07:00",
       ),
       endDateTime: new Date(
-        import.meta.env.PUBLIC_RESEPSI_ISO_END ?? "2025-10-11T14:00:00+07:00"
+        import.meta.env.PUBLIC_RESEPSI_ISO_END ?? "2025-10-11T14:00:00+07:00",
       ),
     },
   },

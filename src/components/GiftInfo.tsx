@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Gift, Copy, Check, MapPin, CreditCard, Sparkles } from "lucide-react";
-import { BANK_ACCOUNTS, WEDDING_CONFIG } from "../constants";
+import { BANK_ACCOUNTS, WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
 const GiftInfo: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const copyToClipboard = (text: string, id: string) => {
@@ -18,14 +18,25 @@ const GiftInfo: React.FC = () => {
           <div className="text-accentDark dark:text-accent mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 shadow-md md:mb-12 md:h-20 md:w-20 md:rounded-[2rem] dark:border-white/5 dark:bg-white/5">
             <Gift className="h-6 w-6 md:h-10 md:w-10" />
           </div>
+
+          {/* Judul: Tanda Kasih */}
           <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
-            Kado Pernikahan
+            {WEDDING_TEXT.gift.title}
           </h2>
+
+          {/* <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
+            Kado Pernikahan
+          </h2> */}
           <div className="bg-accent/30 mx-auto h-[1px] w-16"></div>
+
+          {/* Deskripsi Sopan */}
           <p className="mx-auto max-w-xl text-base leading-relaxed font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
+            {WEDDING_TEXT.gift.desc}
+          </p>
+          {/* <p className="mx-auto max-w-xl text-base leading-relaxed font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
             Doa restu Anda adalah karunia terindah bagi kami. Jika bermaksud
             memberikan tanda kasih, dapat melalui:
-          </p>
+          </p> */}
         </div>
         <div className="mb-10 grid grid-cols-1 gap-5 md:mb-20 md:grid-cols-2 md:gap-14">
           {BANK_ACCOUNTS.map((acc, idx) => (

@@ -13,7 +13,7 @@ import FloatingPetals from "./components/FloatingPetals";
 import Envelope from "./components/Envelope";
 import { Heart, Quote, ChevronUp } from "lucide-react";
 import { dbService } from "./services/dbService";
-import { WEDDING_CONFIG } from "./constants";
+import { WEDDING_CONFIG, WEDDING_TEXT } from "./constants";
 import InstallPrompt from "./components/InstallPrompt";
 
 const App: React.FC = () => {
@@ -69,7 +69,7 @@ const App: React.FC = () => {
           "opacity-0",
           "transition-all",
           "duration-[1.5s]",
-          "ease-out"
+          "ease-out",
         );
         observer.observe(section);
       });
@@ -160,18 +160,32 @@ const App: React.FC = () => {
           <div className="space-y-12 text-center md:space-y-16">
             <div className="group relative inline-block px-4">
               <Quote className="text-accentDark absolute -top-10 -left-2 h-12 w-12 rotate-180 opacity-[0.06] transition-transform duration-1000 md:-top-16 md:-left-12 md:h-24 md:w-24 dark:opacity-[0.12]" />
-              <p className="mx-auto max-w-2xl font-serif text-lg leading-relaxed text-balance text-slate-500 italic md:text-3xl dark:text-slate-400">
+
+              {/* <p className="mx-auto max-w-2xl font-serif text-lg leading-relaxed text-balance text-slate-500 italic md:text-3xl dark:text-slate-400">
                 "Terima kasih atas doa dan restu tulus Anda. Kehadiran Anda
                 adalah kado terindah bagi awal babak baru kehidupan kami."
-              </p>
+              </p> */}
+              {/* UBAH BAGIAN INI: TEXT PENUTUP & SALAM */}
+              <div className="space-y-6">
+                <p className="mx-auto max-w-2xl font-serif text-lg leading-relaxed text-balance text-slate-500 italic md:text-3xl dark:text-slate-400">
+                  "{WEDDING_TEXT.closing.text}"
+                </p>
+                <p className="font-serif text-xl font-bold text-slate-800 dark:text-white">
+                  {WEDDING_TEXT.closing.salam}
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-col items-center gap-6 border-t border-slate-100 pt-16 md:gap-10 md:pt-28 dark:border-white/5">
-              <div className="flex items-center gap-3 opacity-50 transition-opacity hover:opacity-100">
-                <p className="tracking-luxury text-[9px] font-black uppercase italic md:text-[13px]">
-                  Dibuat dengan penuh cinta untuk hari spesial kami
-                </p>
-              </div>
+              {/* Signature */}
+              <p className="tracking-luxury text-[9px] font-black uppercase md:text-[13px]">
+                {WEDDING_TEXT.closing.signature}
+              </p>
+              <p className="font-serif text-lg italic">
+                {WEDDING_CONFIG.couple.bride.name} &{" "}
+                {WEDDING_CONFIG.couple.groom.name}
+              </p>
+              <p className="text-[10px] mt-2">{WEDDING_TEXT.closing.family}</p>
             </div>
           </div>
         </div>

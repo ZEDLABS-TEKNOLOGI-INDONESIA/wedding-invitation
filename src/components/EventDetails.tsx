@@ -11,7 +11,7 @@ import {
   Sparkles,
   Heart,
 } from "lucide-react";
-import { WEDDING_CONFIG } from "../constants";
+import { WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
 import { generateGoogleCalendarUrl, downloadICS } from "../utils/calendarUtils";
 const EventDetails: React.FC = () => {
   const [copied, setCopied] = useState(false);
@@ -26,7 +26,7 @@ const EventDetails: React.FC = () => {
   const mapUrl = `https://maps.google.com/maps?q=${WEDDING_CONFIG.venue.latitude},${WEDDING_CONFIG.venue.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
   const handleCalendar = (
     type: "google" | "ics",
-    eventType: "akad" | "resepsi"
+    eventType: "akad" | "resepsi",
   ) => {
     const event = {
       title: `${WEDDING_CONFIG.events[eventType].title} ${WEDDING_CONFIG.couple.bride.name} & ${WEDDING_CONFIG.couple.groom.name}`,
@@ -54,12 +54,20 @@ const EventDetails: React.FC = () => {
             <Sparkles className="text-accentDark dark:text-accent h-5 w-5 animate-pulse md:h-6 md:w-6" />
             <div className="bg-accentDark/20 dark:bg-accent/20 h-[1px] w-8 md:w-12"></div>
           </div>
+
           <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
-            The Celebration
+            Waktu & Tempat
           </h2>
-          <p className="mx-auto max-w-xl px-4 text-base font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
-            Merupakan kehormatan bagi kami jika Anda berkenan hadir.
+          {/* Kalimat Undangan Sopan */}
+          <p className="mx-auto max-w-2xl px-4 text-base font-light text-balance text-slate-500 italic md:text-xl dark:text-slate-400">
+            {WEDDING_TEXT.invitation}
           </p>
+          {/* <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
+            The Celebration
+          </h2> */}
+          {/* <p className="mx-auto max-w-xl px-4 text-base font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
+            Merupakan kehormatan bagi kami jika Anda berkenan hadir.
+          </p> */}
         </div>
         <div className="mb-16 grid gap-6 md:mb-20 md:grid-cols-2 md:gap-14">
           {["akad", "resepsi"].map((type) => {
@@ -104,7 +112,7 @@ const EventDetails: React.FC = () => {
                   <button
                     onClick={() =>
                       setActiveDropdown(
-                        activeDropdown === type ? null : (type as any)
+                        activeDropdown === type ? null : (type as any),
                       )
                     }
                     className="bg-primary dark:bg-accentDark tracking-editorial flex w-full items-center justify-center gap-3 rounded-2xl py-4 text-[10px] font-bold text-white uppercase transition-all hover:shadow-2xl active:scale-95 md:gap-5 md:rounded-3xl md:py-6 md:text-[11px]"
