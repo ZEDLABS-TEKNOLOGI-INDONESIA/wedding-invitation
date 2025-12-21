@@ -1,0 +1,40 @@
+2025-12-21 18:18:27: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:27:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:27:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:27:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
+2025-12-21 18:18:30: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:30:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:30:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:30:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
+2025-12-21 18:18:31: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:31:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:31:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:31:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
+2025-12-21 18:18:45: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:45:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:45:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:45:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
+2025-12-21 18:18:45: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:45:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:45:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:45:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
+2025-12-21 18:18:46: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:46:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:46:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:46:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
+2025-12-21 18:18:46: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:46:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:46:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:46:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
+2025-12-21 18:18:46: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:46:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:46:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:46:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
+2025-12-21 18:18:46: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:46:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:46:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:46:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
+2025-12-21 18:18:46: There was an uncaught error in the middle of the stream while rendering /. Error: Unable to resolve [/var/www/wedding.feyaya.com/src/App]
+2025-12-21 18:18:46:     at Object.resolve (file:///var/www/wedding.feyaya.com/dist/server/chunks/_@astrojs-ssr-adapter_NDEFZ-TL.mjs:3364:17)
+2025-12-21 18:18:46:     at generateHydrateScript (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:809:48)
+2025-12-21 18:18:46:     at renderFrameworkComponent (file:///var/www/wedding.feyaya.com/dist/server/chunks/astro/server_oVdgqn8w.mjs:2361:24)
