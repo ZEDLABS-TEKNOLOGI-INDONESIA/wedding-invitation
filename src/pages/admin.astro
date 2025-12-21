@@ -238,7 +238,6 @@ const formatDate = (dateStr: string) => {
             >
               <Printer className="h-4 w-4" /> DESIGN PDF
             </button>
-
           </div>
 
           {/* --- CONTENT 1: RSVP --- */}
@@ -364,19 +363,12 @@ const formatDate = (dateStr: string) => {
             </div>
           </div>
 
-
-
-
-
-
-{/* --- CONTENT 4: INVITATION PDF MANAGER (BARU) --- */}
+          {/* --- CONTENT 4: INVITATION PDF MANAGER (BARU) --- */}
           <div id="content-pdf" class="tab-content hidden">
             <div class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
               <InvitationManager client:only="react" />
             </div>
           </div>
-
-
         </div>
       )
     }
