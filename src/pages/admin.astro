@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import db from "../lib/db";
 import QRCodeManager from "../components/QRCodeManager";
+import InvitationManager from "../components/InvitationManager";
 import {
   Users,
   Trash2,
@@ -10,6 +11,7 @@ import {
   CheckCircle2,
   XCircle,
   MessageCircle,
+  Printer,
   HelpCircle,
   QrCode,
 } from "lucide-react";
@@ -230,6 +232,13 @@ const formatDate = (dateStr: string) => {
             >
               <QrCode className="h-4 w-4" /> QR GENERATOR
             </button>
+            <button
+              id="btn-pdf"
+              class="tab-btn flex items-center gap-2 border-b-2 border-transparent px-6 py-3 text-sm font-bold whitespace-nowrap text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <Printer className="h-4 w-4" /> DESIGN PDF
+            </button>
+
           </div>
 
           {/* --- CONTENT 1: RSVP --- */}
@@ -354,6 +363,20 @@ const formatDate = (dateStr: string) => {
               />
             </div>
           </div>
+
+
+
+
+
+
+{/* --- CONTENT 4: INVITATION PDF MANAGER (BARU) --- */}
+          <div id="content-pdf" class="tab-content hidden">
+            <div class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <InvitationManager client:only="react" />
+            </div>
+          </div>
+
+
         </div>
       )
     }
@@ -390,6 +413,8 @@ const formatDate = (dateStr: string) => {
       const btnRsvp = document.getElementById("btn-rsvp");
       const btnWishes = document.getElementById("btn-wishes");
       const btnQr = document.getElementById("btn-qr");
+      const btnPdf = document.getElementById("btn-pdf");
+      if (btnPdf) btnPdf.addEventListener("click", () => switchTab("pdf"));
 
       if (btnRsvp) btnRsvp.addEventListener("click", () => switchTab("rsvp"));
       if (btnWishes)
