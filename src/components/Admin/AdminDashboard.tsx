@@ -13,12 +13,6 @@ import {
   Save,
   Loader2,
   X,
-  Database,
-  History,
-  Clock,
-  RotateCcw,
-  CheckCircle2,
-  AlertTriangle,
 } from "lucide-react";
 import QRCodeManager from "../QRCodeManager";
 import InvitationManager from "../InvitationManager";
@@ -37,15 +31,6 @@ interface Wish {
   id: number;
   name: string;
   message: string;
-  created_at: string;
-}
-
-interface HistoryLog {
-  id: number;
-  action_type: string;
-  filename: string;
-  status: "SUCCESS" | "FAILED";
-  details?: string;
   created_at: string;
 }
 
@@ -309,54 +294,29 @@ const AdminDashboard = ({
   initialWishes: Wish[];
   siteUrl: string;
 }) => {
-  const [activeTab, setActiveTab] = useState<
-    "rsvp" | "wishes" | "qr" | "pdf" | "db"
-  >("rsvp");
+  const [activeTab, setActiveTab] = useState<"rsvp" | "wishes" | "qr" | "pdf">(
+    "rsvp",
+  );
 
   // Data States
   const [rsvps, setRsvps] = useState(initialRsvps);
   const [wishes, setWishes] = useState(initialWishes);
-  const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
 
   // UI/Loading States
-  const [isProcessing, setIsProcessing] = useState(false); // Untuk Backup/Restore
-  const [processMsg, setProcessMsg] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false); // Untuk Hapus Data
-  const [isSaving, setIsSaving] = useState(false); // Untuk Edit Form
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Edit Modal State
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch History saat tab DB dibuka
-  useEffect(() => {
-    if (activeTab === "db") {
-      fetchHistory();
-    }
-  }, [activeTab]);
-
-  const fetchHistory = () => {
-    fetch("/api/history")
-      .then((res) => res.json())
-      .then((data) => setHistoryLogs(data))
-      .catch((err) => console.error("Failed to load history:", err));
-  };
-
   // --- GENERIC DELETE HANDLER ---
-  const handleDelete = async (
-    type: "rsvp" | "wish" | "history",
-    ids: number[],
-  ) => {
+  const handleDelete = async (type: "rsvp" | "wish", ids: number[]) => {
     if (ids.length === 0) return;
     setIsDeleting(true);
 
     try {
-      const actionKey =
-        type === "history"
-          ? "delete_history"
-          : type === "rsvp"
-            ? "delete_rsvp"
-            : "delete_wish";
+      const actionKey = type === "rsvp" ? "delete_rsvp" : "delete_wish";
 
       const res = await fetch("/api/admin", {
         method: "POST",
@@ -371,8 +331,6 @@ const AdminDashboard = ({
           setRsvps((prev) => prev.filter((i) => !ids.includes(i.id)));
         if (type === "wish")
           setWishes((prev) => prev.filter((i) => !ids.includes(i.id)));
-        if (type === "history")
-          setHistoryLogs((prev) => prev.filter((i) => !ids.includes(i.id)));
       } else {
         alert("Gagal menghapus: " + (json.error || "Unknown Error"));
       }
@@ -418,91 +376,23 @@ const AdminDashboard = ({
     }
   };
 
-  // --- DATABASE: CREATE BACKUP ---
-  const handleCreateBackup = async () => {
-    setIsProcessing(true);
-    setProcessMsg("Membuat Backup di Server...");
-    try {
-      const res = await fetch("/api/backup", { method: "POST" });
-      const json = await res.json();
-      if (res.ok) {
-        alert("Backup Berhasil! File tersimpan di server.");
-        fetchHistory(); // Refresh list
-      } else {
-        alert("Gagal Backup: " + json.error);
-      }
-    } catch (e) {
-      alert("Server Error saat backup.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // --- DATABASE: RESTORE ---
-  const handleRestoreFromHistory = async (filename: string) => {
-    if (
-      !confirm(
-        `PERINGATAN: Database aktif akan DITIMPA dengan backup "${filename}".\n\nData yang masuk setelah tanggal backup ini akan HILANG.\n\nLanjutkan?`,
-      )
-    )
-      return;
-
-    setIsProcessing(true);
-    setProcessMsg("Merestore Database...");
-
-    try {
-      const res = await fetch("/api/restore", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename }),
-      });
-      const json = await res.json();
-
-      if (res.ok) {
-        alert("Restore Berhasil! Halaman akan dimuat ulang.");
-        window.location.reload();
-      } else {
-        alert("Gagal Restore: " + json.error);
-      }
-    } catch (e) {
-      alert("Gagal menghubungi server.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // --- DATABASE: CLEAR LOGS ---
-  const handleClearLogs = () => {
-    if (
-      confirm(
-        "Hapus semua riwayat log? File backup fisik di server tidak akan terhapus.",
-      )
-    ) {
-      handleDelete(
-        "history",
-        historyLogs.map((h) => h.id),
-      );
-    }
-  };
-
   // --- TABS CONFIG ---
   const tabs = [
     { id: "rsvp", label: "Data RSVP", icon: Users },
     { id: "wishes", label: "Ucapan & Doa", icon: MessageCircle },
     { id: "qr", label: "QR Generator", icon: QrCode },
     { id: "pdf", label: "Design PDF", icon: Printer },
-    { id: "db", label: "Database Center", icon: Database },
   ];
 
   return (
     <div>
       {/* LOADING OVERLAY */}
-      {(isProcessing || isDeleting) && (
+      {isDeleting && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="flex items-center gap-4 rounded-xl bg-white p-6 shadow-2xl">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             <span className="text-lg font-bold text-slate-700">
-              {isDeleting ? "Menghapus Data..." : processMsg}
+              Menghapus Data...
             </span>
           </div>
         </div>
@@ -642,129 +532,6 @@ const AdminDashboard = ({
       {activeTab === "pdf" && (
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800 animate-reveal">
           <InvitationManager />
-        </div>
-      )}
-
-      {/* --- TAB: DATABASE --- */}
-      {activeTab === "db" && (
-        <div className="animate-reveal space-y-8">
-          {/* Header & Create Backup */}
-          <div className="flex flex-col items-center justify-between gap-6 rounded-3xl border border-blue-100 bg-blue-50 p-8 md:flex-row dark:border-blue-900/30 dark:bg-blue-900/10">
-            <div className="space-y-2 text-center md:text-left">
-              <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                Database Center
-              </h2>
-              <p className="max-w-md text-sm text-blue-700/80 dark:text-blue-200">
-                Buat titik pengembalian (restore point) aman. Data akan disimpan
-                di folder <code>/database/backup/</code> di server.
-              </p>
-            </div>
-            <button
-              onClick={handleCreateBackup}
-              className="flex items-center gap-3 rounded-xl bg-blue-600 px-8 py-4 font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:scale-105 hover:bg-blue-700 active:scale-95"
-            >
-              <Save className="h-5 w-5" />
-              BUAT BACKUP BARU
-            </button>
-          </div>
-
-          {/* History List */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-lg font-bold text-slate-700 dark:text-slate-300">
-                <History className="h-5 w-5" /> Riwayat Backup Server
-              </h3>
-              {historyLogs.length > 0 && (
-                <button
-                  onClick={handleClearLogs}
-                  className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors"
-                >
-                  <Trash2 className="h-3 w-3" /> Bersihkan Log
-                </button>
-              )}
-            </div>
-
-            <DataTable
-              data={historyLogs}
-              columns={[
-                {
-                  header: "Waktu Backup",
-                  accessor: (item) => (
-                    <div className="flex flex-col">
-                      <span className="font-bold text-slate-700 dark:text-slate-200">
-                        {new Date(item.created_at).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs text-slate-400">
-                        <Clock className="h-3 w-3" />
-                        {new Date(item.created_at).toLocaleTimeString("id-ID")}
-                      </span>
-                    </div>
-                  ),
-                },
-                {
-                  header: "Nama File",
-                  accessor: "filename",
-                  className: "font-mono text-xs text-slate-500",
-                },
-                {
-                  header: "Status",
-                  accessor: (item) => (
-                    <div className="flex items-center gap-1.5">
-                      {item.status === "SUCCESS" ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                      )}
-                      <span
-                        className={`text-xs font-bold ${item.status === "SUCCESS" ? "text-green-600" : "text-red-600"}`}
-                      >
-                        {item.status}
-                      </span>
-                    </div>
-                  ),
-                },
-                {
-                  header: "Aksi",
-                  accessor: (item) =>
-                    item.action_type === "BACKUP" &&
-                    item.status === "SUCCESS" ? (
-                      <div className="flex gap-2">
-                        {/* Tombol Restore */}
-                        <button
-                          onClick={() =>
-                            handleRestoreFromHistory(item.filename)
-                          }
-                          className="flex items-center gap-1.5 rounded-lg bg-orange-100 px-3 py-1.5 text-xs font-bold text-orange-700 transition-colors hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400"
-                          title="Kembalikan database ke titik ini"
-                        >
-                          <RotateCcw className="h-3.5 w-3.5" /> Restore
-                        </button>
-
-                        {/* Tombol Download */}
-                        <a
-                          href={`/api/download-backup?file=${item.filename}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300"
-                          title="Download file fisik"
-                        >
-                          <Download className="h-3.5 w-3.5" /> Unduh
-                        </a>
-                      </div>
-                    ) : (
-                      <span className="text-xs italic text-slate-400">
-                        {item.details}
-                      </span>
-                    ),
-                },
-              ]}
-              onDelete={(id) => handleDelete("history", [id])}
-            />
-          </div>
         </div>
       )}
 

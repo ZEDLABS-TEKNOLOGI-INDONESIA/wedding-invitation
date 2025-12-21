@@ -13,14 +13,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const body = await request.json();
     const { action, id, ids, data } = body;
 
-    // Normalisasi ID menjadi array of numbers untuk mencegah SQL Injection / Type Error
-    let targetIds: number[] = [];
-    if (ids && Array.isArray(ids)) {
-      targetIds = ids.map((i) => Number(i)).filter((n) => !isNaN(n));
-    } else if (id) {
-      targetIds = [Number(id)];
-    }
-
+    const targetIds = ids || (id ? [id] : []);
     if (targetIds.length === 0 && !data) {
       return new Response(JSON.stringify({ error: "No valid ID provided" }), {
         status: 400,
@@ -29,7 +22,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const placeholders = targetIds.map(() => "?").join(",");
 
-    // --- RSVP ---
+    // --- RSVP ACTIONS ---
     if (action === "update_rsvp") {
       const { guest_name, attendance, guest_count, message } = data;
       db.prepare(
@@ -45,7 +38,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ success: true }));
     }
 
-    // --- WISHES ---
+    // --- WISHES ACTIONS ---
     if (action === "update_wish") {
       const { name, message } = data;
       db.prepare("UPDATE wishes SET name=?, message=? WHERE id=?").run(
@@ -60,14 +53,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       db.prepare(`DELETE FROM wishes WHERE id IN (${placeholders})`).run(
         ...targetIds,
       );
-      return new Response(JSON.stringify({ success: true }));
-    }
-
-    // --- HISTORY ---
-    if (action === "delete_history") {
-      db.prepare(
-        `DELETE FROM backup_history WHERE id IN (${placeholders})`,
-      ).run(...targetIds);
       return new Response(JSON.stringify({ success: true }));
     }
 
