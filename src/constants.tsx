@@ -1,11 +1,9 @@
 import type { WeddingConfig } from "./types";
 
-// Helper untuk membaca ENV
 const getEnv = (key: string, defaultValue: string): string => {
   return import.meta.env[key] ?? defaultValue;
 };
 
-// Helper untuk membaca JSON ENV (untuk array)
 const getJsonEnv = <T,>(key: string, defaultValue: T): T => {
   const val = import.meta.env[key];
   if (!val) return defaultValue;

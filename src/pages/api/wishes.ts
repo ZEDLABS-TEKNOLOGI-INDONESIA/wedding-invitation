@@ -9,6 +9,7 @@ export const GET: APIRoute = async () => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error(error);
     return new Response(JSON.stringify({ error: "Failed to fetch" }), {
       status: 500,
     });
@@ -50,6 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
   } catch (error) {
+    console.error(error);
     return new Response(JSON.stringify({ error: "Database error" }), {
       status: 500,
     });

@@ -8,6 +8,7 @@ interface Props {
 
 const { title, description } = Astro.props;
 ---
+
 <!doctype html>
 <html lang="id" class="scroll-smooth">
   <head>
@@ -26,18 +27,21 @@ const { title, description } = Astro.props;
   <body>
     <script is:inline>
       const theme = (() => {
-        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
-          return localStorage.getItem('theme');
+        if (
+          typeof localStorage !== "undefined" &&
+          localStorage.getItem("theme")
+        ) {
+          return localStorage.getItem("theme");
         }
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          return 'dark';
+        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          return "dark";
         }
-        return 'light';
+        return "light";
       })();
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
       } else {
-        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.remove("dark");
       }
     </script>
     <slot />

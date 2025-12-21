@@ -4,9 +4,6 @@ import {
   CheckCircle2,
   Heart,
   Users,
-  UserCheck,
-  UserX,
-  HelpCircle,
   Clock,
   RefreshCcw,
   Minus,
@@ -14,7 +11,7 @@ import {
 } from "lucide-react";
 import { dbService } from "../services/dbService";
 import { AttendanceStatus, type RSVP } from "../types";
-import { MAX_GUESTS } from "../constants"; // Import konfigurasi Max Tamu
+import { MAX_GUESTS } from "../constants";
 
 const RSVPForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -93,56 +90,56 @@ const RSVPForm: React.FC = () => {
   return (
     <section
       id="rsvp"
-      className="py-16 md:py-40 bg-white dark:bg-darkBg transition-colors duration-1000"
+      className="dark:bg-darkBg bg-white py-16 transition-colors duration-1000 md:py-40"
     >
-      <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-        <div className="text-center mb-12 md:mb-24 space-y-3">
-          <Heart className="w-5 h-5 text-accentDark dark:text-accent/30 mx-auto mb-2 animate-pulse" />
-          <h2 className="text-4xl md:text-8xl font-serif italic text-slate-900 dark:text-white tracking-tight">
+      <div className="container mx-auto max-w-7xl px-4 md:px-6">
+        <div className="mb-12 space-y-3 text-center md:mb-24">
+          <Heart className="text-accentDark dark:text-accent/30 mx-auto mb-2 h-5 w-5 animate-pulse" />
+          <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-8xl dark:text-white">
             Reservasi
           </h2>
-          <p className="text-slate-400 dark:text-slate-500 tracking-luxury text-[9px] md:text-[10px] uppercase font-bold">
+          <p className="tracking-luxury text-[9px] font-bold text-slate-400 uppercase md:text-[10px] dark:text-slate-500">
             Mohon konfirmasi kehadiran Anda
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-8 md:gap-14 items-stretch">
-          <div className="lg:col-span-5 space-y-6">
-            <div className="editorial-card h-full p-6 md:p-14 rounded-[1.5rem] md:rounded-[3.5rem] relative overflow-hidden group shadow-lg flex flex-col justify-center">
+        <div className="grid items-stretch gap-8 md:gap-14 lg:grid-cols-12">
+          <div className="space-y-6 lg:col-span-5">
+            <div className="editorial-card group relative flex h-full flex-col justify-center overflow-hidden rounded-[1.5rem] p-6 shadow-lg md:rounded-[3.5rem] md:p-14">
               {submitted ? (
-                <div className="text-center space-y-6 animate-reveal">
-                  <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto text-green-600 dark:text-green-400">
-                    <CheckCircle2 className="w-10 h-10" />
+                <div className="animate-reveal space-y-6 text-center">
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400">
+                    <CheckCircle2 className="h-10 w-10" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-2xl md:text-4xl font-serif italic text-slate-900 dark:text-white">
+                    <h3 className="font-serif text-2xl text-slate-900 italic md:text-4xl dark:text-white">
                       Terima Kasih!
                     </h3>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base leading-relaxed">
+                    <p className="text-sm leading-relaxed text-slate-500 md:text-base dark:text-slate-400">
                       Konfirmasi kehadiran Anda telah berhasil kami simpan.
                     </p>
                   </div>
                   <button
                     onClick={() => setSubmitted(false)}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-slate-100 dark:bg-white/5 rounded-full text-[10px] uppercase font-bold tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                    className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-[10px] font-bold tracking-widest uppercase transition-colors hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10"
                   >
-                    <RefreshCcw className="w-3 h-3" />
+                    <RefreshCcw className="h-3 w-3" />
                     Edit Kembali
                   </button>
                 </div>
               ) : (
                 <>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-accentDark/5 dark:bg-accent/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-1000 pointer-events-none"></div>
+                  <div className="bg-accentDark/5 dark:bg-accent/5 pointer-events-none absolute top-0 right-0 -mt-16 -mr-16 h-32 w-32 rounded-full transition-transform duration-1000 group-hover:scale-110"></div>
                   <div className="relative z-10 space-y-8 md:space-y-12">
-                    <div className="flex items-center gap-4 border-b border-slate-50 dark:border-white/5 pb-4 md:pb-10">
-                      <div className="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-accentDark dark:text-accent border border-slate-100 dark:border-white/10">
-                        <Users className="w-5 h-5 md:w-8 md:h-8" />
+                    <div className="flex items-center gap-4 border-b border-slate-50 pb-4 md:pb-10 dark:border-white/5">
+                      <div className="text-accentDark dark:text-accent flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 md:h-16 md:w-16 md:rounded-2xl dark:border-white/10 dark:bg-white/5">
+                        <Users className="h-5 w-5 md:h-8 md:w-8" />
                       </div>
                       <div>
-                        <h3 className="text-lg md:text-2xl font-serif italic text-slate-900 dark:text-white leading-none">
+                        <h3 className="font-serif text-lg leading-none text-slate-900 italic md:text-2xl dark:text-white">
                           Konfirmasi
                         </h3>
-                        <p className="text-[8px] md:text-[9px] uppercase tracking-editorial text-slate-400 mt-1.5 font-bold">
+                        <p className="tracking-editorial mt-1.5 text-[8px] font-bold text-slate-400 uppercase md:text-[9px]">
                           Lengkapi data Anda
                         </p>
                       </div>
@@ -152,14 +149,14 @@ const RSVPForm: React.FC = () => {
                       className="space-y-6 md:space-y-10"
                     >
                       <div className="space-y-6 md:space-y-8">
-                        <div className="relative group/input">
+                        <div className="group/input relative">
                           <input
                             required
                             type="text"
                             disabled={isNameLocked}
-                            className={`w-full bg-transparent border-b border-slate-200 dark:border-white/10 py-2 md:py-5 focus:border-accentDark dark:focus:border-accent outline-none transition-all text-base md:text-xl font-serif italic text-slate-900 dark:text-white placeholder:text-slate-200 ${
+                            className={`focus:border-accentDark dark:focus:border-accent w-full border-b border-slate-200 bg-transparent py-2 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-200 md:py-5 md:text-xl dark:border-white/10 dark:text-white ${
                               isNameLocked
-                                ? "opacity-60 cursor-not-allowed text-slate-500"
+                                ? "cursor-not-allowed text-slate-500 opacity-60"
                                 : ""
                             }`}
                             placeholder="Nama Tamu"
@@ -171,14 +168,14 @@ const RSVPForm: React.FC = () => {
                               })
                             }
                           />
-                          <label className="absolute -top-3.5 left-0 text-[7px] md:text-[9px] uppercase tracking-editorial text-slate-400 font-bold group-focus-within/input:text-accentDark transition-colors">
+                          <label className="tracking-editorial group-focus-within/input:text-accentDark absolute -top-3.5 left-0 text-[7px] font-bold text-slate-400 uppercase transition-colors md:text-[9px]">
                             Nama {isNameLocked && "(Locked)"}
                           </label>
                         </div>
-                        <div className="relative group/input">
+                        <div className="group/input relative">
                           <input
                             type="text"
-                            className="w-full bg-transparent border-b border-slate-200 dark:border-white/10 py-2 md:py-5 focus:border-accentDark dark:focus:border-accent outline-none transition-all text-base md:text-xl font-serif italic text-slate-900 dark:text-white placeholder:text-slate-200"
+                            className="focus:border-accentDark dark:focus:border-accent w-full border-b border-slate-200 bg-transparent py-2 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-200 md:py-5 md:text-xl dark:border-white/10 dark:text-white"
                             placeholder="WhatsApp / Phone"
                             value={formData.phone}
                             onChange={(e) =>
@@ -188,14 +185,14 @@ const RSVPForm: React.FC = () => {
                               })
                             }
                           />
-                          <label className="absolute -top-3.5 left-0 text-[7px] md:text-[9px] uppercase tracking-editorial text-slate-400 font-bold group-focus-within/input:text-accentDark transition-colors">
+                          <label className="tracking-editorial group-focus-within/input:text-accentDark absolute -top-3.5 left-0 text-[7px] font-bold text-slate-400 uppercase transition-colors md:text-[9px]">
                             Kontak
                           </label>
                         </div>
                       </div>
 
                       <div className="space-y-3 md:space-y-6">
-                        <p className="text-[8px] md:text-[9px] uppercase tracking-editorial text-slate-400 font-bold mb-1">
+                        <p className="tracking-editorial mb-1 text-[8px] font-bold text-slate-400 uppercase md:text-[9px]">
                           Status Kehadiran
                         </p>
                         <div className="grid grid-cols-1 gap-2">
@@ -210,46 +207,45 @@ const RSVPForm: React.FC = () => {
                               onClick={() =>
                                 setFormData({ ...formData, attendance: status })
                               }
-                              className={`px-5 py-3.5 md:py-5 rounded-lg md:rounded-2xl border transition-all text-[9px] md:text-[11px] font-bold uppercase tracking-editorial flex items-center justify-between group ${
+                              className={`tracking-editorial group flex items-center justify-between rounded-lg border px-5 py-3.5 text-[9px] font-bold uppercase transition-all md:rounded-2xl md:py-5 md:text-[11px] ${
                                 formData.attendance === status
-                                  ? "bg-primary dark:bg-white text-white dark:text-primary border-primary dark:border-white shadow-md"
-                                  : "border-slate-100 dark:border-white/5 text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
+                                  ? "bg-primary dark:text-primary border-primary text-white shadow-md dark:border-white dark:bg-white"
+                                  : "border-slate-100 text-slate-400 hover:bg-slate-50 dark:border-white/5 dark:hover:bg-white/5"
                               }`}
                             >
                               {status.replace("_", " ")}
                               {formData.attendance === status && (
-                                <CheckCircle2 className="w-3.5 h-3.5 md:w-5 md:h-5" />
+                                <CheckCircle2 className="h-3.5 w-3.5 md:h-5 md:w-5" />
                               )}
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      {/* Input Jumlah Tamu (Conditional) */}
                       {formData.attendance === AttendanceStatus.HADIR && (
-                        <div className="space-y-3 animate-reveal">
-                          <p className="text-[8px] md:text-[9px] uppercase tracking-editorial text-slate-400 font-bold mb-1">
+                        <div className="animate-reveal space-y-3">
+                          <p className="tracking-editorial mb-1 text-[8px] font-bold text-slate-400 uppercase md:text-[9px]">
                             Jumlah Tamu (Max {MAX_GUESTS})
                           </p>
                           <div className="flex items-center gap-4">
                             <button
                               type="button"
                               onClick={() => handleGuestCount("dec")}
-                              className="w-10 h-10 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
+                              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 transition-colors hover:bg-slate-50 disabled:opacity-30 dark:border-white/10 dark:hover:bg-white/5"
                               disabled={formData.guest_count <= 1}
                             >
-                              <Minus className="w-4 h-4" />
+                              <Minus className="h-4 w-4" />
                             </button>
-                            <div className="flex-1 text-center font-serif italic text-xl md:text-2xl border-b border-slate-100 dark:border-white/5 pb-1">
+                            <div className="flex-1 border-b border-slate-100 pb-1 text-center font-serif text-xl italic md:text-2xl dark:border-white/5">
                               {formData.guest_count} Orang
                             </div>
                             <button
                               type="button"
                               onClick={() => handleGuestCount("inc")}
-                              className="w-10 h-10 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
+                              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 transition-colors hover:bg-slate-50 disabled:opacity-30 dark:border-white/10 dark:hover:bg-white/5"
                               disabled={formData.guest_count >= MAX_GUESTS}
                             >
-                              <Plus className="w-4 h-4" />
+                              <Plus className="h-4 w-4" />
                             </button>
                           </div>
                         </div>
@@ -258,14 +254,14 @@ const RSVPForm: React.FC = () => {
                       <button
                         disabled={isSubmitting}
                         type="submit"
-                        className="w-full py-3.5 md:py-6 bg-primary dark:bg-accentDark text-white rounded-xl md:rounded-3xl font-bold uppercase tracking-luxury text-[9px] md:text-[11px] hover:shadow-xl transition-all duration-700 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 group shadow-sm"
+                        className="bg-primary dark:bg-accentDark tracking-luxury group flex w-full items-center justify-center gap-3 rounded-xl py-3.5 text-[9px] font-bold text-white uppercase shadow-sm transition-all duration-700 hover:shadow-xl active:scale-95 disabled:opacity-50 md:rounded-3xl md:py-6 md:text-[11px]"
                       >
                         {isSubmitting
                           ? "Sending..."
                           : isNameLocked
-                          ? "Update RSVP"
-                          : "Send RSVP"}
-                        <Send className="w-3.5 h-3.5 md:w-5 md:h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                            ? "Update RSVP"
+                            : "Send RSVP"}
+                        <Send className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1 md:h-5 md:w-5" />
                       </button>
                     </form>
                   </div>
@@ -274,8 +270,7 @@ const RSVPForm: React.FC = () => {
             </div>
           </div>
 
-          {/* --- RIGHT COLUMN: LIST & STATS --- */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="space-y-6 lg:col-span-7">
             <div className="grid grid-cols-3 gap-3 md:gap-6">
               {[
                 {
@@ -296,55 +291,54 @@ const RSVPForm: React.FC = () => {
               ].map((item, idx) => (
                 <div
                   key={idx}
-                  className="editorial-card p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-2 border border-slate-100 dark:border-white/5"
+                  className="editorial-card flex flex-col items-center justify-center space-y-2 rounded-[1.5rem] border border-slate-100 p-4 text-center md:rounded-[2.5rem] md:p-8 dark:border-white/5"
                 >
                   <span
-                    className={`text-2xl md:text-5xl font-serif font-bold ${item.color}`}
+                    className={`font-serif text-2xl font-bold md:text-5xl ${item.color}`}
                   >
                     {item.count}
                   </span>
-                  <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-60">
+                  <span className="text-[9px] font-bold tracking-widest uppercase opacity-60 md:text-[10px]">
                     {item.label}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="editorial-card p-6 md:p-14 rounded-[2rem] md:rounded-[4rem] flex flex-col relative overflow-hidden group shadow-lg border border-slate-100 dark:border-white/5">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-50"></div>
-              <div className="relative z-10 flex flex-col h-full">
-                <div className="mb-8 flex items-center justify-between flex-shrink-0">
-                  <h3 className="text-xl md:text-3xl font-serif italic text-slate-900 dark:text-white">
+            <div className="editorial-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-100 p-6 shadow-lg md:rounded-[4rem] md:p-14 dark:border-white/5">
+              <div className="from-accent/5 absolute inset-0 bg-gradient-to-br via-transparent to-transparent opacity-50"></div>
+              <div className="relative z-10 flex h-full flex-col">
+                <div className="mb-8 flex flex-shrink-0 items-center justify-between">
+                  <h3 className="font-serif text-xl text-slate-900 italic md:text-3xl dark:text-white">
                     Daftar Tamu
                   </h3>
-                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest opacity-50">
-                    <Clock className="w-3 h-3" />
+                  <div className="flex items-center gap-2 text-[10px] tracking-widest uppercase opacity-50">
+                    <Clock className="h-3 w-3" />
                     <span>Terbaru</span>
                   </div>
                 </div>
 
-                {/* Scrollable Container dengan ketinggian tetap */}
-                <div className="flex-grow overflow-y-auto pr-2 -mr-2 custom-scrollbar h-96 md:h-[450px]">
+                <div className="custom-scrollbar -mr-2 h-96 flex-grow overflow-y-auto pr-2 md:h-[450px]">
                   {rsvps.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full opacity-40">
-                      <Users className="w-8 h-8 mb-2" />
-                      <span className="text-xs uppercase tracking-widest">
+                    <div className="flex h-full flex-col items-center justify-center opacity-40">
+                      <Users className="mb-2 h-8 w-8" />
+                      <span className="text-xs tracking-widest uppercase">
                         Belum ada data
                       </span>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {rsvps.map((rsvp) => (
                         <div
                           key={rsvp.id}
-                          className="editorial-card p-5 rounded-2xl space-y-4 animate-reveal"
+                          className="editorial-card animate-reveal space-y-4 rounded-2xl p-5"
                         >
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-300 flex-shrink-0">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
                                 {rsvp.guest_name.charAt(0).toUpperCase()}
                               </div>
-                              <span className="text-base font-serif italic text-slate-800 dark:text-slate-200 truncate">
+                              <span className="truncate font-serif text-base text-slate-800 italic dark:text-slate-200">
                                 {rsvp.guest_name}
                               </span>
                             </div>
@@ -357,8 +351,8 @@ const RSVPForm: React.FC = () => {
                             </span>
                           </div>
                           {rsvp.attendance === AttendanceStatus.HADIR && (
-                            <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-white/5 pt-3 mt-3">
-                              <Users className="w-4 h-4" />
+                            <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 text-xs text-slate-400 dark:border-white/5 dark:text-slate-500">
+                              <Users className="h-4 w-4" />
                               <span>Datang ber-{rsvp.guest_count}</span>
                             </div>
                           )}

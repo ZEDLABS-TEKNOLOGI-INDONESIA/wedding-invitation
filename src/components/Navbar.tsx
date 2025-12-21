@@ -52,11 +52,11 @@ const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
     "absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-accent text-white dark:text-slate-900 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap hidden md:block shadow-xl pointer-events-none";
   return (
     <nav
-      className={`fixed bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[95%] md:w-fit px-2 transition-all duration-700 ease-in-out pointer-events-none ${
+      className={`pointer-events-none fixed bottom-4 left-1/2 z-[100] w-[95%] -translate-x-1/2 px-2 transition-all duration-700 ease-in-out md:bottom-8 md:w-fit ${
         isVisible ? "translate-y-0 opacity-100" : "translate-y-24 opacity-0"
       }`}
     >
-      <div className="bg-white/60 dark:bg-darkSurface/60 backdrop-blur-2xl border border-white/40 dark:border-white/10 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex items-center justify-between md:justify-center gap-1 p-1.5 md:p-2 pointer-events-auto transition-colors duration-1000">
+      <div className="dark:bg-darkSurface/60 pointer-events-auto flex items-center justify-between gap-1 rounded-full border border-white/40 bg-white/60 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-2xl transition-colors duration-1000 md:justify-center md:p-2 dark:border-white/10">
         {navItems.map((item) => (
           <a
             key={item.label}
@@ -65,7 +65,7 @@ const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
             title={item.label}
             onClick={handleAction}
           >
-            <item.icon className="w-5 h-5 md:w-6 md:h-6" />
+            <item.icon className="h-5 w-5 md:h-6 md:w-6" />
             <span className={tooltipClass}>{item.label}</span>
           </a>
         ))}
@@ -79,9 +79,9 @@ const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
           aria-label="Toggle theme"
         >
           {theme === "light" ? (
-            <Moon className="w-5 h-5 md:w-6 md:h-6" />
+            <Moon className="h-5 w-5 md:h-6 md:w-6" />
           ) : (
-            <Sun className="w-5 h-5 md:w-6 md:h-6" />
+            <Sun className="h-5 w-5 md:h-6 md:w-6" />
           )}
           <span className={tooltipClass}>
             {theme === "light" ? "Dark Mode" : "Light Mode"}

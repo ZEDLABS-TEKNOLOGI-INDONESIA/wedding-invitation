@@ -87,7 +87,7 @@
   }
 
   body {
-    @apply bg-secondary text-slate-800 transition-colors duration-1000 ease-out antialiased leading-relaxed;
+    @apply bg-secondary leading-relaxed text-slate-800 antialiased transition-colors duration-1000 ease-out;
   }
 
   /* Style spesifik saat Dark Mode aktif */
@@ -121,7 +121,7 @@
 }
 
 .editorial-card {
-  @apply bg-white transition-all duration-700 border border-slate-900/5 shadow-sm;
+  @apply border border-slate-900/5 bg-white shadow-sm transition-all duration-700;
 }
 .dark .editorial-card {
   @apply bg-darkSurface border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.2)];

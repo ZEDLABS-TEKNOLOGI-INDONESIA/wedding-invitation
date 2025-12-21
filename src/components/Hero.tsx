@@ -9,7 +9,7 @@ const Hero: React.FC = () => {
     minutes: 0,
     seconds: 0,
   });
-  const [guestName, setGuestName] = useState<string | null>(null);
+  const [setGuestName] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -38,57 +38,57 @@ const Hero: React.FC = () => {
   };
 
   return (
-    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+    <section className="relative flex h-screen w-full items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img
           src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop"
-          className="w-full h-full object-cover animate-subtle-zoom"
+          className="animate-subtle-zoom h-full w-full object-cover"
           alt="Wedding Backdrop"
         />
-        <div className="absolute inset-0 bg-slate-950/40 dark:bg-slate-950/60 backdrop-blur-[0.5px]"></div>
+        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] dark:bg-slate-950/60"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/80"></div>
       </div>
 
-      <div className="z-10 container mx-auto px-6 flex flex-col items-center text-center">
-        <div className="animate-reveal [animation-delay:200ms] space-y-4 md:space-y-10 w-full">
+      <div className="z-10 container mx-auto flex flex-col items-center px-6 text-center">
+        <div className="animate-reveal w-full space-y-4 [animation-delay:200ms] md:space-y-10">
           <div className="flex items-center justify-center gap-3 md:gap-4">
-            <div className="h-[1px] w-6 md:w-20 bg-white/30"></div>
-            <span className="text-white/80 tracking-luxury text-[8px] md:text-[12px] uppercase font-light">
+            <div className="h-[1px] w-6 bg-white/30 md:w-20"></div>
+            <span className="tracking-luxury text-[8px] font-light text-white/80 uppercase md:text-[12px]">
               The Wedding Celebration
             </span>
-            <div className="h-[1px] w-6 md:w-20 bg-white/30"></div>
+            <div className="h-[1px] w-6 bg-white/30 md:w-20"></div>
           </div>
 
-          <h1 className="text-white text-5xl sm:text-7xl md:text-[9rem] font-serif italic leading-tight md:leading-none tracking-tight break-words">
+          <h1 className="font-serif text-5xl leading-tight tracking-tight break-words text-white italic sm:text-7xl md:text-[9rem] md:leading-none">
             {WEDDING_CONFIG.couple.bride.name}
             <span className="text-accent/30 mx-2 md:mx-6">&</span>
             {WEDDING_CONFIG.couple.groom.name}
           </h1>
 
           <div className="space-y-3 md:space-y-6">
-            <p className="text-white font-serif italic text-xl sm:text-2xl md:text-5xl tracking-widest opacity-90">
+            <p className="font-serif text-xl tracking-widest text-white italic opacity-90 sm:text-2xl md:text-5xl">
               {WEDDING_CONFIG.events.akad.date}
             </p>
             <div className="flex items-center justify-center gap-3 md:gap-4">
-              <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-accent/40 animate-pulse" />
-              <p className="text-accent/70 text-[9px] md:text-[13px] uppercase tracking-widest font-medium">
+              <Sparkles className="text-accent/40 h-3 w-3 animate-pulse md:h-4 md:w-4" />
+              <p className="text-accent/70 text-[9px] font-medium tracking-widest uppercase md:text-[13px]">
                 Pandeglang, Banten
               </p>
-              <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-accent/40 animate-pulse" />
+              <Sparkles className="text-accent/40 h-3 w-3 animate-pulse md:h-4 md:w-4" />
             </div>
           </div>
         </div>
 
-        <div className="mt-8 md:mt-16 animate-reveal [animation-delay:600ms] flex items-center justify-center gap-4 md:gap-14 frosted-glass px-6 md:px-10 py-5 md:py-8 rounded-[1.5rem] md:rounded-[2.2rem] shadow-2xl border border-white/40 dark:border-white/10">
+        <div className="animate-reveal frosted-glass mt-8 flex items-center justify-center gap-4 rounded-[1.5rem] border border-white/40 px-6 py-5 shadow-2xl [animation-delay:600ms] md:mt-16 md:gap-14 md:rounded-[2.2rem] md:px-10 md:py-8 dark:border-white/10">
           {Object.entries(timeLeft).map(([label, value]) => (
             <div
               key={label}
-              className="flex flex-col items-center min-w-[50px] md:min-w-[80px]"
+              className="flex min-w-[50px] flex-col items-center md:min-w-[80px]"
             >
-              <span className="text-2xl md:text-6xl font-serif font-bold text-slate-900 dark:text-white leading-none tracking-tighter">
+              <span className="font-serif text-2xl leading-none font-bold tracking-tighter text-slate-900 md:text-6xl dark:text-white">
                 {String(value).padStart(2, "0")}
               </span>
-              <span className="text-[7px] md:text-[11px] uppercase tracking-[0.2em] text-accentDark/80 dark:text-accent/60 font-black mt-1 md:mt-3">
+              <span className="text-accentDark/80 dark:text-accent/60 mt-1 text-[7px] font-black tracking-[0.2em] uppercase md:mt-3 md:text-[11px]">
                 {label}
               </span>
             </div>
@@ -97,12 +97,12 @@ const Hero: React.FC = () => {
 
         <button
           onClick={handleScrollToContent}
-          className="mt-12 md:mt-20 group flex flex-col items-center gap-3 md:gap-4 text-white/40 hover:text-white transition-all duration-500"
+          className="group mt-12 flex flex-col items-center gap-3 text-white/40 transition-all duration-500 hover:text-white md:mt-20 md:gap-4"
         >
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:border-accent group-hover:bg-accent/10 transition-all shadow-lg backdrop-blur-sm">
-            <ChevronDown className="w-4 h-4 md:w-5 md:h-5 animate-bounce" />
+          <div className="group-hover:border-accent group-hover:bg-accent/10 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 shadow-lg backdrop-blur-sm transition-all md:h-12 md:w-12">
+            <ChevronDown className="h-4 w-4 animate-bounce md:h-5 md:w-5" />
           </div>
-          <span className="text-[8px] md:text-[9px] uppercase tracking-luxury font-bold opacity-50 group-hover:opacity-100">
+          <span className="tracking-luxury text-[8px] font-bold uppercase opacity-50 group-hover:opacity-100 md:text-[9px]">
             Lihat Detail
           </span>
         </button>

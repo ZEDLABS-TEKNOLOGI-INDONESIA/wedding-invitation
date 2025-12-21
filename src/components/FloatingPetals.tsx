@@ -22,11 +22,11 @@ const FloatingPetals: React.FC = () => {
     setPetals(newPetals);
   }, []);
   return (
-    <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
+    <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden">
       {petals.map((p) => (
         <div
           key={p.id}
-          className="absolute top-[-50px] bg-accent/20 dark:bg-accent/10 rounded-full blur-[1px]"
+          className="bg-accent/20 dark:bg-accent/10 absolute top-[-50px] rounded-full blur-[1px]"
           style={{
             left: p.left,
             width: p.size,
@@ -37,7 +37,7 @@ const FloatingPetals: React.FC = () => {
             transform: `rotate(${p.rotation})`,
           }}
         >
-          <div className="w-full h-full rounded-[100%_0%_100%_0%_/_100%_0%_100%_0%] shadow-inner bg-accent/10"></div>
+          <div className="bg-accent/10 h-full w-full rounded-[100%_0%_100%_0%_/_100%_0%_100%_0%] shadow-inner"></div>
         </div>
       ))}
       <style>{`
