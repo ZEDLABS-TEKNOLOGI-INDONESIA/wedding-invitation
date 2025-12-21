@@ -1,9 +1,8 @@
 import type { APIRoute } from "astro";
 import db from "../../lib/db";
 import { checkRateLimit } from "../../lib/rateLimit";
-import { sendTelegramNotification } from "../../utils/telegram"; // <--- Import Telegram
+import { sendTelegramNotification } from "../../utils/telegram";
 
-// Helper Sanitasi
 const sanitize = (str: string) => {
   if (!str) return "";
   return str
@@ -33,22 +32,18 @@ export const GET: APIRoute = async () => {
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const ip = clientAddress || "unknown";
 
-  // Rate Limiting
   if (!checkRateLimit(ip, 5, 60000)) {
     return new Response(
       JSON.stringify({ error: "Too many requests. Please try again later." }),
-      { status: 429 }
+      { status: 429 },
     );
   }
 
   try {
     const rawData = await request.json();
-
-    // 1. Sanitasi Input
     const name = sanitize(rawData.name);
     const message = sanitize(rawData.message);
 
-    // 2. Cek apakah nama sudah pernah kirim
     const checkStmt = db.prepare("SELECT id FROM wishes WHERE name = ?");
     const existingWish = checkStmt.get(name) as { id: number } | undefined;
 
@@ -56,7 +51,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     let resultId = 0;
 
     if (existingWish) {
-      // UPDATE PESAN LAMA
+      // UPDATE
       const updateStmt = db.prepare(`
         UPDATE wishes 
         SET message = ?, created_at = ?
@@ -66,35 +61,42 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       actionType = "updated";
       resultId = existingWish.id;
     } else {
-      // INSERT PESAN BARU
+      // INSERT
       const insertStmt = db.prepare(
-        "INSERT INTO wishes (name, message, created_at) VALUES (?, ?, ?)"
+        "INSERT INTO wishes (name, message, created_at) VALUES (?, ?, ?)",
       );
       const result = insertStmt.run(name, message, new Date().toISOString());
       actionType = "created";
       resultId = Number(result.lastInsertRowid);
     }
 
-    // 3. Kirim Notifikasi Telegram
+    // --- LOGIC NOTIFIKASI TELEGRAM ---
+
+    // 1. Tentukan Judul
+    const title =
+      actionType === "created"
+        ? "✨ <b>UCAPAN & DOA BARU!</b>"
+        : "📝 <b>UCAPAN DIPERBARUI!</b>";
+
+    // 2. Susun Pesan
     const notifMsg = `
-<b>✨ UCAPAN & DOA BARU!</b>
+${title}
 
 👤 <b>Dari:</b> ${name}
 
-📝 <b>Isi Pesan:</b>
 <i>"${message}"</i>
     `.trim();
 
+    // 3. Kirim
     sendTelegramNotification(notifMsg);
 
-    // 4. Return Response Sukses
     return new Response(
       JSON.stringify({
         success: true,
         id: resultId,
         action: actionType,
       }),
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error(error);

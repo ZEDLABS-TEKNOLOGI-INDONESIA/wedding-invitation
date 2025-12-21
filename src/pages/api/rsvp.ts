@@ -3,7 +3,6 @@ import db from "../../lib/db";
 import { checkRateLimit } from "../../lib/rateLimit";
 import { sendTelegramNotification } from "../../utils/telegram";
 
-// Helper Sanitasi (Mencegah XSS)
 const sanitize = (str: string) => {
   if (!str) return "";
   return str
@@ -37,25 +36,24 @@ export const GET: APIRoute = async () => {
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const ip = clientAddress || "unknown";
 
-  // Rate Limiting
   if (!checkRateLimit(ip, 5, 60000)) {
     return new Response(
       JSON.stringify({ error: "Too many requests. Please try again later." }),
-      { status: 429 }
+      { status: 429 },
     );
   }
 
   try {
     const rawData = await request.json();
 
-    // 1. Sanitasi Input
+    // Sanitasi
     const guest_name = sanitize(rawData.guest_name);
     const phone = sanitize(rawData.phone);
     const message = sanitize(rawData.message);
     const attendance = rawData.attendance;
     const guest_count = rawData.guest_count;
 
-    // 2. Cek apakah tamu sudah pernah isi (berdasarkan nama)
+    // Cek Data Lama
     const checkStmt = db.prepare("SELECT id FROM rsvps WHERE guest_name = ?");
     const existingGuest = checkStmt.get(guest_name) as
       | { id: number }
@@ -65,7 +63,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     let resultId = 0;
 
     if (existingGuest) {
-      // UPDATE DATA LAMA
+      // UPDATE
       const updateStmt = db.prepare(`
         UPDATE rsvps 
         SET phone = ?, attendance = ?, guest_count = ?, message = ?, created_at = ?
@@ -77,12 +75,12 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         guest_count,
         message || "",
         new Date().toISOString(),
-        existingGuest.id
+        existingGuest.id,
       );
       actionType = "updated";
       resultId = existingGuest.id;
     } else {
-      // INSERT DATA BARU
+      // INSERT
       const insertStmt = db.prepare(`
         INSERT INTO rsvps (guest_name, phone, attendance, guest_count, message, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -93,38 +91,47 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         attendance,
         guest_count,
         message || "",
-        new Date().toISOString()
+        new Date().toISOString(),
       );
       actionType = "created";
       resultId = Number(result.lastInsertRowid);
     }
 
-    // 3. Kirim Notifikasi Telegram (Fire-and-forget, tidak perlu await agar UI cepat)
+    // --- LOGIC NOTIFIKASI TELEGRAM ---
+
+    // 1. Tentukan Judul Berdasarkan Aksi
+    const title =
+      actionType === "created"
+        ? "💌 <b>RSVP BARU MASUK!</b>"
+        : "♻️ <b>PEMBARUAN DATA RSVP!</b>";
+
+    // 2. Tentukan Emoji Status
     const statusEmoji =
       attendance === "hadir" ? "✅" : attendance === "ragu" ? "🤔" : "❌";
 
+    // 3. Susun Pesan
     const notifMsg = `
-<b>💌 RSVP MASUK! (${actionType.toUpperCase()})</b>
+${title}
 
 👤 <b>Nama:</b> ${guest_name}
 ${statusEmoji} <b>Status:</b> ${attendance.toUpperCase()}
 👥 <b>Jml:</b> ${attendance === "hadir" ? guest_count + " Orang" : "-"}
-📞 <b>HP:</b> ${phone || "-"}
+📞 <b>Kontak:</b> ${phone || "-"}
 
 💬 <b>Pesan:</b>
 <i>"${message || "-"}"</i>
     `.trim();
 
+    // 4. Kirim
     sendTelegramNotification(notifMsg);
 
-    // 4. Return Response Sukses
     return new Response(
       JSON.stringify({
         success: true,
         id: resultId,
         action: actionType,
       }),
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error(error);
