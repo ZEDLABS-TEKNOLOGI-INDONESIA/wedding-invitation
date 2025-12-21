@@ -1,417 +1,103 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import db from "../lib/db";
-import QRCodeManager from "../components/QRCodeManager";
-import InvitationManager from "../components/InvitationManager";
-import {
-  Users,
-  Trash2,
-  LogOut,
-  Download,
-  CheckCircle2,
-  XCircle,
-  MessageCircle,
-  Printer,
-  HelpCircle,
-  QrCode,
-} from "lucide-react";
+import AdminDashboard from "../components/Admin/AdminDashboard";
+import { LogOut, CheckCircle2, XCircle, HelpCircle, Users } from "lucide-react";
 
-// --- SERVER SIDE LOGIC ---
 const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD || "admin123";
 const COOKIE_NAME = "wedding_admin_auth";
 
-// Cek Status Login
-const isAuthenticated = Astro.cookies.has(COOKIE_NAME);
-
-// Handle Form Submissions (POST)
+// Login Logic
 if (Astro.request.method === "POST") {
-  try {
-    const formData = await Astro.request.formData();
-    const action = formData.get("action");
-
-    if (action === "login") {
-      const passwordInput = formData.get("password")?.toString();
-      if (passwordInput === ADMIN_PASSWORD) {
-        Astro.cookies.set(COOKIE_NAME, "true", {
-          path: "/",
-          httpOnly: true,
-          secure: import.meta.env.PROD,
-          maxAge: 60 * 60 * 24,
-        });
-        return Astro.redirect("/admin");
-      }
-    }
-
-    if (action === "logout") {
-      Astro.cookies.delete(COOKIE_NAME, { path: "/" });
+  const formData = await Astro.request.formData();
+  const action = formData.get("action");
+  if (action === "login") {
+    const passwordInput = formData.get("password")?.toString();
+    if (passwordInput === ADMIN_PASSWORD) {
+      Astro.cookies.set(COOKIE_NAME, "true", { path: "/", httpOnly: true, secure: import.meta.env.PROD, maxAge: 60 * 60 * 24 });
       return Astro.redirect("/admin");
     }
-
-    if (isAuthenticated) {
-      if (action === "delete_wish") {
-        db.prepare("DELETE FROM wishes WHERE id = ?").run(formData.get("id"));
-      }
-      if (action === "delete_rsvp") {
-        db.prepare("DELETE FROM rsvps WHERE id = ?").run(formData.get("id"));
-      }
-    }
-  } catch (error) {
-    console.error("Admin Action Error:", error);
+  }
+  if (action === "logout") {
+    Astro.cookies.delete(COOKIE_NAME, { path: "/" });
+    return Astro.redirect("/admin");
   }
 }
 
-// Fetch Data & Stats
-let rsvps = [];
-let wishes = [];
-let stats = { total: 0, hadir: 0, ragu: 0, tidak: 0, guestCount: 0 };
+const isAuthenticated = Astro.cookies.has(COOKIE_NAME);
+let rsvps = [], wishes = [], stats = { total: 0, hadir: 0, ragu: 0, tidak: 0, guestCount: 0 };
 
 if (isAuthenticated) {
-  try {
-    // Ambil Data dari DB
-    rsvps = db.prepare("SELECT * FROM rsvps ORDER BY created_at DESC").all();
-    wishes = db.prepare("SELECT * FROM wishes ORDER BY created_at DESC").all();
-
-    // --- LOGIC STATISTIK YANG SUDAH DIPERBAIKI ---
-    stats.total = rsvps.length;
-
-    // Filter & Hitung Hadir
-    const rsvpsHadir = rsvps.filter((r: any) => r.attendance === "hadir");
-    stats.hadir = rsvpsHadir.length; // Jumlah Form
-    stats.guestCount = rsvpsHadir.reduce(
-      (sum: number, r: any) => sum + (r.guest_count || 1),
-      0
-    ); // Total Pax
-
-    // Hitung sisanya
-    stats.ragu = rsvps.filter((r: any) => r.attendance === "ragu").length;
-    stats.tidak = rsvps.filter(
-      (r: any) => r.attendance === "tidak_hadir"
-    ).length;
-  } catch (e) {
-    console.error("Database Error:", e);
-  }
+  rsvps = db.prepare("SELECT * FROM rsvps ORDER BY created_at DESC").all();
+  wishes = db.prepare("SELECT * FROM wishes ORDER BY created_at DESC").all();
+  stats.total = rsvps.length;
+  stats.hadir = rsvps.filter((r: any) => r.attendance === "hadir").length;
+  stats.ragu = rsvps.filter((r: any) => r.attendance === "ragu").length;
+  stats.tidak = rsvps.filter((r: any) => r.attendance === "tidak_hadir").length;
+  stats.guestCount = rsvps
+    .filter((r: any) => r.attendance === "hadir")
+    .reduce((sum: number, r: any) => sum + (r.guest_count || 1), 0);
 }
-
-const formatDate = (dateStr: string) => {
-  try {
-    return new Date(dateStr).toLocaleString("id-ID", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  } catch (e) {
-    return "-";
-  }
-};
 ---
 
 <Layout title="Admin Dashboard">
-  <main
-    class="min-h-screen bg-slate-50 text-slate-800 transition-colors duration-500 dark:bg-slate-900 dark:text-slate-200"
-  >
-    {
-      !isAuthenticated ? (
-        /* --- LOGIN FORM --- */
-        <div class="flex h-screen w-full items-center justify-center px-4">
-          <div class="w-full max-w-md space-y-8 rounded-2xl bg-white p-10 shadow-xl dark:bg-slate-800">
-            <div class="text-center">
-              <h1 class="font-serif text-3xl font-bold text-slate-900 italic dark:text-white">
-                Admin Access
-              </h1>
-            </div>
-            <form method="POST" class="mt-8 space-y-6">
-              <input type="hidden" name="action" value="login" />
-              <input
-                type="password"
-                name="password"
-                required
-                class="block w-full rounded-lg border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                placeholder="Password..."
-              />
-              <button
-                type="submit"
-                class="w-full rounded-lg bg-slate-900 px-4 py-4 text-sm font-bold text-white hover:bg-slate-800 dark:bg-blue-600"
-              >
-                MASUK
-              </button>
-            </form>
+  <main class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200">
+    {!isAuthenticated ? (
+      <div class="flex h-screen w-full items-center justify-center px-4">
+        <div class="w-full max-w-md space-y-8 rounded-2xl bg-white p-10 shadow-xl dark:bg-slate-800">
+          <div class="text-center">
+            <h1 class="font-serif text-3xl font-bold text-slate-900 italic dark:text-white">Admin Access</h1>
           </div>
+          <form method="POST" class="mt-8 space-y-6">
+            <input type="hidden" name="action" value="login" />
+            <input type="password" name="password" required class="block w-full rounded-lg border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white" placeholder="Password..." />
+            <button type="submit" class="w-full rounded-lg bg-slate-900 px-4 py-4 text-sm font-bold text-white hover:bg-slate-800 dark:bg-blue-600">MASUK</button>
+          </form>
         </div>
-      ) : (
-        /* --- DASHBOARD CONTENT --- */
-        <div class="container mx-auto max-w-7xl px-4 py-10">
-          {/* Header */}
-          <div class="mb-10 flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div>
-              <h1 class="font-serif text-3xl font-bold italic md:text-4xl">
-                Wedding Dashboard
-              </h1>
-              <p class="text-sm text-slate-500 dark:text-slate-400">
-                Panel kontrol undangan digital
-              </p>
-            </div>
-            <form method="POST">
-              <input type="hidden" name="action" value="logout" />
-              <button class="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-                <LogOut className="h-4 w-4" /> LOGOUT
-              </button>
-            </form>
+      </div>
+    ) : (
+      <div class="container mx-auto max-w-7xl px-4 py-10">
+        <div class="mb-10 flex flex-col items-center justify-between gap-4 md:flex-row">
+          <div>
+            <h1 class="font-serif text-3xl font-bold italic md:text-4xl">Wedding Dashboard</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Selamat datang, Admin</p>
           </div>
-
-          {/* Stats Cards */}
-          <div class="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
-            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-slate-400">
-                <>
-                  <Users className="h-5 w-5" />
-                  <span class="text-xs font-bold uppercase">Total Respon</span>
-                </>
-              </div>
-              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                {stats.total}
-              </p>
-            </div>
-            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-green-500">
-                <>
-                  <CheckCircle2 className="h-5 w-5" />
-                  <span class="text-xs font-bold tracking-wider uppercase">
-                    Hadir
-                  </span>
-                </>
-              </div>
-              <div class="mt-2 flex items-baseline gap-2">
-                <span class="text-3xl font-bold text-slate-900 dark:text-white">
-                  {stats.hadir}
-                </span>
-                <span class="text-lg font-medium text-slate-400">
-                  ({stats.guestCount} Pax)
-                </span>
-              </div>
-            </div>
-            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-yellow-500">
-                <>
-                  <HelpCircle className="h-5 w-5" />
-                  <span class="text-xs font-bold uppercase">Ragu</span>
-                </>
-              </div>
-              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                {stats.ragu}
-              </p>
-            </div>
-            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-red-500">
-                <>
-                  <XCircle className="h-5 w-5" />
-                  <span class="text-xs font-bold uppercase">Tidak Hadir</span>
-                </>
-              </div>
-              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                {stats.tidak}
-              </p>
-            </div>
-          </div>
-
-          {/* Tabs Navigation */}
-          <div class="mb-8 flex gap-2 overflow-x-auto border-b border-slate-200 pb-1 dark:border-slate-700">
-            <button
-              id="btn-rsvp"
-              class="tab-btn border-b-2 border-blue-600 px-6 py-3 text-sm font-bold whitespace-nowrap text-blue-600 transition-colors"
-            >
-              DATA RSVP
+          <form method="POST">
+            <input type="hidden" name="action" value="logout" />
+            <button class="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
+              <LogOut className="h-4 w-4" /> LOGOUT
             </button>
-            <button
-              id="btn-wishes"
-              class="tab-btn border-b-2 border-transparent px-6 py-3 text-sm font-bold whitespace-nowrap text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              UCAPAN & DOA
-            </button>
-            <button
-              id="btn-qr"
-              class="tab-btn flex items-center gap-2 border-b-2 border-transparent px-6 py-3 text-sm font-bold whitespace-nowrap text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              <QrCode className="h-4 w-4" /> QR GENERATOR
-            </button>
-            <button
-              id="btn-pdf"
-              class="tab-btn flex items-center gap-2 border-b-2 border-transparent px-6 py-3 text-sm font-bold whitespace-nowrap text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              <Printer className="h-4 w-4" /> DESIGN PDF
-            </button>
-          </div>
-
-          {/* --- CONTENT 1: RSVP --- */}
-          <div id="content-rsvp" class="tab-content block">
-            <div class="mb-4 flex justify-end">
-              <a
-                href="/api/export-rsvp"
-                target="_blank"
-                class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700"
-              >
-                <Download className="h-4 w-4" /> EXPORT CSV
-              </a>
-            </div>
-            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                  <thead class="bg-slate-50 text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
-                    <tr>
-                      <th class="px-6 py-4 font-bold uppercase">Nama</th>
-                      <th class="px-6 py-4 font-bold uppercase">Status</th>
-                      <th class="px-6 py-4 font-bold uppercase">Pax</th>
-                      <th class="px-6 py-4 font-bold uppercase">Pesan</th>
-                      <th class="px-6 py-4 text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                    {rsvps.map((row: any) => (
-                      <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                        <td class="px-6 py-4 font-medium dark:text-white">
-                          {row.guest_name}
-                        </td>
-                        <td class="px-6 py-4 capitalize">
-                          {row.attendance.replace("_", " ")}
-                        </td>
-                        <td class="px-6 py-4">{row.guest_count}</td>
-                        <td class="max-w-xs truncate px-6 py-4 text-slate-500">
-                          {row.message || "-"}
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                          <form
-                            method="POST"
-                            onsubmit="return confirm('Hapus?');"
-                          >
-                            <input
-                              type="hidden"
-                              name="action"
-                              value="delete_rsvp"
-                            />
-                            <input type="hidden" name="id" value={row.id} />
-                            <button class="text-slate-400 hover:text-red-500">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </form>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {rsvps.length === 0 && (
-                <div class="p-8 text-center text-slate-400">
-                  Belum ada data.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* --- CONTENT 2: WISHES --- */}
-          <div id="content-wishes" class="tab-content hidden">
-            <div class="mb-4 flex justify-end">
-              <a
-                href="/api/export-wishes"
-                target="_blank"
-                class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
-              >
-                <Download className="h-4 w-4" /> EXPORT CSV
-              </a>
-            </div>
-
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {wishes.map((wish: any) => (
-                <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                  <div class="mb-2 flex justify-between">
-                    <h4 class="font-bold dark:text-white">{wish.name}</h4>
-                    <span class="text-xs text-slate-400">
-                      {formatDate(wish.created_at)}
-                    </span>
-                  </div>
-                  <div class="my-3 h-[1px] w-full bg-slate-100 dark:bg-slate-700" />
-                  <p class="mb-4 text-sm text-slate-600 italic dark:text-slate-300">
-                    "{wish.message}"
-                  </p>
-                  <form method="POST" onsubmit="return confirm('Hapus?');">
-                    <input type="hidden" name="action" value="delete_wish" />
-                    <input type="hidden" name="id" value={wish.id} />
-                    <button class="flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-600">
-                      <Trash2 className="h-3 w-3" /> HAPUS
-                    </button>
-                  </form>
-                </div>
-              ))}
-            </div>
-
-            {/* EMPTY STATE - PENTING AGAR TIDAK BLANK SAAT DATA KOSONG */}
-            {wishes.length === 0 && (
-              <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-400 dark:border-slate-700 dark:bg-slate-800/50">
-                <MessageCircle className="h-10 w-10 mx-auto mb-2 text-slate-300" />
-                <p>Belum ada ucapan & doa yang masuk.</p>
-              </div>
-            )}
-          </div>
-
-          {/* --- CONTENT 3: QR CODE MANAGER --- */}
-          <div id="content-qr" class="tab-content hidden">
-            <div class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <h2 class="mb-6 font-serif text-2xl font-bold text-slate-900 italic dark:text-white">
-                QR Code Generator
-              </h2>
-              <QRCodeManager
-                client:only="react"
-                siteUrl={Astro.site?.toString() || "https://wedding.feyaya.com"}
-              />
-            </div>
-          </div>
-
-          {/* --- CONTENT 4: INVITATION PDF MANAGER (BARU) --- */}
-          <div id="content-pdf" class="tab-content hidden">
-            <div class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <InvitationManager client:only="react" />
-            </div>
-          </div>
+          </form>
         </div>
-      )
-    }
+
+        {/* STATS */}
+        <div class="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
+           <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+              <div class="flex items-center gap-3 text-slate-400"><Users className="h-5 w-5" /><span class="text-xs font-bold uppercase">Total Respon</span></div>
+              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
+           </div>
+           <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+              <div class="flex items-center gap-3 text-green-500"><CheckCircle2 className="h-5 w-5" /><span class="text-xs font-bold uppercase">Hadir</span></div>
+              <div class="mt-2 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-900 dark:text-white">{stats.hadir}</span><span class="text-lg font-medium text-slate-400">({stats.guestCount} Pax)</span></div>
+           </div>
+           <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+              <div class="flex items-center gap-3 text-yellow-500"><HelpCircle className="h-5 w-5" /><span class="text-xs font-bold uppercase">Ragu</span></div>
+              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{stats.ragu}</p>
+           </div>
+           <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+              <div class="flex items-center gap-3 text-red-500"><XCircle className="h-5 w-5" /><span class="text-xs font-bold uppercase">Tidak Hadir</span></div>
+              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{stats.tidak}</p>
+           </div>
+        </div>
+
+        {/* MAIN DASHBOARD */}
+        <AdminDashboard 
+          client:load 
+          initialRsvps={rsvps} 
+          initialWishes={wishes} 
+          siteUrl={Astro.site?.toString() || "https://wedding.feyaya.com"} 
+        />
+      </div>
+    )}
   </main>
-
-  <script is:inline>
-    // Definisi Fungsi
-    function switchTab(tabName) {
-      // Hide all content
-      document
-        .querySelectorAll(".tab-content")
-        .forEach((el) => el.classList.add("hidden"));
-
-      // Reset button styles
-      document.querySelectorAll(".tab-btn").forEach((el) => {
-        el.classList.remove("border-blue-600", "text-blue-600");
-        el.classList.add("border-transparent", "text-slate-400");
-      });
-
-      // Show selected content
-      const content = document.getElementById(`content-${tabName}`);
-      if (content) content.classList.remove("hidden");
-
-      // Activate button
-      const btn = document.getElementById(`btn-${tabName}`);
-      if (btn) {
-        btn.classList.remove("border-transparent", "text-slate-400");
-        btn.classList.add("border-blue-600", "text-blue-600");
-      }
-    }
-
-    // Event Listeners (Pengganti onclick agar Linter Happy)
-    document.addEventListener("DOMContentLoaded", () => {
-      const btnRsvp = document.getElementById("btn-rsvp");
-      const btnWishes = document.getElementById("btn-wishes");
-      const btnQr = document.getElementById("btn-qr");
-      const btnPdf = document.getElementById("btn-pdf");
-      if (btnPdf) btnPdf.addEventListener("click", () => switchTab("pdf"));
-
-      if (btnRsvp) btnRsvp.addEventListener("click", () => switchTab("rsvp"));
-      if (btnWishes)
-        btnWishes.addEventListener("click", () => switchTab("wishes"));
-      if (btnQr) btnQr.addEventListener("click", () => switchTab("qr"));
-    });
-  </script>
 </Layout>
