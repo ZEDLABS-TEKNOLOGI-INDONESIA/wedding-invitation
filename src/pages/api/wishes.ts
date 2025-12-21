@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import db from "../../lib/db";
+import { checkRateLimit } from "../../lib/rateLimit";
 export const GET: APIRoute = async () => {
   try {
     const stmt = db.prepare("SELECT * FROM wishes ORDER BY created_at DESC");
@@ -15,7 +16,16 @@ export const GET: APIRoute = async () => {
     });
   }
 };
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress }) => {
+  const ip = clientAddress || "unknown";
+  if (!checkRateLimit(ip, 5, 60000)) {
+    return new Response(
+      JSON.stringify({ error: "Too many requests. Please try again later." }),
+      {
+        status: 429,
+      }
+    );
+  }
   try {
     const data = await request.json();
     const { name, message } = data;

@@ -190,7 +190,23 @@ const RSVPForm: React.FC = () => {
                           </label>
                         </div>
                       </div>
-
+                      <div className="group/input relative mt-8">
+                        <textarea
+                          className="focus:border-accentDark dark:focus:border-accent w-full resize-none border-b border-slate-200 bg-transparent py-2 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-200 md:py-5 md:text-xl dark:border-white/10 dark:text-white"
+                          placeholder="Pesan untuk mempelai (Opsional)"
+                          rows={2}
+                          value={formData.message}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              message: e.target.value,
+                            })
+                          }
+                        />
+                        <label className="tracking-editorial group-focus-within/input:text-accentDark absolute -top-3.5 left-0 text-[7px] font-bold text-slate-400 uppercase transition-colors md:text-[9px]">
+                          Pesan
+                        </label>
+                      </div>
                       <div className="space-y-3 md:space-y-6">
                         <p className="tracking-editorial mb-1 text-[8px] font-bold text-slate-400 uppercase md:text-[9px]">
                           Status Kehadiran

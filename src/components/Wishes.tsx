@@ -133,7 +133,7 @@ const Wishes: React.FC = () => {
                       <textarea
                         required
                         className="focus:border-accentDark dark:focus:border-accent h-32 w-full resize-none border-b-2 border-slate-100 bg-transparent py-3 font-serif text-lg leading-relaxed text-slate-900 italic transition-all outline-none placeholder:text-slate-200 md:h-52 md:py-6 md:text-2xl dark:border-white/5 dark:text-white dark:placeholder:text-slate-800"
-                        placeholder="Tuliskan/Perbarui harapan terbaik Anda..."
+                        placeholder="Tuliskan harapan terbaik Anda..."
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                       />

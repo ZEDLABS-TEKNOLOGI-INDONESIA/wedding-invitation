@@ -9,7 +9,9 @@ const Hero: React.FC = () => {
     minutes: 0,
     seconds: 0,
   });
-  const [setGuestName] = useState<string | null>(null);
+
+  // PERBAIKAN DISINI: Menambahkan variabel guestName
+  const [guestName, setGuestName] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -64,6 +66,13 @@ const Hero: React.FC = () => {
             <span className="text-accent/30 mx-2 md:mx-6">&</span>
             {WEDDING_CONFIG.couple.groom.name}
           </h1>
+
+          {/* Opsional: Jika ingin menampilkan nama tamu di Hero */}
+          {guestName && (
+            <p className="animate-reveal mt-4 font-serif text-xl text-white/80 italic">
+              Kepada Yth. {guestName}
+            </p>
+          )}
 
           <div className="space-y-3 md:space-y-6">
             <p className="font-serif text-xl tracking-widest text-white italic opacity-90 sm:text-2xl md:text-5xl">

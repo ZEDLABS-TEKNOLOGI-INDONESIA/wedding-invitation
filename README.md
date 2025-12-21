@@ -2,7 +2,7 @@
 
 Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun menggunakan **Astro**, **React**, **Tailwind CSS**, dan **SQLite**. Website ini mendukung mode gelap (dark mode), animasi halus, musik latar otomatis, dan sistem manajemen tamu yang terintegrasi.
 
-![Banner](gambar.png)
+![Banner](https://via.placeholder.com/1200x600?text=Wedding+Invitation+Banner)
 
 ---
 
@@ -23,6 +23,7 @@ Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun 
   - _Smart Update_: Jika tamu dengan nama yang sama mengisi ulang, data lama akan diperbarui (tidak duplikat).
   - _Dashboard_: Menampilkan statistik kehadiran secara _real-time_ di halaman form.
   - _Input Counter_: Input jumlah tamu dengan batasan maksimum yang bisa dikonfigurasi.
+  - _Rate Limiting_: Proteksi spam sederhana berdasarkan IP.
 - **Buku Tamu (Wishes)**: Fitur kirim ucapan dan doa dengan paginasi dan input yang terkunci jika diakses lewat link khusus.
 - **Integrasi Peta & Kalender**: Tautan langsung ke Google Maps dan fitur "Add to Calendar" (Google/ICS).
 - **Galeri Foto**: Penampil foto interaktif (lightbox) dengan navigasi keyboard.
@@ -31,8 +32,8 @@ Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun 
 ### Teknis
 
 - **Dynamic Configuration**: Mengubah data pengantin, lokasi, musik, dan acara cukup melalui file `.env` tanpa perlu build ulang.
-- **Server-Side Rendering (SSR)**: Menggunakan Astro Node Adapter untuk performa optimal dan SEO.
-- **Database SQLite**: Penyimpanan data tamu dan ucapan yang ringan, cepat, dan mandiri (tanpa perlu setup MySQL/PostgreSQL terpisah).
+- **Server-Side Rendering (SSR)**: Menggunakan Astro Node Adapter dalam mode `standalone` untuk performa optimal dan SEO.
+- **Database SQLite**: Penyimpanan data tamu dan ucapan yang ringan, cepat, dan mandiri (menggunakan `better-sqlite3`).
 - **Optimasi Deployment**: Konfigurasi siap pakai untuk deploy menggunakan PM2 dan Nginx Reverse Proxy.
 
 ---
@@ -42,29 +43,31 @@ Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun 
 ```txt
 .
 ├── src/
-│   ├── components/         # Komponen UI (React)
+│   ├── components/         # Komponen UI (React: Hero, RSVP, Gallery, dll)
 │   ├── layouts/            # Layout dasar halaman (Astro)
-│   ├── lib/                # Konfigurasi Database (SQLite)
+│   ├── lib/                # Konfigurasi Database (SQLite) & Rate Limiter
 │   ├── pages/
-│   │   ├── api/            # API Endpoints (RSVP & Wishes)
+│   │   ├── api/            # API Endpoints (RSVP, Wishes, Export)
 │   │   └── index.astro     # Halaman utama
 │   ├── services/           # Logic penghubung Frontend ke API
-│   ├── styles/             # Global CSS & Tailwind Config
+│   ├── styles/             # Global CSS & Tailwind Theme
 │   ├── utils/              # Helper functions (Calendar, etc)
 │   └── types.ts            # Definisi Tipe TypeScript
-├── public/                 # Aset statis
+├── public/                 # Aset statis (Favicon, Images)
 ├── .env                    # Konfigurasi Data (PENTING)
 ├── astro.config.mjs        # Konfigurasi Astro
 ├── ecosystem.config.cjs    # Konfigurasi PM2 untuk Production
 ├── nginx.conf              # Contoh konfigurasi Nginx
-└── package.json            # Daftar dependensi
+└── package.json            # Daftar dependensi & Scripts
 ```
 
 ---
 
 ## Konfigurasi (.env)
 
-Proyek ini menggunakan variabel lingkungan untuk menyimpan semua data teks dan pengaturan. Buat file `.env` di root folder dan isi sesuai kebutuhan:
+Proyek ini menggunakan variabel lingkungan untuk menyimpan semua data teks dan pengaturan. Salin file `.env.example` menjadi `.env` di root folder dan isi sesuai kebutuhan.
+
+**Penting:** Data kompleks seperti _Bank Accounts_, _Love Story_, dan _Gallery_ harus ditulis dalam format JSON satu baris.
 
 ```properties
 # --- SERVER CONFIG ---
@@ -103,6 +106,7 @@ PUBLIC_AKAD_DAY=Minggu
 PUBLIC_AKAD_DATE=11 Oktober 2025
 PUBLIC_AKAD_START=08:00
 PUBLIC_AKAD_END=10:00
+# Format ISO Wajib: YYYY-MM-DDTHH:mm:ss+07:00
 PUBLIC_AKAD_ISO_START=2025-10-11T08:00:00+07:00
 PUBLIC_AKAD_ISO_END=2025-10-11T10:00:00+07:00
 
@@ -132,7 +136,7 @@ Pastikan Anda sudah menginstal **Node.js** (v18+) dan **Yarn** atau **NPM**.
 1.  **Clone Repository**
 
     ```bash
-    git clone https://github.com/zulfikriyahya/wedding-invitation.git
+    git clone https://github.com/username/wedding-invitation.git
     cd wedding-invitation
     ```
 
@@ -157,7 +161,7 @@ Pastikan Anda sudah menginstal **Node.js** (v18+) dan **Yarn** atau **NPM**.
 
 ## Deployment ke Production (VPS / Dedicated Server)
 
-Proyek ini menggunakan adapter **Node.js Standalone** dan database **SQLite**. Berikut langkah-langkah deploy ke server Ubuntu/CentOS:
+Proyek ini menggunakan adapter **Node.js Standalone** dan database **SQLite**. Berikut langkah-langkah deploy ke server Ubuntu/CentOS/Debian:
 
 ### 1. Build Project
 
@@ -167,11 +171,11 @@ Di komputer lokal Anda, jalankan perintah build:
 yarn build
 ```
 
-Ini akan menghasilkan folder `dist/`.
+Ini akan menghasilkan folder `dist/` dan `node_modules/` (opsional, tergantung config, tapi lebih baik install ulang di server).
 
 ### 2. Upload File ke Server
 
-Upload file/folder berikut ke direktori server (misal: `/var/www/wedding.feyaya.com`):
+Upload file/folder berikut ke direktori server (misal: `/var/www/wedding.example.com`):
 
 - Folder `dist/`
 - File `.env` (**Penting**: Pastikan file ini ada di server)
@@ -184,15 +188,15 @@ Upload file/folder berikut ke direktori server (misal: `/var/www/wedding.feyaya.
 Masuk ke terminal server dan jalankan:
 
 ```bash
-cd /var/www/wedding.feyaya.com
+cd /var/www/wedding.example.com
 yarn install --production
 ```
 
-_Langkah ini penting untuk meng-compile driver SQLite (`better-sqlite3`) sesuai sistem operasi server._
+_Langkah ini penting agar driver SQLite (`better-sqlite3`) terkompilasi sesuai sistem operasi server._
 
 ### 4. Jalankan dengan PM2
 
-Gunakan PM2 untuk menjalankan aplikasi di background. Konfigurasi `ecosystem.config.cjs` sudah diset untuk membaca file `.env`.
+Gunakan PM2 untuk menjalankan aplikasi di background.
 
 ```bash
 pm2 start ecosystem.config.cjs
@@ -202,7 +206,7 @@ pm2 startup
 
 ### 5. Konfigurasi Nginx (Reverse Proxy)
 
-Buat file konfigurasi Nginx (biasanya di `/etc/nginx/sites-available/wedding`) dan isi dengan konten dari file `nginx.conf` yang disertakan di repository ini. Sesuaikan `server_name` dengan domain Anda.
+Buat file konfigurasi Nginx (biasanya di `/etc/nginx/sites-available/wedding`) menggunakan contoh dari file `nginx.conf` di repo ini.
 
 ```bash
 # Link konfigurasi
@@ -213,32 +217,30 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
-### 6. Setup SSL (Opsional tapi Disarankan)
-
-Gunakan Certbot untuk mengaktifkan HTTPS:
-
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d wedding.feyaya.com
-```
-
 ---
 
 ## Personalisasi Undangan
 
-Untuk membuat link undangan spesifik untuk tamu tertentu, tambahkan parameter `?to=` di akhir URL.
+Untuk membuat link undangan spesifik untuk tamu tertentu, tambahkan parameter `?to=` di akhir URL. URL di-encode secara otomatis oleh browser untuk spasi.
 
 **Contoh:**
-`https://wedding.feyaya.com/?to=Budi+Santoso`
+`https://wedding.example.com/?to=Budi+Santoso`
 
-- Nama "Budi Santoso" akan muncul otomatis di sampul undangan.
-- Kolom nama di form RSVP dan Ucapan akan otomatis terisi "Budi Santoso" dan **terkunci** agar tidak bisa diubah sembarangan.
+**Efek:**
+
+1. Nama "Budi Santoso" muncul di **Amplop Depan**.
+2. Nama "Budi Santoso" muncul di **Hero Section**.
+3. Input Nama di form **RSVP** otomatis terisi "Budi Santoso" dan **terkunci**.
+4. Input Nama di form **Wishes** otomatis terisi "Budi Santoso" dan **terkunci**.
 
 ---
 
-## Preview
+## Ekspor Data
 
-[![Preview](gambar.png)](video.mp4)
+Data tamu dan ucapan dapat diekspor ke format CSV melalui API endpoint berikut:
+
+- **Data RSVP**: [https://wedding.example.com/api/export-rsvp](https://wedding.example.com/api/export-rsvp)
+- **Data Wishes**: [https://wedding.example.com/api/export-wishes](https://wedding.example.com/api/export-wishes)
 
 ---
 
