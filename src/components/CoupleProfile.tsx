@@ -15,7 +15,7 @@ const CoupleProfile: React.FC = () => {
             Pasangan Berbahagia
           </h2> */}
           {/* Salam Pembuka */}
-          <span className="font-serif text-lg italic text-accentDark dark:text-accent">
+          <span className="text-accentDark dark:text-accent font-serif text-lg italic">
             {WEDDING_TEXT.opening.salam}
           </span>
 
@@ -34,7 +34,7 @@ const CoupleProfile: React.FC = () => {
           </p>
 
           {/* Sumber Ayat */}
-          <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400">
+          <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
             {WEDDING_TEXT.quote.source}
           </p>
         </div>

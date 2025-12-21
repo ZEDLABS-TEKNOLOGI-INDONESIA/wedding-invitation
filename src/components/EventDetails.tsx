@@ -26,7 +26,7 @@ const EventDetails: React.FC = () => {
   const mapUrl = `https://maps.google.com/maps?q=${WEDDING_CONFIG.venue.latitude},${WEDDING_CONFIG.venue.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
   const handleCalendar = (
     type: "google" | "ics",
-    eventType: "akad" | "resepsi",
+    eventType: "akad" | "resepsi"
   ) => {
     const event = {
       title: `${WEDDING_CONFIG.events[eventType].title} ${WEDDING_CONFIG.couple.bride.name} & ${WEDDING_CONFIG.couple.groom.name}`,
@@ -112,7 +112,7 @@ const EventDetails: React.FC = () => {
                   <button
                     onClick={() =>
                       setActiveDropdown(
-                        activeDropdown === type ? null : (type as any),
+                        activeDropdown === type ? null : (type as any)
                       )
                     }
                     className="bg-primary dark:bg-accentDark tracking-editorial flex w-full items-center justify-center gap-3 rounded-2xl py-4 text-[10px] font-bold text-white uppercase transition-all hover:shadow-2xl active:scale-95 md:gap-5 md:rounded-3xl md:py-6 md:text-[11px]"

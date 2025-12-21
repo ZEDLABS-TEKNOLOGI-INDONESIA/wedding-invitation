@@ -69,7 +69,7 @@ const App: React.FC = () => {
           "opacity-0",
           "transition-all",
           "duration-[1.5s]",
-          "ease-out",
+          "ease-out"
         );
         observer.observe(section);
       });
@@ -185,7 +185,7 @@ const App: React.FC = () => {
                 {WEDDING_CONFIG.couple.bride.name} &{" "}
                 {WEDDING_CONFIG.couple.groom.name}
               </p>
-              <p className="text-[10px] mt-2">{WEDDING_TEXT.closing.family}</p>
+              <p className="mt-2 text-[10px]">{WEDDING_TEXT.closing.family}</p>
             </div>
           </div>
         </div>
