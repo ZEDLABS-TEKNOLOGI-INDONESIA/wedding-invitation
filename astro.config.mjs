@@ -23,6 +23,36 @@ export default defineConfig({
         workbox: {
           navigateFallback: "/404",
           globPatterns: ["**/*.{css,js,html,svg,png,ico,txt}"],
+          runtimeCaching: [
+            {
+              // Cache gambar dari Unsplash, Placehold.co, Google Fonts, dll
+              urlPattern:
+                /^https:\/\/(images\.unsplash\.com|placehold\.co|fonts\.googleapis\.com|fonts\.gstatic\.com)\/.*/i,
+              handler: "CacheFirst", // Strategi: Cek Cache dulu, baru download
+              options: {
+                cacheName: "external-images-fonts",
+                expiration: {
+                  maxEntries: 50, // Maksimal simpan 50 file
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // Simpan selama 30 Hari
+                },
+                cacheableResponse: {
+                  statuses: [0, 200], // Cache jika sukses
+                },
+              },
+            },
+            {
+              // Cache Musik (MP3)
+              urlPattern: ({ url }) => url.pathname.endsWith(".mp3"),
+              handler: "CacheFirst",
+              options: {
+                cacheName: "audio-cache",
+                expiration: {
+                  maxEntries: 5,
+                  maxAgeSeconds: 60 * 60 * 24 * 30,
+                },
+              },
+            },
+          ],
         },
         manifest: {
           name: "The Wedding of Fera & Yahya",
