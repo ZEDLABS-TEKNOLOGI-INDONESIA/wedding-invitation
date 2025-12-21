@@ -7,6 +7,8 @@ EXCLUDE_PATTERNS=(
   "./.yarn/*" 
   "./.astro/*" 
   "./dist/*" 
+  "./public/*" 
+  "./database/*" 
   "./package-lock.json" 
   "./pnpm-lock.yaml"
   "./bun.lockb"
