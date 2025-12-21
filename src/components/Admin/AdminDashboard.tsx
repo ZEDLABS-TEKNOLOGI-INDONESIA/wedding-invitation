@@ -61,8 +61,8 @@ const DataTable = <T extends { id: number }>({
   const filteredData = useMemo(() => {
     return data.filter((item) =>
       Object.values(item).some((val) =>
-        String(val).toLowerCase().includes(search.toLowerCase()),
-      ),
+        String(val).toLowerCase().includes(search.toLowerCase())
+      )
     );
   }, [data, search]);
 
@@ -77,7 +77,7 @@ const DataTable = <T extends { id: number }>({
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (page - 1) * pageSize,
-    page * pageSize,
+    page * pageSize
   );
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,7 +90,7 @@ const DataTable = <T extends { id: number }>({
 
   const handleSelectOne = (id: number) => {
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
     );
   };
 
@@ -148,7 +148,7 @@ const DataTable = <T extends { id: number }>({
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
+            <thead className="bg-slate-50 text-xs text-slate-500 uppercase dark:bg-slate-900/50 dark:text-slate-400">
               <tr>
                 {onBulkDelete && (
                   <th className="w-4 px-6 py-4">
@@ -233,7 +233,7 @@ const DataTable = <T extends { id: number }>({
                               onClick={() => {
                                 if (
                                   confirm(
-                                    "Yakin hapus data ini secara permanen?",
+                                    "Yakin hapus data ini secara permanen?"
                                   )
                                 )
                                   onDelete(item.id);
@@ -295,7 +295,7 @@ const AdminDashboard = ({
   siteUrl: string;
 }) => {
   const [activeTab, setActiveTab] = useState<"rsvp" | "wishes" | "qr" | "pdf">(
-    "rsvp",
+    "rsvp"
   );
 
   // Data States
@@ -358,11 +358,11 @@ const AdminDashboard = ({
       if (res.ok) {
         if (type === "rsvp") {
           setRsvps((prev) =>
-            prev.map((item) => (item.id === id ? { ...item, ...data } : item)),
+            prev.map((item) => (item.id === id ? { ...item, ...data } : item))
           );
         } else {
           setWishes((prev) =>
-            prev.map((item) => (item.id === id ? { ...item, ...data } : item)),
+            prev.map((item) => (item.id === id ? { ...item, ...data } : item))
           );
         }
         setIsModalOpen(false);
@@ -418,12 +418,12 @@ const AdminDashboard = ({
 
       {/* --- TAB: RSVP --- */}
       {activeTab === "rsvp" && (
-        <div className="space-y-6 animate-reveal">
+        <div className="animate-reveal space-y-6">
           <div className="flex justify-end">
             <a
               href="/api/export-rsvp"
               target="_blank"
-              className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700 transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-green-700"
             >
               <Download className="h-4 w-4" /> EXPORT CSV
             </a>
@@ -479,12 +479,12 @@ const AdminDashboard = ({
 
       {/* --- TAB: WISHES --- */}
       {activeTab === "wishes" && (
-        <div className="space-y-6 animate-reveal">
+        <div className="animate-reveal space-y-6">
           <div className="flex justify-end">
             <a
               href="/api/export-wishes"
               target="_blank"
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-700"
             >
               <Download className="h-4 w-4" /> EXPORT CSV
             </a>
@@ -523,14 +523,14 @@ const AdminDashboard = ({
 
       {/* --- TAB: QR --- */}
       {activeTab === "qr" && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800 animate-reveal">
+        <div className="animate-reveal rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <QRCodeManager siteUrl={siteUrl} />
         </div>
       )}
 
       {/* --- TAB: PDF --- */}
       {activeTab === "pdf" && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800 animate-reveal">
+        <div className="animate-reveal rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <InvitationManager />
         </div>
       )}
@@ -554,7 +554,7 @@ const AdminDashboard = ({
                 handleUpdate(
                   activeTab === "rsvp" ? "rsvp" : "wish",
                   editingItem.id,
-                  data,
+                  data
                 );
               }}
               className="space-y-4"
@@ -562,7 +562,7 @@ const AdminDashboard = ({
               {activeTab === "rsvp" ? (
                 <>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">
+                    <label className="text-xs font-bold text-slate-500 uppercase">
                       Nama Tamu
                     </label>
                     <input
@@ -574,7 +574,7 @@ const AdminDashboard = ({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-bold uppercase text-slate-500">
+                      <label className="text-xs font-bold text-slate-500 uppercase">
                         Status
                       </label>
                       <select
@@ -588,7 +588,7 @@ const AdminDashboard = ({
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold uppercase text-slate-500">
+                      <label className="text-xs font-bold text-slate-500 uppercase">
                         Pax
                       </label>
                       <input
@@ -601,7 +601,7 @@ const AdminDashboard = ({
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">
+                    <label className="text-xs font-bold text-slate-500 uppercase">
                       Pesan
                     </label>
                     <textarea
@@ -615,7 +615,7 @@ const AdminDashboard = ({
               ) : (
                 <>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">
+                    <label className="text-xs font-bold text-slate-500 uppercase">
                       Nama Pengirim
                     </label>
                     <input
@@ -626,7 +626,7 @@ const AdminDashboard = ({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">
+                    <label className="text-xs font-bold text-slate-500 uppercase">
                       Ucapan
                     </label>
                     <textarea

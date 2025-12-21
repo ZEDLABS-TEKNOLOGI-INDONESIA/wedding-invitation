@@ -26,14 +26,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     if (action === "update_rsvp") {
       const { guest_name, attendance, guest_count, message } = data;
       db.prepare(
-        "UPDATE rsvps SET guest_name=?, attendance=?, guest_count=?, message=? WHERE id=?",
+        "UPDATE rsvps SET guest_name=?, attendance=?, guest_count=?, message=? WHERE id=?"
       ).run(guest_name, attendance, guest_count, message, id);
       return new Response(JSON.stringify({ success: true }));
     }
 
     if (action === "delete_rsvp") {
       db.prepare(`DELETE FROM rsvps WHERE id IN (${placeholders})`).run(
-        ...targetIds,
+        ...targetIds
       );
       return new Response(JSON.stringify({ success: true }));
     }
@@ -44,14 +44,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       db.prepare("UPDATE wishes SET name=?, message=? WHERE id=?").run(
         name,
         message,
-        id,
+        id
       );
       return new Response(JSON.stringify({ success: true }));
     }
 
     if (action === "delete_wish") {
       db.prepare(`DELETE FROM wishes WHERE id IN (${placeholders})`).run(
-        ...targetIds,
+        ...targetIds
       );
       return new Response(JSON.stringify({ success: true }));
     }
@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     console.error("Admin API Error:", error);
     return new Response(
       JSON.stringify({ error: error.message || "Server Error" }),
-      { status: 500 },
+      { status: 500 }
     );
   }
 };

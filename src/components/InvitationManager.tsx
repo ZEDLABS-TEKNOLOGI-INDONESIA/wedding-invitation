@@ -14,7 +14,6 @@ import {
   FileSpreadsheet,
   Check,
   FileText,
-  Trash2,
 } from "lucide-react";
 import { WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
 
@@ -100,7 +99,7 @@ const InvitationManager: React.FC = () => {
     x: number,
     y: number,
     size: number,
-    angle: number,
+    angle: number
   ) => {
     const rad = (angle * Math.PI) / 180;
     const ctx = { c: Math.cos(rad), s: Math.sin(rad) };
@@ -111,12 +110,12 @@ const InvitationManager: React.FC = () => {
     doc.setFillColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
-      currentTheme.secondary[2],
+      currentTheme.secondary[2]
     );
     doc.setDrawColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.setLineWidth(0.15);
     const p1 = t(0, 0);
@@ -134,7 +133,7 @@ const InvitationManager: React.FC = () => {
     doc.setDrawColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.setLineWidth(0.25);
     doc.circle(x, y, size, "FD");
@@ -161,7 +160,7 @@ const InvitationManager: React.FC = () => {
     doc: jsPDF,
     cx: number,
     cy: number,
-    rot: number,
+    rot: number
   ) => {
     const leaves = [
       { s: 1.6, a: rot + 5, d: 9 },
@@ -194,7 +193,7 @@ const InvitationManager: React.FC = () => {
     doc.setDrawColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.setLineWidth(0.5);
     doc.rect(m, m, w - m * 2, h - m * 2);
@@ -213,7 +212,7 @@ const InvitationManager: React.FC = () => {
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
-      currentTheme.secondary[2],
+      currentTheme.secondary[2]
     );
     doc.setLineWidth(0.1);
     const midTop = { x: width / 2, y: 8 };
@@ -253,7 +252,7 @@ const InvitationManager: React.FC = () => {
     doc.setFillColor(
       currentTheme.bg[0],
       currentTheme.bg[1],
-      currentTheme.bg[2],
+      currentTheme.bg[2]
     );
     doc.rect(0, 0, width, height, "F");
 
@@ -265,7 +264,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
-      currentTheme.textMuted[2],
+      currentTheme.textMuted[2]
     );
     doc.text("THE WEDDING OF", cx, 50, { align: "center" });
     doc.setFont("times", "italic");
@@ -273,7 +272,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
-      currentTheme.textMain[2],
+      currentTheme.textMain[2]
     );
     doc.text(WEDDING_CONFIG.couple.bride.name, cx, 75, { align: "center" });
     doc.setFont("times", "normal");
@@ -281,7 +280,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.text("&", cx, 88, { align: "center" });
     doc.setFont("times", "italic");
@@ -289,13 +288,13 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
-      currentTheme.textMain[2],
+      currentTheme.textMain[2]
     );
     doc.text(WEDDING_CONFIG.couple.groom.name, cx, 105, { align: "center" });
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
-      currentTheme.secondary[2],
+      currentTheme.secondary[2]
     );
     doc.setLineWidth(0.2);
     doc.line(cx - 20, 115, cx + 20, 115);
@@ -304,7 +303,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
-      currentTheme.textMuted[2],
+      currentTheme.textMuted[2]
     );
     doc.text(WEDDING_CONFIG.events.resepsi.date.toUpperCase(), cx, 125, {
       align: "center",
@@ -317,7 +316,7 @@ const InvitationManager: React.FC = () => {
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
-      currentTheme.secondary[2],
+      currentTheme.secondary[2]
     );
     doc.setLineWidth(0.3);
     doc.roundedRect(cx - boxW / 2 + 0.5, boxY + 0.5, boxW, boxH, 2, 2, "F");
@@ -325,7 +324,7 @@ const InvitationManager: React.FC = () => {
     doc.setDrawColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.setLineWidth(0.5);
     doc.roundedRect(cx - boxW / 2, boxY, boxW, boxH, 2, 2, "FD");
@@ -340,7 +339,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
-      currentTheme.textMain[2],
+      currentTheme.textMain[2]
     );
     const splitName = doc.splitTextToSize(guest.name, boxW - 5);
     doc.text(splitName, cx, boxY + 18, { align: "center" });
@@ -350,7 +349,7 @@ const InvitationManager: React.FC = () => {
       doc.setTextColor(
         currentTheme.textMuted[0],
         currentTheme.textMuted[1],
-        currentTheme.textMuted[2],
+        currentTheme.textMuted[2]
       );
       doc.text(guest.address, cx, boxY + 26, { align: "center" });
     }
@@ -363,7 +362,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
-      currentTheme.textMain[2],
+      currentTheme.textMain[2]
     );
     doc.text(WEDDING_TEXT.opening.salam, cx, 50, { align: "center" });
     doc.setFont("times", "italic");
@@ -371,7 +370,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
-      currentTheme.textMuted[2],
+      currentTheme.textMuted[2]
     );
     const quote = doc.splitTextToSize(WEDDING_TEXT.quote.ar_rum, width - 60);
     doc.text(quote, cx, 60, { align: "center" });
@@ -381,14 +380,14 @@ const InvitationManager: React.FC = () => {
       "Kami bermaksud menyelenggarakan pernikahan putra-putri kami:",
       cx,
       95,
-      { align: "center" },
+      { align: "center" }
     );
     doc.setFont("times", "bold");
     doc.setFontSize(16);
     doc.setTextColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.text(WEDDING_CONFIG.couple.bride.fullName, cx, 110, {
       align: "center",
@@ -398,7 +397,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
-      currentTheme.textMuted[2],
+      currentTheme.textMuted[2]
     );
     doc.text(WEDDING_CONFIG.couple.bride.parents, cx, 117, { align: "center" });
     doc.setFont("times", "italic");
@@ -409,7 +408,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.text(WEDDING_CONFIG.couple.groom.fullName, cx, 137, {
       align: "center",
@@ -419,7 +418,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
-      currentTheme.textMuted[2],
+      currentTheme.textMuted[2]
     );
     doc.text(WEDDING_CONFIG.couple.groom.parents, cx, 144, { align: "center" });
 
@@ -431,7 +430,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
-      currentTheme.textMain[2],
+      currentTheme.textMain[2]
     );
     doc.text("Insya Allah acara akan dilaksanakan pada:", cx, 35, {
       align: "center",
@@ -441,7 +440,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.text(WEDDING_CONFIG.events.akad.title, cx, 50, { align: "center" });
     doc.setFont("times", "normal");
@@ -449,24 +448,24 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
-      currentTheme.textMain[2],
+      currentTheme.textMain[2]
     );
     doc.text(
       `${WEDDING_CONFIG.events.akad.day}, ${WEDDING_CONFIG.events.akad.date}`,
       cx,
       57,
-      { align: "center" },
+      { align: "center" }
     );
     doc.text(
       `Pukul: ${WEDDING_CONFIG.events.akad.startTime} - ${WEDDING_CONFIG.events.akad.endTime} WIB`,
       cx,
       62,
-      { align: "center" },
+      { align: "center" }
     );
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
-      currentTheme.secondary[2],
+      currentTheme.secondary[2]
     );
     doc.setLineWidth(0.15);
     doc.line(cx - 20, 70, cx - 5, 70);
@@ -474,7 +473,7 @@ const InvitationManager: React.FC = () => {
     doc.setFillColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     for (let i = 0; i < 3; i++) {
       doc.circle(cx - 2 + i, 70, 0.3, "F");
@@ -484,7 +483,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.text(WEDDING_CONFIG.events.resepsi.title, cx, 85, { align: "center" });
     doc.setFont("times", "normal");
@@ -492,26 +491,26 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
-      currentTheme.textMain[2],
+      currentTheme.textMain[2]
     );
     doc.text(
       `${WEDDING_CONFIG.events.resepsi.day}, ${WEDDING_CONFIG.events.resepsi.date}`,
       cx,
       92,
-      { align: "center" },
+      { align: "center" }
     );
     doc.text(
       `Pukul: ${WEDDING_CONFIG.events.resepsi.startTime} - ${WEDDING_CONFIG.events.resepsi.endTime} WIB`,
       cx,
       97,
-      { align: "center" },
+      { align: "center" }
     );
     doc.setFont("times", "bold");
     doc.setFontSize(12);
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
-      currentTheme.textMain[2],
+      currentTheme.textMain[2]
     );
     doc.text("BERTEMPAT DI:", cx, 115, { align: "center" });
     doc.setFont("times", "normal");
@@ -521,7 +520,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
-      currentTheme.textMuted[2],
+      currentTheme.textMuted[2]
     );
     const addr = doc.splitTextToSize(WEDDING_CONFIG.venue.address, 80);
     doc.text(addr, cx, 128, { align: "center" });
@@ -530,7 +529,7 @@ const InvitationManager: React.FC = () => {
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
-      currentTheme.secondary[2],
+      currentTheme.secondary[2]
     );
     doc.setLineWidth(0.3);
     doc.roundedRect(
@@ -539,7 +538,7 @@ const InvitationManager: React.FC = () => {
       qrSize + 3,
       qrSize + 3,
       1,
-      1,
+      1
     );
     doc.addImage(qrMapsImg, "PNG", cx - qrSize / 2, qrY, qrSize, qrSize);
     doc.text("Scan Google Maps", cx, qrY + qrSize + 5, { align: "center" });
@@ -552,7 +551,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.text("E-INVITATION", cx, 50, { align: "center" });
     const qrDigiSize = 40;
@@ -560,12 +559,12 @@ const InvitationManager: React.FC = () => {
     doc.setFillColor(
       currentTheme.bg[0],
       currentTheme.bg[1],
-      currentTheme.bg[2],
+      currentTheme.bg[2]
     );
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
-      currentTheme.secondary[2],
+      currentTheme.secondary[2]
     );
     doc.setLineWidth(0.3);
     doc.roundedRect(
@@ -575,12 +574,12 @@ const InvitationManager: React.FC = () => {
       qrDigiSize + 5,
       2,
       2,
-      "FD",
+      "FD"
     );
     doc.setDrawColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.setLineWidth(0.4);
     doc.roundedRect(
@@ -590,7 +589,7 @@ const InvitationManager: React.FC = () => {
       qrDigiSize + 4,
       1.5,
       1.5,
-      "D",
+      "D"
     );
     doc.addImage(
       qrGuestImg,
@@ -598,20 +597,20 @@ const InvitationManager: React.FC = () => {
       cx - qrDigiSize / 2,
       digiY,
       qrDigiSize,
-      qrDigiSize,
+      qrDigiSize
     );
     doc.setFont("times", "normal");
     doc.setFontSize(9);
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
-      currentTheme.textMuted[2],
+      currentTheme.textMuted[2]
     );
     doc.text(
       "Scan untuk buka undangan digital & konfirmasi kehadiran",
       cx,
       digiY + qrDigiSize + 8,
-      { align: "center" },
+      { align: "center" }
     );
     const closingY = 135;
     doc.setFont("times", "normal");
@@ -619,7 +618,7 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
-      currentTheme.textMain[2],
+      currentTheme.textMain[2]
     );
     const closing = doc.splitTextToSize(WEDDING_TEXT.closing.text, width - 60);
     doc.text(closing, cx, closingY, { align: "center" });
@@ -637,18 +636,18 @@ const InvitationManager: React.FC = () => {
     doc.setTextColor(
       currentTheme.primary[0],
       currentTheme.primary[1],
-      currentTheme.primary[2],
+      currentTheme.primary[2]
     );
     doc.text(
       `${WEDDING_CONFIG.couple.bride.name} & ${WEDDING_CONFIG.couple.groom.name}`,
       cx,
       closingY + 38,
-      { align: "center" },
+      { align: "center" }
     );
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
-      currentTheme.secondary[2],
+      currentTheme.secondary[2]
     );
     doc.setLineWidth(0.1);
     for (let i = 0; i < 5; i++) {
@@ -671,7 +670,7 @@ const InvitationManager: React.FC = () => {
     const doc = await generatePDFDoc(singleData);
     handleSaveAs(
       doc.output("blob"),
-      `Inv_${singleData.name.replace(/[^a-zA-Z0-9]/g, "_")}_${currentTheme.id}.pdf`,
+      `Inv_${singleData.name.replace(/[^a-zA-Z0-9]/g, "_")}_${currentTheme.id}.pdf`
     );
   };
 
@@ -725,7 +724,7 @@ const InvitationManager: React.FC = () => {
         const chunk = bulkData.slice(i, i + CHUNK_SIZE);
 
         setStatusMsg(
-          `Generating PDF ${i + 1} - ${Math.min(i + chunk.length, bulkData.length)} dari ${bulkData.length}...`,
+          `Generating PDF ${i + 1} - ${Math.min(i + chunk.length, bulkData.length)} dari ${bulkData.length}...`
         );
 
         await Promise.all(
@@ -736,7 +735,7 @@ const InvitationManager: React.FC = () => {
               .replace(/[^a-zA-Z0-9]/g, "_")
               .substring(0, 50);
             folder?.file(`${i + idx + 1}_${safeName}.pdf`, blob);
-          }),
+          })
         );
 
         const currentCount = Math.min(i + CHUNK_SIZE, bulkData.length);
@@ -749,7 +748,7 @@ const InvitationManager: React.FC = () => {
       const content = await zip.generateAsync({ type: "blob" });
       handleSaveAs(
         content,
-        `Undangan-${currentTheme.id}-${new Date().toISOString().slice(0, 10)}.zip`,
+        `Undangan-${currentTheme.id}-${new Date().toISOString().slice(0, 10)}.zip`
       );
       setStatusMsg("Selesai!");
     } catch (error) {
@@ -963,7 +962,7 @@ const InvitationManager: React.FC = () => {
               </div>
 
               <label
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:opacity-90 dark:bg-white dark:text-slate-900 ${isReadingCsv ? "opacity-50 pointer-events-none" : ""}`}
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:opacity-90 dark:bg-white dark:text-slate-900 ${isReadingCsv ? "pointer-events-none opacity-50" : ""}`}
               >
                 Pilih File CSV
                 <input
@@ -1012,7 +1011,7 @@ const InvitationManager: React.FC = () => {
                   <button
                     onClick={processBulk}
                     disabled={isProcessing}
-                    className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-slate-900 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:bg-slate-800 hover:shadow-slate-500/20 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                    className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-slate-900 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-slate-500/20 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                   >
                     <div className="relative z-10 flex items-center gap-2">
                       {isProcessing ? (
@@ -1030,14 +1029,14 @@ const InvitationManager: React.FC = () => {
 
               {/* Progress Bar Visual */}
               {isProcessing && (
-                <div className="space-y-2 animate-reveal">
+                <div className="animate-reveal space-y-2">
                   <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
                     <span>{statusMsg}</span>
                     <span>{progress}%</span>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-3 dark:bg-slate-700 overflow-hidden">
+                  <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                     <div
-                      className="bg-blue-600 h-full rounded-full transition-all duration-300 ease-out"
+                      className="h-full rounded-full bg-blue-600 transition-all duration-300 ease-out"
                       style={{ width: `${progress}%` }}
                     ></div>
                   </div>

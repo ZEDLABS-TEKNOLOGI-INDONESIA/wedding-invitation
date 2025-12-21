@@ -11,7 +11,6 @@ import {
   Loader2,
   FileText,
   CheckCircle2,
-  Trash2,
 } from "lucide-react";
 import { WEDDING_CONFIG } from "../constants";
 
@@ -127,7 +126,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         const chunk = bulkNames.slice(i, i + CHUNK_SIZE);
 
         setStatusMsg(
-          `Memproses ${i + 1} - ${Math.min(i + chunk.length, bulkNames.length)} dari ${bulkNames.length}...`,
+          `Memproses ${i + 1} - ${Math.min(i + chunk.length, bulkNames.length)} dari ${bulkNames.length}...`
         );
 
         await Promise.all(
@@ -144,11 +143,11 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                 base64: true,
               });
             }
-          }),
+          })
         );
 
         const currentProgress = Math.round(
-          ((i + chunk.length) / bulkNames.length) * 100,
+          ((i + chunk.length) / bulkNames.length) * 100
         );
         setProgress(currentProgress);
 
@@ -159,7 +158,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       const content = await zip.generateAsync({ type: "blob" });
       handleSaveAs(
         content,
-        `QR-Codes-${new Date().toISOString().slice(0, 10)}.zip`,
+        `QR-Codes-${new Date().toISOString().slice(0, 10)}.zip`
       );
       setStatusMsg("Selesai!");
     } catch (e) {
@@ -178,7 +177,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     if (canvas) {
       handleSaveAs(
         canvas.toDataURL("image/png"),
-        `QR-${singleName || "Wedding"}.png`,
+        `QR-${singleName || "Wedding"}.png`
       );
     }
   };
@@ -239,7 +238,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               <button
                 onClick={downloadSingle}
                 disabled={!singleName}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-xs font-bold text-white uppercase shadow-lg hover:bg-blue-700 disabled:opacity-50 transition-all"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-xs font-bold text-white uppercase shadow-lg transition-all hover:bg-blue-700 disabled:opacity-50"
               >
                 <Download className="h-4 w-4" /> Download PNG
               </button>
@@ -266,7 +265,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                 }
               />
               <div className="mt-4 text-center">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
                   Preview Desain
                 </p>
               </div>
@@ -310,7 +309,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               </div>
 
               <label
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:opacity-90 dark:bg-white dark:text-slate-900 ${isReadingCsv ? "opacity-50 pointer-events-none" : ""}`}
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:opacity-90 dark:bg-white dark:text-slate-900 ${isReadingCsv ? "pointer-events-none opacity-50" : ""}`}
               >
                 Pilih File CSV
                 <input
@@ -358,7 +357,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                   <button
                     onClick={downloadAllZip}
                     disabled={isProcessing}
-                    className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-blue-600 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:bg-blue-700 hover:shadow-blue-500/20 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-blue-600 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-blue-500/20 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     <div className="relative z-10 flex items-center gap-2">
                       {isProcessing ? (
@@ -376,7 +375,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
               {/* Progress Bar */}
               {isProcessing && (
-                <div className="space-y-2 animate-reveal">
+                <div className="animate-reveal space-y-2">
                   <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
                     <span>{statusMsg}</span>
                     <span>{progress}%</span>
@@ -452,7 +451,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               </div>
 
               {bulkNames.length > 50 && (
-                <p className="text-center text-xs italic text-slate-400">
+                <p className="text-center text-xs text-slate-400 italic">
                   ... dan {bulkNames.length - 50} QR Code lainnya (disembunyikan
                   agar browser tidak berat, namun tetap akan terunduh).
                 </p>

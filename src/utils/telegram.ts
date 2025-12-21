@@ -41,7 +41,7 @@ export const sendTelegramNotification = async (text: string) => {
       const errorData = await response.text();
       console.error(
         `❌ Gagal kirim Telegram (HTTP ${response.status}):`,
-        errorData,
+        errorData
       );
     } else {
       // console.log("✅ Notifikasi Telegram terkirim");

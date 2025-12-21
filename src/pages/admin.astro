@@ -14,7 +14,12 @@ if (Astro.request.method === "POST") {
   if (action === "login") {
     const passwordInput = formData.get("password")?.toString();
     if (passwordInput === ADMIN_PASSWORD) {
-      Astro.cookies.set(COOKIE_NAME, "true", { path: "/", httpOnly: true, secure: import.meta.env.PROD, maxAge: 60 * 60 * 24 });
+      Astro.cookies.set(COOKIE_NAME, "true", {
+        path: "/",
+        httpOnly: true,
+        secure: import.meta.env.PROD,
+        maxAge: 60 * 60 * 24,
+      });
       return Astro.redirect("/admin");
     }
   }
@@ -25,7 +30,9 @@ if (Astro.request.method === "POST") {
 }
 
 const isAuthenticated = Astro.cookies.has(COOKIE_NAME);
-let rsvps = [], wishes = [], stats = { total: 0, hadir: 0, ragu: 0, tidak: 0, guestCount: 0 };
+let rsvps = [],
+  wishes = [],
+  stats = { total: 0, hadir: 0, ragu: 0, tidak: 0, guestCount: 0 };
 
 if (isAuthenticated) {
   rsvps = db.prepare("SELECT * FROM rsvps ORDER BY created_at DESC").all();
@@ -41,63 +48,119 @@ if (isAuthenticated) {
 ---
 
 <Layout title="Admin Dashboard">
-  <main class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200">
-    {!isAuthenticated ? (
-      <div class="flex h-screen w-full items-center justify-center px-4">
-        <div class="w-full max-w-md space-y-8 rounded-2xl bg-white p-10 shadow-xl dark:bg-slate-800">
-          <div class="text-center">
-            <h1 class="font-serif text-3xl font-bold text-slate-900 italic dark:text-white">Admin Access</h1>
+  <main
+    class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200"
+  >
+    {
+      !isAuthenticated ? (
+        <div class="flex h-screen w-full items-center justify-center px-4">
+          <div class="w-full max-w-md space-y-8 rounded-2xl bg-white p-10 shadow-xl dark:bg-slate-800">
+            <div class="text-center">
+              <h1 class="font-serif text-3xl font-bold text-slate-900 italic dark:text-white">
+                Admin Access
+              </h1>
+            </div>
+            <form method="POST" class="mt-8 space-y-6">
+              <input type="hidden" name="action" value="login" />
+              <input
+                type="password"
+                name="password"
+                required
+                class="block w-full rounded-lg border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                placeholder="Password..."
+              />
+              <button
+                type="submit"
+                class="w-full rounded-lg bg-slate-900 px-4 py-4 text-sm font-bold text-white hover:bg-slate-800 dark:bg-blue-600"
+              >
+                MASUK
+              </button>
+            </form>
           </div>
-          <form method="POST" class="mt-8 space-y-6">
-            <input type="hidden" name="action" value="login" />
-            <input type="password" name="password" required class="block w-full rounded-lg border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white" placeholder="Password..." />
-            <button type="submit" class="w-full rounded-lg bg-slate-900 px-4 py-4 text-sm font-bold text-white hover:bg-slate-800 dark:bg-blue-600">MASUK</button>
-          </form>
         </div>
-      </div>
-    ) : (
-      <div class="container mx-auto max-w-7xl px-4 py-10">
-        <div class="mb-10 flex flex-col items-center justify-between gap-4 md:flex-row">
-          <div>
-            <h1 class="font-serif text-3xl font-bold italic md:text-4xl">Wedding Dashboard</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400">Selamat datang, Admin</p>
+      ) : (
+        <div class="container mx-auto max-w-7xl px-4 py-10">
+          <div class="mb-10 flex flex-col items-center justify-between gap-4 md:flex-row">
+            <div>
+              <h1 class="font-serif text-3xl font-bold italic md:text-4xl">
+                Wedding Dashboard
+              </h1>
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                Selamat datang, Admin
+              </p>
+            </div>
+            <form method="POST">
+              <input type="hidden" name="action" value="logout" />
+              <button class="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
+                <LogOut className="h-4 w-4" /> LOGOUT
+              </button>
+            </form>
           </div>
-          <form method="POST">
-            <input type="hidden" name="action" value="logout" />
-            <button class="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-              <LogOut className="h-4 w-4" /> LOGOUT
-            </button>
-          </form>
-        </div>
 
-        {/* STATS */}
-        <div class="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
-           <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-slate-400"><Users className="h-5 w-5" /><span class="text-xs font-bold uppercase">Total Respon</span></div>
-              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
-           </div>
-           <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-green-500"><CheckCircle2 className="h-5 w-5" /><span class="text-xs font-bold uppercase">Hadir</span></div>
-              <div class="mt-2 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-900 dark:text-white">{stats.hadir}</span><span class="text-lg font-medium text-slate-400">({stats.guestCount} Pax)</span></div>
-           </div>
-           <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-yellow-500"><HelpCircle className="h-5 w-5" /><span class="text-xs font-bold uppercase">Ragu</span></div>
-              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{stats.ragu}</p>
-           </div>
-           <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-red-500"><XCircle className="h-5 w-5" /><span class="text-xs font-bold uppercase">Tidak Hadir</span></div>
-              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{stats.tidak}</p>
-           </div>
-        </div>
+          {/* STATS */}
+          <div class="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
+            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+              <div class="flex items-center gap-3 text-slate-400">
+                <>
+                  <Users className="h-5 w-5" />
+                  <span class="text-xs font-bold uppercase">Total Respon</span>
+                </>
+              </div>
+              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                {stats.total}
+              </p>
+            </div>
+            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+              <div class="flex items-center gap-3 text-green-500">
+                <>
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span class="text-xs font-bold uppercase">Hadir</span>
+                </>
+              </div>
+              <div class="mt-2 flex items-baseline gap-2">
+                <>
+                  <span class="text-3xl font-bold text-slate-900 dark:text-white">
+                    {stats.hadir}
+                  </span>
+                  <span class="text-lg font-medium text-slate-400">
+                    ({stats.guestCount} Pax)
+                  </span>
+                </>
+              </div>
+            </div>
+            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+              <div class="flex items-center gap-3 text-yellow-500">
+                <>
+                  <HelpCircle className="h-5 w-5" />
+                  <span class="text-xs font-bold uppercase">Ragu</span>
+                </>
+              </div>
+              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                {stats.ragu}
+              </p>
+            </div>
+            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+              <div class="flex items-center gap-3 text-red-500">
+                <>
+                  <XCircle className="h-5 w-5" />
+                  <span class="text-xs font-bold uppercase">Tidak Hadir</span>
+                </>
+              </div>
+              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                {stats.tidak}
+              </p>
+            </div>
+          </div>
 
-        {/* MAIN DASHBOARD */}
-        <AdminDashboard 
-          client:load 
-          initialRsvps={rsvps} 
-          initialWishes={wishes} 
-          siteUrl={Astro.site?.toString() || "https://wedding.feyaya.com"} 
-        />
-      </div>
-    )}
+          {/* MAIN DASHBOARD */}
+          <AdminDashboard
+            client:load
+            initialRsvps={rsvps}
+            initialWishes={wishes}
+            siteUrl={Astro.site?.toString() || "https://wedding.feyaya.com"}
+          />
+        </div>
+      )
+    }
   </main>
 </Layout>
