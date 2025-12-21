@@ -9,25 +9,30 @@ import {
   HelpCircle,
   Clock,
   RefreshCcw,
+  Minus,
+  Plus,
 } from "lucide-react";
 import { dbService } from "../services/dbService";
 import { AttendanceStatus, type RSVP } from "../types";
+
 const RSVPForm: React.FC = () => {
   const [formData, setFormData] = useState({
     guest_name: "",
     phone: "",
     attendance: AttendanceStatus.HADIR,
-    guest_count: 1,
+    guest_count: 1, // Default 1 orang
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isNameLocked, setIsNameLocked] = useState(false);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
+
   const loadRSVPs = async () => {
     const data = await dbService.getRSVPs();
     setRsvps(data);
   };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const to = params.get("to");
@@ -37,6 +42,7 @@ const RSVPForm: React.FC = () => {
     }
     loadRSVPs();
   }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.guest_name) return;
@@ -51,32 +57,35 @@ const RSVPForm: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handleGuestCount = (operation: "inc" | "dec") => {
+    setFormData((prev) => {
+      const current = prev.guest_count;
+      let next = current;
+      if (operation === "inc" && current < 5) next = current + 1; // Max 5
+      if (operation === "dec" && current > 1) next = current - 1; // Min 1
+      return { ...prev, guest_count: next };
+    });
+  };
+
   const stats = {
     hadir: rsvps.filter((r) => r.attendance === AttendanceStatus.HADIR).length,
     ragu: rsvps.filter((r) => r.attendance === AttendanceStatus.RAGU).length,
     tidak: rsvps.filter((r) => r.attendance === AttendanceStatus.TIDAK_HADIR)
       .length,
   };
+
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
       case AttendanceStatus.HADIR:
-        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800";
+        return "text-green-600 dark:text-green-400";
       case AttendanceStatus.TIDAK_HADIR:
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800";
+        return "text-red-500 dark:text-red-400";
       default:
-        return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+        return "text-slate-500 dark:text-slate-400";
     }
   };
-  const getStatusIcon = (status: AttendanceStatus) => {
-    switch (status) {
-      case AttendanceStatus.HADIR:
-        return <UserCheck className="w-3 h-3 md:w-4 md:h-4" />;
-      case AttendanceStatus.TIDAK_HADIR:
-        return <UserX className="w-3 h-3 md:w-4 md:h-4" />;
-      default:
-        return <HelpCircle className="w-3 h-3 md:w-4 md:h-4" />;
-    }
-  };
+
   return (
     <section
       id="rsvp"
@@ -179,6 +188,7 @@ const RSVPForm: React.FC = () => {
                           </label>
                         </div>
                       </div>
+
                       <div className="space-y-3 md:space-y-6">
                         <p className="text-[8px] md:text-[9px] uppercase tracking-editorial text-slate-400 font-bold mb-1">
                           Status Kehadiran
@@ -209,6 +219,36 @@ const RSVPForm: React.FC = () => {
                           ))}
                         </div>
                       </div>
+
+                      {formData.attendance === AttendanceStatus.HADIR && (
+                        <div className="space-y-3 animate-reveal">
+                          <p className="text-[8px] md:text-[9px] uppercase tracking-editorial text-slate-400 font-bold mb-1">
+                            Jumlah Tamu
+                          </p>
+                          <div className="flex items-center gap-4">
+                            <button
+                              type="button"
+                              onClick={() => handleGuestCount("dec")}
+                              className="w-10 h-10 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
+                              disabled={formData.guest_count <= 1}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <div className="flex-1 text-center font-serif italic text-xl md:text-2xl border-b border-slate-100 dark:border-white/5 pb-1">
+                              {formData.guest_count} Orang
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleGuestCount("inc")}
+                              className="w-10 h-10 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
+                              disabled={formData.guest_count >= 10}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       <button
                         disabled={isSubmitting}
                         type="submit"
@@ -227,6 +267,7 @@ const RSVPForm: React.FC = () => {
               )}
             </div>
           </div>
+
           <div className="lg:col-span-7 space-y-6">
             <div className="grid grid-cols-3 gap-3 md:gap-6">
               {[
@@ -261,10 +302,11 @@ const RSVPForm: React.FC = () => {
                 </div>
               ))}
             </div>
-            <div className="editorial-card p-6 md:p-14 rounded-[2rem] md:rounded-[4rem] min-h-[400px] max-h-[600px] flex flex-col relative overflow-hidden group shadow-lg border border-slate-100 dark:border-white/5">
+
+            <div className="editorial-card p-6 md:p-14 rounded-[2rem] md:rounded-[4rem] flex flex-col relative overflow-hidden group shadow-lg border border-slate-100 dark:border-white/5">
               <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-50"></div>
               <div className="relative z-10 flex flex-col h-full">
-                <div className="mb-8 flex items-center justify-between">
+                <div className="mb-8 flex items-center justify-between flex-shrink-0">
                   <h3 className="text-xl md:text-3xl font-serif italic text-slate-900 dark:text-white">
                     Daftar Tamu
                   </h3>
@@ -273,48 +315,48 @@ const RSVPForm: React.FC = () => {
                     <span>Terbaru</span>
                   </div>
                 </div>
-                <div className="flex-grow overflow-y-auto pr-2 space-y-3 md:space-y-4 custom-scrollbar">
+
+                <div className="flex-grow overflow-y-auto pr-2 -mr-2 custom-scrollbar h-96 md:h-[450px]">
                   {rsvps.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-40 opacity-40">
+                    <div className="flex flex-col items-center justify-center h-full opacity-40">
                       <Users className="w-8 h-8 mb-2" />
                       <span className="text-xs uppercase tracking-widest">
                         Belum ada data
                       </span>
                     </div>
                   ) : (
-                    rsvps.map((rsvp) => (
-                      <div
-                        key={rsvp.id}
-                        className="flex items-center justify-between p-3 md:p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 transition-all hover:bg-white dark:hover:bg-white/10 hover:shadow-md animate-reveal"
-                      >
-                        <div className="flex items-center gap-3 md:gap-5">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-300">
-                            {rsvp.guest_name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm md:text-lg font-serif italic text-slate-800 dark:text-slate-200">
-                              {rsvp.guest_name}
-                            </span>
-                            <span className="text-[8px] md:text-[9px] uppercase tracking-widest opacity-40">
-                              {new Date(rsvp.created_at).toLocaleDateString(
-                                "id-ID",
-                                { day: "numeric", month: "short" }
-                              )}
-                            </span>
-                          </div>
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {rsvps.map((rsvp) => (
                         <div
-                          className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full border ${getStatusColor(
-                            rsvp.attendance
-                          )}`}
+                          key={rsvp.id}
+                          className="editorial-card p-5 rounded-2xl space-y-4 animate-reveal"
                         >
-                          {getStatusIcon(rsvp.attendance)}
-                          <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest hidden sm:inline-block">
-                            {rsvp.attendance.replace("_", " ")}
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-300 flex-shrink-0">
+                                {rsvp.guest_name.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-base font-serif italic text-slate-800 dark:text-slate-200 truncate">
+                                {rsvp.guest_name}
+                              </span>
+                            </div>
+                            <span
+                              className={`text-xs font-bold uppercase ${getStatusColor(
+                                rsvp.attendance
+                              )}`}
+                            >
+                              {rsvp.attendance.replace("_", " ")}
+                            </span>
+                          </div>
+                          {rsvp.attendance === AttendanceStatus.HADIR && (
+                            <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-white/5 pt-3 mt-3">
+                              <Users className="w-4 h-4" />
+                              <span>Datang ber-{rsvp.guest_count}</span>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
