@@ -2,7 +2,7 @@
 
 Sebuah website undangan pernikahan modern, elegan, dan interaktif yang dibangun menggunakan **Astro**, **React**, **Tailwind CSS**, dan **SQLite**. Website ini mendukung mode gelap (dark mode), animasi halus, musik latar otomatis, dan sistem manajemen tamu yang terintegrasi.
 
-![Banner](https://via.placeholder.com/1200x600?text=Wedding+Invitation+Banner)
+![Banner](./public/thumbnail.png)
 
 ---
 
