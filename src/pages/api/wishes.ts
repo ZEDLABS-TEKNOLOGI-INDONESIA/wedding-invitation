@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (!checkRateLimit(ip, 5, 60000)) {
     return new Response(
       JSON.stringify({ error: "Too many requests. Please try again later." }),
-      { status: 429 },
+      { status: 429 }
     );
   }
 
@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     } else {
       // INSERT
       const insertStmt = db.prepare(
-        "INSERT INTO wishes (name, message, created_at) VALUES (?, ?, ?)",
+        "INSERT INTO wishes (name, message, created_at) VALUES (?, ?, ?)"
       );
       const result = insertStmt.run(name, message, new Date().toISOString());
       actionType = "created";
@@ -96,7 +96,7 @@ ${title}
         id: resultId,
         action: actionType,
       }),
-      { status: 200 },
+      { status: 200 }
     );
   } catch (error) {
     console.error(error);

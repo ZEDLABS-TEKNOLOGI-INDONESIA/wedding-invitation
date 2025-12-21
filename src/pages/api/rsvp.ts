@@ -39,7 +39,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (!checkRateLimit(ip, 5, 60000)) {
     return new Response(
       JSON.stringify({ error: "Too many requests. Please try again later." }),
-      { status: 429 },
+      { status: 429 }
     );
   }
 
@@ -75,7 +75,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         guest_count,
         message || "",
         new Date().toISOString(),
-        existingGuest.id,
+        existingGuest.id
       );
       actionType = "updated";
       resultId = existingGuest.id;
@@ -91,7 +91,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         attendance,
         guest_count,
         message || "",
-        new Date().toISOString(),
+        new Date().toISOString()
       );
       actionType = "created";
       resultId = Number(result.lastInsertRowid);
@@ -131,7 +131,7 @@ ${statusEmoji} <b>Status:</b> ${attendance.toUpperCase()}
         id: resultId,
         action: actionType,
       }),
-      { status: 200 },
+      { status: 200 }
     );
   } catch (error) {
     console.error(error);
