@@ -17,6 +17,7 @@ EXCLUDE_PATTERNS=(
   "./wedding.db-wal" 
   "./$OUT" 
   "./.gitignore"
+  "./.env"
   "./gambar.png"
   "./video.mp4"
   "./README.md"
