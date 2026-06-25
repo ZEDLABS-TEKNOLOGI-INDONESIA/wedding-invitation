@@ -1,8 +1,8 @@
-import { defineConfig } from "astro/config";
-import react from "@astrojs/react";
-import tailwind from "@tailwindcss/vite";
 import node from "@astrojs/node";
+import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
+import tailwind from "@tailwindcss/vite";
+import { defineConfig } from "astro/config";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
@@ -25,23 +25,21 @@ export default defineConfig({
           globPatterns: ["**/*.{css,js,html,svg,png,ico,txt}"],
           runtimeCaching: [
             {
-              // Cache gambar dari Unsplash, Placehold.co, Google Fonts, dll
               urlPattern:
                 /^https:\/\/(images\.unsplash\.com|placehold\.co|fonts\.googleapis\.com|fonts\.gstatic\.com)\/.*/i,
-              handler: "CacheFirst", // Strategi: Cek Cache dulu, baru download
+              handler: "CacheFirst",
               options: {
                 cacheName: "external-images-fonts",
                 expiration: {
-                  maxEntries: 50, // Maksimal simpan 50 file
-                  maxAgeSeconds: 60 * 60 * 24 * 30, // Simpan selama 30 Hari
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 * 24 * 30,
                 },
                 cacheableResponse: {
-                  statuses: [0, 200], // Cache jika sukses
+                  statuses: [0, 200],
                 },
               },
             },
             {
-              // Cache Musik (MP3)
               urlPattern: ({ url }) => url.pathname.endsWith(".mp3"),
               handler: "CacheFirst",
               options: {
