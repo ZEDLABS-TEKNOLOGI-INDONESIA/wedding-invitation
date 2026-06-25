@@ -1,39 +1,44 @@
-import React, { useState } from "react";
 import {
   Calendar,
-  Clock,
-  MapPin,
-  ExternalLink,
   CalendarPlus,
-  Copy,
   Check,
   ChevronDown,
-  Sparkles,
+  Clock,
+  Copy,
+  ExternalLink,
   Heart,
+  MapPin,
+  Sparkles,
 } from "lucide-react";
-import { WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
-import { generateGoogleCalendarUrl, downloadICS } from "../utils/calendarUtils";
-const EventDetails: React.FC = () => {
+import React, { useState } from "react";
+import type { AppConfig } from "../types";
+import { downloadICS, generateGoogleCalendarUrl } from "../utils/calendarUtils";
+
+const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [copied, setCopied] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<
     "akad" | "resepsi" | null
   >(null);
+
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(WEDDING_CONFIG.venue.address);
+    navigator.clipboard.writeText(config.venue.address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  const mapUrl = `https://maps.google.com/maps?q=${WEDDING_CONFIG.venue.latitude},${WEDDING_CONFIG.venue.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+
+  const mapUrl = `https://maps.google.com/maps?q=${config.venue.latitude},${config.venue.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+
   const handleCalendar = (
     type: "google" | "ics",
     eventType: "akad" | "resepsi"
   ) => {
+    const ev = config.events[eventType];
     const event = {
-      title: `${WEDDING_CONFIG.events[eventType].title} ${WEDDING_CONFIG.couple.bride.name} & ${WEDDING_CONFIG.couple.groom.name}`,
-      description: `Menghadiri ${WEDDING_CONFIG.events[eventType].title} pernikahan ${WEDDING_CONFIG.couple.bride.name} & ${WEDDING_CONFIG.couple.groom.name}.`,
-      location: WEDDING_CONFIG.venue.address,
-      startTime: WEDDING_CONFIG.events[eventType].startDateTime,
-      endTime: WEDDING_CONFIG.events[eventType].endDateTime,
+      title: `${ev.title} ${config.couple.bride.name} & ${config.couple.groom.name}`,
+      description: `Menghadiri ${ev.title} pernikahan ${config.couple.bride.name} & ${config.couple.groom.name}.`,
+      location: config.venue.address,
+      startTime: ev.startDateTime,
+      endTime: ev.endDateTime,
     };
     if (type === "google") {
       window.open(generateGoogleCalendarUrl(event), "_blank");
@@ -42,6 +47,7 @@ const EventDetails: React.FC = () => {
     }
     setActiveDropdown(null);
   };
+
   return (
     <section
       id="event"
@@ -54,24 +60,16 @@ const EventDetails: React.FC = () => {
             <Sparkles className="text-accentDark dark:text-accent h-5 w-5 animate-pulse md:h-6 md:w-6" />
             <div className="bg-accentDark/20 dark:bg-accent/20 h-[1px] w-8 md:w-12"></div>
           </div>
-
           <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
             Waktu & Tempat
           </h2>
-          {/* Kalimat Undangan Sopan */}
           <p className="mx-auto max-w-2xl px-4 text-base font-light text-balance text-slate-500 italic md:text-xl dark:text-slate-400">
-            {WEDDING_TEXT.invitation}
+            {config.text.invitation}
           </p>
-          {/* <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
-            The Celebration
-          </h2> */}
-          {/* <p className="mx-auto max-w-xl px-4 text-base font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
-            Merupakan kehormatan bagi kami jika Anda berkenan hadir.
-          </p> */}
         </div>
         <div className="mb-16 grid gap-6 md:mb-20 md:grid-cols-2 md:gap-14">
-          {["akad", "resepsi"].map((type) => {
-            const ev = WEDDING_CONFIG.events[type as "akad" | "resepsi"];
+          {(["akad", "resepsi"] as const).map((type) => {
+            const ev = config.events[type];
             return (
               <div
                 key={type}
@@ -111,9 +109,7 @@ const EventDetails: React.FC = () => {
                 <div className="relative w-full">
                   <button
                     onClick={() =>
-                      setActiveDropdown(
-                        activeDropdown === type ? null : (type as any)
-                      )
+                      setActiveDropdown(activeDropdown === type ? null : type)
                     }
                     className="bg-primary dark:bg-accentDark tracking-editorial flex w-full items-center justify-center gap-3 rounded-2xl py-4 text-[10px] font-bold text-white uppercase transition-all hover:shadow-2xl active:scale-95 md:gap-5 md:rounded-3xl md:py-6 md:text-[11px]"
                   >
@@ -128,7 +124,7 @@ const EventDetails: React.FC = () => {
                   {activeDropdown === type && (
                     <div className="frosted-glass animate-reveal absolute top-full right-0 left-0 z-[50] mt-3 overflow-hidden rounded-[1.5rem] border border-slate-200 p-2 shadow-2xl md:mt-4 md:rounded-[2rem] md:p-3 dark:border-white/10">
                       <button
-                        onClick={() => handleCalendar("google", type as any)}
+                        onClick={() => handleCalendar("google", type)}
                         className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-left text-slate-800 transition-colors hover:bg-slate-50 md:gap-5 md:rounded-2xl md:px-8 md:py-6 dark:text-white dark:hover:bg-white/5"
                       >
                         <div className="bg-accentDark dark:bg-accent h-2 w-2 animate-pulse rounded-full md:h-3 md:w-3"></div>
@@ -137,7 +133,7 @@ const EventDetails: React.FC = () => {
                         </span>
                       </button>
                       <button
-                        onClick={() => handleCalendar("ics", type as any)}
+                        onClick={() => handleCalendar("ics", type)}
                         className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-left text-slate-800 transition-colors hover:bg-slate-50 md:gap-5 md:rounded-2xl md:px-8 md:py-6 dark:text-white dark:hover:bg-white/5"
                       >
                         <div className="h-2 w-2 rounded-full bg-slate-300 md:h-3 md:w-3 dark:bg-slate-600"></div>
@@ -161,10 +157,10 @@ const EventDetails: React.FC = () => {
                 </div>
                 <div className="space-y-1 md:space-y-2">
                   <h4 className="font-serif text-3xl leading-tight tracking-tight text-slate-900 italic md:text-6xl dark:text-white">
-                    {WEDDING_CONFIG.venue.name}
+                    {config.venue.name}
                   </h4>
                   <p className="text-base leading-snug font-light text-slate-500 italic md:text-2xl dark:text-slate-400">
-                    {WEDDING_CONFIG.venue.address}
+                    {config.venue.address}
                   </p>
                 </div>
               </div>
@@ -182,7 +178,7 @@ const EventDetails: React.FC = () => {
                 {copied ? "Address Copied" : "Copy Address"}
               </button>
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${WEDDING_CONFIG.venue.latitude},${WEDDING_CONFIG.venue.longitude}`}
+                href={`https://www.google.com/maps/search/?api=1&query=${config.venue.latitude},${config.venue.longitude}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-primary dark:text-primary tracking-editorial flex w-full items-center justify-center gap-3 rounded-xl px-6 py-4 text-[10px] font-bold text-white uppercase transition-all hover:shadow-2xl sm:w-1/2 md:gap-4 md:rounded-[2rem] md:px-12 md:py-5 md:text-[11px] lg:w-auto dark:bg-white"
@@ -201,12 +197,12 @@ const EventDetails: React.FC = () => {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-            ></iframe>
-            <div className="dark:border-darkSurface/5 pointer-events-none absolute inset-0 border-[6px] border-white/5 md:border-[12px]"></div>
+            />
           </div>
         </div>
       </div>
     </section>
   );
 };
+
 export default EventDetails;

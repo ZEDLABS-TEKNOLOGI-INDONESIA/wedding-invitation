@@ -10,10 +10,9 @@ import {
   Plus,
 } from "lucide-react";
 import { dbService } from "../services/dbService";
-import { AttendanceStatus, type RSVP } from "../types";
-import { MAX_GUESTS } from "../constants";
+import { AttendanceStatus, type RSVP, type AppConfig } from "../types";
 
-const RSVPForm: React.FC = () => {
+const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [formData, setFormData] = useState({
     guest_name: "",
     phone: "",
@@ -25,6 +24,8 @@ const RSVPForm: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [isNameLocked, setIsNameLocked] = useState(false);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
+
+  const maxGuests = config.rsvp.maxGuests;
 
   const loadRSVPs = async () => {
     const data = await dbService.getRSVPs();
@@ -44,7 +45,6 @@ const RSVPForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.guest_name) return;
-
     setIsSubmitting(true);
     try {
       await dbService.saveRSVP(formData);
@@ -61,7 +61,7 @@ const RSVPForm: React.FC = () => {
     setFormData((prev) => {
       const current = prev.guest_count;
       let next = current;
-      if (operation === "inc" && current < MAX_GUESTS) next = current + 1;
+      if (operation === "inc" && current < maxGuests) next = current + 1;
       if (operation === "dec" && current > 1) next = current - 1;
       return { ...prev, guest_count: next };
     });
@@ -241,7 +241,7 @@ const RSVPForm: React.FC = () => {
                       {formData.attendance === AttendanceStatus.HADIR && (
                         <div className="animate-reveal space-y-3">
                           <p className="tracking-editorial mb-1 text-[8px] font-bold text-slate-400 uppercase md:text-[9px]">
-                            Jumlah Tamu (Max {MAX_GUESTS})
+                            Jumlah Tamu (Max {maxGuests})
                           </p>
                           <div className="flex items-center gap-4">
                             <button
@@ -259,7 +259,7 @@ const RSVPForm: React.FC = () => {
                               type="button"
                               onClick={() => handleGuestCount("inc")}
                               className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 transition-colors hover:bg-slate-50 disabled:opacity-30 dark:border-white/10 dark:hover:bg-white/5"
-                              disabled={formData.guest_count >= MAX_GUESTS}
+                              disabled={formData.guest_count >= maxGuests}
                             >
                               <Plus className="h-4 w-4" />
                             </button>
@@ -333,7 +333,6 @@ const RSVPForm: React.FC = () => {
                     <span>Terbaru</span>
                   </div>
                 </div>
-
                 <div className="custom-scrollbar -mr-2 h-96 flex-grow overflow-y-auto pr-2 md:h-[450px]">
                   {rsvps.length === 0 ? (
                     <div className="flex h-full flex-col items-center justify-center opacity-40">
@@ -385,4 +384,5 @@ const RSVPForm: React.FC = () => {
     </section>
   );
 };
+
 export default RSVPForm;

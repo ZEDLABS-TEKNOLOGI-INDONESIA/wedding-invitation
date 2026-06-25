@@ -1,7 +1,8 @@
 import React from "react";
 import { Heart, Sparkles } from "lucide-react";
-import { LOVE_STORY } from "../constants";
-const LoveStory: React.FC = () => {
+import type { AppConfig } from "../types";
+
+const LoveStory: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="story"
@@ -21,7 +22,7 @@ const LoveStory: React.FC = () => {
         <div className="relative">
           <div className="absolute left-1/2 hidden h-full w-[1px] -translate-x-1/2 bg-slate-200 md:block dark:bg-white/10"></div>
           <div className="space-y-16 md:space-y-24">
-            {LOVE_STORY.map((story, index) => (
+            {config.loveStory.map((story, index) => (
               <div
                 key={index}
                 className={`relative flex flex-col items-center gap-12 md:flex-row ${
@@ -64,4 +65,5 @@ const LoveStory: React.FC = () => {
     </section>
   );
 };
+
 export default LoveStory;

@@ -14,8 +14,7 @@ import {
 } from "lucide-react";
 import Papa from "papaparse";
 import QRCode from "qrcode";
-import React, { useState } from "react";
-import { WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
+import React, { useEffect, useState } from "react";
 
 interface GuestData {
   name: string;
@@ -31,6 +30,7 @@ interface ThemeColor {
   textMain: [number, number, number];
   textMuted: [number, number, number];
 }
+
 const THEMES: ThemeColor[] = [
   {
     name: "Sage Green (Original)",
@@ -70,7 +70,11 @@ const THEMES: ThemeColor[] = [
   },
 ];
 
-const InvitationManager: React.FC = () => {
+interface InvitationManagerProps {
+  siteUrl: string;
+}
+
+const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
   const [activeTab, setActiveTab] = useState<"single" | "bulk">("single");
   const [currentTheme, setCurrentTheme] = useState<ThemeColor>(THEMES[0]);
   const [singleData, setSingleData] = useState<GuestData>({
@@ -78,13 +82,21 @@ const InvitationManager: React.FC = () => {
     address: "Di Tempat",
   });
   const [bulkData, setBulkData] = useState<GuestData[]>([]);
-
   const [isReadingCsv, setIsReadingCsv] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
-
   const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [cfg, setCfg] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((data) => setCfg(data))
+      .catch(() => {});
+  }, []);
+
+  const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
 
   const handleSaveAs = (blob: Blob | string, name: string) => {
     const saveAsFunc = (FileSaver as any).saveAs || FileSaver;
@@ -225,6 +237,34 @@ const InvitationManager: React.FC = () => {
   };
 
   const generatePDFDoc = async (guest: GuestData): Promise<jsPDF> => {
+    const brideName = cfg.BRIDE_NICKNAME || "Bride";
+    const groomName = cfg.GROOM_NICKNAME || "Groom";
+    const brideFullName = cfg.BRIDE_FULLNAME || "Bride";
+    const groomFullName = cfg.GROOM_FULLNAME || "Groom";
+    const brideParents = cfg.BRIDE_PARENTS || "";
+    const groomParents = cfg.GROOM_PARENTS || "";
+    const venueName = cfg.VENUE_NAME || "";
+    const venueAddress = cfg.VENUE_ADDRESS || "";
+    const venueLat = cfg.VENUE_LAT || "0";
+    const venueLng = cfg.VENUE_LNG || "0";
+    const akadTitle = cfg.AKAD_TITLE || "Akad Nikah";
+    const akadDay = cfg.AKAD_DAY || "";
+    const akadDate = cfg.AKAD_DATE || "";
+    const akadStart = cfg.AKAD_START || "";
+    const akadEnd = cfg.AKAD_END || "";
+    const resepsiTitle = cfg.RESEPSI_TITLE || "Resepsi Pernikahan";
+    const resepsiDay = cfg.RESEPSI_DAY || "";
+    const resepsiDate = cfg.RESEPSI_DATE || "";
+    const resepsiStart = cfg.RESEPSI_START || "";
+    const resepsiEnd = cfg.RESEPSI_END || "";
+    const salamOpening =
+      cfg.TEXT_SALAM_OPENING || "Assalamu'alaikum Warahmatullahi Wabarakatuh";
+    const quoteArRum = cfg.TEXT_QUOTE_AR_RUM || "";
+    const closingText = cfg.TEXT_CLOSING || "";
+    const salamClosing =
+      cfg.TEXT_SALAM_CLOSING || "Wassalamu'alaikum Warahmatullahi Wabarakatuh";
+    const signature = cfg.TEXT_SIGNATURE || "Kami yang berbahagia,";
+
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -234,13 +274,12 @@ const InvitationManager: React.FC = () => {
     const height = doc.internal.pageSize.getHeight();
     const cx = width / 2;
 
-    const siteUrl = window.location.origin;
-    const guestUrl = `${siteUrl}/?to=${encodeURIComponent(guest.name)}`;
+    const guestUrl = `${baseUrl}/?to=${encodeURIComponent(guest.name)}`;
     const qrGuestImg = await QRCode.toDataURL(guestUrl, {
       margin: 0,
       color: { dark: "#2f3d1a", light: "#ffffff" },
     });
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${WEDDING_CONFIG.venue.latitude},${WEDDING_CONFIG.venue.longitude}`;
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${venueLat},${venueLng}`;
     const qrMapsImg = await QRCode.toDataURL(mapsUrl, {
       margin: 0,
       color: { dark: "#2f3d1a", light: "#ffffff" },
@@ -252,7 +291,6 @@ const InvitationManager: React.FC = () => {
       currentTheme.bg[2]
     );
     doc.rect(0, 0, width, height, "F");
-
     drawBorder(doc, width, height);
     drawCornerDecorations(doc, width, height);
 
@@ -271,7 +309,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMain[1],
       currentTheme.textMain[2]
     );
-    doc.text(WEDDING_CONFIG.couple.bride.name, cx, 75, { align: "center" });
+    doc.text(brideName, cx, 75, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(16);
     doc.setTextColor(
@@ -287,7 +325,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMain[1],
       currentTheme.textMain[2]
     );
-    doc.text(WEDDING_CONFIG.couple.groom.name, cx, 105, { align: "center" });
+    doc.text(groomName, cx, 105, { align: "center" });
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
@@ -302,9 +340,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMuted[1],
       currentTheme.textMuted[2]
     );
-    doc.text(WEDDING_CONFIG.events.resepsi.date.toUpperCase(), cx, 125, {
-      align: "center",
-    });
+    doc.text(resepsiDate.toUpperCase(), cx, 125, { align: "center" });
 
     const boxY = 155;
     const boxW = 85;
@@ -329,7 +365,6 @@ const InvitationManager: React.FC = () => {
     doc.setFontSize(9);
     doc.text("Kepada Yth. Bapak/Ibu/Saudara/i:", cx, boxY + 8, {
       align: "center",
-      charSpace: 0,
     });
     doc.setFont("times", "bolditalic");
     doc.setFontSize(14);
@@ -361,7 +396,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMain[1],
       currentTheme.textMain[2]
     );
-    doc.text(WEDDING_TEXT.opening.salam, cx, 50, { align: "center" });
+    doc.text(salamOpening, cx, 50, { align: "center" });
     doc.setFont("times", "italic");
     doc.setFontSize(10);
     doc.setTextColor(
@@ -369,7 +404,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMuted[1],
       currentTheme.textMuted[2]
     );
-    const quote = doc.splitTextToSize(WEDDING_TEXT.quote.ar_rum, width - 60);
+    const quote = doc.splitTextToSize(quoteArRum, width - 60);
     doc.text(quote, cx, 60, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(10);
@@ -386,9 +421,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.primary[1],
       currentTheme.primary[2]
     );
-    doc.text(WEDDING_CONFIG.couple.bride.fullName, cx, 110, {
-      align: "center",
-    });
+    doc.text(brideFullName, cx, 110, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(9);
     doc.setTextColor(
@@ -396,7 +429,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMuted[1],
       currentTheme.textMuted[2]
     );
-    doc.text(WEDDING_CONFIG.couple.bride.parents, cx, 117, { align: "center" });
+    doc.text(brideParents, cx, 117, { align: "center" });
     doc.setFont("times", "italic");
     doc.setFontSize(12);
     doc.text("&", cx, 127, { align: "center" });
@@ -407,9 +440,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.primary[1],
       currentTheme.primary[2]
     );
-    doc.text(WEDDING_CONFIG.couple.groom.fullName, cx, 137, {
-      align: "center",
-    });
+    doc.text(groomFullName, cx, 137, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(9);
     doc.setTextColor(
@@ -417,7 +448,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMuted[1],
       currentTheme.textMuted[2]
     );
-    doc.text(WEDDING_CONFIG.couple.groom.parents, cx, 144, { align: "center" });
+    doc.text(groomParents, cx, 144, { align: "center" });
 
     doc.addPage();
     drawBorder(doc, width, height);
@@ -439,7 +470,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.primary[1],
       currentTheme.primary[2]
     );
-    doc.text(WEDDING_CONFIG.events.akad.title, cx, 50, { align: "center" });
+    doc.text(akadTitle, cx, 50, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(10);
     doc.setTextColor(
@@ -447,18 +478,10 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMain[1],
       currentTheme.textMain[2]
     );
-    doc.text(
-      `${WEDDING_CONFIG.events.akad.day}, ${WEDDING_CONFIG.events.akad.date}`,
-      cx,
-      57,
-      { align: "center" }
-    );
-    doc.text(
-      `Pukul: ${WEDDING_CONFIG.events.akad.startTime} - ${WEDDING_CONFIG.events.akad.endTime} WIB`,
-      cx,
-      62,
-      { align: "center" }
-    );
+    doc.text(`${akadDay}, ${akadDate}`, cx, 57, { align: "center" });
+    doc.text(`Pukul: ${akadStart} - ${akadEnd} WIB`, cx, 62, {
+      align: "center",
+    });
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
@@ -482,7 +505,7 @@ const InvitationManager: React.FC = () => {
       currentTheme.primary[1],
       currentTheme.primary[2]
     );
-    doc.text(WEDDING_CONFIG.events.resepsi.title, cx, 85, { align: "center" });
+    doc.text(resepsiTitle, cx, 85, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(10);
     doc.setTextColor(
@@ -490,18 +513,10 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMain[1],
       currentTheme.textMain[2]
     );
-    doc.text(
-      `${WEDDING_CONFIG.events.resepsi.day}, ${WEDDING_CONFIG.events.resepsi.date}`,
-      cx,
-      92,
-      { align: "center" }
-    );
-    doc.text(
-      `Pukul: ${WEDDING_CONFIG.events.resepsi.startTime} - ${WEDDING_CONFIG.events.resepsi.endTime} WIB`,
-      cx,
-      97,
-      { align: "center" }
-    );
+    doc.text(`${resepsiDay}, ${resepsiDate}`, cx, 92, { align: "center" });
+    doc.text(`Pukul: ${resepsiStart} - ${resepsiEnd} WIB`, cx, 97, {
+      align: "center",
+    });
     doc.setFont("times", "bold");
     doc.setFontSize(12);
     doc.setTextColor(
@@ -512,14 +527,14 @@ const InvitationManager: React.FC = () => {
     doc.text("BERTEMPAT DI:", cx, 115, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(11);
-    doc.text(WEDDING_CONFIG.venue.name, cx, 122, { align: "center" });
+    doc.text(venueName, cx, 122, { align: "center" });
     doc.setFontSize(9);
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
       currentTheme.textMuted[2]
     );
-    const addr = doc.splitTextToSize(WEDDING_CONFIG.venue.address, 80);
+    const addr = doc.splitTextToSize(venueAddress, 80);
     doc.text(addr, cx, 128, { align: "center" });
     const qrSize = 22;
     const qrY = 145;
@@ -617,17 +632,13 @@ const InvitationManager: React.FC = () => {
       currentTheme.textMain[1],
       currentTheme.textMain[2]
     );
-    const closing = doc.splitTextToSize(WEDDING_TEXT.closing.text, width - 60);
+    const closing = doc.splitTextToSize(closingText, width - 60);
     doc.text(closing, cx, closingY, { align: "center" });
     doc.setFont("times", "bolditalic");
-    doc.text(WEDDING_TEXT.closing.salam, cx, closingY + 20, {
-      align: "center",
-    });
+    doc.text(salamClosing, cx, closingY + 20, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(9);
-    doc.text(WEDDING_TEXT.closing.signature, cx, closingY + 30, {
-      align: "center",
-    });
+    doc.text(signature, cx, closingY + 30, { align: "center" });
     doc.setFont("times", "bold");
     doc.setFontSize(12);
     doc.setTextColor(
@@ -635,12 +646,9 @@ const InvitationManager: React.FC = () => {
       currentTheme.primary[1],
       currentTheme.primary[2]
     );
-    doc.text(
-      `${WEDDING_CONFIG.couple.bride.name} & ${WEDDING_CONFIG.couple.groom.name}`,
-      cx,
-      closingY + 38,
-      { align: "center" }
-    );
+    doc.text(`${brideName} & ${groomName}`, cx, closingY + 38, {
+      align: "center",
+    });
     doc.setDrawColor(
       currentTheme.secondary[0],
       currentTheme.secondary[1],
@@ -648,8 +656,7 @@ const InvitationManager: React.FC = () => {
     );
     doc.setLineWidth(0.1);
     for (let i = 0; i < 5; i++) {
-      const xOffset = -10 + i * 5;
-      doc.circle(cx + xOffset, closingY + 48, 0.4, "D");
+      doc.circle(cx + (-10 + i * 5), closingY + 48, 0.4, "D");
     }
 
     return doc;
@@ -658,8 +665,7 @@ const InvitationManager: React.FC = () => {
   const handlePreview = async () => {
     if (!singleData.name) return;
     const doc = await generatePDFDoc(singleData);
-    const pdfDataUri = doc.output("datauristring");
-    setPreviewUri(pdfDataUri);
+    setPreviewUri(doc.output("datauristring"));
   };
 
   const downloadSingle = async () => {
@@ -681,9 +687,7 @@ const InvitationManager: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsReadingCsv(true);
-
     setTimeout(() => {
       Papa.parse(file, {
         complete: (results) => {
@@ -691,7 +695,6 @@ const InvitationManager: React.FC = () => {
           results.data.forEach((row: any) => {
             const name = row[0];
             const address = row[1] || "Di Tempat";
-
             if (name && typeof name === "string" && name.trim() !== "") {
               if (!name.toLowerCase().includes("nama tamu")) {
                 guests.push({ name: name.trim(), address: address.trim() });
@@ -711,19 +714,15 @@ const InvitationManager: React.FC = () => {
     setIsProcessing(true);
     setProgress(0);
     setStatusMsg("Menyiapkan assets...");
-
     try {
       const zip = new JSZip();
       const folder = zip.folder(`Undangan_${currentTheme.name}_Floral`);
       const CHUNK_SIZE = 10;
-
       for (let i = 0; i < bulkData.length; i += CHUNK_SIZE) {
         const chunk = bulkData.slice(i, i + CHUNK_SIZE);
-
         setStatusMsg(
           `Generating PDF ${i + 1} - ${Math.min(i + chunk.length, bulkData.length)} dari ${bulkData.length}...`
         );
-
         await Promise.all(
           chunk.map(async (guest, idx) => {
             const doc = await generatePDFDoc(guest);
@@ -734,13 +733,13 @@ const InvitationManager: React.FC = () => {
             folder?.file(`${i + idx + 1}_${safeName}.pdf`, blob);
           })
         );
-
-        const currentCount = Math.min(i + CHUNK_SIZE, bulkData.length);
-        setProgress(Math.round((currentCount / bulkData.length) * 100));
-
+        setProgress(
+          Math.round(
+            (Math.min(i + CHUNK_SIZE, bulkData.length) / bulkData.length) * 100
+          )
+        );
         await new Promise((r) => setTimeout(r, 20));
       }
-
       setStatusMsg("Mengompres ZIP...");
       const content = await zip.generateAsync({ type: "blob" });
       handleSaveAs(
@@ -814,7 +813,6 @@ const InvitationManager: React.FC = () => {
                   }}
                 />
               </div>
-
               {currentTheme.id === theme.id && (
                 <div className="absolute -bottom-3 rounded-lg bg-gradient-to-r from-slate-800 to-slate-700 px-3 py-1 text-[10px] font-bold whitespace-nowrap text-white shadow-lg dark:from-white dark:to-slate-100 dark:text-slate-900">
                   {theme.name}
@@ -883,7 +881,6 @@ const InvitationManager: React.FC = () => {
                 />
               </div>
             </div>
-
             <div className="flex gap-3">
               <button
                 onClick={handlePreview}
@@ -901,7 +898,6 @@ const InvitationManager: React.FC = () => {
               </button>
             </div>
           </div>
-
           <div className="flex min-h-[400px] items-center justify-center rounded-xl bg-slate-200 p-4 dark:bg-slate-900/50">
             {previewUri ? (
               <iframe
@@ -945,8 +941,6 @@ const InvitationManager: React.FC = () => {
                   <strong>Kolom 1: Nama Tamu</strong> |{" "}
                   <strong>Kolom 2: Alamat/Kota (Opsional)</strong>
                 </p>
-
-                {/* CENTERED BUTTON */}
                 <div className="flex justify-center pt-2">
                   <button
                     onClick={downloadTemplate}
@@ -957,7 +951,6 @@ const InvitationManager: React.FC = () => {
                   </button>
                 </div>
               </div>
-
               <label
                 className={`inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:opacity-90 dark:bg-white dark:text-slate-900 ${isReadingCsv ? "pointer-events-none opacity-50" : ""}`}
               >
@@ -973,7 +966,6 @@ const InvitationManager: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Header Control */}
               <div className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50 p-4 md:flex-row md:items-center md:justify-between dark:border-blue-900/30 dark:bg-blue-900/10">
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg bg-blue-100 p-2 font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
@@ -989,10 +981,7 @@ const InvitationManager: React.FC = () => {
                     </span>
                   </div>
                 </div>
-
-                {/* BUTTONS GROUP */}
                 <div className="flex gap-3">
-                  {/* TOMBOL RESET ELEGAN */}
                   <button
                     onClick={() => {
                       if (confirm("Yakin ingin menghapus semua data?"))
@@ -1003,18 +992,16 @@ const InvitationManager: React.FC = () => {
                     <RefreshCcw className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-180" />
                     Reset Data
                   </button>
-
-                  {/* TOMBOL DOWNLOAD ELEGAN */}
                   <button
                     onClick={processBulk}
                     disabled={isProcessing}
-                    className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-slate-900 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-slate-500/20 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                    className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-slate-900 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                   >
                     <div className="relative z-10 flex items-center gap-2">
                       {isProcessing ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Download className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+                        <Download className="h-4 w-4" />
                       )}
                       <span>
                         {isProcessing ? "Memproses..." : "Download ZIP"}
@@ -1024,7 +1011,6 @@ const InvitationManager: React.FC = () => {
                 </div>
               </div>
 
-              {/* Progress Bar Visual */}
               {isProcessing && (
                 <div className="animate-reveal space-y-2">
                   <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
@@ -1035,7 +1021,7 @@ const InvitationManager: React.FC = () => {
                     <div
                       className="h-full rounded-full bg-blue-600 transition-all duration-300 ease-out"
                       style={{ width: `${progress}%` }}
-                    ></div>
+                    />
                   </div>
                 </div>
               )}
@@ -1059,7 +1045,6 @@ const InvitationManager: React.FC = () => {
                         </p>
                       </div>
                     </div>
-
                     <Check className="h-4 w-4 text-green-500" />
                   </div>
                 ))}
