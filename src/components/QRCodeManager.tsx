@@ -162,6 +162,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       );
       setStatusMsg("Selesai!");
     } catch (e) {
+      console.error("Gagal membuat ZIP:", e);
       alert("Terjadi kesalahan saat membuat ZIP.");
     } finally {
       setTimeout(() => {

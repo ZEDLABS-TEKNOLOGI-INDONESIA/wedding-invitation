@@ -335,6 +335,7 @@ const AdminDashboard = ({
         alert("Gagal menghapus: " + (json.error || "Unknown Error"));
       }
     } catch (e) {
+      console.error("Gagal menghapus data:", e);
       alert("Error Network: Gagal menghubungi server.");
     } finally {
       setIsDeleting(false);
@@ -370,6 +371,7 @@ const AdminDashboard = ({
         alert("Gagal update data.");
       }
     } catch (e) {
+      console.error("Gagal update data:", e);
       alert("Gagal menyimpan perubahan.");
     } finally {
       setIsSaving(false);
