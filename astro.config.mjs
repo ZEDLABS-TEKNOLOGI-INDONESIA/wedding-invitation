@@ -6,7 +6,7 @@ import { defineConfig } from "astro/config";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  site: "http://127.0.0.1:5432",
+  site: "https://wedding.zedlabs.id",
   integrations: [react(), sitemap()],
   output: "server",
   adapter: node({
