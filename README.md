@@ -447,7 +447,7 @@ wedding-invitation/
 │   └── wedding.db                 # Auto-created on first run
 │
 ├── public/                         # Static assets
-│   ├── favicon.svg                # Site icon
+│   ├── favicon.ico                # Site icon
 │   ├── pwa-192x192.png           # PWA icon small
 │   ├── pwa-512x512.png           # PWA icon large
 │   └── thumbnail.png              # OG image preview

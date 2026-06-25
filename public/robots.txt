@@ -2,5 +2,5 @@ User-agent: *
 Allow: /
 
 # Ganti domain sesuai domain asli Anda
-Sitemap: http://localhost:5432/sitemap-index.xml
-Robots: http://localhost:5432/robots.txt
+Sitemap: https://wedding.zedlabs.id/sitemap-index.xml
+Robots: https://wedding.zedlabs.id/robots.txt
