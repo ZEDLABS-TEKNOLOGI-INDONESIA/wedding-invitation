@@ -7,15 +7,19 @@ import {
   Sparkles,
   Image as ImageIcon,
 } from "lucide-react";
-import { GALLERY_IMAGES } from "../constants";
-const Gallery: React.FC = () => {
+import type { AppConfig } from "../types";
+
+const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
+  const images = config.galleryImages;
   const [selectedImg, setSelectedImg] = useState<number | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+
   const openLightbox = (index: number) => {
     setSelectedImg(index);
     setIsClosing(false);
     document.body.style.overflow = "hidden";
   };
+
   const closeLightbox = () => {
     setIsClosing(true);
     setTimeout(() => {
@@ -24,19 +28,17 @@ const Gallery: React.FC = () => {
       document.body.style.overflow = "unset";
     }, 400);
   };
+
   const navigate = (direction: "prev" | "next", e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (selectedImg === null) return;
     if (direction === "prev") {
-      setSelectedImg(
-        selectedImg === 0 ? GALLERY_IMAGES.length - 1 : selectedImg - 1
-      );
+      setSelectedImg(selectedImg === 0 ? images.length - 1 : selectedImg - 1);
     } else {
-      setSelectedImg(
-        selectedImg === GALLERY_IMAGES.length - 1 ? 0 : selectedImg + 1
-      );
+      setSelectedImg(selectedImg === images.length - 1 ? 0 : selectedImg + 1);
     }
   };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedImg === null) return;
@@ -47,6 +49,7 @@ const Gallery: React.FC = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedImg]);
+
   return (
     <section
       id="gallery"
@@ -67,7 +70,7 @@ const Gallery: React.FC = () => {
           </p>
         </div>
         <div className="columns-1 gap-6 space-y-6 sm:columns-2 md:gap-10 md:space-y-10 lg:columns-3">
-          {GALLERY_IMAGES.map((src, index) => (
+          {images.map((src, index) => (
             <div
               key={index}
               className="group hover:shadow-accent/20 dark:bg-darkSurface relative cursor-pointer overflow-hidden rounded-[2rem] border border-slate-100 bg-slate-50 shadow-xl transition-all duration-700 hover:-translate-y-3 md:rounded-[3.5rem] dark:border-white/5"
@@ -101,7 +104,7 @@ const Gallery: React.FC = () => {
           <div className="pointer-events-none relative z-[1010] flex h-full w-full items-center justify-center">
             <div className="relative flex max-h-[75vh] max-w-[95vw] items-center justify-center md:max-h-[85vh]">
               <img
-                src={GALLERY_IMAGES[selectedImg]}
+                src={images[selectedImg]}
                 alt="Lightbox Fullscreen"
                 className={`pointer-events-auto max-h-full max-w-full rounded-[1.5rem] border border-white/10 object-contain shadow-[0_60px_120px_rgba(0,0,0,0.9)] transition-all duration-700 md:rounded-[4rem] ${
                   isClosing
@@ -144,16 +147,11 @@ const Gallery: React.FC = () => {
                   <span className="text-accent font-sans font-black">
                     {selectedImg + 1}
                   </span>{" "}
-                  / {GALLERY_IMAGES.length}
+                  / {images.length}
                 </p>
                 <div className="h-[1px] w-6 bg-white/20 md:w-12"></div>
               </div>
               <Sparkles className="text-accent/50 hidden h-4 w-4 animate-pulse md:block md:h-6 md:w-6" />
-            </div>
-            <div className="mt-4 flex items-center gap-2 opacity-30 md:mt-8">
-              <span className="tracking-luxury text-[7px] font-bold text-white uppercase italic md:text-[10px]">
-                The Wedding of Fey & Yaya
-              </span>
             </div>
           </div>
         </div>
@@ -161,4 +159,5 @@ const Gallery: React.FC = () => {
     </section>
   );
 };
+
 export default Gallery;

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown, Sparkles } from "lucide-react";
-import { WEDDING_CONFIG } from "../constants";
+import type { AppConfig } from "../types";
 
-const Hero: React.FC = () => {
+const Hero: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -17,8 +17,7 @@ const Hero: React.FC = () => {
 
     const timer = setInterval(() => {
       const distance =
-        WEDDING_CONFIG.events.akad.startDateTime.getTime() -
-        new Date().getTime();
+        config.events.akad.startDateTime.getTime() - new Date().getTime();
       if (distance > 0) {
         setTimeLeft({
           days: Math.floor(distance / (1000 * 60 * 60 * 24)),
@@ -31,7 +30,7 @@ const Hero: React.FC = () => {
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [config.events.akad.startDateTime]);
 
   const handleScrollToContent = () => {
     document.getElementById("couple")?.scrollIntoView({ behavior: "smooth" });
@@ -41,7 +40,7 @@ const Hero: React.FC = () => {
     <section className="relative flex h-screen w-full items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img
-          src={WEDDING_CONFIG.hero.image}
+          src={config.hero.image}
           className="animate-subtle-zoom h-full w-full object-cover"
           alt="Wedding Backdrop"
         />
@@ -60,9 +59,9 @@ const Hero: React.FC = () => {
           </div>
 
           <h1 className="font-serif text-5xl leading-tight tracking-tight break-words text-white italic sm:text-7xl md:text-[9rem] md:leading-none">
-            {WEDDING_CONFIG.couple.bride.name}
+            {config.couple.bride.name}
             <span className="text-accent/30 mx-2 md:mx-6">&</span>
-            {WEDDING_CONFIG.couple.groom.name}
+            {config.couple.groom.name}
           </h1>
 
           {guestName && (
@@ -73,12 +72,12 @@ const Hero: React.FC = () => {
 
           <div className="space-y-3 md:space-y-6">
             <p className="font-serif text-xl tracking-widest text-white italic opacity-90 sm:text-2xl md:text-5xl">
-              {WEDDING_CONFIG.events.akad.date}
+              {config.events.akad.date}
             </p>
             <div className="flex items-center justify-center gap-3 md:gap-4">
               <Sparkles className="text-accent/40 h-3 w-3 animate-pulse md:h-4 md:w-4" />
               <p className="text-accent/70 text-[9px] font-medium tracking-widest uppercase md:text-[13px]">
-                {WEDDING_CONFIG.hero.city}
+                {config.hero.city}
               </p>
               <Sparkles className="text-accent/40 h-3 w-3 animate-pulse md:h-4 md:w-4" />
             </div>

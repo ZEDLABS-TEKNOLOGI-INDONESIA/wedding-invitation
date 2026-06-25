@@ -11,12 +11,13 @@ import MusicPlayer from "./components/MusicPlayer";
 import Navbar from "./components/Navbar";
 import FloatingPetals from "./components/FloatingPetals";
 import Envelope from "./components/Envelope";
-import { Heart, Quote, ChevronUp } from "lucide-react";
-import { dbService } from "./services/dbService";
-import { WEDDING_CONFIG, WEDDING_TEXT } from "./constants";
 import InstallPrompt from "./components/InstallPrompt";
+import { useConfig } from "./hooks/useConfig";
+import { Heart, Quote, ChevronUp } from "lucide-react";
 
 const App: React.FC = () => {
+  const { config, loading } = useConfig();
+
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("theme") as "light" | "dark";
@@ -41,8 +42,6 @@ const App: React.FC = () => {
   }, [theme]);
 
   useEffect(() => {
-    dbService.initializeDemo();
-
     if (!isOpened) {
       document.body.style.overflow = "hidden";
     } else {
@@ -92,8 +91,16 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  if (loading || !config) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white"></div>
+      </div>
+    );
+  }
+
   const footerDate = (() => {
-    const d = WEDDING_CONFIG.events.akad.startDateTime;
+    const d = config.events.akad.startDateTime;
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
@@ -102,25 +109,23 @@ const App: React.FC = () => {
 
   return (
     <div className="selection:bg-accent/30 selection:text-primary relative min-h-screen overflow-x-hidden">
-      {!isOpened && <Envelope onOpen={handleOpenInvitation} />}
+      {!isOpened && <Envelope onOpen={handleOpenInvitation} config={config} />}
 
       <InstallPrompt />
-
       <FloatingPetals />
-
-      <Hero />
+      <Hero config={config} />
 
       <main className="relative z-10 space-y-0">
-        <CoupleProfile />
-        <LoveStory />
-        <EventDetails />
-        <Gallery />
-        <RSVPForm />
-        <Wishes />
-        <GiftInfo />
+        <CoupleProfile config={config} />
+        <LoveStory config={config} />
+        <EventDetails config={config} />
+        <Gallery config={config} />
+        <RSVPForm config={config} />
+        <Wishes config={config} />
+        <GiftInfo config={config} />
       </main>
 
-      <MusicPlayer />
+      <MusicPlayer url={config.music.url} />
       <Navbar theme={theme} toggleTheme={toggleTheme} />
 
       <footer className="dark:bg-darkSurface relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white px-6 transition-colors duration-1000">
@@ -144,9 +149,9 @@ const App: React.FC = () => {
           <div className="space-y-8 text-center md:space-y-12">
             <Heart className="text-accent/60 mx-auto h-8 w-8 animate-pulse fill-current md:h-12 md:w-12" />
             <h2 className="font-serif text-6xl leading-[0.85] tracking-tighter text-slate-900 italic drop-shadow-xl sm:text-8xl md:text-[12rem] dark:text-white">
-              {WEDDING_CONFIG.couple.bride.name}{" "}
+              {config.couple.bride.name}{" "}
               <span className="text-accent/30">&</span>{" "}
-              {WEDDING_CONFIG.couple.groom.name}
+              {config.couple.groom.name}
             </h2>
             <div className="flex items-center justify-center gap-4 md:gap-6">
               <div className="bg-accent/30 h-[1px] w-10 md:w-20"></div>
@@ -160,32 +165,24 @@ const App: React.FC = () => {
           <div className="space-y-12 text-center md:space-y-16">
             <div className="group relative inline-block px-4">
               <Quote className="text-accentDark absolute -top-10 -left-2 h-12 w-12 rotate-180 opacity-[0.06] transition-transform duration-1000 md:-top-16 md:-left-12 md:h-24 md:w-24 dark:opacity-[0.12]" />
-
-              {/* <p className="mx-auto max-w-2xl font-serif text-lg leading-relaxed text-balance text-slate-500 italic md:text-3xl dark:text-slate-400">
-                "Terima kasih atas doa dan restu tulus Anda. Kehadiran Anda
-                adalah kado terindah bagi awal babak baru kehidupan kami."
-              </p> */}
-              {/* UBAH BAGIAN INI: TEXT PENUTUP & SALAM */}
               <div className="space-y-6">
                 <p className="mx-auto max-w-2xl font-serif text-lg leading-relaxed text-balance text-slate-500 italic md:text-3xl dark:text-slate-400">
-                  "{WEDDING_TEXT.closing.text}"
+                  "{config.text.closing.text}"
                 </p>
                 <p className="font-serif text-xl font-bold text-slate-800 dark:text-white">
-                  {WEDDING_TEXT.closing.salam}
+                  {config.text.closing.salam}
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col items-center gap-6 border-t border-slate-100 pt-16 md:gap-10 md:pt-28 dark:border-white/5">
-              {/* Signature */}
               <p className="tracking-luxury text-[9px] font-black uppercase md:text-[13px]">
-                {WEDDING_TEXT.closing.signature}
+                {config.text.closing.signature}
               </p>
               <p className="font-serif text-lg italic">
-                {WEDDING_CONFIG.couple.bride.name} &{" "}
-                {WEDDING_CONFIG.couple.groom.name}
+                {config.couple.bride.name} & {config.couple.groom.name}
               </p>
-              <p className="mt-2 text-[10px]">{WEDDING_TEXT.closing.family}</p>
+              <p className="mt-2 text-[10px]">{config.text.closing.family}</p>
             </div>
           </div>
         </div>

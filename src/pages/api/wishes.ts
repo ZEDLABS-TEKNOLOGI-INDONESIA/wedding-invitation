@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import db from "../../lib/db";
+import db, { getConfig } from "../../lib/db";
 import { checkRateLimit } from "../../lib/rateLimit";
 import { sendTelegramNotification } from "../../utils/telegram";
 
@@ -15,14 +15,14 @@ const sanitize = (str: string) => {
 
 export const GET: APIRoute = async () => {
   try {
-    const stmt = db.prepare("SELECT * FROM wishes ORDER BY created_at DESC");
-    const wishes = stmt.all();
+    const wishes = db
+      .prepare("SELECT * FROM wishes ORDER BY created_at DESC")
+      .all();
     return new Response(JSON.stringify(wishes), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
-    console.error(error);
+  } catch {
     return new Response(JSON.stringify({ error: "Failed to fetch" }), {
       status: 500,
     });
@@ -44,55 +44,56 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const name = sanitize(rawData.name);
     const message = sanitize(rawData.message);
 
-    const checkStmt = db.prepare("SELECT id FROM wishes WHERE name = ?");
-    const existingWish = checkStmt.get(name) as { id: number } | undefined;
+    const existing = db
+      .prepare("SELECT id FROM wishes WHERE name = ?")
+      .get(name) as { id: number } | undefined;
 
     let actionType = "";
     let resultId = 0;
 
-    if (existingWish) {
-      const updateStmt = db.prepare(`
-        UPDATE wishes
-        SET message = ?, created_at = ?
-        WHERE id = ?
-      `);
-      updateStmt.run(message, new Date().toISOString(), existingWish.id);
-      actionType = "updated";
-      resultId = existingWish.id;
-    } else {
-      const insertStmt = db.prepare(
-        "INSERT INTO wishes (name, message, created_at) VALUES (?, ?, ?)"
+    if (existing) {
+      db.prepare("UPDATE wishes SET message=?, created_at=? WHERE id=?").run(
+        message,
+        new Date().toISOString(),
+        existing.id
       );
-      const result = insertStmt.run(name, message, new Date().toISOString());
+      actionType = "updated";
+      resultId = existing.id;
+    } else {
+      const result = db
+        .prepare(
+          "INSERT INTO wishes (name, message, created_at) VALUES (?, ?, ?)"
+        )
+        .run(name, message, new Date().toISOString());
       actionType = "created";
       resultId = Number(result.lastInsertRowid);
     }
 
+    const config = getConfig();
     const title =
       actionType === "created"
-        ? "✨ <b>UCAPAN & DOA BARU!</b>"
-        : "📝 <b>UCAPAN DIPERBARUI!</b>";
+        ? "<b>UCAPAN & DOA BARU!</b>"
+        : "<b>UCAPAN DIPERBARUI!</b>";
 
     const notifMsg = `
 ${title}
 
-👤 <b>Dari:</b> ${name}
+<b>Dari:</b> ${name}
 
 <i>"${message}"</i>
     `.trim();
 
-    sendTelegramNotification(notifMsg);
+    sendTelegramNotification(
+      notifMsg,
+      config.TELEGRAM_BOT_TOKEN,
+      config.TELEGRAM_CHAT_ID
+    );
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        id: resultId,
-        action: actionType,
-      }),
+      JSON.stringify({ success: true, id: resultId, action: actionType }),
       { status: 200 }
     );
-  } catch (error) {
-    console.error(error);
+  } catch {
     return new Response(JSON.stringify({ error: "Database error" }), {
       status: 500,
     });

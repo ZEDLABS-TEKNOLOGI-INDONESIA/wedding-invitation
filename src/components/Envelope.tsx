@@ -1,25 +1,31 @@
-import React, { useState, useEffect } from "react";
 import { MailOpen, Sparkles } from "lucide-react";
-import { WEDDING_CONFIG } from "../constants";
+import React, { useEffect, useState } from "react";
+import type { AppConfig } from "../types";
+
 interface EnvelopeProps {
   onOpen: () => void;
+  config: AppConfig;
 }
-const Envelope: React.FC<EnvelopeProps> = ({ onOpen }) => {
+
+const Envelope: React.FC<EnvelopeProps> = ({ onOpen, config }) => {
   const [guestName, setGuestName] = useState<string>("");
   const [isAnimate, setIsAnimate] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const to = params.get("to");
     if (to) setGuestName(to);
     setTimeout(() => setIsAnimate(true), 300);
   }, []);
+
   const handleOpenClick = () => {
     setIsExiting(true);
     setTimeout(() => {
       onOpen();
     }, 800);
   };
+
   return (
     <div
       className={`bg-darkBg fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden transition-all duration-1000 ease-in-out ${
@@ -56,24 +62,17 @@ const Envelope: React.FC<EnvelopeProps> = ({ onOpen }) => {
                 The Wedding of
               </span>
               <h1 className="font-serif text-6xl leading-none tracking-tighter text-white italic md:text-9xl">
-                {WEDDING_CONFIG.couple.bride.name}
+                {config.couple.bride.name}
                 <span className="text-accent/30 mx-4 font-sans not-italic md:mx-8">
                   &
                 </span>
-                {WEDDING_CONFIG.couple.groom.name}
+                {config.couple.groom.name}
               </h1>
             </div>
           </div>
           <div className="group relative">
             <div className="from-accent/20 to-accentDark/20 absolute -inset-1 rounded-[3rem] bg-gradient-to-r opacity-30 blur transition duration-1000 group-hover:opacity-60"></div>
             <div className="frosted-glass relative space-y-8 overflow-hidden rounded-[2.8rem] border border-white/20 p-10 shadow-2xl md:p-16 dark:border-white/10">
-              <div className="pointer-events-none absolute inset-0 opacity-[0.03] mix-blend-overlay">
-                <img
-                  src="https://www.transparenttextures.com/patterns/paper-fibers.png"
-                  className="h-full w-full object-cover"
-                  alt="texture"
-                />
-              </div>
               <div className="relative z-10 space-y-3">
                 <p className="text-accentDark dark:text-accent text-[11px] font-bold tracking-[0.3em] uppercase transition-colors duration-500 md:text-[13px]">
                   Kepada Yth. Bapak/Ibu/Sdr/i:
@@ -109,15 +108,11 @@ const Envelope: React.FC<EnvelopeProps> = ({ onOpen }) => {
       </div>
       <div className="pointer-events-none absolute inset-4 rounded-[2rem] border border-white/5 md:inset-8 md:rounded-[4rem]"></div>
       <style>{`
-        .animate-spin-slow {
-          animation: spin 8s linear infinite;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
+        .animate-spin-slow { animation: spin 8s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
 };
+
 export default Envelope;

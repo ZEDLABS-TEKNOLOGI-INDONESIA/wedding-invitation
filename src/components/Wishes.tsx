@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { dbService } from "../services/dbService";
-import type { Wish } from "../types";
+import type { Wish, AppConfig } from "../types";
 import {
   Quote,
   Heart,
@@ -10,7 +10,8 @@ import {
   Sparkles,
   Check,
 } from "lucide-react";
-const Wishes: React.FC = () => {
+
+const Wishes: React.FC<{ config: AppConfig }> = ({ config: _config }) => {
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const wishesPerPage = 6;
@@ -19,6 +20,7 @@ const Wishes: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [isNameLocked, setIsNameLocked] = useState(false);
   const [postSuccess, setPostSuccess] = useState(false);
+
   useEffect(() => {
     loadWishes();
     const params = new URLSearchParams(window.location.search);
@@ -28,10 +30,12 @@ const Wishes: React.FC = () => {
       setIsNameLocked(true);
     }
   }, []);
+
   const loadWishes = async () => {
     const data = await dbService.getWishes();
     setWishes(data);
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !message.trim()) return;
@@ -50,18 +54,20 @@ const Wishes: React.FC = () => {
       setIsSending(false);
     }
   };
+
   const totalPages = Math.ceil(wishes.length / wishesPerPage);
   const currentWishes = useMemo(() => {
     const start = (currentPage - 1) * wishesPerPage;
     return wishes.slice(start, start + wishesPerPage);
   }, [wishes, currentPage]);
+
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-    const header = document.getElementById("wishes-header");
-    if (header) {
-      header.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    document
+      .getElementById("wishes-header")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = window.innerWidth < 768 ? 3 : 5;
@@ -73,6 +79,7 @@ const Wishes: React.FC = () => {
     for (let i = startPage; i <= endPage; i++) pages.push(i);
     return pages;
   };
+
   return (
     <section
       id="wishes"
@@ -251,4 +258,5 @@ const Wishes: React.FC = () => {
     </section>
   );
 };
+
 export default Wishes;

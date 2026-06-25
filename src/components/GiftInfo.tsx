@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import { Gift, Copy, Check, MapPin, CreditCard, Sparkles } from "lucide-react";
-import { BANK_ACCOUNTS, WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
-const GiftInfo: React.FC = () => {
+import type { AppConfig } from "../types";
+
+const GiftInfo: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
+
   return (
     <section
       id="gift"
@@ -18,28 +21,16 @@ const GiftInfo: React.FC = () => {
           <div className="text-accentDark dark:text-accent mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 shadow-md md:mb-12 md:h-20 md:w-20 md:rounded-[2rem] dark:border-white/5 dark:bg-white/5">
             <Gift className="h-6 w-6 md:h-10 md:w-10" />
           </div>
-
-          {/* Judul: Tanda Kasih */}
           <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
-            {WEDDING_TEXT.gift.title}
+            {config.text.gift.title}
           </h2>
-
-          {/* <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
-            Kado Pernikahan
-          </h2> */}
           <div className="bg-accent/30 mx-auto h-[1px] w-16"></div>
-
-          {/* Deskripsi Sopan */}
           <p className="mx-auto max-w-xl text-base leading-relaxed font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
-            {WEDDING_TEXT.gift.desc}
+            {config.text.gift.desc}
           </p>
-          {/* <p className="mx-auto max-w-xl text-base leading-relaxed font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
-            Doa restu Anda adalah karunia terindah bagi kami. Jika bermaksud
-            memberikan tanda kasih, dapat melalui:
-          </p> */}
         </div>
         <div className="mb-10 grid grid-cols-1 gap-5 md:mb-20 md:grid-cols-2 md:gap-14">
-          {BANK_ACCOUNTS.map((acc, idx) => (
+          {config.bankAccounts.map((acc, idx) => (
             <div
               key={idx}
               className="editorial-card group relative space-y-6 overflow-hidden rounded-[1.5rem] border border-slate-100 p-8 shadow-sm transition-all hover:shadow-lg md:space-y-12 md:rounded-[4.5rem] md:p-20 dark:border-white/5"
@@ -92,12 +83,12 @@ const GiftInfo: React.FC = () => {
               </h4>
             </div>
             <p className="text-sm leading-relaxed font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
-              {WEDDING_CONFIG.venue.address}
+              {config.venue.address}
             </p>
           </div>
           <button
             onClick={() =>
-              copyToClipboard(WEDDING_CONFIG.venue.address, "address-gift")
+              copyToClipboard(config.venue.address, "address-gift")
             }
             className={`tracking-luxury relative z-10 inline-flex w-full items-center justify-center gap-3 rounded-xl px-8 py-3.5 text-[9px] font-bold uppercase shadow-md transition-all md:w-auto md:rounded-[2.5rem] md:px-14 md:py-6 md:text-[12px] ${
               copiedId === "address-gift"
@@ -117,4 +108,5 @@ const GiftInfo: React.FC = () => {
     </section>
   );
 };
+
 export default GiftInfo;

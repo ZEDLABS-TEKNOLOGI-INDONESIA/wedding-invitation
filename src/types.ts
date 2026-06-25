@@ -22,7 +22,7 @@ export interface Wish {
   created_at: string;
 }
 
-export interface WeddingConfig {
+export interface AppConfig {
   couple: {
     bride: {
       name: string;
@@ -53,6 +53,31 @@ export interface WeddingConfig {
     image: string;
     city: string;
   };
+  music: {
+    url: string;
+  };
+  rsvp: {
+    maxGuests: number;
+  };
+  bankAccounts: { bank: string; number: string; name: string }[];
+  loveStory: { date: string; title: string; desc: string }[];
+  galleryImages: string[];
+  text: {
+    opening: { salam: string };
+    quote: { ar_rum: string; source: string };
+    invitation: string;
+    closing: {
+      text: string;
+      salam: string;
+      signature: string;
+      family: string;
+    };
+    gift: { title: string; desc: string };
+  };
+  telegram: {
+    botToken: string;
+    chatId: string;
+  };
 }
 
 export interface WeddingEvent {
@@ -64,3 +89,5 @@ export interface WeddingEvent {
   startDateTime: Date;
   endDateTime: Date;
 }
+
+export type WeddingConfig = AppConfig;
