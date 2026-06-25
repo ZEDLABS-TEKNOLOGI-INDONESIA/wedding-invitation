@@ -486,7 +486,7 @@ Semua konfigurasi website dikelola melalui environment variables. Salin `.env.ex
 ```properties
 # Host dan Port untuk development/production
 HOST=0.0.0.0
-PORT=4321
+PORT=5432
 
 # Nama file database SQLite (auto-created di /database)
 DB_NAME=wedding.db
@@ -622,7 +622,7 @@ PUBLIC_RSVP_MAX_GUESTS=20
 **Bank Accounts:**
 
 ```json
-PUBLIC_BANK_ACCOUNTS=[{"bank":"Bank BCA","number":"1234567890","name":"Fera Oktapia"},{"bank":"Bank Mandiri","number":"0987654321","name":"Yahya Zulfikri"}]
+PUBLIC_BANK_ACCOUNTS=[{"bank":"Bank BCA","number":"1234567890","name":"Fera Oktapia"},{"bank":"Bank Mandiri","number":"0987655432","name":"Yahya Zulfikri"}]
 ```
 
 **Love Story Timeline:**
@@ -732,7 +732,7 @@ code .env  # jika menggunakan VSCode
 
 ```properties
 HOST=0.0.0.0
-PORT=4321
+PORT=5432
 DB_NAME=wedding.db
 ADMIN_PASSWORD=admin123
 
@@ -767,16 +767,16 @@ pnpm dev
 
 # Output yang muncul:
 # 🚀 astro v5.x.x started in XXXms
-# ┃ Local    http://localhost:4321/
-# ┃ Network  http://192.168.x.x:4321/
+# ┃ Local    http://localhost:5432/
+# ┃ Network  http://192.168.x.x:5432/
 ```
 
 #### 5. Akses Website
 
 Buka browser dan kunjungi:
 
-- Local: `http://localhost:4321`
-- Network: `http://192.168.x.x:4321` (bisa diakses dari device lain dalam jaringan yang sama)
+- Local: `http://localhost:5432`
+- Network: `http://192.168.x.x:5432` (bisa diakses dari device lain dalam jaringan yang sama)
 
 ### Development Workflow
 
@@ -846,16 +846,16 @@ pnpm dev  # Database baru akan dibuat otomatis
 #### Test RSVP System
 
 ```bash
-1. Buka http://localhost:4321/?to=Test+User
+1. Buka http://localhost:5432/?to=Test+User
 2. Scroll ke section RSVP
 3. Isi form dan submit
-4. Cek data di admin panel: http://localhost:4321/admin
+4. Cek data di admin panel: http://localhost:5432/admin
 ```
 
 #### Test Admin Panel
 
 ```bash
-1. Akses http://localhost:4321/admin
+1. Akses http://localhost:5432/admin
 2. Login dengan password dari .env (ADMIN_PASSWORD)
 3. Eksplorasi semua fitur:
    - Lihat data RSVP
@@ -905,13 +905,13 @@ pnpm dev  # Database baru akan dibuat otomatis
 # Ganti port di .env
 PORT=3000
 
-# Atau kill process yang menggunakan port 4321
+# Atau kill process yang menggunakan port 5432
 # Windows:
-netstat -ano | findstr :4321
+netstat -ano | findstr :5432
 taskkill /PID <PID> /F
 
 # Linux/Mac:
-lsof -ti:4321 | xargs kill -9
+lsof -ti:5432 | xargs kill -9
 ```
 
 **Database Lock Error:**
@@ -1063,7 +1063,7 @@ nano .env
 # PENTING: Ganti nilai-nilai berikut untuk production:
 ADMIN_PASSWORD=<strong-password-here>
 HOST=0.0.0.0
-PORT=4321
+PORT=5432
 ```
 
 #### 3. Test Manual Run
@@ -1133,7 +1133,7 @@ limit_req_zone $binary_remote_addr zone=general:10m rate=30r/s;
 
 # Upstream
 upstream wedding_backend {
-    server 127.0.0.1:4321;
+    server 127.0.0.1:5432;
     keepalive 64;
 }
 
@@ -1918,7 +1918,7 @@ wedding-invitation
 **Problem:**
 
 ```
-Error: listen EADDRINUSE: address already in use :::4321
+Error: listen EADDRINUSE: address already in use :::5432
 ```
 
 **Solution:**
@@ -1929,11 +1929,11 @@ PORT=3000
 
 # Opsi 2: Kill process yang menggunakan port
 # Windows
-netstat -ano | findstr :4321
+netstat -ano | findstr :5432
 taskkill /PID <PID_NUMBER> /F
 
 # Linux/Mac
-lsof -ti:4321 | xargs kill -9
+lsof -ti:5432 | xargs kill -9
 ```
 
 #### Database Lock
