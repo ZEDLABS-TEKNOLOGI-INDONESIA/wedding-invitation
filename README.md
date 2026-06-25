@@ -1087,7 +1087,7 @@ pm2 list
 # ┌─────┬──────────────────────┬─────────┬─────────┐
 # │ id  │ name                 │ status  │ cpu     │
 # ├─────┼──────────────────────┼─────────┼─────────┤
-# │ 0   │ wedding.feyaya.com   │ online  │ 0%      │
+# │ 0   │ wedding.zedlabs.id   │ online  │ 0%      │
 # └─────┴──────────────────────┴─────────┴─────────┘
 
 # Auto-start on server reboot
@@ -1100,16 +1100,16 @@ pm2 startup
 
 ```bash
 # Lihat logs real-time
-pm2 logs wedding.feyaya.com
+pm2 logs wedding.zedlabs.id
 
 # Restart aplikasi
-pm2 restart wedding.feyaya.com
+pm2 restart wedding.zedlabs.id
 
 # Stop aplikasi
-pm2 stop wedding.feyaya.com
+pm2 stop wedding.zedlabs.id
 
 # Hapus dari PM2
-pm2 delete wedding.feyaya.com
+pm2 delete wedding.zedlabs.id
 
 # Monitor resource usage
 pm2 monit
@@ -1140,7 +1140,7 @@ upstream wedding_backend {
 server {
     listen 80;
     listen [::]:80;
-    server_name wedding.feyaya.com www.wedding.feyaya.com;
+    server_name wedding.zedlabs.id www.wedding.zedlabs.id;
 
     # Redirect HTTP to HTTPS (setelah SSL setup)
     # return 301 https://$server_name$request_uri;
@@ -1262,7 +1262,7 @@ sudo systemctl reload nginx
 
 ```bash
 # Generate SSL certificate
-sudo certbot --nginx -d wedding.feyaya.com -d www.wedding.feyaya.com
+sudo certbot --nginx -d wedding.zedlabs.id -d www.wedding.zedlabs.id
 
 # Follow prompts:
 # - Email untuk renewal notifications
@@ -1339,13 +1339,13 @@ mkdir -p ~/backups
 
 ```bash
 # Real-time logs
-pm2 logs wedding.feyaya.com --lines 100
+pm2 logs wedding.zedlabs.id --lines 100
 
 # Error logs only
-pm2 logs wedding.feyaya.com --err
+pm2 logs wedding.zedlabs.id --err
 
 # Save logs to file
-pm2 logs wedding.feyaya.com > app.log
+pm2 logs wedding.zedlabs.id > app.log
 ```
 
 #### 2. Nginx Logs
@@ -1392,7 +1392,7 @@ pnpm install --production
 pnpm build
 
 # 4. Restart PM2
-pm2 restart wedding.feyaya.com
+pm2 restart wedding.zedlabs.id
 
 # 5. Verify
 pm2 status
@@ -1409,13 +1409,13 @@ pm2 status
 **URL Umum:**
 
 ```
-https://wedding.feyaya.com
+https://wedding.zedlabs.id
 ```
 
 **URL Personal (dengan nama tamu):**
 
 ```
-https://wedding.feyaya.com/?to=Ahmad+Syarief+Ramadhan
+https://wedding.zedlabs.id/?to=Ahmad+Syarief+Ramadhan
 ```
 
 **Efek Personalisasi:**
@@ -1489,7 +1489,7 @@ https://wedding.feyaya.com/?to=Ahmad+Syarief+Ramadhan
 #### Login ke Dashboard
 
 ```
-URL: https://wedding.feyaya.com/admin
+URL: https://wedding.zedlabs.id/admin
 Password: Sesuai dengan ADMIN_PASSWORD di .env
 ```
 
@@ -2006,7 +2006,7 @@ Server tidak bisa connect ke backend.
 pm2 status
 
 # Lihat logs
-pm2 logs wedding.feyaya.com --err
+pm2 logs wedding.zedlabs.id --err
 
 # Test manual run
 cd /var/www/wedding-invitation
@@ -2024,10 +2024,10 @@ node dist/server/entry.mjs
 
 ```bash
 # Restart PM2
-pm2 restart wedding.feyaya.com
+pm2 restart wedding.zedlabs.id
 
 # Jika masih error, delete dan start ulang
-pm2 delete wedding.feyaya.com
+pm2 delete wedding.zedlabs.id
 pm2 start ecosystem.config.cjs
 pm2 save
 ```
@@ -2057,13 +2057,13 @@ Certbot gagal generate certificate.
 
 ```bash
 # Test certbot
-sudo certbot certonly --dry-run -d wedding.feyaya.com
+sudo certbot certonly --dry-run -d wedding.zedlabs.id
 
 # Cek DNS
-nslookup wedding.feyaya.com
+nslookup wedding.zedlabs.id
 
 # Test HTTP access
-curl -I http://wedding.feyaya.com
+curl -I http://wedding.zedlabs.id
 ```
 
 **Common Causes:**
@@ -2080,7 +2080,7 @@ curl -I http://wedding.feyaya.com
 # Tunggu DNS propagate (max 24 jam)
 
 # Test dengan HTTP challenge
-sudo certbot --nginx -d wedding.feyaya.com --preferred-challenges http
+sudo certbot --nginx -d wedding.zedlabs.id --preferred-challenges http
 ```
 
 #### Out of Memory
@@ -2103,7 +2103,7 @@ module.exports = {
 }
 
 # Restart PM2
-pm2 restart wedding.feyaya.com
+pm2 restart wedding.zedlabs.id
 ```
 
 ### Database Issues
@@ -2606,6 +2606,6 @@ SOFTWARE.
 
 **Email:** zulfikriyahya18@gmail.com
 
-**Website:** [https://wedding.feyaya.com](https://wedding.feyaya.com)
+**Website:** [https://wedding.zedlabs.id](https://wedding.zedlabs.id)
 
 **Repository:** [https://github.com/zulfikriyahya/wedding-invitation](https://github.com/zulfikriyahya/wedding-invitation)
