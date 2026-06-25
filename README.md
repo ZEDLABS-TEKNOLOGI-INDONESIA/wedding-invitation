@@ -765,7 +765,7 @@ code .env  # jika menggunakan VSCode
 HOST=0.0.0.0
 PORT=5432
 DB_NAME=wedding.db
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=P@ssw0rd
 ```
 
 Konten undangan (nama mempelai, jadwal, dsb) **tidak perlu diisi di sini**. Cukup jalankan server, database akan terisi data default secara otomatis, lalu sesuaikan melalui `/admin` > tab **Pengaturan**.

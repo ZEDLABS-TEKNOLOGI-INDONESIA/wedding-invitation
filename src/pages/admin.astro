@@ -4,27 +4,47 @@ import AdminDashboard from "../components/Admin/AdminDashboard";
 import Layout from "../layouts/Layout.astro";
 import db from "../lib/db";
 
-const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD || "admin123";
+const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD || "P@ssw0rd";
 const COOKIE_NAME = "wedding_admin_auth";
 
 if (Astro.request.method === "POST") {
-  const formData = await Astro.request.formData();
-  const action = formData.get("action");
-  if (action === "login") {
-    const passwordInput = formData.get("password")?.toString();
-    if (passwordInput === ADMIN_PASSWORD) {
-      Astro.cookies.set(COOKIE_NAME, "true", {
-        path: "/",
-        httpOnly: true,
-        secure: import.meta.env.PROD,
-        maxAge: 60 * 60 * 24,
-      });
-      return Astro.redirect("/admin");
+  const contentType = Astro.request.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const body = await Astro.request.json();
+    const action = body.action;
+
+    if (action === "login") {
+      const credential = body.credential?.toString();
+      if (credential === ADMIN_PASSWORD) {
+        Astro.cookies.set(COOKIE_NAME, "true", {
+          path: "/",
+          httpOnly: true,
+          secure: import.meta.env.PROD,
+          maxAge: 60 * 60 * 24,
+        });
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } else {
+        return new Response(
+          JSON.stringify({ success: false, error: "Invalid credential" }),
+          {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
     }
-  }
-  if (action === "logout") {
-    Astro.cookies.delete(COOKIE_NAME, { path: "/" });
-    return Astro.redirect("/admin");
+
+    if (action === "logout") {
+      Astro.cookies.delete(COOKIE_NAME, { path: "/" });
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   }
 }
 
@@ -59,22 +79,28 @@ if (isAuthenticated) {
                 Admin Access
               </h1>
             </div>
-            <form method="POST" class="mt-8 space-y-6">
-              <input type="hidden" name="action" value="login" />
+            <div
+              id="login-error"
+              class="hidden rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400"
+            >
+              Kredensial tidak valid. Silakan coba lagi.
+            </div>
+            <div class="mt-8 space-y-6">
               <input
+                id="admin-credential"
                 type="password"
-                name="password"
-                required
+                autocomplete="current-password"
                 class="block w-full rounded-lg border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                placeholder="Password..."
+                placeholder="Masukkan akses kunci..."
               />
               <button
-                type="submit"
+                id="login-btn"
+                type="button"
                 class="w-full rounded-lg bg-slate-900 px-4 py-4 text-sm font-bold text-white hover:bg-slate-800 dark:bg-blue-600"
               >
                 MASUK
               </button>
-            </form>
+            </div>
           </div>
         </div>
       ) : (
@@ -88,15 +114,15 @@ if (isAuthenticated) {
                 Selamat datang, Admin
               </p>
             </div>
-            <form method="POST">
-              <input type="hidden" name="action" value="logout" />
-              <button class="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-                <LogOut className="h-4 w-4" /> LOGOUT
-              </button>
-            </form>
+            <button
+              id="logout-btn"
+              type="button"
+              class="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400"
+            >
+              <LogOut className="h-4 w-4" /> LOGOUT
+            </button>
           </div>
 
-          {/* STATS */}
           <div class="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
             <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
               <div class="flex items-center gap-3 text-slate-400">
@@ -151,7 +177,6 @@ if (isAuthenticated) {
             </div>
           </div>
 
-          {/* MAIN DASHBOARD */}
           <AdminDashboard
             client:load
             initialRsvps={rsvps}
@@ -162,4 +187,61 @@ if (isAuthenticated) {
       )
     }
   </main>
+
+  <script>
+    // Login
+    const loginBtn = document.getElementById("login-btn");
+    const credentialInput = document.getElementById(
+      "admin-credential"
+    ) as HTMLInputElement;
+    const loginError = document.getElementById("login-error");
+
+    if (loginBtn && credentialInput) {
+      const doLogin = async () => {
+        const val = credentialInput.value;
+        if (!val) return;
+
+        loginBtn.textContent = "Memverifikasi...";
+        loginBtn.setAttribute("disabled", "true");
+
+        try {
+          const res = await fetch("/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "login", credential: val }),
+          });
+
+          if (res.ok) {
+            window.location.reload();
+          } else {
+            if (loginError) loginError.classList.remove("hidden");
+            loginBtn.textContent = "MASUK";
+            loginBtn.removeAttribute("disabled");
+          }
+        } catch {
+          if (loginError) loginError.classList.remove("hidden");
+          loginBtn.textContent = "MASUK";
+          loginBtn.removeAttribute("disabled");
+        }
+      };
+
+      loginBtn.addEventListener("click", doLogin);
+      credentialInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doLogin();
+      });
+    }
+
+    // Logout
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        await fetch("/admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "logout" }),
+        });
+        window.location.reload();
+      });
+    }
+  </script>
 </Layout>
