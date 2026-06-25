@@ -1,17 +1,17 @@
-import React, { useState, useRef, useMemo } from "react";
-import { QRCodeCanvas } from "qrcode.react";
-import Papa from "papaparse";
-import JSZip from "jszip";
 import FileSaver from "file-saver";
+import JSZip from "jszip";
 import {
-  Download,
-  Upload,
-  Copy,
-  RefreshCcw,
-  Loader2,
-  FileText,
   CheckCircle2,
+  Copy,
+  Download,
+  FileText,
+  Loader2,
+  RefreshCcw,
+  Upload,
 } from "lucide-react";
+import Papa from "papaparse";
+import { QRCodeCanvas } from "qrcode.react";
+import React, { useMemo, useRef, useState } from "react";
 import { WEDDING_CONFIG } from "../constants";
 
 const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
@@ -19,7 +19,6 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [singleName, setSingleName] = useState("");
   const [bulkNames, setBulkNames] = useState<string[]>([]);
 
-  // Progress States
   const [isReadingCsv, setIsReadingCsv] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -34,13 +33,11 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     return `${baseUrl}/?to=${encodeURIComponent(name.trim())}`;
   };
 
-  // --- HELPER SAVE AS ---
   const handleSaveAs = (blob: Blob | string, name: string) => {
     const saveAsFunc = (FileSaver as any).saveAs || FileSaver;
     saveAsFunc(blob, name);
   };
 
-  // --- PREMIUM LOGO LOGIC ---
   const centerLogo = useMemo(() => {
     try {
       const bInitial = (WEDDING_CONFIG?.couple?.bride?.name || "B")
@@ -75,8 +72,6 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       return "";
     }
   }, []);
-
-  // --- ACTIONS ---
 
   const downloadTemplate = () => {
     const csvContent =
@@ -433,7 +428,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                     <QRCodeCanvas
                       ref={(el) => (qrRefs.current[idx + 50] = el)}
                       value={generateUrl(name)}
-                      size={250} // Use larger size for file download
+                      size={250}
                       level="H"
                       includeMargin={true}
                       imageSettings={

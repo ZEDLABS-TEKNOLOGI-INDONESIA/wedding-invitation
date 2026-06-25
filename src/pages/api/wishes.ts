@@ -51,9 +51,8 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     let resultId = 0;
 
     if (existingWish) {
-      // UPDATE
       const updateStmt = db.prepare(`
-        UPDATE wishes 
+        UPDATE wishes
         SET message = ?, created_at = ?
         WHERE id = ?
       `);
@@ -61,7 +60,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       actionType = "updated";
       resultId = existingWish.id;
     } else {
-      // INSERT
       const insertStmt = db.prepare(
         "INSERT INTO wishes (name, message, created_at) VALUES (?, ?, ?)"
       );
@@ -70,15 +68,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       resultId = Number(result.lastInsertRowid);
     }
 
-    // --- LOGIC NOTIFIKASI TELEGRAM ---
-
-    // 1. Tentukan Judul
     const title =
       actionType === "created"
         ? "✨ <b>UCAPAN & DOA BARU!</b>"
         : "📝 <b>UCAPAN DIPERBARUI!</b>";
 
-    // 2. Susun Pesan
     const notifMsg = `
 ${title}
 
@@ -87,7 +81,6 @@ ${title}
 <i>"${message}"</i>
     `.trim();
 
-    // 3. Kirim
     sendTelegramNotification(notifMsg);
 
     return new Response(

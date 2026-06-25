@@ -22,7 +22,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const placeholders = targetIds.map(() => "?").join(",");
 
-    // --- RSVP ACTIONS ---
     if (action === "update_rsvp") {
       const { guest_name, attendance, guest_count, message } = data;
       db.prepare(
@@ -38,7 +37,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ success: true }));
     }
 
-    // --- WISHES ACTIONS ---
     if (action === "update_wish") {
       const { name, message } = data;
       db.prepare("UPDATE wishes SET name=?, message=? WHERE id=?").run(

@@ -1,20 +1,20 @@
-import React, { useState } from "react";
-import jsPDF from "jspdf";
-import Papa from "papaparse";
-import JSZip from "jszip";
-import QRCode from "qrcode";
 import FileSaver from "file-saver";
+import jsPDF from "jspdf";
+import JSZip from "jszip";
 import {
+  Check,
   Download,
-  Upload,
+  Eye,
+  FileSpreadsheet,
+  FileText,
   Loader2,
   Printer,
-  Eye,
   RefreshCcw,
-  FileSpreadsheet,
-  Check,
-  FileText,
+  Upload,
 } from "lucide-react";
+import Papa from "papaparse";
+import QRCode from "qrcode";
+import React, { useState } from "react";
 import { WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
 
 interface GuestData {
@@ -79,7 +79,6 @@ const InvitationManager: React.FC = () => {
   });
   const [bulkData, setBulkData] = useState<GuestData[]>([]);
 
-  // Progress States
   const [isReadingCsv, setIsReadingCsv] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -87,13 +86,11 @@ const InvitationManager: React.FC = () => {
 
   const [previewUri, setPreviewUri] = useState<string | null>(null);
 
-  // --- HELPER SAVE AS ---
   const handleSaveAs = (blob: Blob | string, name: string) => {
     const saveAsFunc = (FileSaver as any).saveAs || FileSaver;
     saveAsFunc(blob, name);
   };
 
-  // --- DRAWING HELPERS ---
   const drawLeaf = (
     doc: jsPDF,
     x: number,

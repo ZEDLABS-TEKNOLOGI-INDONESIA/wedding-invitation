@@ -1,23 +1,22 @@
-import React, { useState, useMemo, useEffect } from "react";
 import {
-  Search,
-  Trash2,
-  Edit,
   ChevronLeft,
   ChevronRight,
   Download,
-  Users,
-  MessageCircle,
-  QrCode,
-  Printer,
-  Save,
+  Edit,
   Loader2,
+  MessageCircle,
+  Printer,
+  QrCode,
+  Save,
+  Search,
+  Trash2,
+  Users,
   X,
 } from "lucide-react";
-import QRCodeManager from "../QRCodeManager";
+import React, { useEffect, useMemo, useState } from "react";
 import InvitationManager from "../InvitationManager";
+import QRCodeManager from "../QRCodeManager";
 
-// --- TYPES ---
 interface RSVP {
   id: number;
   guest_name: string;
@@ -34,7 +33,6 @@ interface Wish {
   created_at: string;
 }
 
-// --- REUSABLE TABLE COMPONENT ---
 const DataTable = <T extends { id: number }>({
   data,
   columns,
@@ -57,7 +55,6 @@ const DataTable = <T extends { id: number }>({
   const [pageSize, setPageSize] = useState(10);
   const [selected, setSelected] = useState<number[]>([]);
 
-  // Filter Search
   const filteredData = useMemo(() => {
     return data.filter((item) =>
       Object.values(item).some((val) =>
@@ -284,7 +281,6 @@ const DataTable = <T extends { id: number }>({
   );
 };
 
-// --- MAIN DASHBOARD COMPONENT ---
 const AdminDashboard = ({
   initialRsvps,
   initialWishes,
@@ -298,19 +294,15 @@ const AdminDashboard = ({
     "rsvp"
   );
 
-  // Data States
   const [rsvps, setRsvps] = useState(initialRsvps);
   const [wishes, setWishes] = useState(initialWishes);
 
-  // UI/Loading States
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Edit Modal State
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // --- GENERIC DELETE HANDLER ---
   const handleDelete = async (type: "rsvp" | "wish", ids: number[]) => {
     if (ids.length === 0) return;
     setIsDeleting(true);
@@ -342,7 +334,6 @@ const AdminDashboard = ({
     }
   };
 
-  // --- GENERIC UPDATE HANDLER ---
   const handleUpdate = async (type: "rsvp" | "wish", id: number, data: any) => {
     setIsSaving(true);
     try {
@@ -378,7 +369,6 @@ const AdminDashboard = ({
     }
   };
 
-  // --- TABS CONFIG ---
   const tabs = [
     { id: "rsvp", label: "Data RSVP", icon: Users },
     { id: "wishes", label: "Ucapan & Doa", icon: MessageCircle },
