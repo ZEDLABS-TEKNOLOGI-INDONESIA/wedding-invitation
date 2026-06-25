@@ -1,6 +1,6 @@
 # Website Undangan Pernikahan Digital
 
-Website undangan pernikahan yang elegan, modern, dan interaktif dibangun menggunakan Astro, React, Tailwind CSS, dan SQLite. Dilengkapi dengan sistem manajemen tamu yang komprehensif, pelacakan RSVP real-time, notifikasi otomatis, dan tools desain profesional.
+Website undangan pernikahan yang elegan, modern, dan interaktif dibangun menggunakan Astro, React, Tailwind CSS, dan SQLite. Dilengkapi dengan sistem manajemen tamu yang komprehensif, pelacakan RSVP real-time, notifikasi otomatis, tools desain profesional, dan panel admin untuk mengelola seluruh konten undangan tanpa perlu edit file atau redeploy.
 
 ![Banner](./public/thumbnail.png)
 
@@ -9,6 +9,7 @@ Website undangan pernikahan yang elegan, modern, dan interaktif dibangun menggun
 ## Daftar Isi
 
 - [Fitur Utama](#fitur-utama)
+- [Arsitektur Konfigurasi](#arsitektur-konfigurasi)
 - [Struktur Proyek](#struktur-proyek)
 - [Konfigurasi](#konfigurasi)
 - [Instalasi & Development](#instalasi--development)
@@ -132,18 +133,26 @@ Efek:
 
 ### Sistem Teknis
 
-**Dynamic Configuration**
+**Dynamic Configuration (Database-Driven)**
+
+Seluruh konten undangan (nama mempelai, jadwal, venue, galeri, teks, dsb) disimpan di tabel `config` pada database SQLite dan dikelola sepenuhnya melalui Admin Dashboard, tidak perlu edit file atau redeploy untuk mengubah isi undangan.
 
 ```javascript
-// Semua data dari environment variables
-// Parsing otomatis untuk tipe data kompleks
-const parseJson = (jsonString, defaultValue) => {
+// src/utils/configParser.ts
+// Parsing otomatis untuk tipe data kompleks (JSON array/object)
+const parseJson = <T,>(str: string, fallback: T): T => {
   try {
-    return JSON.parse(jsonString);
-  } catch (e) {
-    return defaultValue;
+    return JSON.parse(str) as T;
+  } catch {
+    return fallback;
   }
 };
+```
+
+```javascript
+// src/hooks/useConfig.ts
+// React hook untuk fetch config dari /api/config, dengan in-memory cache
+const { config, loading } = useConfig();
 ```
 
 **Server-Side Rendering**
@@ -174,6 +183,12 @@ CREATE TABLE wishes (
   message TEXT NOT NULL,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Tabel Config (Dynamic Settings)
+CREATE TABLE config (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 ```
 
 **PWA Support**
@@ -191,6 +206,7 @@ CREATE TABLE wishes (
 // 2. Update data RSVP
 // 3. Ucapan baru dari buku tamu
 
+// Token & Chat ID disimpan di tabel config (diatur via Admin > Pengaturan)
 // Format pesan dengan HTML parsing
 // Timeout 5 detik untuk koneksi lambat
 // Silent fail agar tidak mengganggu user experience
@@ -201,7 +217,7 @@ CREATE TABLE wishes (
 **Autentikasi**
 
 - Cookie-based authentication
-- Password dari environment variable
+- Password dari environment variable (`ADMIN_PASSWORD`)
 - Session management dengan expire time
 - Logout dengan clear cookie
 
@@ -239,7 +255,7 @@ _Mode Single:_
 ```
 Input: Nama Tamu
 Output:
-- QR Code dengan logo premium (inisial mempelai)
+- QR Code dengan logo premium (inisial mempelai, diambil dari config)
 - Preview real-time
 - Download PNG high-quality
 - Copy link ke clipboard
@@ -292,6 +308,8 @@ Halaman 4: E-Invitation
 - Wassalamualaikum
 - Signature mempelai
 ```
+
+Semua teks dan data pada PDF diambil langsung dari tabel `config` melalui endpoint `/api/config`, sehingga otomatis sinkron dengan perubahan yang dilakukan di Admin > Pengaturan.
 
 _Theme Options:_
 
@@ -350,6 +368,71 @@ Features:
 - ZIP naming: Undangan-{theme}-{date}.zip
 ```
 
+**Pengaturan (Settings)**
+
+Tab khusus di Admin Dashboard untuk mengelola seluruh konten undangan secara dinamis tanpa perlu akses server atau redeploy:
+
+```
+Kategori yang dapat diatur:
+- Mempelai Wanita & Pria (nama, orang tua, Instagram, foto)
+- Venue (nama, alamat, koordinat GPS)
+- Jadwal Akad Nikah & Resepsi
+- Hero & Media (gambar hero, kota, URL musik, max tamu RSVP)
+- Teks & Konten (salam, quote, kalimat undangan, penutup)
+- Rekening Bank (JSON array)
+- Kisah Cinta / Love Story (JSON array)
+- Galeri Foto (JSON array URL)
+- Notifikasi Telegram (Bot Token, Chat ID)
+```
+
+Setiap perubahan disimpan ke tabel `config` melalui `POST /api/config` dan langsung diterapkan ke seluruh halaman setelah cache di-invalidate.
+
+---
+
+## Arsitektur Konfigurasi
+
+Konfigurasi proyek menggunakan pendekatan **hybrid**, dipisah berdasarkan sensitivitas dan kebutuhan akses:
+
+| Jenis Config | Lokasi | Diatur Via | Contoh |
+|---|---|---|---|
+| Critical / Infrastruktur | `.env` | Edit file manual + restart server | `HOST`, `PORT`, `DB_NAME`, `ADMIN_PASSWORD` |
+| Konten Undangan | Database (tabel `config`) | Admin Dashboard > Pengaturan | Nama mempelai, venue, jadwal, galeri, teks, dsb |
+
+**Alasan pemisahan ini:**
+
+- `.env` menyimpan nilai yang berkaitan dengan keamanan dan infrastruktur server (port, password admin, nama file database), yang secara wajar tidak boleh diubah dari UI publik/admin dan butuh restart untuk berlaku.
+- Tabel `config` menyimpan seluruh konten yang sifatnya editorial (nama, tanggal, galeri, teks), agar bisa diubah kapan saja tanpa perlu akses SSH/server, langsung dari Admin Dashboard.
+
+**Alur data dari Admin ke Frontend:**
+
+```
+Admin mengisi form di tab "Pengaturan"
+        │
+        ▼
+POST /api/config (auth: cookie wedding_admin_auth)
+        │
+        ▼
+setConfig() menulis ke tabel config (SQLite)
+        │
+        ▼
+invalidateConfigCache() menghapus cache di client
+        │
+        ▼
+useConfig() hook fetch ulang GET /api/config
+        │
+        ▼
+parseConfig() mengubah raw key-value menjadi AppConfig
+        │
+        ▼
+Seluruh komponen React (App.tsx, Hero, CoupleProfile, dst)
+menerima config sebagai props dan re-render
+```
+
+**Catatan keamanan:**
+
+- `GET /api/config` bersifat publik tapi tidak pernah mengembalikan `TELEGRAM_BOT_TOKEN` dan `TELEGRAM_CHAT_ID`.
+- `GET /api/config/full` (termasuk Telegram credentials) dan `POST /api/config` hanya bisa diakses dengan cookie admin yang valid.
+
 ---
 
 ## Struktur Proyek
@@ -372,7 +455,7 @@ wedding-invitation/
 ├── src/
 │   ├── components/                # React components
 │   │   ├── Admin/
-│   │   │   └── AdminDashboard.tsx # Main admin interface
+│   │   │   └── AdminDashboard.tsx # Main admin interface (incl. tab Pengaturan)
 │   │   ├── CoupleProfile.tsx      # Mempelai section
 │   │   ├── Envelope.tsx           # Opening animation
 │   │   ├── EventDetails.tsx       # Jadwal acara
@@ -390,16 +473,22 @@ wedding-invitation/
 │   │   ├── RSVPForm.tsx           # RSVP form + dashboard
 │   │   └── Wishes.tsx             # Guest book + pagination
 │   │
+│   ├── hooks/
+│   │   └── useConfig.ts           # React hook: fetch + cache config dari API
+│   │
 │   ├── layouts/
 │   │   └── Layout.astro           # Base HTML structure
 │   │
 │   ├── lib/
-│   │   ├── db.ts                  # SQLite setup + migrations
+│   │   ├── db.ts                  # SQLite setup + migrations + default config
 │   │   └── rateLimit.ts           # IP-based rate limiter
 │   │
 │   ├── pages/
 │   │   ├── api/
-│   │   │   ├── admin.ts           # Admin CRUD operations
+│   │   │   ├── config/
+│   │   │   │   └── full.ts        # GET config lengkap (admin only, incl. Telegram)
+│   │   │   ├── admin.ts           # Admin CRUD operations (RSVP & Wishes)
+│   │   │   ├── config.ts          # GET (public) / POST (admin) config
 │   │   │   ├── export-rsvp.ts     # RSVP CSV export
 │   │   │   ├── export-wishes.ts   # Wishes CSV export
 │   │   │   ├── rsvp.ts            # RSVP GET/POST
@@ -410,20 +499,20 @@ wedding-invitation/
 │   │   └── qrcode.astro           # QR generator page
 │   │
 │   ├── services/
-│   │   └── dbService.ts           # Frontend API wrapper
+│   │   └── dbService.ts           # Frontend API wrapper (RSVP & Wishes)
 │   │
 │   ├── styles/
 │   │   └── global.css             # Tailwind + custom styles
 │   │
 │   ├── utils/
 │   │   ├── calendarUtils.ts       # Google Cal + ICS
+│   │   ├── configParser.ts        # Parser raw config (DB) → AppConfig
 │   │   └── telegram.ts            # Telegram notifications
 │   │
-│   ├── App.tsx                    # Main React app
-│   ├── constants.tsx              # Config parser
-│   └── types.ts                   # TypeScript definitions
+│   ├── App.tsx                    # Main React app (consume useConfig)
+│   └── types.ts                   # TypeScript definitions (AppConfig, RSVP, Wish)
 │
-├── .env                           # Configuration file (REQUIRED)
+├── .env                           # Critical configuration file (REQUIRED)
 ├── .env.example                   # Configuration template
 ├── .prettierrc.mjs               # Code formatting rules
 ├── astro.config.mjs              # Astro framework config
@@ -432,7 +521,6 @@ wedding-invitation/
 ├── nginx.conf                    # Nginx reverse proxy example
 ├── package.json                  # Dependencies + scripts
 ├── README.md                     # This file
-├── todo.md                       # Development notes
 ├── tsconfig.json                 # TypeScript config
 └── LICENSE                       # MIT License
 ```
@@ -444,22 +532,32 @@ wedding-invitation/
 ```javascript
 // Auto-migration dari root ke /database folder
 // WAL mode untuk concurrent access
-// Auto-create tables on first run
+// Auto-create tables on first run (rsvps, wishes, config)
+// Seed default config jika tabel config kosong
+```
+
+**Config Layer (`src/utils/configParser.ts` + `src/hooks/useConfig.ts`)**
+
+```javascript
+// parseConfig(): raw key-value (Record<string, string>) dari DB
+// menjadi struktur AppConfig yang strongly-typed
+// useConfig(): fetch /api/config sekali, cache in-memory,
+// invalidateConfigCache() dipanggil setelah admin menyimpan perubahan
 ```
 
 **API Layer (`src/pages/api/`)**
 
 ```javascript
 // RESTful endpoints
-// Rate limiting di semua POST endpoints
+// Rate limiting di semua POST endpoints publik (rsvp, wishes)
 // Sanitasi input untuk XSS protection
-// Cookie-based auth untuk admin
+// Cookie-based auth untuk admin (admin.ts, config POST, config/full GET)
 ```
 
 **Service Layer (`src/services/dbService.ts`)**
 
 ```javascript
-// Client-side cache (30 detik)
+// Client-side cache (30 detik) khusus RSVP & Wishes
 // Fetch wrapper untuk API calls
 // Type-safe responses
 ```
@@ -470,18 +568,16 @@ wedding-invitation/
 // React functional components dengan hooks
 // TypeScript strict mode
 // Client-side rendering dengan Astro directives
-// Shared props via constants
+// Semua komponen menerima `config: AppConfig` sebagai props dari App.tsx
 ```
 
 ---
 
 ## Konfigurasi
 
-### File .env
+### File .env (Critical Config)
 
-Semua konfigurasi website dikelola melalui environment variables. Salin `.env.example` ke `.env` di root folder.
-
-#### Server Configuration
+File `.env` hanya menyimpan konfigurasi infrastruktur yang sensitif atau wajib tersedia sebelum server menyala. Salin `.env.example` ke `.env` di root folder.
 
 ```properties
 # Host dan Port untuk development/production
@@ -495,185 +591,120 @@ DB_NAME=wedding.db
 ADMIN_PASSWORD=P@ssw0rd_Anda_Disini
 ```
 
-#### Notifikasi Telegram (Opsional)
+**Penting:**
 
-```properties
-# Untuk mendapatkan token dan chat_id:
-# 1. Buat bot baru melalui @BotFather di Telegram
-# 2. Dapatkan chat_id dengan cara kirim pesan ke bot
-#    lalu akses: https://api.telegram.org/bot<TOKEN>/getUpdates
+- Jangan commit `.env` ke repository. Pastikan ada di `.gitignore`.
+- Ganti `ADMIN_PASSWORD` dengan password yang kuat sebelum deploy ke production. Nilai di `.env.example` hanya placeholder.
+- Setelah mengubah `.env`, server development perlu di-restart manual (`Ctrl+C` lalu `pnpm dev` lagi).
 
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-TELEGRAM_CHAT_ID=123456789
+### Konten Undangan (Database, via Admin Dashboard)
+
+Seluruh konten berikut **tidak lagi diatur melalui `.env`**, melainkan melalui tab **Pengaturan** di Admin Dashboard (`/admin`). Saat pertama kali dijalankan, database akan otomatis terisi dengan nilai default (contoh data Fera & Yahya) yang bisa langsung diedit dari sana.
+
+#### Mempelai Wanita
+
+| Field | Keterangan |
+|---|---|
+| Nama Panggilan | Untuk footer dan hero section |
+| Nama Lengkap | Untuk profile section |
+| Nama Orang Tua | Teks bebas, contoh: "Putri tercinta dari Bpk. ... & Ibu ..." |
+| Instagram | Tanpa tanda @ |
+| URL Foto | Disarankan rasio portrait, minimal 600x800px |
+
+#### Mempelai Pria
+
+Field identik dengan Mempelai Wanita.
+
+#### Venue
+
+| Field | Keterangan |
+|---|---|
+| Nama Gedung | Nama tempat acara |
+| Alamat Lengkap | Untuk display dan PDF |
+| Latitude / Longitude | Koordinat GPS, didapat dari Google Maps (klik kanan pada lokasi) |
+
+#### Akad Nikah & Resepsi
+
+| Field | Keterangan |
+|---|---|
+| Judul | Bebas customize, contoh "Akad Nikah" |
+| Hari | Contoh: Minggu |
+| Tanggal | Format Indonesia, contoh: "11 Oktober 2025" |
+| Jam Mulai / Selesai | Format 24 jam, contoh: "08:00" |
+| ISO Start / ISO End | Format ISO-8601 dengan timezone, **wajib akurat** karena dipakai countdown timer dan export kalender |
+
+```
+Format ISO: YYYY-MM-DDTHH:mm:ss+07:00
+Contoh: 2025-10-11T08:00:00+07:00
 ```
 
-#### Hero Section
+#### Hero & Media
 
-```properties
-# Gambar utama (support Unsplash, lokal, atau CDN)
-PUBLIC_HERO_IMAGE=https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop
+| Field | Keterangan |
+|---|---|
+| URL Gambar Hero | Mendukung Unsplash, CDN, atau upload lokal |
+| Kota | Ditampilkan di bawah judul hero |
+| URL Musik (MP3) | Background music, gunakan link direct (CDN/hosting sendiri) |
+| Maks Tamu per RSVP | Default 20, sesuaikan kapasitas venue |
 
-# Lokasi/kota untuk ditampilkan di hero
-PUBLIC_HERO_CITY=Kab. Pandeglang, Banten
-```
+#### Teks & Konten
 
-#### Background Music
+Mencakup salam pembuka, quote Ar-Rum, kalimat undangan, teks penutup, salam penutup, tanda tangan, nama keluarga, judul dan deskripsi hadiah. Semua berupa teks bebas (textarea) yang diedit langsung dari form.
 
-```properties
-# URL musik (MP3/OGG)
-# Bisa menggunakan:
-# - CDN seperti BenSound
-# - Upload ke hosting sendiri
-# - Google Drive (dengan link direct download)
-
-PUBLIC_MUSIC_URL=https://www.bensound.com/bensound-music/bensound-forever.mp3
-```
-
-#### Data Mempelai Wanita
-
-```properties
-# Nama panggilan (untuk footer dan hero)
-PUBLIC_BRIDE_NICKNAME=Fey
-
-# Nama lengkap (untuk profile section)
-PUBLIC_BRIDE_FULLNAME=Fera Oktapia
-
-# Info orang tua
-PUBLIC_BRIDE_PARENTS=Putri tercinta dari Bpk. [Nama Ayah] & Ibu [Nama Ibu]
-
-# Instagram handle (tanpa @)
-PUBLIC_BRIDE_INSTAGRAM=feraoktapia___
-
-# URL foto portrait (landscape atau portrait, min 600x800px)
-PUBLIC_BRIDE_IMAGE=https://placehold.co/600x800?text=Fey+Portrait
-```
-
-#### Data Mempelai Pria
-
-```properties
-PUBLIC_GROOM_NICKNAME=Yaya
-PUBLIC_GROOM_FULLNAME=Yahya Zulfikri
-PUBLIC_GROOM_PARENTS=Putra tercinta dari Bpk. [Nama Ayah] & Ibu [Nama Ibu]
-PUBLIC_GROOM_INSTAGRAM=zulfikriyahya_
-PUBLIC_GROOM_IMAGE=https://placehold.co/600x800?text=Yaya+Portrait
-```
-
-#### Informasi Venue
-
-```properties
-# Nama tempat acara
-PUBLIC_VENUE_NAME=The Royal Azure Ballroom
-
-# Alamat lengkap (untuk display dan PDF)
-PUBLIC_VENUE_ADDRESS=Jl. Taman Makam Pahlawan No.1, Kab. Pandeglang, Banten
-
-# Koordinat GPS (dapatkan dari Google Maps)
-# Cara: Klik kanan di Google Maps → koordinat ada di popup
-PUBLIC_VENUE_LAT=-6.2088
-PUBLIC_VENUE_LNG=106.8456
-```
-
-#### Jadwal Akad Nikah
-
-```properties
-# Judul acara (bebas customize)
-PUBLIC_AKAD_TITLE=Akad Nikah
-
-# Nama hari (Senin - Minggu)
-PUBLIC_AKAD_DAY=Minggu
-
-# Tanggal dalam format Indonesia
-PUBLIC_AKAD_DATE=11 Oktober 2025
-
-# Waktu mulai dan selesai (format 24 jam)
-PUBLIC_AKAD_START=08:00
-PUBLIC_AKAD_END=10:00
-
-# Format ISO-8601 dengan timezone (+07:00 untuk WIB)
-# PENTING: Format ini digunakan untuk countdown timer dan calendar export
-PUBLIC_AKAD_ISO_START=2025-10-11T08:00:00+07:00
-PUBLIC_AKAD_ISO_END=2025-10-11T10:00:00+07:00
-```
-
-#### Jadwal Resepsi
-
-```properties
-PUBLIC_RESEPSI_TITLE=Resepsi Pernikahan
-PUBLIC_RESEPSI_DAY=Minggu
-PUBLIC_RESEPSI_DATE=11 Oktober 2025
-PUBLIC_RESEPSI_START=11:00
-PUBLIC_RESEPSI_END=14:00
-PUBLIC_RESEPSI_ISO_START=2025-10-11T11:00:00+07:00
-PUBLIC_RESEPSI_ISO_END=2025-10-11T14:00:00+07:00
-```
-
-#### Konfigurasi RSVP
-
-```properties
-# Maksimal jumlah tamu yang bisa dibawa per undangan
-# Bisa disesuaikan dengan kapasitas venue
-PUBLIC_RSVP_MAX_GUESTS=20
-```
-
-#### Data Kompleks (Format JSON)
-
-**PENTING:** Data berikut harus ditulis dalam **satu baris** tanpa line break.
-
-**Bank Accounts:**
+#### Rekening Bank (JSON Array)
 
 ```json
-PUBLIC_BANK_ACCOUNTS=[{"bank":"Bank BCA","number":"1234567890","name":"Fera Oktapia"},{"bank":"Bank Mandiri","number":"0987655432","name":"Yahya Zulfikri"}]
+[{"bank":"Bank BCA","number":"1234567890","name":"Fera Oktapia"},{"bank":"Bank Mandiri","number":"0987655432","name":"Yahya Zulfikri"}]
 ```
 
-**Love Story Timeline:**
+#### Kisah Cinta / Love Story (JSON Array)
 
 ```json
-PUBLIC_LOVE_STORY=[{"date":"2020","title":"Awal Pertemuan","desc":"Atas izin Allah, kami dipertemukan dalam suasana yang sederhana namun penuh makna."},{"date":"2022","title":"Menjalin Harapan","desc":"Dengan niat baik, kami memutuskan untuk saling mengenal dan membangun komitmen menuju ridho-Nya."},{"date":"2025","title":"Ikatan Suci","desc":"Insya Allah, kami memantapkan hati untuk menyempurnakan separuh agama dalam ikatan pernikahan."}]
+[{"date":"2020","title":"Awal Pertemuan","desc":"Atas izin Allah, kami dipertemukan dalam suasana yang sederhana namun penuh makna."},{"date":"2022","title":"Menjalin Harapan","desc":"Dengan niat baik, kami memutuskan untuk saling mengenal dan membangun komitmen menuju ridho-Nya."},{"date":"2025","title":"Ikatan Suci","desc":"Insya Allah, kami memantapkan hati untuk menyempurnakan separuh agama dalam ikatan pernikahan."}]
 ```
 
-**Gallery Images:**
+#### Galeri Foto (JSON Array URL)
 
 ```json
-PUBLIC_GALLERY_IMAGES=["https://placehold.co/800x1200?text=Moment+1","https://placehold.co/1200x800?text=Moment+2","https://placehold.co/800x800?text=Moment+3","https://placehold.co/800x1200?text=Moment+4","https://placehold.co/1200x800?text=Moment+5","https://placehold.co/800x1200?text=Moment+6"]
+["https://placehold.co/800x1200?text=Moment+1","https://placehold.co/1200x800?text=Moment+2","https://placehold.co/800x800?text=Moment+3"]
 ```
 
-### Tips Konfigurasi
+#### Notifikasi Telegram
 
-1. **Validasi JSON:**
+| Field | Keterangan |
+|---|---|
+| Bot Token | Didapat dari @BotFather di Telegram |
+| Chat ID | Didapat dengan kirim pesan ke bot lalu akses `https://api.telegram.org/bot<TOKEN>/getUpdates` |
 
-   ```bash
-   # Gunakan tool online seperti jsonlint.com
-   # untuk memvalidasi format JSON sebelum paste ke .env
-   ```
+Field ini hanya terlihat dan tersimpan melalui `GET /api/config/full` dan `POST /api/config`, sehingga tidak pernah terekspos ke endpoint publik.
 
-2. **URL Gambar:**
+### Tips Pengisian Konten
 
-   ```javascript
-   // Rekomendasi sumber gambar:
-   // - Unsplash (gratis, high-quality)
-   // - ImgBB (free image hosting)
-   // - Cloudinary (CDN profesional)
-   // - Self-hosted di /public folder
-   ```
+1. **Validasi JSON**: Untuk field Rekening Bank, Kisah Cinta, dan Galeri Foto, gunakan tool seperti jsonlint.com untuk memastikan format valid sebelum disimpan. Form di Admin Dashboard akan menampilkan error "JSON tidak valid" jika format salah.
 
-3. **Koordinat GPS:**
+2. **URL Gambar**: Rekomendasi sumber gambar:
+   - Unsplash (gratis, high-quality)
+   - ImgBB (free image hosting)
+   - Cloudinary (CDN profesional)
+   - Self-hosted di `/public` folder
 
+3. **Koordinat GPS**:
    ```
    1. Buka Google Maps
    2. Klik kanan pada lokasi venue
    3. Klik koordinat yang muncul (format: -6.xxx, 106.xxx)
-   4. Copy paste ke .env
+   4. Paste ke field Latitude / Longitude di Admin > Pengaturan
    ```
 
-4. **Format Tanggal ISO:**
-   ```javascript
-   // Format: YYYY-MM-DDTHH:mm:ss+07:00
-   // YYYY: Tahun 4 digit
-   // MM: Bulan 2 digit (01-12)
-   // DD: Tanggal 2 digit (01-31)
-   // T: Separator
-   // HH:mm:ss: Jam 24-format
-   // +07:00: Timezone (WIB)
+4. **Format Tanggal ISO**:
+   ```
+   Format: YYYY-MM-DDTHH:mm:ss+07:00
+   YYYY: Tahun 4 digit
+   MM: Bulan 2 digit (01-12)
+   DD: Tanggal 2 digit (01-31)
+   T: Separator
+   HH:mm:ss: Jam 24-format
+   +07:00: Timezone (WIB)
    ```
 
 ---
@@ -716,7 +747,7 @@ git clone git@github.com:zulfikriyahya/wedding-invitation.git
 cd wedding-invitation
 ```
 
-#### 2. Setup Environment Variables
+#### 2. Setup Environment Variables (Critical Config Saja)
 
 ```bash
 # Copy template konfigurasi
@@ -735,13 +766,9 @@ HOST=0.0.0.0
 PORT=5432
 DB_NAME=wedding.db
 ADMIN_PASSWORD=admin123
-
-PUBLIC_BRIDE_NICKNAME=Bride
-PUBLIC_GROOM_NICKNAME=Groom
-PUBLIC_VENUE_NAME=Test Venue
-PUBLIC_AKAD_ISO_START=2025-12-31T10:00:00+07:00
-PUBLIC_AKAD_ISO_END=2025-12-31T12:00:00+07:00
 ```
+
+Konten undangan (nama mempelai, jadwal, dsb) **tidak perlu diisi di sini**. Cukup jalankan server, database akan terisi data default secara otomatis, lalu sesuaikan melalui `/admin` > tab **Pengaturan**.
 
 #### 3. Install Dependencies
 
@@ -777,6 +804,17 @@ Buka browser dan kunjungi:
 
 - Local: `http://localhost:5432`
 - Network: `http://192.168.x.x:5432` (bisa diakses dari device lain dalam jaringan yang sama)
+- Admin: `http://localhost:5432/admin` (login dengan `ADMIN_PASSWORD` dari `.env`)
+
+#### 6. Isi Konten Undangan
+
+```
+1. Login ke /admin
+2. Buka tab "Pengaturan"
+3. Isi/edit seluruh field sesuai kebutuhan
+4. Klik "Simpan Semua"
+5. Perubahan langsung terlihat di halaman utama tanpa restart server
+```
 
 ### Development Workflow
 
@@ -789,6 +827,9 @@ Buka browser dan kunjungi:
 # - src/**/*.ts
 # - src/**/*.css
 # - .env (perlu restart manual)
+
+# Perubahan konten via Admin > Pengaturan TIDAK perlu restart,
+# cukup invalidate cache otomatis dan reload halaman.
 ```
 
 #### File .env Changes
@@ -805,7 +846,7 @@ pnpm dev  # Start ulang
 # Database otomatis dibuat di:
 ./database/wedding.db
 
-# Untuk reset database:
+# Untuk reset database (termasuk reset semua config ke default):
 rm -rf database/
 pnpm dev  # Database baru akan dibuat otomatis
 ```
@@ -863,6 +904,7 @@ pnpm dev  # Database baru akan dibuat otomatis
    - Export CSV
    - Generate QR Code
    - Buat PDF undangan
+   - Edit konten undangan di tab Pengaturan
 ```
 
 #### Test QR Code Generator
@@ -895,6 +937,17 @@ pnpm dev  # Database baru akan dibuat otomatis
    - Download template CSV
    - Upload file
    - Generate batch
+```
+
+#### Test Pengaturan (Settings)
+
+```bash
+1. Login ke admin panel
+2. Buka tab "Pengaturan"
+3. Edit salah satu field, misal Nama Panggilan mempelai
+4. Klik "Simpan Semua"
+5. Buka tab baru ke halaman utama (/)
+6. Verifikasi perubahan sudah tampil
 ```
 
 ### Troubleshooting Development
@@ -1008,6 +1061,7 @@ tar -czf production.tar.gz \
 # - node_modules/ (install ulang di server)
 # - src/ (sudah ter-bundle di dist/)
 # - .git/ (opsional, tergantung deployment strategy)
+# - database/ (kecuali ingin migrasi data lama, lihat bagian Backup)
 ```
 
 #### 3. Upload ke Server
@@ -1115,6 +1169,16 @@ pm2 delete wedding.zedlabs.id
 pm2 monit
 ```
 
+#### 6. Isi Konten Undangan Production
+
+```bash
+1. Akses https://your-domain.com/admin
+2. Login dengan ADMIN_PASSWORD dari .env production
+3. Buka tab "Pengaturan"
+4. Isi seluruh data sesuai kebutuhan acara
+5. Simpan
+```
+
 ### Setup Nginx Reverse Proxy
 
 #### 1. Buat Konfigurasi Nginx
@@ -1187,6 +1251,16 @@ server {
         expires 30d;
         add_header Cache-Control "public, max-age=2592000";
         access_log off;
+    }
+
+    # No Cache untuk Config API (selalu fresh)
+    location /api/config {
+        proxy_pass http://wedding_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
     }
 
     # Rate Limit untuk API Endpoints
@@ -1303,6 +1377,8 @@ sudo ufw status
 
 ### Database Backup Strategy
 
+Database sekarang menyimpan tiga jenis data penting: RSVP, Wishes, dan seluruh konten undangan (tabel `config`). Backup database sama dengan backup seluruh konten undangan.
+
 #### 1. Manual Backup
 
 ```bash
@@ -1396,6 +1472,9 @@ pm2 restart wedding.zedlabs.id
 
 # 5. Verify
 pm2 status
+
+# Catatan: konten undangan (tabel config) tidak terpengaruh oleh
+# update kode, karena tersimpan persisten di database/wedding.db
 ```
 
 ---
@@ -1434,7 +1513,7 @@ https://wedding.zedlabs.id/?to=Ahmad+Syarief+Ramadhan
    - **Hadir**: Akan datang ke acara
    - **Tidak Hadir**: Tidak bisa hadir
    - **Ragu**: Belum yakin/tentative
-5. Jika pilih "Hadir", tentukan jumlah tamu yang dibawa (max 20 orang default)
+5. Jika pilih "Hadir", tentukan jumlah tamu yang dibawa (max sesuai pengaturan admin, default 20 orang)
 6. Isi pesan untuk mempelai (opsional)
 7. Klik tombol "Send RSVP"
 
@@ -1566,7 +1645,7 @@ Nama Tamu,No HP,Kehadiran,Jumlah,Pesan,Waktu Input
 
 - Size: 250x250 px
 - Level: High error correction
-- Logo: Inisial mempelai dalam circle dengan border gold
+- Logo: Inisial mempelai dalam circle dengan border gold (diambil dari Pengaturan)
 - Format: PNG transparent background
 
 **Mode Bulk (Banyak):**
@@ -1663,6 +1742,8 @@ Undangan-sage-2025-01-15.zip
 
 **Detail Template PDF:**
 
+Seluruh teks dan data berikut ditarik otomatis dari tabel `config` (sama dengan yang diatur di tab Pengaturan), bukan hardcoded.
+
 **Halaman 1 - Cover:**
 
 - Border ornamen bunga (vektor, bukan gambar)
@@ -1740,6 +1821,21 @@ Undangan-sage-2025-01-15.zip
 - Color mode: CMYK untuk hasil optimal
 - Print setting: Best quality
 
+#### Mengatur Konten Undangan (Tab Pengaturan)
+
+1. Login ke admin panel
+2. Buka tab "Pengaturan"
+3. Form ditampilkan per kategori: Mempelai Wanita, Mempelai Pria, Venue, Akad Nikah, Resepsi, Hero & Media, Teks & Konten, Rekening Bank, Kisah Cinta, Galeri, Notifikasi Telegram
+4. Untuk field bertipe JSON (Rekening Bank, Kisah Cinta, Galeri), pastikan format array valid sebelum menyimpan
+5. Klik "Simpan Semua" di bagian atas atau bawah form
+6. Tombol akan berubah menjadi "Tersimpan!" sebagai konfirmasi
+7. Buka halaman utama di tab baru untuk verifikasi perubahan
+
+**Catatan:**
+
+- Perubahan langsung aktif tanpa perlu restart server atau rebuild
+- Jika ada error JSON, field terkait akan ditandai merah dengan pesan error, dan penyimpanan dibatalkan sampai diperbaiki
+
 #### Logout
 
 Klik tombol "LOGOUT" di kanan atas dashboard.
@@ -1752,16 +1848,15 @@ Klik tombol "LOGOUT" di kanan atas dashboard.
 
 **Framework & Library:**
 
-- **Astro 5.16.6**: Static Site Generator dengan SSR support
+- **Astro 7.x**: Static Site Generator dengan SSR support
   - Island Architecture untuk optimal bundle size
   - Partial hydration
   - Built-in optimization
-- **React 19.2.3**: UI Component Library
+- **React 19.x**: UI Component Library
   - Functional components dengan hooks
   - TypeScript strict mode
-  - Server Components ready
 
-- **Tailwind CSS 4.1.18**: Utility-first CSS Framework
+- **Tailwind CSS 4.x**: Utility-first CSS Framework
   - Custom theme configuration
   - Dark mode support
   - Responsive design
@@ -1770,24 +1865,25 @@ Klik tombol "LOGOUT" di kanan atas dashboard.
 **UI Components:**
 
 - **Lucide React**: Icon library (tree-shakeable)
+- **@icons-pack/react-simple-icons**: Icon brand (Instagram, dsb)
 - Custom components dengan editorial design
 
 **QR Code & PDF:**
 
-- **qrcode.react 4.2.0**: QR code generator component
-- **qrcode 1.5.4**: Server-side QR generation
-- **jsPDF 3.0.4**: PDF generation library
+- **qrcode.react**: QR code generator component
+- **qrcode**: Server-side/PDF QR generation
+- **jsPDF**: PDF generation library
 - **Canvas API**: untuk render QR dan vector graphics
 
 **File Processing:**
 
-- **PapaParse 5.5.3**: CSV parser
-- **JSZip 3.10.1**: ZIP file generator
-- **FileSaver 2.0.5**: Client-side file download
+- **PapaParse**: CSV parser
+- **JSZip**: ZIP file generator
+- **FileSaver**: Client-side file download
 
 **PWA:**
 
-- **vite-plugin-pwa 1.2.0**: PWA integration
+- **vite-plugin-pwa**: PWA integration
 - **Workbox**: Service Worker strategies
 
 ### Backend
@@ -1795,38 +1891,40 @@ Klik tombol "LOGOUT" di kanan atas dashboard.
 **Runtime & Server:**
 
 - **Node.js 18+**: JavaScript runtime
-- **Astro Node Adapter 9.5.1**: SSR dengan standalone mode
-- **Express** (via Astro): HTTP server
+- **Astro Node Adapter**: SSR dengan standalone mode
 
 **Database:**
 
-- **better-sqlite3 12.5.0**: Synchronous SQLite3 binding
+- **better-sqlite3**: Synchronous SQLite3 binding
   - WAL mode untuk concurrent access
   - Prepared statements
   - Transaction support
+  - Tabel `config` untuk seluruh konten dinamis
 
 **API Layer:**
 
 - RESTful API dengan Astro API routes
 - Type-safe dengan TypeScript
 - Input sanitization
+- Cookie-based auth untuk endpoint admin
 
 ### Development Tools
 
 **Code Quality:**
 
-- **TypeScript 5.9.3**: Type-safe JavaScript
-- **ESLint 9.39.2**: Linting
+- **TypeScript**: Type-safe JavaScript
+- **ESLint**: Linting
   - React plugin
   - Astro plugin
   - TypeScript plugin
-- **Prettier 3.7.4**: Code formatter
+  - jsx-a11y plugin
+- **Prettier**: Code formatter
   - Astro plugin
   - Tailwind plugin
 
 **Build Tools:**
 
-- **Vite 7.3.0**: Build tool dan dev server
+- **Vite**: Build tool dan dev server
   - HMR (Hot Module Replacement)
   - Code splitting
   - Asset optimization
@@ -1867,6 +1965,7 @@ Klik tombol "LOGOUT" di kanan atas dashboard.
   - New RSVP alerts
   - New wishes alerts
   - Update notifications
+  - Credentials diatur via Admin > Pengaturan, bukan `.env`
 
 **CDN & Hosting:**
 
@@ -1899,7 +1998,7 @@ wedding-invitation
 
 - Client bundle: ~150KB (gzipped)
 - Server bundle: ~500KB
-- Database: ~100KB (empty)
+- Database: ~100KB (kosong, sebelum data terisi)
 
 **Performance Metrics:**
 
@@ -1990,6 +2089,27 @@ pnpm add better-sqlite3 --force
 
 # Atau dengan node-gyp
 npm rebuild better-sqlite3
+```
+
+#### Halaman Utama Error Setelah Update Kode
+
+**Problem:**
+
+```
+Cannot read properties of undefined (reading 'couple')
+```
+
+**Diagnosis:**
+Error ini terjadi jika ada komponen atau file (misalnya `Layout.astro`) yang masih mengimpor config statis dari `constants.tsx`, padahal sistem sudah migrasi penuh ke database. `constants.tsx` sengaja dikosongkan setelah migrasi.
+
+**Solution:**
+
+```bash
+# Pastikan tidak ada import WEDDING_CONFIG atau WEDDING_TEXT
+grep -r "WEDDING_CONFIG\|WEDDING_TEXT" src/
+
+# Jika ditemukan, ganti dengan data dari useConfig() hook
+# atau hapus referensinya jika tidak relevan lagi
 ```
 
 ### Production Issues
@@ -2161,6 +2281,34 @@ VACUUM;
 ANALYZE;
 ```
 
+#### Config Tidak Tersimpan / Tidak Muncul
+
+**Problem:**
+Sudah klik "Simpan Semua" di tab Pengaturan, tapi perubahan tidak terlihat di halaman utama.
+
+**Diagnosis:**
+
+```bash
+# Cek isi tabel config langsung
+sqlite3 database/wedding.db "SELECT key, value FROM config WHERE key='BRIDE_NICKNAME';"
+
+# Cek response API
+curl http://localhost:5432/api/config
+```
+
+**Common Causes:**
+
+1. Cookie admin sudah expired saat submit (request POST gagal dengan 401)
+2. Cache di browser belum di-invalidate (jarang terjadi karena `invalidateConfigCache()` otomatis dipanggil)
+
+**Solution:**
+
+```bash
+# Login ulang ke /admin
+# Coba simpan kembali
+# Hard refresh browser (Ctrl+Shift+R) di halaman utama
+```
+
 ### API Issues
 
 #### Rate Limit Hit
@@ -2210,6 +2358,21 @@ export default defineConfig({
 });
 ```
 
+#### Unauthorized saat Simpan Pengaturan
+
+**Problem:**
+
+```
+{"error":"Unauthorized"}
+```
+
+**Solution:**
+
+```bash
+# Cookie wedding_admin_auth sudah expired (maxAge 24 jam)
+# Login ulang di /admin sebelum mencoba simpan kembali
+```
+
 ### Frontend Issues
 
 #### White Screen / Blank Page
@@ -2222,14 +2385,14 @@ Page load tapi kosong.
 ```javascript
 // Open browser console (F12)
 // Lihat error di console
-// Cek network tab untuk failed requests
+// Cek network tab untuk failed requests, khususnya /api/config
 ```
 
 **Common Causes:**
 
 1. JavaScript error
 2. React hydration mismatch
-3. Missing environment variables
+3. `/api/config` gagal fetch (server down atau database error)
 4. Bundle error
 
 **Solution:**
@@ -2239,8 +2402,8 @@ Page load tapi kosong.
 rm -rf .astro dist
 pnpm build
 
-# Check .env
-cat .env | grep PUBLIC_
+# Cek response /api/config langsung
+curl http://localhost:5432/api/config
 ```
 
 #### Dark Mode Tidak Berfungsi
@@ -2276,17 +2439,18 @@ Countdown timer menghitung ke tanggal yang salah.
 **Diagnosis:**
 
 ```bash
-# Check .env
-cat .env | grep PUBLIC_AKAD_ISO_START
+# Cek nilai AKAD_ISO_START di database
+sqlite3 database/wedding.db "SELECT value FROM config WHERE key='AKAD_ISO_START';"
 ```
 
 **Solution:**
 
-```properties
-# Format harus exact ISO-8601 dengan timezone
-PUBLIC_AKAD_ISO_START=2025-10-11T08:00:00+07:00
-                     # ^^^^-^^-^^T^^:^^:^^+^^:^^
-                     # YYYY-MM-DDTHH:mm:ss+TZ
+```
+# Buka Admin > Pengaturan > Akad Nikah
+# Perbaiki field "ISO Start" dengan format yang benar:
+2025-10-11T08:00:00+07:00
+# YYYY-MM-DDTHH:mm:ss+TZ
+# Simpan kembali
 ```
 
 ### QR Code & PDF Issues
@@ -2300,15 +2464,14 @@ Blank canvas atau error saat generate.
 
 ```javascript
 // Check console error
-// Verify logo image loaded
+// Verify response /api/config berisi BRIDE_NICKNAME dan GROOM_NICKNAME
 ```
 
 **Solution:**
 
-```javascript
-// Verify constants.tsx
-// Check WEDDING_CONFIG.couple.bride.name
-// Check WEDDING_CONFIG.couple.groom.name
+```bash
+# Pastikan field Nama Panggilan mempelai sudah diisi
+# di Admin > Pengaturan > Mempelai Wanita/Pria
 ```
 
 #### PDF Generation Failed
@@ -2323,7 +2486,7 @@ Error generating PDF
 
 ```bash
 # Check browser console
-# Verify all env variables loaded
+# Verify /api/config merespons dengan benar
 ```
 
 **Solution:**
@@ -2361,8 +2524,8 @@ Submit RSVP/Wishes tapi tidak ada notif Telegram.
 **Diagnosis:**
 
 ```bash
-# Check .env
-cat .env | grep TELEGRAM_
+# Cek isi config Telegram (perlu login admin)
+curl -b "wedding_admin_auth=true" http://localhost:5432/api/config/full | grep TELEGRAM
 
 # Test manual
 curl -X POST "https://api.telegram.org/bot<TOKEN>/sendMessage" \
@@ -2373,7 +2536,7 @@ curl -X POST "https://api.telegram.org/bot<TOKEN>/sendMessage" \
 **Solution:**
 
 ```bash
-# Verify token dan chat_id benar
+# Verify token dan chat_id di Admin > Pengaturan > Notifikasi Telegram
 # Check bot belum di-block
 # Check internet connection dari server
 
@@ -2382,7 +2545,7 @@ curl https://api.telegram.org
 
 # Jika ISP block Telegram:
 # - Gunakan VPN/proxy
-# - Atau disable notifikasi Telegram
+# - Atau biarkan kosong untuk disable notifikasi (silent fail by design)
 ```
 
 #### Timeout Error
@@ -2416,7 +2579,7 @@ Page load > 5 detik.
 # Chrome DevTools > Lighthouse > Generate Report
 
 # Check Network tab
-# Identify large/slow resources
+# Identify large/slow resources, termasuk waktu response /api/config
 ```
 
 **Solution:**
@@ -2477,7 +2640,7 @@ pnpm build --verbose
 
 1. TypeScript error
 2. Missing dependencies
-3. Environment variables tidak load
+3. File masih mengimpor `WEDDING_CONFIG`/`WEDDING_TEXT` dari `constants.tsx` yang sudah kosong
 
 **Solution:**
 
@@ -2488,8 +2651,8 @@ pnpm tsc --noEmit
 # Install dependencies
 pnpm install
 
-# Check .env exists
-ls -la .env
+# Pastikan tidak ada import config statis yang tersisa
+grep -r "WEDDING_CONFIG\|WEDDING_TEXT" src/
 ```
 
 #### Cannot Connect to Server
@@ -2519,15 +2682,19 @@ sudo ufw allow 22/tcp
 
 **Q: Apakah database SQLite aman untuk production?**
 
-A: Ya, untuk website undangan dengan traffic moderate (< 100 concurrent users), SQLite sangat cocok. Keuntungan: simple, zero-config, backup mudah (tinggal copy file).
+A: Ya, untuk website undangan dengan traffic moderate (< 100 concurrent users), SQLite sangat cocok. Keuntungan: simple, zero-config, backup mudah (tinggal copy file). Sekarang database juga menyimpan seluruh konten undangan, jadi backup database sama dengan backup konten + data tamu.
 
 **Q: Bagaimana cara mengganti data mempelai?**
 
-A: Edit file `.env`, ubah nilai `PUBLIC_BRIDE_*` dan `PUBLIC_GROOM_*`, lalu restart server (development) atau rebuild + restart PM2 (production).
+A: Login ke `/admin`, buka tab "Pengaturan", edit field Mempelai Wanita/Pria, lalu klik "Simpan Semua". Tidak perlu edit `.env` atau restart server.
+
+**Q: Apakah masih perlu mengisi `.env` untuk data mempelai/jadwal/galeri?**
+
+A: Tidak. Sejak migrasi ke sistem config dinamis, `.env` hanya berisi `HOST`, `PORT`, `DB_NAME`, dan `ADMIN_PASSWORD`. Semua konten lain diatur dari Admin Dashboard.
 
 **Q: Apakah bisa menambah bahasa?**
 
-A: Ya, tambahkan translation di `src/constants.tsx` dan buat logic untuk switch language. Framework sudah support i18n.
+A: Ya, tambahkan field locale terpisah di tabel `config` (misal `TEXT_SALAM_OPENING_EN`) dan buat logic switch language di komponen terkait. Framework sudah support struktur ini.
 
 **Q: Berapa batas maksimal tamu?**
 
@@ -2535,19 +2702,23 @@ A: Tidak ada batas hard limit. Database SQLite bisa handle jutaan records. Yang 
 
 **Q: Apakah mobile-friendly?**
 
-A: Ya, fully responsive dengan Tailwind CSS. Tested di berbagai device dan screen size.
+A: Ya, fully responsive dengan Tailwind CSS. Tested di berbagai device dan screen size, termasuk form Pengaturan di Admin Dashboard.
 
 **Q: Bisa deploy di shared hosting?**
 
-A: Tidak, karena butuh Node.js runtime. Minimal pakai VPS. Alternative: Deploy di platform seperti Vercel/Netlify (butuh adapter lain).
+A: Tidak, karena butuh Node.js runtime. Minimal pakai VPS. Alternative: Deploy di platform seperti Vercel/Netlify (butuh adapter lain, dan perlu solusi database terpisah karena SQLite file-based tidak cocok untuk serverless).
 
 **Q: Database backup otomatis?**
 
-A: Gunakan cron job seperti di section "Database Backup Strategy".
+A: Gunakan cron job seperti di section "Database Backup Strategy". Karena konten undangan sekarang ikut tersimpan di database, pastikan backup ini berjalan rutin terutama menjelang hari H.
 
 **Q: SSL certificate gratis selamanya?**
 
 A: Ya, Let's Encrypt gratis dan auto-renew setiap 90 hari via certbot.
+
+**Q: Apa yang terjadi jika tabel `config` kosong atau database baru?**
+
+A: `src/lib/db.ts` otomatis melakukan seed data default (contoh data Fera & Yahya) saat pertama kali database dibuat, menggunakan `INSERT OR IGNORE`. Admin tinggal menimpa nilai default tersebut dari tab Pengaturan.
 
 ---
 
@@ -2566,7 +2737,7 @@ Kontribusi sangat welcome! Silakan:
 - Follow existing code style (Prettier + ESLint)
 - Write meaningful commit messages
 - Test thoroughly before submit
-- Update documentation jika perlu
+- Update documentation jika perlu, terutama jika menambah field baru di tabel `config`
 
 ---
 
@@ -2609,3 +2780,4 @@ SOFTWARE.
 **Website:** [https://wedding.zedlabs.id](https://wedding.zedlabs.id)
 
 **Repository:** [https://github.com/zulfikriyahya/wedding-invitation](https://github.com/zulfikriyahya/wedding-invitation)
+```
