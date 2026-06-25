@@ -1,8 +1,7 @@
 ---
-import Layout from "../layouts/Layout.astro";
 import QRCodeGenerator from "../components/QRCodeGenerator";
+import Layout from "../layouts/Layout.astro";
 
-// Proteksi Halaman (Sama seperti Admin)
 const COOKIE_NAME = "wedding_admin_auth";
 const isAuthenticated = Astro.cookies.has(COOKIE_NAME);
 

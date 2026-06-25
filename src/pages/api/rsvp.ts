@@ -16,8 +16,8 @@ const sanitize = (str: string) => {
 export const GET: APIRoute = async () => {
   try {
     const stmt = db.prepare(`
-      SELECT id, guest_name, attendance, guest_count, message, created_at 
-      FROM rsvps 
+      SELECT id, guest_name, attendance, guest_count, message, created_at
+      FROM rsvps
       ORDER BY created_at DESC
     `);
     const rsvps = stmt.all();
@@ -46,14 +46,12 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   try {
     const rawData = await request.json();
 
-    // Sanitasi
     const guest_name = sanitize(rawData.guest_name);
     const phone = sanitize(rawData.phone);
     const message = sanitize(rawData.message);
     const attendance = rawData.attendance;
     const guest_count = rawData.guest_count;
 
-    // Cek Data Lama
     const checkStmt = db.prepare("SELECT id FROM rsvps WHERE guest_name = ?");
     const existingGuest = checkStmt.get(guest_name) as
       | { id: number }
@@ -63,9 +61,8 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     let resultId = 0;
 
     if (existingGuest) {
-      // UPDATE
       const updateStmt = db.prepare(`
-        UPDATE rsvps 
+        UPDATE rsvps
         SET phone = ?, attendance = ?, guest_count = ?, message = ?, created_at = ?
         WHERE id = ?
       `);
@@ -80,7 +77,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       actionType = "updated";
       resultId = existingGuest.id;
     } else {
-      // INSERT
       const insertStmt = db.prepare(`
         INSERT INTO rsvps (guest_name, phone, attendance, guest_count, message, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -97,19 +93,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       resultId = Number(result.lastInsertRowid);
     }
 
-    // --- LOGIC NOTIFIKASI TELEGRAM ---
-
-    // 1. Tentukan Judul Berdasarkan Aksi
     const title =
       actionType === "created"
         ? "💌 <b>RSVP BARU MASUK!</b>"
         : "♻️ <b>PEMBARUAN DATA RSVP!</b>";
 
-    // 2. Tentukan Emoji Status
     const statusEmoji =
       attendance === "hadir" ? "✅" : attendance === "ragu" ? "🤔" : "❌";
 
-    // 3. Susun Pesan
     const notifMsg = `
 ${title}
 
@@ -122,7 +113,6 @@ ${statusEmoji} <b>Status:</b> ${attendance.toUpperCase()}
 <i>"${message || "-"}"</i>
     `.trim();
 
-    // 4. Kirim
     sendTelegramNotification(notifMsg);
 
     return new Response(

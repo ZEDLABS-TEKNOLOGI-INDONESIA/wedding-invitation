@@ -1,7 +1,7 @@
-import React, { useState, useRef, useMemo } from "react";
-import { QRCodeCanvas } from "qrcode.react";
 import { Download, Link as LinkIcon } from "lucide-react";
-import { WEDDING_CONFIG } from "../constants"; // Import Config
+import { QRCodeCanvas } from "qrcode.react";
+import React, { useMemo, useRef, useState } from "react";
+import { WEDDING_CONFIG } from "../constants";
 
 const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [guestName, setGuestName] = useState("");
@@ -14,7 +14,6 @@ const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     return `${baseUrl}/?to=${encodeURIComponent(guestName.trim())}`;
   };
 
-  // --- GENERATE PREMIUM LOGO (SAMA DENGAN QR MANAGER) ---
   const centerLogo = useMemo(() => {
     try {
       const bInitial = (WEDDING_CONFIG?.couple?.bride?.name || "B")
@@ -32,10 +31,10 @@ const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               <stop offset="100%" style="stop-color:#B45309;stop-opacity:1" />
             </linearGradient>
           </defs>
-          
+
           <!-- Background Putih -->
           <circle cx="50" cy="50" r="48" fill="white" />
-          
+
           <!-- Border Emas -->
           <circle cx="50" cy="50" r="46" fill="none" stroke="url(#goldGradient)" stroke-width="2" />
           <circle cx="50" cy="50" r="42" fill="none" stroke="#f1f5f9" stroke-width="1" />
@@ -47,13 +46,13 @@ const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           </g>
 
           <!-- Hati Merah -->
-          <path d="M50 38 
-                   C 46 32, 36 33, 36 42 
-                   C 36 52, 50 64, 50 64 
-                   C 50 64, 64 52, 64 42 
-                   C 64 33, 54 32, 50 38 Z" 
-                fill="#e11d48" 
-                stroke="white" 
+          <path d="M50 38
+                   C 46 32, 36 33, 36 42
+                   C 36 52, 50 64, 50 64
+                   C 50 64, 64 52, 64 42
+                   C 64 33, 54 32, 50 38 Z"
+                fill="#e11d48"
+                stroke="white"
                 stroke-width="1.5" />
         </svg>
       `.trim();
@@ -130,14 +129,14 @@ const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           <QRCodeCanvas
             ref={canvasRef}
             value={generateUrl()}
-            size={280} // Ukuran sedikit lebih besar untuk halaman ini
+            size={280}
             level={"H"}
             includeMargin={true}
             imageSettings={
               centerLogo
                 ? {
                     src: centerLogo,
-                    height: 60, // Ukuran logo proporsional
+                    height: 60,
                     width: 60,
                     excavate: true,
                   }

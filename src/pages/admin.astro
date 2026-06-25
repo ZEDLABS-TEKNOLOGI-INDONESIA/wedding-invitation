@@ -1,13 +1,12 @@
 ---
+import { CheckCircle2, HelpCircle, LogOut, Users, XCircle } from "lucide-react";
+import AdminDashboard from "../components/Admin/AdminDashboard";
 import Layout from "../layouts/Layout.astro";
 import db from "../lib/db";
-import AdminDashboard from "../components/Admin/AdminDashboard";
-import { LogOut, CheckCircle2, XCircle, HelpCircle, Users } from "lucide-react";
 
 const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD || "admin123";
 const COOKIE_NAME = "wedding_admin_auth";
 
-// Login Logic
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const action = formData.get("action");
