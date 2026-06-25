@@ -1,5 +1,6 @@
 import React from "react";
-import { Instagram, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
+import { SiInstagram } from "@icons-pack/react-simple-icons";
 import { WEDDING_CONFIG, WEDDING_TEXT } from "../constants";
 const CoupleProfile: React.FC = () => {
   const { bride, groom } = WEDDING_CONFIG.couple;
@@ -61,7 +62,7 @@ const CoupleProfile: React.FC = () => {
                 rel="noopener noreferrer"
                 className="dark:text-accent/50 hover:text-accentDark inline-flex items-center gap-3 rounded-full border border-slate-100 bg-slate-50 px-6 py-2 text-slate-400 transition-all dark:border-white/5 dark:bg-white/5 dark:hover:text-white"
               >
-                <Instagram className="h-3 w-3" />
+                <SiInstagram className="h-3 w-3" color="currentColor" />
                 <span className="text-[9px] font-bold tracking-widest uppercase">
                   @{groom.instagram}
                 </span>
@@ -90,7 +91,7 @@ const CoupleProfile: React.FC = () => {
                 rel="noopener noreferrer"
                 className="dark:text-accent/50 hover:text-accentDark inline-flex items-center gap-3 rounded-full border border-slate-100 bg-slate-50 px-6 py-2 text-slate-400 transition-all dark:border-white/5 dark:bg-white/5 dark:hover:text-white"
               >
-                <Instagram className="h-3 w-3" />
+                <SiInstagram className="h-3 w-3" color="currentColor" />
                 <span className="text-[9px] font-bold tracking-widest uppercase">
                   @{bride.instagram}
                 </span>

@@ -685,7 +685,7 @@ PUBLIC_GALLERY_IMAGES=["https://placehold.co/800x1200?text=Moment+1","https://pl
 **Software Required:**
 
 - Node.js versi 18.x atau lebih tinggi
-- Package manager: Yarn (recommended) atau NPM
+- Package manager: pnpm (recommended) atau NPM
 - Git untuk version control
 - Text editor: VSCode (recommended)
 
@@ -746,8 +746,8 @@ PUBLIC_AKAD_ISO_END=2025-12-31T12:00:00+07:00
 #### 3. Install Dependencies
 
 ```bash
-# Menggunakan Yarn (recommended)
-yarn install
+# Menggunakan pnpm (recommended)
+pnpm install
 
 # Atau menggunakan NPM
 npm install
@@ -763,7 +763,7 @@ npm install
 
 ```bash
 # Start server
-yarn dev
+pnpm dev
 
 # Output yang muncul:
 # 🚀 astro v5.x.x started in XXXms
@@ -796,7 +796,7 @@ Buka browser dan kunjungi:
 ```bash
 # Setelah edit .env, restart server:
 Ctrl + C  # Stop server
-yarn dev  # Start ulang
+pnpm dev  # Start ulang
 ```
 
 #### Database Location
@@ -807,7 +807,7 @@ yarn dev  # Start ulang
 
 # Untuk reset database:
 rm -rf database/
-yarn dev  # Database baru akan dibuat otomatis
+pnpm dev  # Database baru akan dibuat otomatis
 ```
 
 #### Debugging
@@ -823,7 +823,7 @@ yarn dev  # Database baru akan dibuat otomatis
       "type": "node",
       "request": "launch",
       "name": "Astro Dev Server",
-      "runtimeExecutable": "yarn",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],
       "console": "integratedTerminal"
     }
@@ -927,15 +927,15 @@ rm database/wedding.db-journal
 ```bash
 # Clear cache dan reinstall
 rm -rf node_modules
-rm yarn.lock  # atau package-lock.json
-yarn install
+rm pnpm-lock.yaml  # atau package-lock.json
+pnpm install
 ```
 
 **Better-sqlite3 Compile Error:**
 
 ```bash
 # Rebuild native module
-yarn add better-sqlite3 --force
+pnpm add better-sqlite3 --force
 ```
 
 ---
@@ -961,8 +961,8 @@ sudo apt update && sudo apt upgrade -y
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install -y nodejs
 
-# Install Yarn
-sudo npm install -g yarn
+# Install pnpm
+sudo npm install -g pnpm
 
 # Install PM2
 sudo npm install -g pm2
@@ -983,7 +983,7 @@ sudo apt install -y certbot python3-certbot-nginx
 git status
 
 # Build production
-yarn build
+pnpm build
 
 # Output akan ada di folder dist/
 # Struktur:
@@ -1000,7 +1000,7 @@ yarn build
 tar -czf production.tar.gz \
   dist/ \
   package.json \
-  yarn.lock \
+  pnpm-lock.yaml \
   ecosystem.config.cjs \
   .env
 
@@ -1036,8 +1036,8 @@ git clone https://github.com/zulfikriyahya/wedding-invitation.git
 cd wedding-invitation
 
 # Build di server
-yarn install --production
-yarn build
+pnpm install --production
+pnpm build
 ```
 
 ### Setup Production Environment
@@ -1048,7 +1048,7 @@ yarn build
 cd /var/www/wedding-invitation
 
 # Install hanya production dependencies
-yarn install --production
+pnpm install --production
 
 # Verify better-sqlite3 compiled correctly
 node -e "require('better-sqlite3')"
@@ -1386,10 +1386,10 @@ cd /var/www/wedding-invitation
 git pull origin main
 
 # 2. Install dependencies (jika ada perubahan package.json)
-yarn install --production
+pnpm install --production
 
 # 3. Build
-yarn build
+pnpm build
 
 # 4. Restart PM2
 pm2 restart wedding.feyaya.com
@@ -1954,7 +1954,7 @@ pkill -f "astro dev"
 rm database/wedding.db-journal
 
 # 3. Restart dev server
-yarn dev
+pnpm dev
 ```
 
 #### Module Not Found
@@ -1970,8 +1970,8 @@ Cannot find module 'better-sqlite3'
 ```bash
 # Clear cache dan reinstall
 rm -rf node_modules
-rm yarn.lock  # atau package-lock.json
-yarn install
+rm pnpm-lock.yaml  # atau package-lock.json
+pnpm install
 ```
 
 #### Better-sqlite3 Compile Error
@@ -1986,7 +1986,7 @@ Error: The module was compiled against a different Node.js version
 
 ```bash
 # Rebuild native module
-yarn add better-sqlite3 --force
+pnpm add better-sqlite3 --force
 
 # Atau dengan node-gyp
 npm rebuild better-sqlite3
@@ -2237,7 +2237,7 @@ Page load tapi kosong.
 ```bash
 # Rebuild dengan clean cache
 rm -rf .astro dist
-yarn build
+pnpm build
 
 # Check .env
 cat .env | grep PUBLIC_
@@ -2460,7 +2460,7 @@ max_memory_restart: '1G'
 **Problem:**
 
 ```
-yarn build
+pnpm build
 ERROR: Build failed
 ```
 
@@ -2468,7 +2468,7 @@ ERROR: Build failed
 
 ```bash
 # Run dengan verbose
-yarn build --verbose
+pnpm build --verbose
 
 # Check specific error
 ```
@@ -2483,10 +2483,10 @@ yarn build --verbose
 
 ```bash
 # Fix TypeScript errors
-yarn tsc --noEmit
+pnpm tsc --noEmit
 
 # Install dependencies
-yarn install
+pnpm install
 
 # Check .env exists
 ls -la .env
