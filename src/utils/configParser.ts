@@ -1,4 +1,8 @@
 import type { AppConfig } from "../types";
+import {
+  normalizePublicDefaultMode,
+  normalizePublicTheme,
+} from "./publicThemes.ts";
 
 const parseArrayJson = <T>(
   str: string | undefined,
@@ -109,6 +113,11 @@ export function parseConfig(raw: Record<string, string>): AppConfig {
     },
     rsvp: {
       maxGuests: parseSafeInt(raw.RSVP_MAX_GUESTS, 10, 1, 100),
+    },
+    appearance: {
+      theme: normalizePublicTheme(raw.PUBLIC_THEME),
+      defaultMode: normalizePublicDefaultMode(raw.PUBLIC_DEFAULT_MODE),
+      allowGuestThemeSwitch: raw.PUBLIC_ALLOW_THEME_SWITCH !== "false",
     },
     bankAccounts: parseArrayJson(
       raw.BANK_ACCOUNTS,

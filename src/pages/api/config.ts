@@ -65,6 +65,22 @@ const validateConfigEntry = (key: string, value: string): string | null => {
     }
   }
 
+  if (
+    key === "PUBLIC_THEME" &&
+    !["ocean", "sage", "blush", "maroon", "gold", "lavender"].includes(
+      value.trim().toLowerCase()
+    )
+  ) {
+    return "PUBLIC_THEME tidak dikenali.";
+  }
+
+  if (
+    key === "PUBLIC_DEFAULT_MODE" &&
+    !["system", "light", "dark"].includes(value.trim().toLowerCase())
+  ) {
+    return "PUBLIC_DEFAULT_MODE harus berupa system, light, atau dark.";
+  }
+
   if (key === "BANK_ACCOUNTS") {
     try {
       const parsed = JSON.parse(value);

@@ -14,6 +14,10 @@ import Envelope from "./components/Envelope";
 import InstallPrompt from "./components/InstallPrompt";
 import { useConfig } from "./hooks/useConfig";
 import { Heart, Quote, ChevronUp } from "lucide-react";
+import {
+  normalizePublicTheme,
+  type PublicThemeId,
+} from "./utils/publicThemes";
 
 interface AppProps {
   initialRawConfig?: Record<string, string>;
@@ -24,22 +28,46 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
 
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [themeInitialized, setThemeInitialized] = useState(false);
+  const [colorTheme, setColorTheme] = useState<PublicThemeId>(
+    normalizePublicTheme(initialRawConfig?.PUBLIC_THEME)
+  );
+  const [colorThemeInitialized, setColorThemeInitialized] = useState(false);
 
   const [isOpened, setIsOpened] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as "light" | "dark" | null;
+    const defaultMode = config?.appearance?.defaultMode ?? "system";
     if (saved === "light" || saved === "dark") {
       setTheme(saved);
+    } else if (defaultMode === "light" || defaultMode === "dark") {
+      setTheme(defaultMode);
     } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
       setTheme("dark");
     }
     setThemeInitialized(true);
-  }, []);
+  }, [config?.appearance?.defaultMode]);
+
+  useEffect(() => {
+    const defaultPalette = config?.appearance?.theme ?? "ocean";
+    const allowSwitch = config?.appearance?.allowGuestThemeSwitch ?? true;
+    if (allowSwitch) {
+      const savedPalette = localStorage.getItem("wedding_public_theme");
+      if (savedPalette) {
+        setColorTheme(normalizePublicTheme(savedPalette));
+      } else {
+        setColorTheme(defaultPalette);
+      }
+    } else {
+      setColorTheme(defaultPalette);
+    }
+    setColorThemeInitialized(true);
+  }, [config?.appearance?.theme, config?.appearance?.allowGuestThemeSwitch]);
 
   useEffect(() => {
     if (!themeInitialized) return;
     const root = document.documentElement;
+    root.setAttribute("data-theme", theme);
     if (theme === "dark") {
       root.classList.add("dark");
     } else {
@@ -47,6 +75,11 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
     }
     localStorage.setItem("theme", theme);
   }, [theme, themeInitialized]);
+
+  useEffect(() => {
+    if (!colorThemeInitialized) return;
+    document.documentElement.setAttribute("data-wedding-theme", colorTheme);
+  }, [colorTheme, colorThemeInitialized]);
 
   useEffect(() => {
     if (!isOpened) {
@@ -90,6 +123,25 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  const handleSelectColorTheme = (nextTheme: PublicThemeId) => {
+    setColorTheme(nextTheme);
+    try {
+      localStorage.setItem("wedding_public_theme", nextTheme);
+    } catch {
+      /* ignore storage errors */
+    }
+  };
+
+  const handleResetColorTheme = () => {
+    const fallback = config?.appearance?.theme ?? "ocean";
+    setColorTheme(fallback);
+    try {
+      localStorage.removeItem("wedding_public_theme");
+    } catch {
+      /* ignore storage errors */
+    }
   };
 
   const handleOpenInvitation = () => {
@@ -138,7 +190,15 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
       </main>
 
       <MusicPlayer url={config.music.url} visible={isOpened} />
-      <Navbar theme={theme} toggleTheme={toggleTheme} />
+      <Navbar
+        theme={theme}
+        toggleTheme={toggleTheme}
+        colorTheme={colorTheme}
+        defaultColorTheme={config.appearance.theme}
+        allowGuestThemeSwitch={config.appearance.allowGuestThemeSwitch}
+        onSelectColorTheme={handleSelectColorTheme}
+        onResetColorTheme={handleResetColorTheme}
+      />
 
       <footer className="dark:bg-darkSurface relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-white px-6 py-24 pb-32 transition-colors duration-1000 md:py-32">
         <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-10 dark:opacity-[0.05]">

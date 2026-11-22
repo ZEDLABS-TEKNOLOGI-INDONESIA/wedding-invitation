@@ -6,6 +6,9 @@ interface Props {
   description?: string;
   image?: string;
   noindex?: boolean;
+  weddingTheme?: string;
+  defaultColorMode?: "system" | "light" | "dark";
+  allowGuestThemeSwitch?: boolean;
 }
 
 const {
@@ -13,6 +16,9 @@ const {
   description = "Kami mengundang Anda untuk hadir di pernikahan kami.",
   image = "/thumbnail.png",
   noindex = false,
+  weddingTheme = "ocean",
+  defaultColorMode = "system",
+  allowGuestThemeSwitch = true,
 } = Astro.props;
 
 const siteBase = Astro.site || "https://wedding.zedlabs.id";
@@ -23,7 +29,11 @@ const ogImageURL = image.startsWith("http")
 ---
 
 <!doctype html>
-<html lang="id" class="scroll-smooth">
+<html
+  lang="id"
+  class="scroll-smooth"
+  data-wedding-theme={weddingTheme}
+>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -65,21 +75,37 @@ const ogImageURL = image.startsWith("http")
       rel="stylesheet"
     />
 
-    <script is:inline>
+    <script is:inline define:vars={{ defaultColorMode, weddingTheme, allowGuestThemeSwitch }}>
       (function () {
         var root = document.documentElement;
         var stored = null;
+        var storedPalette = null;
         try {
           stored = localStorage.getItem("theme");
+          if (allowGuestThemeSwitch) {
+            storedPalette = localStorage.getItem("wedding_public_theme");
+          }
         } catch {}
         var preferDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        var theme = stored || (preferDark ? "dark" : "light");
+        var theme =
+          stored ||
+          (defaultColorMode === "dark" || defaultColorMode === "light"
+            ? defaultColorMode
+            : preferDark
+              ? "dark"
+              : "light");
         root.setAttribute("data-theme", theme);
         if (theme === "dark") {
           root.classList.add("dark");
         } else {
           root.classList.remove("dark");
         }
+        var validPalettes = ["ocean", "sage", "blush", "maroon", "gold", "lavender"];
+        var palette =
+          storedPalette && validPalettes.indexOf(storedPalette) !== -1
+            ? storedPalette
+            : weddingTheme;
+        root.setAttribute("data-wedding-theme", palette);
       })();
     </script>
   </head>

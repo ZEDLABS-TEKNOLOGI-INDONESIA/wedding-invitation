@@ -2,6 +2,10 @@
 import App from "../App";
 import Layout from "../layouts/Layout.astro";
 import { getPublicConfig } from "../lib/db";
+import {
+  normalizePublicDefaultMode,
+  normalizePublicTheme,
+} from "../utils/publicThemes";
 
 const safeConfig = getPublicConfig();
 
@@ -9,6 +13,11 @@ const brideName = safeConfig.BRIDE_NICKNAME || "Mempelai Wanita";
 const groomName = safeConfig.GROOM_NICKNAME || "Mempelai Pria";
 const eventDate = safeConfig.AKAD_DATE || "";
 const venueName = safeConfig.VENUE_NAME || "";
+const weddingTheme = normalizePublicTheme(safeConfig.PUBLIC_THEME);
+const defaultColorMode = normalizePublicDefaultMode(
+  safeConfig.PUBLIC_DEFAULT_MODE
+);
+const allowGuestThemeSwitch = safeConfig.PUBLIC_ALLOW_THEME_SWITCH !== "false";
 
 const pageTitle = `Pernikahan ${brideName} & ${groomName}`;
 const pageDescription = eventDate
@@ -16,6 +25,12 @@ const pageDescription = eventDate
   : `Undangan Pernikahan Digital ${brideName} & ${groomName}.`;
 ---
 
-<Layout title={pageTitle} description={pageDescription}>
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  weddingTheme={weddingTheme}
+  defaultColorMode={defaultColorMode}
+  allowGuestThemeSwitch={allowGuestThemeSwitch}
+>
   <App client:load initialRawConfig={safeConfig} />
 </Layout>

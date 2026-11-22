@@ -115,6 +115,9 @@ const DEFAULT_CONFIG: Record<string, string> = {
   EVENT_TIMEZONE: "WIB",
   GIFT_ADDRESS: "",
   MUSIC_URL: "https://www.bensound.com/bensound-music/bensound-forever.mp3",
+  PUBLIC_THEME: "ocean",
+  PUBLIC_DEFAULT_MODE: "system",
+  PUBLIC_ALLOW_THEME_SWITCH: "true",
   RSVP_MAX_GUESTS: "20",
   BANK_ACCOUNTS: JSON.stringify([
     { bank: "Bank BCA", number: "1234567890", name: "Fera Oktapia" },

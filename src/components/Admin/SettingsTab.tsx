@@ -3,6 +3,7 @@ import {
   ArrowDown,
   ArrowUp,
   Calendar,
+  Check,
   Clock,
   Copy,
   Download,
@@ -13,6 +14,7 @@ import {
   MapPin,
   Minus,
   Music,
+  Palette,
   Plus,
   RefreshCcw,
   Save,
@@ -40,6 +42,11 @@ import {
   extractCoordsFromMapsUrl,
   parseIsoToSchedule,
 } from "../../utils/formHelpers";
+import {
+  PUBLIC_THEMES,
+  normalizePublicDefaultMode,
+  normalizePublicTheme,
+} from "../../utils/publicThemes";
 import type { ToastState } from "./AdminFeedback";
 import CsvImportModal from "./CsvImportModal";
 
@@ -99,6 +106,9 @@ const EXPORTABLE_CONFIG_KEYS = [
   "ENVELOPE_IMAGE",
   "HERO_CITY",
   "MUSIC_URL",
+  "PUBLIC_THEME",
+  "PUBLIC_DEFAULT_MODE",
+  "PUBLIC_ALLOW_THEME_SWITCH",
   "RSVP_MAX_GUESTS",
   "TEXT_SALAM_OPENING",
   "TEXT_QUOTE_AR_RUM",
@@ -165,6 +175,7 @@ const TEXT_CONTENT_FIELDS: {
 ];
 
 const QUICK_NAV_ITEMS = [
+  { id: "sec-tema", label: "Tema Publik" },
   { id: "sec-mempelai", label: "Mempelai" },
   { id: "sec-lokasi", label: "Lokasi" },
   { id: "sec-jadwal", label: "Jadwal" },
@@ -1024,6 +1035,143 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               {item.label}
             </a>
           ))}
+        </div>
+      </div>
+
+      {/* Tema & Tampilan Undangan Publik */}
+      <div id="sec-tema" className="adm-card scroll-mt-36">
+        <div className="adm-card-header flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="adm-card-title flex items-center gap-1.5">
+              <Palette className="h-4 w-4 text-(--adm-accent)" />
+              Tema &amp; Tampilan Undangan Publik
+            </h3>
+            <p className="adm-card-desc">
+              Pilih palet warna utama dan mode tampilan bawaan yang dilihat tamu
+              saat membuka undangan.
+            </p>
+          </div>
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="adm-btn adm-btn-secondary adm-btn-sm"
+          >
+            <ExternalLink className="h-3.5 w-3.5" /> Lihat Undangan
+          </a>
+        </div>
+        <div className="adm-card-body space-y-4">
+          <div>
+            <span className="adm-label">Nuansa Warna Undangan</span>
+            <div className="mt-1.5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {PUBLIC_THEMES.map((themeItem) => {
+                const activeTheme =
+                  normalizePublicTheme(rawConfig.PUBLIC_THEME) === themeItem.id;
+                return (
+                  <button
+                    key={themeItem.id}
+                    type="button"
+                    onClick={() => handleChange("PUBLIC_THEME", themeItem.id)}
+                    className={`flex items-start gap-3 rounded-lg border p-3 text-left transition-all ${
+                      activeTheme
+                        ? "border-(--adm-accent) bg-(--adm-accent-soft) ring-1 ring-(--adm-accent)"
+                        : "border-(--adm-border) bg-(--adm-bg-primary) hover:border-(--adm-accent)/60"
+                    }`}
+                  >
+                    <div className="flex shrink-0 flex-col gap-1 pt-0.5">
+                      <span
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10 shadow-xs"
+                        style={{
+                          background: `linear-gradient(135deg, ${themeItem.colors.accentDark} 0%, ${themeItem.colors.accent} 100%)`,
+                        }}
+                      >
+                        {activeTheme && (
+                          <Check className="h-3.5 w-3.5 text-white" />
+                        )}
+                      </span>
+                      <div className="flex justify-center gap-0.5">
+                        <span
+                          className="h-2 w-2 rounded-full border border-black/15"
+                          style={{ backgroundColor: themeItem.colors.secondary }}
+                        />
+                        <span
+                          className="h-2 w-2 rounded-full border border-black/15"
+                          style={{ backgroundColor: themeItem.colors.darkBg }}
+                        />
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[12.5px] font-semibold text-(--adm-text-primary)">
+                        {themeItem.name}
+                      </div>
+                      <p className="adm-hint mt-0.5 leading-snug">
+                        {themeItem.tagline}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid gap-3.5 border-t border-(--adm-border) pt-3.5 md:grid-cols-2">
+            <div>
+              <span className="adm-label">Mode Terang / Gelap Bawaan</span>
+              <div className="adm-seg mt-1">
+                {(
+                  [
+                    { id: "system", label: "Ikuti Perangkat" },
+                    { id: "light", label: "Terang (Light)" },
+                    { id: "dark", label: "Gelap (Dark)" },
+                  ] as const
+                ).map((mode) => {
+                  const activeMode =
+                    normalizePublicDefaultMode(
+                      rawConfig.PUBLIC_DEFAULT_MODE
+                    ) === mode.id;
+                  return (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() =>
+                        handleChange("PUBLIC_DEFAULT_MODE", mode.id)
+                      }
+                      className={`adm-seg-btn ${activeMode ? "is-active" : ""}`}
+                    >
+                      {mode.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="adm-hint mt-1">
+                Dipakai untuk pengunjung baru yang belum memilih mode sendiri.
+              </p>
+            </div>
+
+            <div className="flex items-start justify-between gap-3 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-3">
+              <div>
+                <div className="text-[12.5px] font-semibold text-(--adm-text-primary)">
+                  Izinkan Tamu Ganti Tema Warna
+                </div>
+                <p className="adm-hint mt-0.5">
+                  Tampilkan tombol palet warna di navigasi bawah undangan publik
+                  agar tamu bisa mencoba nuansa warna lain.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                aria-label="Izinkan tamu ganti tema warna"
+                checked={rawConfig.PUBLIC_ALLOW_THEME_SWITCH !== "false"}
+                onChange={(e) =>
+                  handleChange(
+                    "PUBLIC_ALLOW_THEME_SWITCH",
+                    e.target.checked ? "true" : "false"
+                  )
+                }
+                className="mt-0.5 h-4 w-4 accent-(--adm-accent)"
+              />
+            </div>
+          </div>
         </div>
       </div>
 

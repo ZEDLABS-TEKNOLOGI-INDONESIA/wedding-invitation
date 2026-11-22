@@ -63,6 +63,11 @@ export interface AppConfig {
   rsvp: {
     maxGuests: number;
   };
+  appearance: {
+    theme: "ocean" | "sage" | "blush" | "maroon" | "gold" | "lavender";
+    defaultMode: "system" | "light" | "dark";
+    allowGuestThemeSwitch: boolean;
+  };
   bankAccounts: { bank: string; number: string; name: string }[];
   loveStory: { date: string; title: string; desc: string }[];
   galleryImages: string[];

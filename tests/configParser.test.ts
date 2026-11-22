@@ -11,6 +11,9 @@ test("parseConfig memparsing data valid termasuk field baru", () => {
     EVENT_TIMEZONE: "WITA",
     GIFT_ADDRESS: "Jl. Mawar No. 10",
     ENVELOPE_IMAGE: "/api/media/cover.jpg",
+    PUBLIC_THEME: "blush",
+    PUBLIC_DEFAULT_MODE: "dark",
+    PUBLIC_ALLOW_THEME_SWITCH: "false",
     RSVP_MAX_GUESTS: "15",
     BANK_ACCOUNTS: JSON.stringify([
       { bank: "BCA", number: "12345", name: "Fey" },
@@ -25,6 +28,9 @@ test("parseConfig memparsing data valid termasuk field baru", () => {
   assert.equal(cfg.events.timezone, "WITA");
   assert.equal(cfg.gift.address, "Jl. Mawar No. 10");
   assert.equal(cfg.hero.envelopeImage, "/api/media/cover.jpg");
+  assert.equal(cfg.appearance.theme, "blush");
+  assert.equal(cfg.appearance.defaultMode, "dark");
+  assert.equal(cfg.appearance.allowGuestThemeSwitch, false);
   assert.equal(cfg.rsvp.maxGuests, 15);
   assert.equal(cfg.bankAccounts.length, 1);
   assert.equal(cfg.loveStory.length, 1);

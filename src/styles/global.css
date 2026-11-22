@@ -86,6 +86,52 @@
     @apply border-gray-200 dark:border-white/10;
   }
 
+  /* Public Wedding Invitation Color Themes */
+  :root[data-wedding-theme="sage"] {
+    --color-primary: #2f3b27;
+    --color-secondary: #f7f8f3;
+    --color-accent: #9fb682;
+    --color-accentDark: #556b38;
+    --color-darkBg: #11160e;
+    --color-darkSurface: #1b2316;
+  }
+
+  :root[data-wedding-theme="blush"] {
+    --color-primary: #4e2a32;
+    --color-secondary: #fff9f8;
+    --color-accent: #e8a5b4;
+    --color-accentDark: #a85568;
+    --color-darkBg: #190e11;
+    --color-darkSurface: #26161b;
+  }
+
+  :root[data-wedding-theme="maroon"] {
+    --color-primary: #441420;
+    --color-secondary: #fcf8f6;
+    --color-accent: #df94a4;
+    --color-accentDark: #881c36;
+    --color-darkBg: #17070b;
+    --color-darkSurface: #260d13;
+  }
+
+  :root[data-wedding-theme="gold"] {
+    --color-primary: #45351b;
+    --color-secondary: #fffcf5;
+    --color-accent: #dfc078;
+    --color-accentDark: #9a7222;
+    --color-darkBg: #161108;
+    --color-darkSurface: #231c0e;
+  }
+
+  :root[data-wedding-theme="lavender"] {
+    --color-primary: #32294a;
+    --color-secondary: #faf8fd;
+    --color-accent: #c4b5fd;
+    --color-accentDark: #6d4fc2;
+    --color-darkBg: #110d1b;
+    --color-darkSurface: #1d172c;
+  }
+
   body {
     @apply bg-secondary leading-relaxed text-slate-800 antialiased transition-colors duration-1000 ease-out;
   }
