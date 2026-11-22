@@ -77,6 +77,17 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
       },
     ],
   },
+  planner: {
+    key: "planner",
+    name: "Manajemen Pernikahan",
+    steps: [
+      {
+        selector: "[data-tour='planner-nav']",
+        title: "6 Modul Persiapan Pernikahan Terpadu",
+        body: "Kelola To-Do Persiapan, Anggaran & Vendor (DP/Lunas), Tabungan Menuju Halal, Mahar/Seserahan & Berkas KUA (N1/N2/N4), Jurnal Menikah, hingga Tuntunan Fikih Munakahat dalam satu tempat.",
+      },
+    ],
+  },
   wa: {
     key: "wa",
     name: "Kirim WhatsApp",

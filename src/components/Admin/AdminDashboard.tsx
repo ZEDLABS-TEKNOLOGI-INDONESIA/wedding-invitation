@@ -2,6 +2,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Download,
   Edit,
   ExternalLink,
@@ -42,6 +43,10 @@ import {
   type ParsedWishRow,
 } from "../../utils/csvImport";
 import {
+  PLANNER_SUBMENUS,
+  type PlannerSectionId,
+} from "../../utils/plannerData";
+import {
   ConfirmModal,
   ToastBanner,
   type ConfirmDialogState,
@@ -58,6 +63,7 @@ const GuestManager = lazy(() => import("../GuestManager"));
 const InvitationManager = lazy(() => import("../InvitationManager"));
 const QRCodeManager = lazy(() => import("../QRCodeManager"));
 const WhatsAppManager = lazy(() => import("../WhatsAppManager"));
+const WeddingPlanner = lazy(() => import("./WeddingPlanner"));
 
 interface RSVP {
   id: number;
@@ -77,7 +83,14 @@ interface Wish {
 }
 
 type AdminTabId =
-  "rsvp" | "wishes" | "guests" | "wa" | "qr" | "pdf" | "settings";
+  | "rsvp"
+  | "wishes"
+  | "guests"
+  | "planner"
+  | "wa"
+  | "qr"
+  | "pdf"
+  | "settings";
 
 const TAB_META: Record<AdminTabId, { title: string; desc: string }> = {
   rsvp: {
@@ -91,6 +104,10 @@ const TAB_META: Record<AdminTabId, { title: string; desc: string }> = {
   guests: {
     title: "Tamu & Check-In",
     desc: "Kelola daftar tamu permanen, kode QR check-in, dan scanner kehadiran hari H.",
+  },
+  planner: {
+    title: "Manajemen Pernikahan",
+    desc: "Kelola to-do persiapan, anggaran & vendor, tabungan menuju halal, mahar/KUA, jurnal, dan tuntunan fikih nikah.",
   },
   wa: {
     title: "Kirim WhatsApp",
@@ -400,6 +417,8 @@ const AdminDashboard = ({
   coupleLabel?: string;
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTabId>("rsvp");
+  const [plannerSubTab, setPlannerSubTab] = useState<PlannerSectionId>("todo");
+  const [plannerMenuOpen, setPlannerMenuOpen] = useState(true);
   const [settingsSubTab, setSettingsSubTab] =
     useState<SettingsSubMenuId>("tema");
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(true);
@@ -741,6 +760,18 @@ const AdminDashboard = ({
       ],
     },
     {
+      judul: "Persiapan & Perencanaan",
+      items: [
+        {
+          id: "planner",
+          label: "Manajemen Nikah",
+          icon: ClipboardList,
+          keywords:
+            "todo persiapan anggaran budget harga vendor tabungan dompet nikah mahar seserahan kua n1 n2 n4 jurnal refleksi fikih fiqih munakahat ijab kabul doa",
+        },
+      ],
+    },
+    {
       judul: "Distribusi & Cetak",
       items: [
         {
@@ -800,7 +831,17 @@ const AdminDashboard = ({
             desc: sub ? sub.desc : TAB_META.settings.desc,
           };
         })()
-      : TAB_META[activeTab];
+      : activeTab === "planner"
+        ? (() => {
+            const sub = PLANNER_SUBMENUS.find((s) => s.id === plannerSubTab);
+            return {
+              title: sub
+                ? `Manajemen Nikah — ${sub.label}`
+                : TAB_META.planner.title,
+              desc: sub ? sub.desc : TAB_META.planner.desc,
+            };
+          })()
+        : TAB_META[activeTab];
   const currentYear = new Date().getFullYear();
 
   return (
@@ -924,8 +965,15 @@ const AdminDashboard = ({
                     const Icon = item.icon;
                     const active = activeTab === item.id;
                     const isSettingsItem = item.id === "settings";
-                    const matchingSubmenus = isSettingsItem
-                      ? SETTINGS_SUBMENUS.filter(
+                    const isPlannerItem = item.id === "planner";
+                    const hasSubmenus = isSettingsItem || isPlannerItem;
+                    const rawSubmenus = isSettingsItem
+                      ? SETTINGS_SUBMENUS
+                      : isPlannerItem
+                        ? PLANNER_SUBMENUS
+                        : [];
+                    const matchingSubmenus = hasSubmenus
+                      ? rawSubmenus.filter(
                           (sub) =>
                             !q ||
                             sub.label.toLowerCase().includes(q) ||
@@ -933,10 +981,13 @@ const AdminDashboard = ({
                             item.label.toLowerCase().includes(q)
                         )
                       : [];
+                    const isOpenSubmenu = isSettingsItem
+                      ? settingsMenuOpen
+                      : plannerMenuOpen;
                     const showSubmenus =
-                      isSettingsItem &&
+                      hasSubmenus &&
                       !sidebarCollapsed &&
-                      (settingsMenuOpen || Boolean(q));
+                      (isOpenSubmenu || Boolean(q));
 
                     return (
                       <li key={item.id}>
@@ -950,6 +1001,13 @@ const AdminDashboard = ({
                               } else {
                                 setActiveTab("settings");
                                 setSettingsMenuOpen(true);
+                              }
+                            } else if (isPlannerItem) {
+                              if (activeTab === "planner" && !sidebarCollapsed) {
+                                setPlannerMenuOpen((prev) => !prev);
+                              } else {
+                                setActiveTab("planner");
+                                setPlannerMenuOpen(true);
                               }
                             } else {
                               setActiveTab(item.id);
@@ -968,7 +1026,7 @@ const AdminDashboard = ({
                           >
                             {item.label}
                           </span>
-                          {isSettingsItem ? (
+                          {hasSubmenus ? (
                             <ChevronDown
                               className={`ml-auto h-3.5 w-3.5 shrink-0 text-(--adm-text-muted) transition-transform duration-200 ${
                                 sidebarCollapsed ? "md:hidden" : ""
@@ -987,20 +1045,31 @@ const AdminDashboard = ({
                           )}
                         </button>
 
-                        {/* Sub-menu Pengaturan */}
+                        {/* Sub-menu (Pengaturan / Manajemen Nikah) */}
                         {showSubmenus && matchingSubmenus.length > 0 && (
                           <ul className="mt-1 ml-5 flex flex-col gap-0.5 border-l border-(--adm-border) pl-2">
                             {matchingSubmenus.map((sub) => {
-                              const subActive =
-                                activeTab === "settings" &&
-                                settingsSubTab === sub.id;
+                              const subActive = isSettingsItem
+                                ? activeTab === "settings" &&
+                                  settingsSubTab === sub.id
+                                : activeTab === "planner" &&
+                                  plannerSubTab === sub.id;
                               return (
                                 <li key={sub.id}>
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setActiveTab("settings");
-                                      setSettingsSubTab(sub.id);
+                                      if (isSettingsItem) {
+                                        setActiveTab("settings");
+                                        setSettingsSubTab(
+                                          sub.id as SettingsSubMenuId
+                                        );
+                                      } else {
+                                        setActiveTab("planner");
+                                        setPlannerSubTab(
+                                          sub.id as PlannerSectionId
+                                        );
+                                      }
                                       setMobileMenuOpen(false);
                                     }}
                                     className={`flex w-full items-center rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors ${
@@ -1523,6 +1592,21 @@ const AdminDashboard = ({
                   <InvitationManager siteUrl={siteUrl} />
                 </Suspense>
               </div>
+            )}
+
+            {activeTab === "planner" && (
+              <Suspense
+                fallback={
+                  <div className="adm-card flex items-center justify-center py-14">
+                    <Loader2 className="h-6 w-6 animate-spin text-(--adm-text-muted)" />
+                  </div>
+                }
+              >
+                <WeddingPlanner
+                  activeSection={plannerSubTab}
+                  onSectionChange={setPlannerSubTab}
+                />
+              </Suspense>
             )}
 
             {activeTab === "settings" && (

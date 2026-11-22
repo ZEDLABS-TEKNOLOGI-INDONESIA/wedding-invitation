@@ -78,6 +78,65 @@ db.exec(`
     checked_in_pax INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS planner_todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    phase TEXT DEFAULT 'H-3 Bulan',
+    category TEXT DEFAULT 'Umum',
+    due_date TEXT DEFAULT '',
+    pic TEXT DEFAULT 'Bersama',
+    done INTEGER DEFAULT 0,
+    notes TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS planner_budget (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT DEFAULT 'Lainnya',
+    estimated_cost INTEGER DEFAULT 0,
+    actual_cost INTEGER DEFAULT 0,
+    paid_amount INTEGER DEFAULT 0,
+    payment_status TEXT DEFAULT 'belum',
+    vendor_phone TEXT DEFAULT '',
+    due_date TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS planner_savings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entry_date TEXT NOT NULL,
+    contributor TEXT DEFAULT 'Bersama',
+    entry_type TEXT DEFAULT 'setor',
+    amount INTEGER NOT NULL,
+    note TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS planner_essentials (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL DEFAULT 'seserahan',
+    title TEXT NOT NULL,
+    price INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'rencana',
+    owner TEXT DEFAULT 'Bersama',
+    done_groom INTEGER DEFAULT 0,
+    done_bride INTEGER DEFAULT 0,
+    notes TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS planner_journal (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entry_date TEXT NOT NULL,
+    author TEXT DEFAULT 'Bersama',
+    mood TEXT DEFAULT 'bersyukur',
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 const DEFAULT_CONFIG: Record<string, string> = {
@@ -172,6 +231,7 @@ const DEFAULT_CONFIG: Record<string, string> = {
   WA_NOTIFY_ADMIN_WISH: "true",
   WA_AUTO_CONFIRM_GUEST: "true",
   WA_AUTO_REMINDER_H1: "true",
+  PLANNER_SAVINGS_TARGET: "50000000",
 };
 
 try {
@@ -217,6 +277,7 @@ export const PRIVATE_CONFIG_KEYS = new Set([
   "WA_NOTIFY_ADMIN_WISH",
   "WA_AUTO_CONFIRM_GUEST",
   "WA_AUTO_REMINDER_H1",
+  "PLANNER_SAVINGS_TARGET",
 ]);
 
 export const getPublicConfig = (): Record<string, string> => {
