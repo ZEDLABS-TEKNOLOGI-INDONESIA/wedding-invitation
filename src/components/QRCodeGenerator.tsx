@@ -47,7 +47,7 @@ const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           <path d="M50 38 C 46 32, 36 33, 36 42 C 36 52, 50 64, 50 64 C 50 64, 64 52, 64 42 C 64 33, 54 32, 50 38 Z" fill="#e11d48" stroke="white" stroke-width="1.5" />
         </svg>
       `.trim();
-      return `data:image/svg+xml;base64,${btoa(svgString)}`;
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
     } catch {
       return "";
     }

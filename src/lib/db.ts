@@ -3,7 +3,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 const DB_DIR = path.resolve(process.cwd(), "database");
-const DB_FILE = path.join(DB_DIR, "wedding.db");
+const rawDbName = process.env.DB_NAME?.trim() || "wedding.db";
+const safeDbName = path.basename(rawDbName).endsWith(".db")
+  ? path.basename(rawDbName)
+  : `${path.basename(rawDbName)}.db`;
+const DB_FILE = path.join(DB_DIR, safeDbName);
 const OLD_DB_FILE = path.resolve(process.cwd(), "wedding.db");
 
 if (!fs.existsSync(DB_DIR)) {
@@ -39,6 +43,26 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS admin_sessions (
+    token_hash TEXT PRIMARY KEY,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS wa_invitations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guest_name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    address TEXT DEFAULT 'Di Tempat',
+    invitation_url TEXT NOT NULL,
+    job_id TEXT DEFAULT '',
+    reference_id TEXT DEFAULT '',
+    status TEXT DEFAULT 'queued',
+    error_message TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 const DEFAULT_CONFIG: Record<string, string> = {
@@ -72,7 +96,10 @@ const DEFAULT_CONFIG: Record<string, string> = {
   RESEPSI_ISO_END: "2025-10-11T14:00:00+07:00",
   HERO_IMAGE:
     "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop",
+  ENVELOPE_IMAGE: "",
   HERO_CITY: "Kab. Pandeglang, Banten",
+  EVENT_TIMEZONE: "WIB",
+  GIFT_ADDRESS: "",
   MUSIC_URL: "https://www.bensound.com/bensound-music/bensound-forever.mp3",
   RSVP_MAX_GUESTS: "20",
   BANK_ACCOUNTS: JSON.stringify([
@@ -117,8 +144,13 @@ const DEFAULT_CONFIG: Record<string, string> = {
   TEXT_GIFT_TITLE: "Tanda Kasih",
   TEXT_GIFT_DESC:
     "Kehadiran dan doa restu Anda adalah hadiah terbaik bagi kami. Namun, jika Anda ingin memberikan tanda kasih dalam bentuk lain, kami menerimanya dengan segala kerendahan hati.",
-  TELEGRAM_BOT_TOKEN: "",
-  TELEGRAM_CHAT_ID: "",
+  WA_BASE_URL: "https://whatsapp.zedlabs.id",
+  WA_API_KEY: "",
+  WA_API_SECRET: "",
+  WA_ADMIN_NUMBERS: "",
+  WA_NOTIFY_ADMIN_RSVP: "true",
+  WA_NOTIFY_ADMIN_WISH: "true",
+  WA_AUTO_CONFIRM_GUEST: "true",
 };
 
 const insertDefault = db.prepare(
@@ -130,6 +162,9 @@ const insertMany = db.transaction(() => {
   }
 });
 insertMany();
+db.prepare(
+  "DELETE FROM config WHERE key IN ('TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID')"
+).run();
 
 export const getConfig = (): Record<string, string> => {
   const rows = db.prepare("SELECT key, value FROM config").all() as {
@@ -145,6 +180,29 @@ export const setConfig = (key: string, value: string): void => {
     value
   );
 };
+
+export const PRIVATE_CONFIG_KEYS = new Set([
+  "WA_BASE_URL",
+  "WA_API_KEY",
+  "WA_API_SECRET",
+  "WA_ADMIN_NUMBERS",
+  "WA_NOTIFY_ADMIN_RSVP",
+  "WA_NOTIFY_ADMIN_WISH",
+  "WA_AUTO_CONFIRM_GUEST",
+]);
+
+export const getPublicConfig = (): Record<string, string> => {
+  const full = getConfig();
+  const safe: Record<string, string> = {};
+  for (const [key, value] of Object.entries(full)) {
+    if (!PRIVATE_CONFIG_KEYS.has(key)) {
+      safe[key] = value;
+    }
+  }
+  return safe;
+};
+
+export const ALLOWED_CONFIG_KEYS = new Set(Object.keys(DEFAULT_CONFIG));
 
 export const getDbPath = () => DB_FILE;
 export default db;

@@ -5,9 +5,22 @@ let wishesCache: { data: Wish[]; timestamp: number } | null = null;
 
 const CACHE_DURATION = 30 * 1000;
 
-export const dbService = {
-  async initializeDemo() {},
+const extractErrorMessage = async (
+  response: Response,
+  fallback: string
+): Promise<string> => {
+  try {
+    const body = await response.json();
+    if (body && typeof body.error === "string" && body.error.trim()) {
+      return body.error;
+    }
+  } catch {
+    // ignore JSON parse failure
+  }
+  return fallback;
+};
 
+export const dbService = {
   async getRSVPs(): Promise<RSVP[]> {
     const now = Date.now();
 
@@ -36,10 +49,17 @@ export const dbService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Failed to save RSVP");
+    if (!response.ok) {
+      const message = await extractErrorMessage(
+        response,
+        "Gagal menyimpan RSVP. Silakan coba lagi."
+      );
+      throw new Error(message);
+    }
+    const result = (await response.json()) as { id?: number };
     return {
       ...data,
-      id: Date.now(),
+      id: typeof result.id === "number" ? result.id : Date.now(),
       created_at: new Date().toISOString(),
     };
   },
@@ -69,10 +89,17 @@ export const dbService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Failed to save wish");
+    if (!response.ok) {
+      const message = await extractErrorMessage(
+        response,
+        "Gagal mengirim ucapan. Silakan coba lagi."
+      );
+      throw new Error(message);
+    }
+    const result = (await response.json()) as { id?: number };
     return {
       ...data,
-      id: Date.now(),
+      id: typeof result.id === "number" ? result.id : Date.now(),
       created_at: new Date().toISOString(),
     };
   },

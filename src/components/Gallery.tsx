@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   X,
   ChevronLeft,
@@ -13,31 +13,44 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
   const images = config.galleryImages;
   const [selectedImg, setSelectedImg] = useState<number | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
 
   const openLightbox = (index: number) => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
     setSelectedImg(index);
     setIsClosing(false);
     document.body.style.overflow = "hidden";
   };
 
-  const closeLightbox = () => {
+  const closeLightbox = useCallback(() => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+    }
     setIsClosing(true);
-    setTimeout(() => {
+    closeTimerRef.current = window.setTimeout(() => {
       setSelectedImg(null);
       setIsClosing(false);
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
+      closeTimerRef.current = null;
     }, 400);
-  };
+  }, []);
 
-  const navigate = (direction: "prev" | "next", e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (selectedImg === null) return;
-    if (direction === "prev") {
-      setSelectedImg(selectedImg === 0 ? images.length - 1 : selectedImg - 1);
-    } else {
-      setSelectedImg(selectedImg === images.length - 1 ? 0 : selectedImg + 1);
-    }
-  };
+  const navigate = useCallback(
+    (direction: "prev" | "next", e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      setSelectedImg((prev) => {
+        if (prev === null || images.length === 0) return null;
+        if (direction === "prev") {
+          return prev === 0 ? images.length - 1 : prev - 1;
+        }
+        return prev === images.length - 1 ? 0 : prev + 1;
+      });
+    },
+    [images.length]
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,7 +61,18 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedImg]);
+  }, [selectedImg, closeLightbox, navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  if (images.length === 0) return null;
 
   return (
     <section
@@ -63,22 +87,24 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
             <div className="bg-accentDark dark:bg-accent h-[1px] w-8 md:w-16"></div>
           </div>
           <h2 className="font-serif text-5xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
-            Our Gallery
+            Galeri Momen
           </h2>
-          <p className="tracking-luxury text-[10px] font-black text-balance text-slate-400 uppercase italic md:text-[13px] dark:text-slate-500">
+          <p className="tracking-luxury text-xs font-black text-balance text-slate-500 uppercase italic md:text-sm dark:text-slate-400">
             Momen-momen indah yang terpatri abadi dalam perjalanan cinta kami
           </p>
         </div>
         <div className="columns-1 gap-6 space-y-6 sm:columns-2 md:gap-10 md:space-y-10 lg:columns-3">
           {images.map((src, index) => (
-            <div
+            <button
               key={index}
-              className="group hover:shadow-accent/20 dark:bg-darkSurface relative cursor-pointer overflow-hidden rounded-[2rem] border border-slate-100 bg-slate-50 shadow-xl transition-all duration-700 hover:-translate-y-3 md:rounded-[3.5rem] dark:border-white/5"
+              type="button"
+              aria-label={`Lihat foto momen ${index + 1}`}
+              className="group hover:shadow-accent/20 dark:bg-darkSurface relative block w-full cursor-pointer overflow-hidden rounded-[2rem] border border-slate-100 bg-slate-50 text-left shadow-xl transition-all duration-700 hover:-translate-y-3 focus:ring-2 focus:ring-accent focus:outline-none md:rounded-[3.5rem] dark:border-white/5"
               onClick={() => openLightbox(index)}
             >
               <img
                 src={src}
-                alt={`Wedding Moment ${index + 1}`}
+                alt={`Momen Pernikahan ${index + 1}`}
                 className="h-auto w-full transform object-cover grayscale-[0.2] transition-transform duration-[1.5s] ease-out group-hover:scale-105 group-hover:grayscale-0"
                 loading="lazy"
               />
@@ -87,12 +113,15 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
                   <Maximize2 className="h-6 w-6 text-white md:h-8 md:w-8" />
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
       {selectedImg !== null && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Pratinjau foto galeri"
           className={`fixed inset-0 z-[1000] flex items-center justify-center overflow-hidden transition-all duration-500 ${
             isClosing ? "opacity-0" : "opacity-100"
           }`}
@@ -105,7 +134,7 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
             <div className="relative flex max-h-[75vh] max-w-[95vw] items-center justify-center md:max-h-[85vh]">
               <img
                 src={images[selectedImg]}
-                alt="Lightbox Fullscreen"
+                alt={`Momen Pernikahan ${selectedImg + 1}`}
                 className={`pointer-events-auto max-h-full max-w-full rounded-[1.5rem] border border-white/10 object-contain shadow-[0_60px_120px_rgba(0,0,0,0.9)] transition-all duration-700 md:rounded-[4rem] ${
                   isClosing
                     ? "translate-y-20 scale-90 blur-xl"
@@ -114,16 +143,20 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
               />
               <div className="pointer-events-auto fixed top-1/2 left-4 z-[1020] -translate-y-1/2 md:left-12">
                 <button
+                  type="button"
+                  aria-label="Foto sebelumnya"
                   onClick={(e) => navigate("prev", e)}
-                  className="group flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/40 backdrop-blur-2xl transition-all hover:scale-110 hover:bg-white/15 hover:text-white active:scale-90 md:h-24 md:w-24"
+                  className="group flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 backdrop-blur-2xl transition-all hover:scale-110 hover:bg-white/15 hover:text-white active:scale-90 md:h-24 md:w-24"
                 >
                   <ChevronLeft className="h-6 w-6 transition-transform group-hover:-translate-x-1 md:h-12 md:w-12" />
                 </button>
               </div>
               <div className="pointer-events-auto fixed top-1/2 right-4 z-[1020] -translate-y-1/2 md:right-12">
                 <button
+                  type="button"
+                  aria-label="Foto berikutnya"
                   onClick={(e) => navigate("next", e)}
-                  className="group flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/40 backdrop-blur-2xl transition-all hover:scale-110 hover:bg-white/15 hover:text-white active:scale-90 md:h-24 md:w-24"
+                  className="group flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 backdrop-blur-2xl transition-all hover:scale-110 hover:bg-white/15 hover:text-white active:scale-90 md:h-24 md:w-24"
                 >
                   <ChevronRight className="h-6 w-6 transition-transform group-hover:translate-x-1 md:h-12 md:w-12" />
                 </button>
@@ -132,8 +165,10 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
           </div>
           <div className="absolute top-6 right-6 z-[1030] md:top-12 md:right-12">
             <button
+              type="button"
+              aria-label="Tutup pratinjau galeri"
               onClick={closeLightbox}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 transition-all hover:rotate-90 hover:bg-white/20 hover:text-white active:scale-95 md:h-20 md:w-20"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition-all hover:rotate-90 hover:bg-white/20 hover:text-white active:scale-95 md:h-20 md:w-20"
             >
               <X className="h-6 w-6 md:h-10 md:w-10" />
             </button>
@@ -143,7 +178,7 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
               <div className="flex items-center gap-4">
                 <div className="h-[1px] w-6 bg-white/20 md:w-12"></div>
                 <p className="font-serif text-base tracking-[0.2em] text-white uppercase italic md:text-4xl md:tracking-[0.4em]">
-                  Moment{" "}
+                  Momen{" "}
                   <span className="text-accent font-sans font-black">
                     {selectedImg + 1}
                   </span>{" "}

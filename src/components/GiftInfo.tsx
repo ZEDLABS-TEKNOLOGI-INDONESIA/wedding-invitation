@@ -4,6 +4,7 @@ import type { AppConfig } from "../types";
 
 const GiftInfo: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const giftAddress = config.gift.address.trim() || config.venue.address;
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -40,70 +41,72 @@ const GiftInfo: React.FC<{ config: AppConfig }> = ({ config }) => {
                 <div className="space-y-3 md:space-y-6">
                   <div className="flex items-center justify-center gap-2.5 md:justify-start">
                     <div className="bg-accent h-1.5 w-1.5 animate-pulse rounded-full"></div>
-                    <p className="text-accentDark dark:text-accent tracking-luxury text-[9px] font-bold uppercase md:text-[12px]">
+                    <p className="text-accentDark dark:text-accent tracking-luxury text-xs font-bold uppercase">
                       {acc.bank}
                     </p>
                   </div>
                   <p className="font-serif text-2xl leading-none tracking-tighter break-all text-slate-900 md:text-7xl dark:text-white">
                     {acc.number}
                   </p>
-                  <p className="tracking-editorial text-[10px] font-medium text-slate-400 uppercase italic md:text-[14px] dark:text-slate-500">
+                  <p className="tracking-editorial text-xs font-medium text-slate-500 uppercase italic md:text-sm dark:text-slate-400">
                     A/N {acc.name}
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => copyToClipboard(acc.number, `bank-${idx}`)}
-                  className={`tracking-editorial inline-flex w-full items-center justify-center gap-2.5 rounded-full px-6 py-3.5 text-[9px] font-bold uppercase shadow-md transition-all md:w-auto md:gap-5 md:px-12 md:py-6 md:text-[12px] ${
+                  className={`tracking-editorial inline-flex w-full items-center justify-center gap-2.5 rounded-full px-6 py-3.5 text-xs font-bold uppercase shadow-md transition-all md:w-auto md:gap-5 md:px-12 md:py-6 ${
                     copiedId === `bank-${idx}`
                       ? "bg-green-500 text-white"
                       : "bg-primary dark:text-primary text-white active:scale-95 dark:bg-white"
                   }`}
                 >
                   {copiedId === `bank-${idx}` ? (
-                    <Check className="h-3.5 w-3.5 md:h-5 md:w-5" />
+                    <Check className="h-4 w-4 md:h-5 md:w-5" />
                   ) : (
-                    <Copy className="h-3.5 w-3.5 md:h-5 md:w-5" />
+                    <Copy className="h-4 w-4 md:h-5 md:w-5" />
                   )}
-                  {copiedId === `bank-${idx}` ? "Berhasil" : "Salin Nomor"}
+                  {copiedId === `bank-${idx}` ? "Disalin!" : "Salin Nomor"}
                 </button>
               </div>
             </div>
           ))}
         </div>
-        <div className="editorial-card group relative flex flex-col items-center gap-6 overflow-hidden rounded-[1.5rem] border border-slate-100 p-6 text-center shadow-md transition-all duration-1000 md:flex-row md:gap-14 md:rounded-[5rem] md:p-20 md:text-left dark:border-white/5">
-          <div className="from-accent/5 absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity group-hover:opacity-100"></div>
-          <div className="text-accentDark dark:text-accent animate-float flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full border border-slate-100 bg-slate-50 shadow-sm md:h-28 md:w-28 dark:border-white/10 dark:bg-white/5">
-            <MapPin className="h-6 w-6 md:h-12 md:w-12" />
-          </div>
-          <div className="relative z-10 flex-grow space-y-1.5 md:space-y-4">
-            <div className="text-accentDark dark:text-accent flex items-center justify-center gap-2.5 md:justify-start">
-              <Sparkles className="h-3.5 w-3.5 md:h-5 md:w-5" />
-              <h4 className="font-serif text-xl tracking-tight italic md:text-5xl">
-                Kirim Kado Fisik
-              </h4>
+        {giftAddress && (
+          <div className="editorial-card group relative flex flex-col items-center gap-6 overflow-hidden rounded-[1.5rem] border border-slate-100 p-6 text-center shadow-md transition-all duration-1000 md:flex-row md:gap-14 md:rounded-[5rem] md:p-20 md:text-left dark:border-white/5">
+            <div className="from-accent/5 absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity group-hover:opacity-100"></div>
+            <div className="text-accentDark dark:text-accent animate-float flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full border border-slate-100 bg-slate-50 shadow-sm md:h-28 md:w-28 dark:border-white/10 dark:bg-white/5">
+              <MapPin className="h-6 w-6 md:h-12 md:w-12" />
             </div>
-            <p className="text-sm leading-relaxed font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
-              {config.venue.address}
-            </p>
+            <div className="relative z-10 flex-grow space-y-1.5 md:space-y-4">
+              <div className="text-accentDark dark:text-accent flex items-center justify-center gap-2.5 md:justify-start">
+                <Sparkles className="h-3.5 w-3.5 md:h-5 md:w-5" />
+                <h4 className="font-serif text-xl tracking-tight italic md:text-5xl">
+                  Kirim Kado Fisik
+                </h4>
+              </div>
+              <p className="text-sm leading-relaxed font-light text-balance text-slate-500 italic md:text-2xl dark:text-slate-400">
+                {giftAddress}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => copyToClipboard(giftAddress, "address-gift")}
+              className={`tracking-luxury relative z-10 inline-flex w-full items-center justify-center gap-3 rounded-xl px-8 py-3.5 text-xs font-bold uppercase shadow-md transition-all md:w-auto md:rounded-[2.5rem] md:px-14 md:py-6 ${
+                copiedId === "address-gift"
+                  ? "bg-green-500 text-white"
+                  : "bg-primary dark:text-primary text-white active:scale-95 dark:bg-white"
+              }`}
+            >
+              {copiedId === "address-gift" ? (
+                <Check className="h-4 w-4 md:h-6 md:w-6" />
+              ) : (
+                <Copy className="h-4 w-4 md:h-6 md:w-6" />
+              )}
+              {copiedId === "address-gift" ? "Disalin!" : "Salin Alamat"}
+            </button>
           </div>
-          <button
-            onClick={() =>
-              copyToClipboard(config.venue.address, "address-gift")
-            }
-            className={`tracking-luxury relative z-10 inline-flex w-full items-center justify-center gap-3 rounded-xl px-8 py-3.5 text-[9px] font-bold uppercase shadow-md transition-all md:w-auto md:rounded-[2.5rem] md:px-14 md:py-6 md:text-[12px] ${
-              copiedId === "address-gift"
-                ? "bg-green-500 text-white"
-                : "bg-primary dark:text-primary text-white active:scale-95 dark:bg-white"
-            }`}
-          >
-            {copiedId === "address-gift" ? (
-              <Check className="h-4 w-4 md:h-6 md:w-6" />
-            ) : (
-              <Copy className="h-4 w-4 md:h-6 md:w-6" />
-            )}
-            Salin Alamat
-          </button>
-        </div>
+        )}
       </div>
     </section>
   );

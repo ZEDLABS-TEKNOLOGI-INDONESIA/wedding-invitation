@@ -32,7 +32,10 @@ const DEFAULT_RAW: Record<string, string> = {
   RESEPSI_ISO_START: "2025-01-01T11:00:00+07:00",
   RESEPSI_ISO_END: "2025-01-01T14:00:00+07:00",
   HERO_IMAGE: "",
+  ENVELOPE_IMAGE: "",
   HERO_CITY: "",
+  EVENT_TIMEZONE: "WIB",
+  GIFT_ADDRESS: "",
   MUSIC_URL: "",
   RSVP_MAX_GUESTS: "10",
   BANK_ACCOUNTS: "[]",
@@ -52,16 +55,25 @@ const DEFAULT_RAW: Record<string, string> = {
 
 let cache: { data: AppConfig; raw: Record<string, string> } | null = null;
 
-export function useConfig() {
-  const [config, setConfig] = useState<AppConfig | null>(
-    cache ? cache.data : null
-  );
-  const [raw, setRaw] = useState<Record<string, string>>(
-    cache ? cache.raw : DEFAULT_RAW
-  );
-  const [loading, setLoading] = useState(!cache);
+export function useConfig(initialRaw?: Record<string, string>) {
+  const [config, setConfig] = useState<AppConfig | null>(() => {
+    if (initialRaw) return parseConfig(initialRaw);
+    if (cache) return cache.data;
+    return null;
+  });
+  const [raw, setRaw] = useState<Record<string, string>>(() => {
+    if (initialRaw) return initialRaw;
+    if (cache) return cache.raw;
+    return DEFAULT_RAW;
+  });
+  const [loading, setLoading] = useState(!initialRaw && !cache);
 
   useEffect(() => {
+    if (initialRaw) {
+      const parsed = parseConfig(initialRaw);
+      cache = { data: parsed, raw: initialRaw };
+      return;
+    }
     if (cache) return;
     fetch("/api/config")
       .then((r) => r.json())
@@ -77,7 +89,7 @@ export function useConfig() {
         setConfig(fallback);
         setLoading(false);
       });
-  }, []);
+  }, [initialRaw]);
 
   return { config, raw, loading };
 }

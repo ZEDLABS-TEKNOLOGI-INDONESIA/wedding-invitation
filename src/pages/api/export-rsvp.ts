@@ -1,15 +1,34 @@
 import type { APIRoute } from "astro";
+import { isAdminAuthenticated } from "../../lib/auth";
 import db from "../../lib/db";
+import { escapeCsvCell } from "../../utils/csv";
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ cookies }) => {
+  if (!isAdminAuthenticated(cookies)) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
   try {
     const stmt = db.prepare(`
-      SELECT guest_name, phone, attendance, guest_count, message, created_at 
-      FROM rsvps 
+      SELECT guest_name, phone, attendance, guest_count, message, created_at
+      FROM rsvps
       ORDER BY created_at DESC
     `);
-    const data = stmt.all() as any[];
-    const csvRows = [];
+    const data = stmt.all() as {
+      guest_name: string;
+      phone: string | null;
+      attendance: string;
+      guest_count: number;
+      message: string | null;
+      created_at: string;
+    }[];
+
     const headers = [
       "Nama Tamu",
       "No HP",
@@ -18,30 +37,33 @@ export const GET: APIRoute = async () => {
       "Pesan",
       "Waktu Input",
     ];
-    csvRows.push(headers.join(","));
-    data.forEach((row) => {
+    const csvRows = [headers.map(escapeCsvCell).join(",")];
+
+    for (const row of data) {
       const values = [
-        `"${row.guest_name}"`,
-        `'${row.phone || "-"}'`,
-        row.attendance,
-        row.guest_count,
-        `"${(row.message || "").replace(/"/g, '""')}"`,
-        row.created_at,
+        escapeCsvCell(row.guest_name),
+        escapeCsvCell(row.phone ? ` ${row.phone}` : "-"),
+        escapeCsvCell(row.attendance),
+        escapeCsvCell(row.guest_count),
+        escapeCsvCell(row.message || ""),
+        escapeCsvCell(row.created_at),
       ];
       csvRows.push(values.join(","));
-    });
+    }
 
-    const csvContent = csvRows.join("\n");
+    const csvContent = "\uFEFF" + csvRows.join("\n");
+    const filename = `wedding-rsvp-${new Date().toISOString().split("T")[0]}.csv`;
 
     return new Response(csvContent, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="wedding-rsvp-${new Date().toISOString().split("T")[0]}.csv"`,
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Export RSVP Error:", error);
     return new Response("Failed to export data", { status: 500 });
   }
 };

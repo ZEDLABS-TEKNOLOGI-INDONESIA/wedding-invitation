@@ -7,7 +7,6 @@ export enum AttendanceStatus {
 export interface RSVP {
   id: number;
   guest_name: string;
-  email?: string;
   phone?: string;
   attendance: AttendanceStatus;
   guest_count: number;
@@ -46,12 +45,17 @@ export interface AppConfig {
     longitude: number;
   };
   events: {
+    timezone: string;
     akad: WeddingEvent;
     resepsi: WeddingEvent;
   };
   hero: {
     image: string;
+    envelopeImage: string;
     city: string;
+  };
+  gift: {
+    address: string;
   };
   music: {
     url: string;
@@ -73,10 +77,6 @@ export interface AppConfig {
       family: string;
     };
     gift: { title: string; desc: string };
-  };
-  telegram: {
-    botToken: string;
-    chatId: string;
   };
 }
 

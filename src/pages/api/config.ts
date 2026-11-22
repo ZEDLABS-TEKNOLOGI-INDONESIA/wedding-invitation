@@ -1,44 +1,192 @@
 import type { APIRoute } from "astro";
-import { getConfig, setConfig } from "../../lib/db";
+import { isAdminAuthenticated } from "../../lib/auth";
+import db, {
+  ALLOWED_CONFIG_KEYS,
+  getPublicConfig,
+  setConfig,
+} from "../../lib/db";
+
+const JSON_HEADERS = { "Content-Type": "application/json" };
+const URL_KEYS = new Set([
+  "BRIDE_IMAGE",
+  "GROOM_IMAGE",
+  "HERO_IMAGE",
+  "ENVELOPE_IMAGE",
+  "MUSIC_URL",
+  "WA_BASE_URL",
+]);
+
+const isSafeUrl = (value: string): boolean => {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return true;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+};
+
+const validateConfigEntry = (key: string, value: string): string | null => {
+  const maxLen =
+    key === "BANK_ACCOUNTS" || key === "LOVE_STORY" || key === "GALLERY_IMAGES"
+      ? 20000
+      : 2000;
+  if (value.length > maxLen) {
+    return `Nilai ${key} melebihi batas panjang karakter.`;
+  }
+
+  if (URL_KEYS.has(key) && !isSafeUrl(value)) {
+    return `${key} harus berupa URL http(s) atau path relatif yang valid.`;
+  }
+
+  if (key === "VENUE_LAT") {
+    const num = Number(value);
+    if (value.trim() !== "" && (!Number.isFinite(num) || num < -90 || num > 90)) {
+      return "VENUE_LAT harus berupa angka antara -90 dan 90.";
+    }
+  }
+
+  if (key === "VENUE_LNG") {
+    const num = Number(value);
+    if (
+      value.trim() !== "" &&
+      (!Number.isFinite(num) || num < -180 || num > 180)
+    ) {
+      return "VENUE_LNG harus berupa angka antara -180 dan 180.";
+    }
+  }
+
+  if (key === "RSVP_MAX_GUESTS") {
+    const num = Number(value);
+    if (!Number.isInteger(num) || num < 1 || num > 100) {
+      return "RSVP_MAX_GUESTS harus berupa bilangan bulat antara 1 dan 100.";
+    }
+  }
+
+  if (key === "BANK_ACCOUNTS") {
+    try {
+      const parsed = JSON.parse(value);
+      if (
+        !Array.isArray(parsed) ||
+        !parsed.every(
+          (item) =>
+            item &&
+            typeof item === "object" &&
+            typeof item.bank === "string" &&
+            typeof item.number === "string" &&
+            typeof item.name === "string"
+        )
+      ) {
+        return 'BANK_ACCOUNTS harus berupa JSON array berisi objek { "bank", "number", "name" }.';
+      }
+    } catch {
+      return "BANK_ACCOUNTS bukan JSON yang valid.";
+    }
+  }
+
+  if (key === "LOVE_STORY") {
+    try {
+      const parsed = JSON.parse(value);
+      if (
+        !Array.isArray(parsed) ||
+        !parsed.every(
+          (item) =>
+            item &&
+            typeof item === "object" &&
+            typeof item.date === "string" &&
+            typeof item.title === "string" &&
+            typeof item.desc === "string"
+        )
+      ) {
+        return 'LOVE_STORY harus berupa JSON array berisi objek { "date", "title", "desc" }.';
+      }
+    } catch {
+      return "LOVE_STORY bukan JSON yang valid.";
+    }
+  }
+
+  if (key === "GALLERY_IMAGES") {
+    try {
+      const parsed = JSON.parse(value);
+      if (
+        !Array.isArray(parsed) ||
+        !parsed.every((item) => typeof item === "string" && isSafeUrl(item))
+      ) {
+        return "GALLERY_IMAGES harus berupa JSON array berisi URL gambar http(s) yang valid.";
+      }
+    } catch {
+      return "GALLERY_IMAGES bukan JSON yang valid.";
+    }
+  }
+
+  return null;
+};
 
 export const GET: APIRoute = async () => {
   try {
-    const config = getConfig();
-    const safeConfig = { ...config };
-    delete safeConfig.TELEGRAM_BOT_TOKEN;
-    delete safeConfig.TELEGRAM_CHAT_ID;
+    const safeConfig = getPublicConfig();
     return new Response(JSON.stringify(safeConfig), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: JSON_HEADERS,
     });
   } catch {
     return new Response(JSON.stringify({ error: "Failed to fetch config" }), {
       status: 500,
+      headers: JSON_HEADERS,
     });
   }
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const auth = cookies.get("wedding_admin_auth")?.value;
-  if (auth !== "true") {
+  if (!isAdminAuthenticated(cookies)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
+      headers: { ...JSON_HEADERS, "Cache-Control": "no-store" },
     });
   }
 
   try {
     const body = await request.json();
-    for (const [key, value] of Object.entries(body)) {
-      if (typeof value === "string") {
-        setConfig(key, value);
-      } else {
-        setConfig(key, JSON.stringify(value));
-      }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return new Response(JSON.stringify({ error: "Payload tidak valid." }), {
+        status: 400,
+        headers: { ...JSON_HEADERS, "Cache-Control": "no-store" },
+      });
     }
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
+
+    const entriesToSave: [string, string][] = [];
+
+    for (const [key, value] of Object.entries(body)) {
+      if (!ALLOWED_CONFIG_KEYS.has(key)) continue;
+      const stringValue =
+        typeof value === "string" ? value : JSON.stringify(value);
+      const validationError = validateConfigEntry(key, stringValue);
+      if (validationError) {
+        return new Response(JSON.stringify({ error: validationError }), {
+          status: 400,
+          headers: { ...JSON_HEADERS, "Cache-Control": "no-store" },
+        });
+      }
+      entriesToSave.push([key, stringValue]);
+    }
+
+    const saveAll = db.transaction((items: [string, string][]) => {
+      for (const [key, val] of items) {
+        setConfig(key, val);
+      }
+    });
+    saveAll(entriesToSave);
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { ...JSON_HEADERS, "Cache-Control": "no-store" },
+    });
   } catch {
     return new Response(JSON.stringify({ error: "Failed to save config" }), {
       status: 500,
+      headers: { ...JSON_HEADERS, "Cache-Control": "no-store" },
     });
   }
 };

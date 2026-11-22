@@ -10,8 +10,21 @@ import {
   Upload,
 } from "lucide-react";
 import Papa from "papaparse";
+import QRCode from "qrcode";
 import { QRCodeCanvas } from "qrcode.react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+
+const loadImage = (src: string): Promise<HTMLImageElement | null> =>
+  new Promise((resolve) => {
+    if (!src) {
+      resolve(null);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
 
 const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [activeTab, setActiveTab] = useState<"single" | "bulk">("single");
@@ -23,7 +36,6 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [statusMsg, setStatusMsg] = useState("");
   const [brideInitial, setBrideInitial] = useState("B");
   const [groomInitial, setGroomInitial] = useState("G");
-  const qrRefs = useRef<{ [key: string]: HTMLCanvasElement | null }>({});
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
 
@@ -69,7 +81,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           <path d="M50 38 C 46 32, 36 33, 36 42 C 36 52, 50 64, 50 64 C 50 64, 64 52, 64 42 C 64 33, 54 32, 50 38 Z" fill="#e11d48" stroke="white" stroke-width="1.5" />
         </svg>
       `.trim();
-      return `data:image/svg+xml;base64,${btoa(svgString)}`;
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
     } catch {
       return "";
     }
@@ -85,6 +97,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
     setIsReadingCsv(true);
     setTimeout(() => {
       Papa.parse(file, {
@@ -100,9 +113,44 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           setBulkNames(names);
           setIsReadingCsv(false);
         },
+        error: (err) => {
+          console.error("Gagal membaca CSV:", err);
+          alert("Gagal membaca file CSV. Pastikan format file valid.");
+          setIsReadingCsv(false);
+        },
         header: false,
       });
     }, 100);
+  };
+
+  const renderQrBase64 = async (
+    name: string,
+    logoImg: HTMLImageElement | null
+  ): Promise<string> => {
+    const size = 300;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    await QRCode.toCanvas(canvas, generateUrl(name), {
+      width: size,
+      margin: 2,
+      errorCorrectionLevel: "H",
+    });
+
+    if (logoImg) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const logoSize = 64;
+        const pos = (size - logoSize) / 2;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, logoSize / 2 + 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.drawImage(logoImg, pos, pos, logoSize, logoSize);
+      }
+    }
+
+    return canvas.toDataURL("image/png").split(",")[1];
   };
 
   const downloadAllZip = async () => {
@@ -113,7 +161,8 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     try {
       const zip = new JSZip();
       const folder = zip.folder("QR_Codes_Wedding");
-      const CHUNK_SIZE = 50;
+      const logoImg = await loadImage(centerLogo);
+      const CHUNK_SIZE = 25;
       for (let i = 0; i < bulkNames.length; i += CHUNK_SIZE) {
         const chunk = bulkNames.slice(i, i + CHUNK_SIZE);
         setStatusMsg(
@@ -122,17 +171,13 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         await Promise.all(
           chunk.map(async (name, chunkIdx) => {
             const globalIdx = i + chunkIdx;
-            const canvas = qrRefs.current[globalIdx];
-            if (canvas) {
-              const dataUrl = canvas.toDataURL("image/png");
-              const base64Data = dataUrl.split(",")[1];
-              const safeName = name
-                .replace(/[^a-z0-9]/gi, "_")
-                .substring(0, 50);
-              folder?.file(`${globalIdx + 1}_${safeName}.png`, base64Data, {
-                base64: true,
-              });
-            }
+            const base64Data = await renderQrBase64(name, logoImg);
+            const safeName = name
+              .replace(/[^a-z0-9]/gi, "_")
+              .substring(0, 50);
+            folder?.file(`${globalIdx + 1}_${safeName}.png`, base64Data, {
+              base64: true,
+            });
           })
         );
         setProgress(Math.round(((i + chunk.length) / bulkNames.length) * 100));
@@ -367,7 +412,6 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                   >
                     <div className="rounded-lg bg-white p-1">
                       <QRCodeCanvas
-                        ref={(el) => (qrRefs.current[idx] = el)}
                         value={generateUrl(name)}
                         size={140}
                         level="H"
@@ -392,27 +436,6 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                         <CheckCircle2 className="h-3 w-3 text-green-500" />
                       </div>
                     </div>
-                  </div>
-                ))}
-                {bulkNames.slice(50).map((name, idx) => (
-                  <div key={idx + 50} className="hidden">
-                    <QRCodeCanvas
-                      ref={(el) => (qrRefs.current[idx + 50] = el)}
-                      value={generateUrl(name)}
-                      size={250}
-                      level="H"
-                      includeMargin={true}
-                      imageSettings={
-                        centerLogo
-                          ? {
-                              src: centerLogo,
-                              height: 50,
-                              width: 50,
-                              excavate: true,
-                            }
-                          : undefined
-                      }
-                    />
                   </div>
                 ))}
               </div>

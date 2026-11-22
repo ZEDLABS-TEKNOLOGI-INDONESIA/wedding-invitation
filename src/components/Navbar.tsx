@@ -1,94 +1,108 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  BookHeart,
   Calendar,
+  Gift,
+  Home,
   Image as ImageIcon,
   MessageCircle,
-  Send,
-  User,
-  Home,
   Moon,
+  Send,
   Sun,
+  User,
 } from "lucide-react";
+
 interface NavbarProps {
   theme: "light" | "dark";
   toggleTheme: () => void;
 }
+
+const NAV_ITEMS = [
+  { icon: Home, label: "Beranda", href: "#hero", sectionId: "hero" },
+  { icon: User, label: "Mempelai", href: "#couple", sectionId: "couple" },
+  { icon: BookHeart, label: "Kisah", href: "#story", sectionId: "story" },
+  { icon: Calendar, label: "Acara", href: "#event", sectionId: "event" },
+  { icon: ImageIcon, label: "Galeri", href: "#gallery", sectionId: "gallery" },
+  { icon: Send, label: "RSVP", href: "#rsvp", sectionId: "rsvp" },
+  { icon: MessageCircle, label: "Ucapan", href: "#wishes", sectionId: "wishes" },
+  { icon: Gift, label: "Kado", href: "#gift", sectionId: "gift" },
+];
+
 const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const timeoutRef = useRef<number | null>(null);
-  const resetTimer = () => {
-    setIsVisible(true);
-    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => {
-      if (window.scrollY > 100) {
-        setIsVisible(false);
-      }
-    }, 3000);
-  };
+  const [activeSection, setActiveSection] = useState<string>("hero");
+
   useEffect(() => {
-    const events = ["mousemove", "scroll", "touchstart", "keydown"];
-    events.forEach((event) => window.addEventListener(event, resetTimer));
-    resetTimer();
-    return () => {
-      events.forEach((event) => window.removeEventListener(event, resetTimer));
-      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-    };
+    const sections = NAV_ITEMS.map((item) =>
+      document.getElementById(item.sectionId)
+    ).filter((el): el is HTMLElement => el !== null);
+
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "-40% 0px -50% 0px", threshold: 0 }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
   }, []);
-  const handleAction = () => {
-    window.dispatchEvent(new CustomEvent("play-wedding-music"));
-    resetTimer();
-  };
-  const navItems = [
-    { icon: Home, label: "Home", href: "#" },
-    { icon: User, label: "Couple", href: "#couple" },
-    { icon: Calendar, label: "Events", href: "#event" },
-    { icon: ImageIcon, label: "Gallery", href: "#gallery" },
-    { icon: Send, label: "RSVP", href: "#rsvp" },
-    { icon: MessageCircle, label: "Wishes", href: "#wishes" },
-  ];
-  const itemBaseClass =
-    "p-3 md:p-4 rounded-full text-slate-600 dark:text-slate-300 hover:text-accent dark:hover:text-accent hover:bg-white/80 dark:hover:bg-white/10 transition-all group relative flex items-center justify-center";
+
   const tooltipClass =
-    "absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-accent text-white dark:text-slate-900 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap hidden md:block shadow-xl pointer-events-none";
+    "pointer-events-none absolute -top-12 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-bold tracking-widest text-white uppercase opacity-0 shadow-xl transition-all group-hover:opacity-100 md:block dark:bg-accent dark:text-slate-900";
+
   return (
     <nav
-      className={`pointer-events-none fixed bottom-4 left-1/2 z-[100] w-[95%] -translate-x-1/2 px-2 transition-all duration-700 ease-in-out md:bottom-8 md:w-fit ${
-        isVisible ? "translate-y-0 opacity-100" : "translate-y-24 opacity-0"
-      }`}
+      aria-label="Navigasi utama undangan"
+      className="pointer-events-none fixed bottom-4 left-1/2 z-[100] w-[96%] max-w-xl -translate-x-1/2 px-1 transition-all duration-500 md:bottom-8 md:w-fit md:max-w-none"
     >
-      <div className="dark:bg-darkSurface/60 pointer-events-auto flex items-center justify-between gap-1 rounded-full border border-white/40 bg-white/60 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-2xl transition-colors duration-1000 md:justify-center md:p-2 dark:border-white/10">
-        {navItems.map((item) => (
-          <a
-            key={item.label}
-            href={item.href}
-            className={itemBaseClass}
-            title={item.label}
-            onClick={handleAction}
-          >
-            <item.icon className="h-5 w-5 md:h-6 md:w-6" />
-            <span className={tooltipClass}>{item.label}</span>
-          </a>
-        ))}
+      <div className="dark:bg-darkSurface/75 pointer-events-auto flex items-center justify-between gap-0.5 overflow-x-auto rounded-full border border-white/40 bg-white/75 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-2xl transition-colors duration-500 md:justify-center md:gap-1 md:p-2 dark:border-white/10">
+        {NAV_ITEMS.map((item) => {
+          const isActive = activeSection === item.sectionId;
+          return (
+            <a
+              key={item.label}
+              href={item.href}
+              aria-label={item.label}
+              aria-current={isActive ? "location" : undefined}
+              title={item.label}
+              className={`group relative flex shrink-0 items-center justify-center rounded-full p-2.5 transition-all md:p-3.5 ${
+                isActive
+                  ? "bg-primary text-white shadow-md dark:bg-accent dark:text-slate-950"
+                  : "text-slate-600 hover:bg-white/80 hover:text-accentDark dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-accent"
+              }`}
+            >
+              <item.icon className="h-4 w-4 md:h-5 md:w-5" />
+              <span className={tooltipClass}>{item.label}</span>
+            </a>
+          );
+        })}
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleTheme();
-            handleAction();
-          }}
-          className={itemBaseClass}
-          aria-label="Toggle theme"
+          type="button"
+          onClick={toggleTheme}
+          className="group relative flex shrink-0 items-center justify-center rounded-full p-2.5 text-slate-600 transition-all hover:bg-white/80 hover:text-accentDark md:p-3.5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-accent"
+          aria-label={
+            theme === "light" ? "Aktifkan mode gelap" : "Aktifkan mode terang"
+          }
+          title={theme === "light" ? "Mode Gelap" : "Mode Terang"}
         >
           {theme === "light" ? (
-            <Moon className="h-5 w-5 md:h-6 md:w-6" />
+            <Moon className="h-4 w-4 md:h-5 md:w-5" />
           ) : (
-            <Sun className="h-5 w-5 md:h-6 md:w-6" />
+            <Sun className="h-4 w-4 md:h-5 md:w-5" />
           )}
           <span className={tooltipClass}>
-            {theme === "light" ? "Dark Mode" : "Light Mode"}
+            {theme === "light" ? "Mode Gelap" : "Mode Terang"}
           </span>
         </button>
       </div>
     </nav>
   );
 };
+
 export default Navbar;

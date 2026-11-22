@@ -10,7 +10,10 @@ interface Petal {
 const FloatingPetals: React.FC = () => {
   const [petals, setPetals] = useState<Petal[]>([]);
   useEffect(() => {
-    const petalCount = 15;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+    const petalCount = 12;
     const newPetals = Array.from({ length: petalCount }).map((_, i) => ({
       id: i,
       left: `${Math.random() * 100}%`,

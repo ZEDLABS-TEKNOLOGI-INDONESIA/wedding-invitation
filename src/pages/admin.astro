@@ -1,72 +1,102 @@
 ---
-import { CheckCircle2, HelpCircle, LogOut, Users, XCircle } from "lucide-react";
+import { ExternalLink, LogOut, Moon, Sun } from "lucide-react";
 import AdminDashboard from "../components/Admin/AdminDashboard";
 import Layout from "../layouts/Layout.astro";
+import {
+  createAdminSession,
+  destroyAdminSession,
+  getConfiguredAdminPassword,
+  isAdminAuthenticated,
+  verifyAdminPassword,
+} from "../lib/auth";
 import db from "../lib/db";
+import { checkRateLimit, getClientIp } from "../lib/rateLimit";
 
-const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD || "P@ssw0rd";
-const COOKIE_NAME = "wedding_admin_auth";
+const JSON_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+};
 
 if (Astro.request.method === "POST") {
   const contentType = Astro.request.headers.get("content-type") || "";
 
   if (contentType.includes("application/json")) {
-    const body = await Astro.request.json();
+    let body: Record<string, unknown> = {};
+    try {
+      body = (await Astro.request.json()) as Record<string, unknown>;
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: "Request tidak valid." }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
     const action = body.action;
 
     if (action === "login") {
-      const credential = body.credential?.toString();
-      if (credential === ADMIN_PASSWORD) {
-        Astro.cookies.set(COOKIE_NAME, "true", {
-          path: "/",
-          httpOnly: true,
-          secure: import.meta.env.PROD,
-          maxAge: 60 * 60 * 24,
-        });
+      const ip = getClientIp(Astro.request, Astro.clientAddress);
+      if (!checkRateLimit(`login:${ip}`, 5, 15 * 60 * 1000)) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Terlalu banyak percobaan login. Coba lagi dalam 15 menit.",
+          }),
+          { status: 429, headers: JSON_HEADERS }
+        );
+      }
+
+      if (!getConfiguredAdminPassword()) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "ADMIN_PASSWORD belum dikonfigurasi di server.",
+          }),
+          { status: 503, headers: JSON_HEADERS }
+        );
+      }
+
+      const credential =
+        typeof body.credential === "string" ? body.credential : "";
+      if (verifyAdminPassword(credential)) {
+        createAdminSession(Astro.cookies, Astro.request);
         return new Response(JSON.stringify({ success: true }), {
           status: 200,
-          headers: { "Content-Type": "application/json" },
+          headers: JSON_HEADERS,
         });
       } else {
         return new Response(
-          JSON.stringify({ success: false, error: "Invalid credential" }),
-          {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          }
+          JSON.stringify({
+            success: false,
+            error: "Kredensial tidak valid. Silakan coba lagi.",
+          }),
+          { status: 401, headers: JSON_HEADERS }
         );
       }
     }
 
     if (action === "logout") {
-      Astro.cookies.delete(COOKIE_NAME, { path: "/" });
+      destroyAdminSession(Astro.cookies);
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: JSON_HEADERS,
       });
     }
   }
 }
 
-const isAuthenticated = Astro.cookies.has(COOKIE_NAME);
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const isAuthenticated = isAdminAuthenticated(Astro.cookies);
 let rsvps = [],
-  wishes = [],
-  stats = { total: 0, hadir: 0, ragu: 0, tidak: 0, guestCount: 0 };
+  wishes = [];
 
 if (isAuthenticated) {
   rsvps = db.prepare("SELECT * FROM rsvps ORDER BY created_at DESC").all();
   wishes = db.prepare("SELECT * FROM wishes ORDER BY created_at DESC").all();
-  stats.total = rsvps.length;
-  stats.hadir = rsvps.filter((r: any) => r.attendance === "hadir").length;
-  stats.ragu = rsvps.filter((r: any) => r.attendance === "ragu").length;
-  stats.tidak = rsvps.filter((r: any) => r.attendance === "tidak_hadir").length;
-  stats.guestCount = rsvps
-    .filter((r: any) => r.attendance === "hadir")
-    .reduce((sum: number, r: any) => sum + (r.guest_count || 1), 0);
 }
 ---
 
-<Layout title="Admin Dashboard">
+<Layout title="Admin Dashboard" noindex={true}>
   <main
     class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200"
   >
@@ -81,26 +111,37 @@ if (isAuthenticated) {
             </div>
             <div
               id="login-error"
+              role="alert"
               class="hidden rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400"
             >
               Kredensial tidak valid. Silakan coba lagi.
             </div>
-            <div class="mt-8 space-y-6">
-              <input
-                id="admin-credential"
-                type="password"
-                autocomplete="current-password"
-                class="block w-full rounded-lg border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                placeholder="Masukkan akses kunci..."
-              />
+            <form id="login-form" class="mt-8 space-y-6">
+              <div>
+                <label
+                  for="admin-credential"
+                  class="sr-only"
+                >
+                  Password Admin
+                </label>
+                <input
+                  id="admin-credential"
+                  name="password"
+                  type="password"
+                  required
+                  autocomplete="current-password"
+                  class="block w-full rounded-lg border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  placeholder="Masukkan akses kunci..."
+                />
+              </div>
               <button
                 id="login-btn"
-                type="button"
-                class="w-full rounded-lg bg-slate-900 px-4 py-4 text-sm font-bold text-white hover:bg-slate-800 dark:bg-blue-600"
+                type="submit"
+                class="w-full rounded-lg bg-slate-900 px-4 py-4 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-50 dark:bg-blue-600"
               >
                 MASUK
               </button>
-            </div>
+            </form>
           </div>
         </div>
       ) : (
@@ -114,66 +155,33 @@ if (isAuthenticated) {
                 Selamat datang, Admin
               </p>
             </div>
-            <button
-              id="logout-btn"
-              type="button"
-              class="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400"
-            >
-              <LogOut className="h-4 w-4" /> LOGOUT
-            </button>
-          </div>
-
-          <div class="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
-            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-slate-400">
-                <>
-                  <Users className="h-5 w-5" />
-                  <span class="text-xs font-bold uppercase">Total Respon</span>
-                </>
-              </div>
-              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                {stats.total}
-              </p>
-            </div>
-            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-green-500">
-                <>
-                  <CheckCircle2 className="h-5 w-5" />
-                  <span class="text-xs font-bold uppercase">Hadir</span>
-                </>
-              </div>
-              <div class="mt-2 flex items-baseline gap-2">
-                <>
-                  <span class="text-3xl font-bold text-slate-900 dark:text-white">
-                    {stats.hadir}
-                  </span>
-                  <span class="text-lg font-medium text-slate-400">
-                    ({stats.guestCount} Pax)
-                  </span>
-                </>
-              </div>
-            </div>
-            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-yellow-500">
-                <>
-                  <HelpCircle className="h-5 w-5" />
-                  <span class="text-xs font-bold uppercase">Ragu</span>
-                </>
-              </div>
-              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                {stats.ragu}
-              </p>
-            </div>
-            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div class="flex items-center gap-3 text-red-500">
-                <>
-                  <XCircle className="h-5 w-5" />
-                  <span class="text-xs font-bold uppercase">Tidak Hadir</span>
-                </>
-              </div>
-              <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                {stats.tidak}
-              </p>
+            <div class="flex flex-wrap items-center gap-3">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                <ExternalLink className="h-4 w-4" /> LIHAT UNDANGAN
+              </a>
+              <button
+                id="admin-theme-toggle"
+                type="button"
+                aria-label="Ubah tema terang atau gelap"
+                class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                <Moon className="h-4 w-4 dark:hidden" />
+                <Sun className="hidden h-4 w-4 dark:inline" />
+                <span class="dark:hidden">GELAP</span>
+                <span class="hidden dark:inline">TERANG</span>
+              </button>
+              <button
+                id="logout-btn"
+                type="button"
+                class="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400"
+              >
+                <LogOut className="h-4 w-4" /> LOGOUT
+              </button>
             </div>
           </div>
 
@@ -189,18 +197,20 @@ if (isAuthenticated) {
   </main>
 
   <script>
-
+    const loginForm = document.getElementById("login-form");
     const loginBtn = document.getElementById("login-btn");
     const credentialInput = document.getElementById(
       "admin-credential"
-    ) as HTMLInputElement;
+    ) as HTMLInputElement | null;
     const loginError = document.getElementById("login-error");
 
-    if (loginBtn && credentialInput) {
-      const doLogin = async () => {
+    if (loginForm && loginBtn && credentialInput) {
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
         const val = credentialInput.value;
         if (!val) return;
 
+        if (loginError) loginError.classList.add("hidden");
         loginBtn.textContent = "Memverifikasi...";
         loginBtn.setAttribute("disabled", "true");
 
@@ -214,23 +224,38 @@ if (isAuthenticated) {
           if (res.ok) {
             window.location.reload();
           } else {
-            if (loginError) loginError.classList.remove("hidden");
+            let msg = "Kredensial tidak valid. Silakan coba lagi.";
+            try {
+              const payload = await res.json();
+              if (payload?.error) msg = payload.error;
+            } catch {
+              // ignore JSON parse errors
+            }
+            if (loginError) {
+              loginError.textContent = msg;
+              loginError.classList.remove("hidden");
+            }
             loginBtn.textContent = "MASUK";
             loginBtn.removeAttribute("disabled");
           }
         } catch {
-          if (loginError) loginError.classList.remove("hidden");
+          if (loginError) {
+            loginError.textContent = "Gagal terhubung ke server.";
+            loginError.classList.remove("hidden");
+          }
           loginBtn.textContent = "MASUK";
           loginBtn.removeAttribute("disabled");
         }
-      };
-
-      loginBtn.addEventListener("click", doLogin);
-      credentialInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") doLogin();
       });
     }
 
+    const themeToggleBtn = document.getElementById("admin-theme-toggle");
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener("click", () => {
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+      });
+    }
 
     const logoutBtn = document.getElementById("logout-btn");
     if (logoutBtn) {

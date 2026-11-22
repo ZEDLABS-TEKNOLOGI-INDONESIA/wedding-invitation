@@ -7,7 +7,15 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   site: "https://wedding.zedlabs.id",
-  integrations: [react(), sitemap()],
+  integrations: [
+    react(),
+    sitemap({
+      filter: (page) =>
+        !page.includes("/admin") &&
+        !page.includes("/qrcode") &&
+        !page.includes("/api/"),
+    }),
+  ],
   output: "server",
   adapter: node({
     mode: "standalone",
@@ -18,10 +26,10 @@ export default defineConfig({
       VitePWA({
         registerType: "autoUpdate",
         devOptions: {
-          enabled: true,
+          enabled: false,
         },
         workbox: {
-          navigateFallback: "/404",
+          navigateFallback: null,
           globPatterns: ["**/*.{css,js,html,svg,png,ico,txt}"],
           runtimeCaching: [
             {

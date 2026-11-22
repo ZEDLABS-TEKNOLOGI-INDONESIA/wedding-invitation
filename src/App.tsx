@@ -15,23 +15,30 @@ import InstallPrompt from "./components/InstallPrompt";
 import { useConfig } from "./hooks/useConfig";
 import { Heart, Quote, ChevronUp } from "lucide-react";
 
-const App: React.FC = () => {
-  const { config, loading } = useConfig();
+interface AppProps {
+  initialRawConfig?: Record<string, string>;
+}
 
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("theme") as "light" | "dark";
-      if (saved) return saved;
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    }
-    return "light";
-  });
+const App: React.FC<AppProps> = ({ initialRawConfig }) => {
+  const { config, loading } = useConfig(initialRawConfig);
+
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [themeInitialized, setThemeInitialized] = useState(false);
 
   const [isOpened, setIsOpened] = useState(false);
 
   useEffect(() => {
+    const saved = localStorage.getItem("theme") as "light" | "dark" | null;
+    if (saved === "light" || saved === "dark") {
+      setTheme(saved);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setTheme("dark");
+    }
+    setThemeInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (!themeInitialized) return;
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
@@ -39,18 +46,18 @@ const App: React.FC = () => {
       root.classList.remove("dark");
     }
     localStorage.setItem("theme", theme);
-  }, [theme]);
+  }, [theme, themeInitialized]);
 
   useEffect(() => {
     if (!isOpened) {
       document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
     }
 
     const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -100px 0px",
+      threshold: 0.01,
+      rootMargin: "0px 0px -40px 0px",
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -58,12 +65,13 @@ const App: React.FC = () => {
         if (entry.isIntersecting) {
           entry.target.classList.add("reveal-active");
           entry.target.classList.remove("opacity-0");
+          observer.unobserve(entry.target);
         }
       });
     }, observerOptions);
 
     if (isOpened) {
-      document.querySelectorAll("section").forEach((section) => {
+      document.querySelectorAll("main section").forEach((section) => {
         section.classList.add(
           "opacity-0",
           "transition-all",
@@ -74,7 +82,10 @@ const App: React.FC = () => {
       });
     }
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      document.body.style.overflow = "";
+    };
   }, [isOpened]);
 
   const toggleTheme = () => {
@@ -101,6 +112,7 @@ const App: React.FC = () => {
 
   const footerDate = (() => {
     const d = config.events.akad.startDateTime;
+    if (Number.isNaN(d.getTime())) return config.events.akad.date;
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
@@ -125,23 +137,25 @@ const App: React.FC = () => {
         <GiftInfo config={config} />
       </main>
 
-      <MusicPlayer url={config.music.url} />
+      <MusicPlayer url={config.music.url} visible={isOpened} />
       <Navbar theme={theme} toggleTheme={toggleTheme} />
 
-      <footer className="dark:bg-darkSurface relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white px-6 transition-colors duration-1000">
+      <footer className="dark:bg-darkSurface relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-white px-6 py-24 pb-32 transition-colors duration-1000 md:py-32">
         <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-10 dark:opacity-[0.05]">
           <Heart className="animate-pulse-soft h-[85vw] w-[85vw] stroke-[0.3]" />
         </div>
 
         <div className="relative z-10 container mx-auto flex max-w-4xl flex-col items-center gap-12 md:gap-24">
           <button
+            type="button"
             onClick={scrollToTop}
+            aria-label="Kembali ke atas"
             className="group flex flex-col items-center gap-4 transition-transform duration-500 hover:scale-105"
           >
             <div className="border-accent/40 text-accentDark dark:text-accent group-hover:bg-accent/10 flex h-12 w-12 items-center justify-center rounded-full border shadow-2xl transition-colors md:h-16 md:w-16">
               <ChevronUp className="h-6 w-6 animate-bounce md:h-8 md:w-8" />
             </div>
-            <span className="tracking-luxury text-[10px] font-bold uppercase opacity-40 transition-opacity group-hover:opacity-100">
+            <span className="tracking-luxury text-xs font-bold uppercase opacity-60 transition-opacity group-hover:opacity-100">
               Sampai Jumpa di Hari Bahagia Kami
             </span>
           </button>
@@ -176,13 +190,15 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex flex-col items-center gap-6 border-t border-slate-100 pt-16 md:gap-10 md:pt-28 dark:border-white/5">
-              <p className="tracking-luxury text-[9px] font-black uppercase md:text-[13px]">
+              <p className="tracking-luxury text-xs font-black uppercase md:text-[13px]">
                 {config.text.closing.signature}
               </p>
               <p className="font-serif text-lg italic">
                 {config.couple.bride.name} & {config.couple.groom.name}
               </p>
-              <p className="mt-2 text-[10px]">{config.text.closing.family}</p>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {config.text.closing.family}
+              </p>
             </div>
           </div>
         </div>

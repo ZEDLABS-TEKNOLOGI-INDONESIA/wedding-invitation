@@ -1,52 +1,76 @@
 import type { APIRoute } from "astro";
+import { addOwnedGuestId, getOwnedGuestIds } from "../../lib/auth";
 import db, { getConfig } from "../../lib/db";
-import { checkRateLimit } from "../../lib/rateLimit";
-import { sendTelegramNotification } from "../../utils/telegram";
+import { checkRateLimit, getClientIp } from "../../lib/rateLimit";
+import { notifyAdminWishWa } from "../../lib/whatsapp";
 
-const sanitize = (str: string) => {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-};
+const WISH_OWNED_COOKIE = "wedding_wish_owned";
+const JSON_HEADERS = { "Content-Type": "application/json" };
 
 export const GET: APIRoute = async () => {
   try {
     const wishes = db
-      .prepare("SELECT * FROM wishes ORDER BY created_at DESC")
+      .prepare("SELECT id, name, message, created_at FROM wishes ORDER BY created_at DESC")
       .all();
     return new Response(JSON.stringify(wishes), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: JSON_HEADERS,
     });
   } catch {
     return new Response(JSON.stringify({ error: "Failed to fetch" }), {
       status: 500,
+      headers: JSON_HEADERS,
     });
   }
 };
 
-export const POST: APIRoute = async ({ request, clientAddress }) => {
-  const ip = clientAddress || "unknown";
+export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
+  const ip = getClientIp(request, clientAddress);
 
-  if (!checkRateLimit(ip, 5, 60000)) {
+  if (!checkRateLimit(`wishes:${ip}`, 5, 60000)) {
     return new Response(
-      JSON.stringify({ error: "Too many requests. Please try again later." }),
-      { status: 429 }
+      JSON.stringify({
+        error: "Terlalu banyak permintaan. Silakan coba lagi sebentar.",
+      }),
+      { status: 429, headers: JSON_HEADERS }
     );
   }
 
   try {
     const rawData = await request.json();
-    const name = sanitize(rawData.name);
-    const message = sanitize(rawData.message);
+    if (!rawData || typeof rawData !== "object") {
+      return new Response(JSON.stringify({ error: "Data tidak valid." }), {
+        status: 400,
+        headers: JSON_HEADERS,
+      });
+    }
 
-    const existing = db
-      .prepare("SELECT id FROM wishes WHERE name = ?")
-      .get(name) as { id: number } | undefined;
+    const name = typeof rawData.name === "string" ? rawData.name.trim() : "";
+    const message =
+      typeof rawData.message === "string" ? rawData.message.trim() : "";
+
+    if (!name || name.length > 100) {
+      return new Response(
+        JSON.stringify({ error: "Nama wajib diisi (maks 100 karakter)." }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+    if (!message || message.length > 1000) {
+      return new Response(
+        JSON.stringify({ error: "Ucapan wajib diisi (maks 1000 karakter)." }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    const ownedIds = getOwnedGuestIds(cookies, WISH_OWNED_COOKIE);
+    const existing =
+      ownedIds.length > 0
+        ? (db
+            .prepare(
+              `SELECT id FROM wishes WHERE name = ? AND id IN (${ownedIds.map(() => "?").join(",")}) LIMIT 1`
+            )
+            .get(name, ...ownedIds) as { id: number } | undefined)
+        : undefined;
 
     let actionType = "";
     let resultId = 0;
@@ -67,35 +91,27 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         .run(name, message, new Date().toISOString());
       actionType = "created";
       resultId = Number(result.lastInsertRowid);
+      addOwnedGuestId(cookies, request, WISH_OWNED_COOKIE, resultId);
     }
 
     const config = getConfig();
-    const title =
-      actionType === "created"
-        ? "<b>UCAPAN & DOA BARU!</b>"
-        : "<b>UCAPAN DIPERBARUI!</b>";
 
-    const notifMsg = `
-${title}
-
-<b>Dari:</b> ${name}
-
-<i>"${message}"</i>
-    `.trim();
-
-    sendTelegramNotification(
-      notifMsg,
-      config.TELEGRAM_BOT_TOKEN,
-      config.TELEGRAM_CHAT_ID
-    );
+    void notifyAdminWishWa(config, {
+      id: resultId,
+      actionType: actionType === "updated" ? "updated" : "created",
+      name,
+      message,
+    });
 
     return new Response(
       JSON.stringify({ success: true, id: resultId, action: actionType }),
-      { status: 200 }
+      { status: 200, headers: JSON_HEADERS }
     );
-  } catch {
+  } catch (error) {
+    console.error("Wishes API Error:", error);
     return new Response(JSON.stringify({ error: "Database error" }), {
       status: 500,
+      headers: JSON_HEADERS,
     });
   }
 };

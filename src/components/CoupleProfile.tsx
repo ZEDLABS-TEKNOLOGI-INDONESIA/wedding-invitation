@@ -23,7 +23,7 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
           <p className="mx-auto max-w-3xl text-lg leading-relaxed font-light text-balance text-slate-600 italic md:text-xl dark:text-slate-300">
             {config.text.quote.ar_rum}
           </p>
-          <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+          <p className="text-xs font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
             {config.text.quote.source}
           </p>
         </div>
@@ -34,27 +34,29 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
               <img
                 src={groom.image}
                 className="dark:border-darkSurface relative h-56 w-56 rounded-full border-4 border-slate-50 object-cover shadow-2xl transition-all duration-1000 group-hover:brightness-110 md:h-[24rem] md:w-[24rem]"
-                alt={groom.name}
+                alt={groom.fullName || groom.name}
               />
             </div>
             <div className="space-y-6">
               <h3 className="font-serif text-3xl font-medium tracking-tight text-slate-900 md:text-6xl dark:text-white">
                 {groom.fullName}
               </h3>
-              <p className="ml-auto max-w-xs text-[10px] font-medium tracking-widest text-balance text-slate-500 uppercase md:max-w-sm md:text-[12px] dark:text-slate-400">
+              <p className="mx-auto max-w-xs text-xs font-medium tracking-wider text-balance text-slate-500 uppercase md:mr-0 md:ml-auto md:max-w-sm md:text-sm dark:text-slate-400">
                 {groom.parents}
               </p>
-              <a
-                href={`https://instagram.com/${groom.instagram}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="dark:text-accent/50 hover:text-accentDark inline-flex items-center gap-3 rounded-full border border-slate-100 bg-slate-50 px-6 py-2 text-slate-400 transition-all dark:border-white/5 dark:bg-white/5 dark:hover:text-white"
-              >
-                <SiInstagram className="h-3 w-3" color="currentColor" />
-                <span className="text-[9px] font-bold tracking-widest uppercase">
-                  @{groom.instagram}
-                </span>
-              </a>
+              {groom.instagram.trim() && (
+                <a
+                  href={`https://instagram.com/${groom.instagram.replace(/^@/, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="dark:text-accent/70 hover:text-accentDark inline-flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-6 py-2.5 text-slate-600 transition-all dark:border-white/10 dark:bg-white/5 dark:hover:text-white"
+                >
+                  <SiInstagram className="h-3.5 w-3.5" color="currentColor" />
+                  <span className="text-xs font-bold tracking-widest uppercase">
+                    @{groom.instagram.replace(/^@/, "")}
+                  </span>
+                </a>
+              )}
             </div>
           </div>
           <div className="group flex flex-col items-center space-y-10 text-center md:items-start md:text-left">
@@ -63,27 +65,29 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
               <img
                 src={bride.image}
                 className="dark:border-darkSurface relative h-56 w-56 rounded-full border-4 border-slate-50 object-cover shadow-2xl transition-all duration-1000 group-hover:brightness-110 md:h-[24rem] md:w-[24rem]"
-                alt={bride.name}
+                alt={bride.fullName || bride.name}
               />
             </div>
             <div className="space-y-6">
               <h3 className="font-serif text-3xl font-medium tracking-tight text-slate-900 md:text-6xl dark:text-white">
                 {bride.fullName}
               </h3>
-              <p className="max-w-xs text-[10px] font-medium tracking-widest text-balance text-slate-500 uppercase md:max-w-sm md:text-[12px] dark:text-slate-400">
+              <p className="mx-auto max-w-xs text-xs font-medium tracking-wider text-balance text-slate-500 uppercase md:mx-0 md:max-w-sm md:text-sm dark:text-slate-400">
                 {bride.parents}
               </p>
-              <a
-                href={`https://instagram.com/${bride.instagram}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="dark:text-accent/50 hover:text-accentDark inline-flex items-center gap-3 rounded-full border border-slate-100 bg-slate-50 px-6 py-2 text-slate-400 transition-all dark:border-white/5 dark:bg-white/5 dark:hover:text-white"
-              >
-                <SiInstagram className="h-3 w-3" color="currentColor" />
-                <span className="text-[9px] font-bold tracking-widest uppercase">
-                  @{bride.instagram}
-                </span>
-              </a>
+              {bride.instagram.trim() && (
+                <a
+                  href={`https://instagram.com/${bride.instagram.replace(/^@/, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="dark:text-accent/70 hover:text-accentDark inline-flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-6 py-2.5 text-slate-600 transition-all dark:border-white/10 dark:bg-white/5 dark:hover:text-white"
+                >
+                  <SiInstagram className="h-3.5 w-3.5" color="currentColor" />
+                  <span className="text-xs font-bold tracking-widest uppercase">
+                    @{bride.instagram.replace(/^@/, "")}
+                  </span>
+                </a>
+              )}
             </div>
           </div>
         </div>

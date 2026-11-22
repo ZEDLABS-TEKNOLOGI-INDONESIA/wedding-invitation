@@ -5,27 +5,31 @@ interface Props {
   title?: string;
   description?: string;
   image?: string;
+  noindex?: boolean;
 }
 
 const {
   title = "The Wedding Invitation",
   description = "Kami mengundang Anda untuk hadir di pernikahan kami.",
   image = "/thumbnail.png",
+  noindex = false,
 } = Astro.props;
 
-const canonicalURL = new URL(
-  Astro.url.pathname,
-  Astro.site || "https://wedding.zedlabs.id"
-);
+const siteBase = Astro.site || "https://wedding.zedlabs.id";
+const canonicalURL = new URL(Astro.url.pathname, siteBase);
+const ogImageURL = image.startsWith("http")
+  ? image
+  : new URL(image, siteBase).toString();
 ---
 
 <!doctype html>
 <html lang="id" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/ico" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
 
     <title>{title}</title>
     <meta name="title" content={title} />
@@ -36,13 +40,13 @@ const canonicalURL = new URL(
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={image} />
+    <meta property="og:image" content={ogImageURL} />
 
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonicalURL} />
     <meta property="twitter:title" content={title} />
     <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={image} />
+    <meta property="twitter:image" content={ogImageURL} />
 
     <meta name="theme-color" content="#020617" />
 

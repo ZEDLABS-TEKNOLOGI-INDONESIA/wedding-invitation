@@ -8,7 +8,7 @@ module.exports = {
       env_file: ".env",
       env: {
         NODE_ENV: "production",
-        HOST: "0.0.0.0",
+        HOST: "127.0.0.1",
         PORT: 5432,
       },
       max_memory_restart: "500M",
@@ -18,8 +18,8 @@ module.exports = {
       merge_logs: true,
       ignore_watch: [
         "node_modules",
-        "wedding.db",
-        "wedding.db-journal",
+        "database",
+        "wedding.db*",
         "logs",
         ".env",
       ],

@@ -10,7 +10,7 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { AppConfig } from "../types";
 import { downloadICS, generateGoogleCalendarUrl } from "../utils/calendarUtils";
 
@@ -19,6 +19,28 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [activeDropdown, setActiveDropdown] = useState<
     "akad" | "resepsi" | null
   >(null);
+  const dropdownContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+    const handlePointerDown = (e: MouseEvent) => {
+      if (
+        dropdownContainerRef.current &&
+        !dropdownContainerRef.current.contains(e.target as Node)
+      ) {
+        setActiveDropdown(null);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveDropdown(null);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeDropdown]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(config.venue.address);
@@ -67,7 +89,10 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
             {config.text.invitation}
           </p>
         </div>
-        <div className="mb-16 grid gap-6 md:mb-20 md:grid-cols-2 md:gap-14">
+        <div
+          ref={dropdownContainerRef}
+          className="mb-16 grid gap-6 md:mb-20 md:grid-cols-2 md:gap-14"
+        >
           {(["akad", "resepsi"] as const).map((type) => {
             const ev = config.events[type];
             return (
@@ -83,8 +108,8 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
                   )}
                 </div>
                 <div className="space-y-2 md:space-y-4">
-                  <span className="tracking-luxury text-accentDark dark:text-accent text-[9px] font-bold uppercase md:text-[10px]">
-                    Our Sacred Day
+                  <span className="tracking-luxury text-accentDark dark:text-accent text-xs font-bold uppercase">
+                    Hari Bahagia
                   </span>
                   <h3 className="font-serif text-3xl leading-tight text-slate-900 italic md:text-7xl dark:text-white">
                     {ev.title}
@@ -99,24 +124,26 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
                       </span>
                     </div>
                   </div>
-                  <div className="tracking-editorial flex items-center justify-center gap-3 text-[11px] font-bold text-slate-400 uppercase md:gap-4 md:text-[12px] dark:text-slate-500">
+                  <div className="tracking-editorial flex items-center justify-center gap-3 text-xs font-bold text-slate-500 uppercase md:gap-4 dark:text-slate-400">
                     <Clock className="text-accentDark dark:text-accent h-4 w-4 md:h-5 md:w-5" />
                     <span>
-                      {ev.startTime} — {ev.endTime} WIB
+                      {ev.startTime} — {ev.endTime} {config.events.timezone}
                     </span>
                   </div>
                 </div>
                 <div className="relative w-full">
                   <button
+                    type="button"
+                    aria-expanded={activeDropdown === type}
                     onClick={() =>
                       setActiveDropdown(activeDropdown === type ? null : type)
                     }
-                    className="bg-primary dark:bg-accentDark tracking-editorial flex w-full items-center justify-center gap-3 rounded-2xl py-4 text-[10px] font-bold text-white uppercase transition-all hover:shadow-2xl active:scale-95 md:gap-5 md:rounded-3xl md:py-6 md:text-[11px]"
+                    className="bg-primary dark:bg-accentDark tracking-editorial flex w-full items-center justify-center gap-3 rounded-2xl py-4 text-xs font-bold text-white uppercase transition-all hover:shadow-2xl active:scale-95 md:gap-5 md:rounded-3xl md:py-6"
                   >
                     <CalendarPlus className="h-4 w-4 md:h-5 md:w-5" />
-                    Save The Date
+                    Simpan Tanggal
                     <ChevronDown
-                      className={`h-3 w-3 transition-transform duration-500 md:h-4 md:w-4 ${
+                      className={`h-3.5 w-3.5 transition-transform duration-500 md:h-4 md:w-4 ${
                         activeDropdown === type ? "rotate-180" : ""
                       }`}
                     />
@@ -124,20 +151,22 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
                   {activeDropdown === type && (
                     <div className="frosted-glass animate-reveal absolute top-full right-0 left-0 z-[50] mt-3 overflow-hidden rounded-[1.5rem] border border-slate-200 p-2 shadow-2xl md:mt-4 md:rounded-[2rem] md:p-3 dark:border-white/10">
                       <button
+                        type="button"
                         onClick={() => handleCalendar("google", type)}
                         className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-left text-slate-800 transition-colors hover:bg-slate-50 md:gap-5 md:rounded-2xl md:px-8 md:py-6 dark:text-white dark:hover:bg-white/5"
                       >
                         <div className="bg-accentDark dark:bg-accent h-2 w-2 animate-pulse rounded-full md:h-3 md:w-3"></div>
-                        <span className="tracking-luxury text-[10px] font-bold uppercase md:text-[11px]">
+                        <span className="tracking-luxury text-xs font-bold uppercase">
                           Google Calendar
                         </span>
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleCalendar("ics", type)}
                         className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-left text-slate-800 transition-colors hover:bg-slate-50 md:gap-5 md:rounded-2xl md:px-8 md:py-6 dark:text-white dark:hover:bg-white/5"
                       >
                         <div className="h-2 w-2 rounded-full bg-slate-300 md:h-3 md:w-3 dark:bg-slate-600"></div>
-                        <span className="tracking-luxury text-[10px] font-bold uppercase md:text-[11px]">
+                        <span className="tracking-luxury text-xs font-bold uppercase">
                           Apple / Outlook
                         </span>
                       </button>
@@ -167,28 +196,30 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
             </div>
             <div className="flex w-full flex-col gap-3 sm:flex-row md:gap-5 lg:w-auto">
               <button
+                type="button"
                 onClick={copyToClipboard}
-                className="tracking-editorial flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 px-6 py-4 text-[10px] font-bold text-slate-700 uppercase transition-all hover:bg-slate-50 sm:w-1/2 md:gap-4 md:rounded-[2rem] md:px-10 md:py-5 md:text-[11px] lg:w-auto dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+                className="tracking-editorial flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 px-6 py-4 text-xs font-bold text-slate-700 uppercase transition-all hover:bg-slate-50 sm:w-1/2 md:gap-4 md:rounded-[2rem] md:px-10 md:py-5 lg:w-auto dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
               >
                 {copied ? (
                   <Check className="h-4 w-4 text-green-500 md:h-5 md:w-5" />
                 ) : (
                   <Copy className="text-accentDark dark:text-accent h-4 w-4 md:h-5 md:w-5" />
                 )}
-                {copied ? "Address Copied" : "Copy Address"}
+                {copied ? "Alamat Disalin" : "Salin Alamat"}
               </button>
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${config.venue.latitude},${config.venue.longitude}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-primary dark:text-primary tracking-editorial flex w-full items-center justify-center gap-3 rounded-xl px-6 py-4 text-[10px] font-bold text-white uppercase transition-all hover:shadow-2xl sm:w-1/2 md:gap-4 md:rounded-[2rem] md:px-12 md:py-5 md:text-[11px] lg:w-auto dark:bg-white"
+                className="bg-primary dark:text-primary tracking-editorial flex w-full items-center justify-center gap-3 rounded-xl px-6 py-4 text-xs font-bold text-white uppercase transition-all hover:shadow-2xl sm:w-1/2 md:gap-4 md:rounded-[2rem] md:px-12 md:py-5 lg:w-auto dark:bg-white"
               >
-                <ExternalLink className="h-4 w-4 md:h-5 md:w-5" /> Open In Maps
+                <ExternalLink className="h-4 w-4 md:h-5 md:w-5" /> Buka di Maps
               </a>
             </div>
           </div>
           <div className="relative h-[350px] overflow-hidden rounded-[1.5rem] border border-slate-100 shadow-2xl md:h-[600px] md:rounded-[3.5rem] dark:border-white/10">
             <iframe
+              title={`Peta Lokasi ${config.venue.name || "Acara Pernikahan"}`}
               src={mapUrl}
               width="100%"
               height="100%"

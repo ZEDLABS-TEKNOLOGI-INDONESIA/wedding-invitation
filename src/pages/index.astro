@@ -1,8 +1,21 @@
 ---
-import Layout from "../layouts/Layout.astro";
 import App from "../App";
+import Layout from "../layouts/Layout.astro";
+import { getPublicConfig } from "../lib/db";
+
+const safeConfig = getPublicConfig();
+
+const brideName = safeConfig.BRIDE_NICKNAME || "Mempelai Wanita";
+const groomName = safeConfig.GROOM_NICKNAME || "Mempelai Pria";
+const eventDate = safeConfig.AKAD_DATE || "";
+const venueName = safeConfig.VENUE_NAME || "";
+
+const pageTitle = `Pernikahan ${brideName} & ${groomName}`;
+const pageDescription = eventDate
+  ? `Undangan Pernikahan ${brideName} & ${groomName} — ${eventDate}${venueName ? ` di ${venueName}` : ""}.`
+  : `Undangan Pernikahan Digital ${brideName} & ${groomName}.`;
 ---
 
-<Layout title="The Wedding of Fera & Yahya">
-  <App client:only="react" />
+<Layout title={pageTitle} description={pageDescription}>
+  <App client:load initialRawConfig={safeConfig} />
 </Layout>

@@ -104,22 +104,6 @@
 }
 
 /* Custom Classes */
-.grain::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
-  opacity: 0.015;
-  pointer-events: none;
-  z-index: 9999;
-}
-.dark .grain::before {
-  opacity: 0.03;
-}
-
 .editorial-card {
   @apply border border-slate-900/5 bg-white shadow-sm transition-all duration-700;
 }
@@ -154,5 +138,16 @@
   }
   .dark .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #1e293b;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

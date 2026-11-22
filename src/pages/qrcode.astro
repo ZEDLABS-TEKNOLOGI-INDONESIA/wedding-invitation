@@ -1,16 +1,16 @@
 ---
 import QRCodeGenerator from "../components/QRCodeGenerator";
 import Layout from "../layouts/Layout.astro";
+import { isAdminAuthenticated } from "../lib/auth";
 
-const COOKIE_NAME = "wedding_admin_auth";
-const isAuthenticated = Astro.cookies.has(COOKIE_NAME);
+Astro.response.headers.set("Cache-Control", "no-store");
 
-if (!isAuthenticated) {
+if (!isAdminAuthenticated(Astro.cookies)) {
   return Astro.redirect("/admin");
 }
 ---
 
-<Layout title="QR Code Generator">
+<Layout title="QR Code Generator" noindex={true}>
   <div class="min-h-screen bg-slate-50 px-4 py-20 dark:bg-slate-900">
     <div class="mx-auto max-w-4xl space-y-8">
       <div class="space-y-2 text-center">

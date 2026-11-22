@@ -74,6 +74,9 @@ interface InvitationManagerProps {
   siteUrl: string;
 }
 
+const rgbToHex = ([r, g, b]: [number, number, number]): string =>
+  "#" + [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("");
+
 const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
   const [activeTab, setActiveTab] = useState<"single" | "bulk">("single");
   const [currentTheme, setCurrentTheme] = useState<ThemeColor>(THEMES[0]);
@@ -88,12 +91,18 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
   const [statusMsg, setStatusMsg] = useState("");
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [cfg, setCfg] = useState<Record<string, string>>({});
+  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
 
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
-      .then((data) => setCfg(data))
-      .catch(() => {});
+      .then((data) => {
+        setCfg(data);
+        setIsConfigLoaded(true);
+      })
+      .catch(() => {
+        setIsConfigLoaded(true);
+      });
   }, []);
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
@@ -257,6 +266,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     const resepsiDate = cfg.RESEPSI_DATE || "";
     const resepsiStart = cfg.RESEPSI_START || "";
     const resepsiEnd = cfg.RESEPSI_END || "";
+    const timezone = cfg.EVENT_TIMEZONE || "WIB";
     const salamOpening =
       cfg.TEXT_SALAM_OPENING || "Assalamu'alaikum Warahmatullahi Wabarakatuh";
     const quoteArRum = cfg.TEXT_QUOTE_AR_RUM || "";
@@ -274,23 +284,28 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     const height = doc.internal.pageSize.getHeight();
     const cx = width / 2;
 
+    const qrDarkHex = rgbToHex(currentTheme.textMain);
     const guestUrl = `${baseUrl}/?to=${encodeURIComponent(guest.name)}`;
     const qrGuestImg = await QRCode.toDataURL(guestUrl, {
       margin: 0,
-      color: { dark: "#2f3d1a", light: "#ffffff" },
+      color: { dark: qrDarkHex, light: "#ffffff" },
     });
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${venueLat},${venueLng}`;
     const qrMapsImg = await QRCode.toDataURL(mapsUrl, {
       margin: 0,
-      color: { dark: "#2f3d1a", light: "#ffffff" },
+      color: { dark: qrDarkHex, light: "#ffffff" },
     });
 
-    doc.setFillColor(
-      currentTheme.bg[0],
-      currentTheme.bg[1],
-      currentTheme.bg[2]
-    );
-    doc.rect(0, 0, width, height, "F");
+    const fillPageBackground = () => {
+      doc.setFillColor(
+        currentTheme.bg[0],
+        currentTheme.bg[1],
+        currentTheme.bg[2]
+      );
+      doc.rect(0, 0, width, height, "F");
+    };
+
+    fillPageBackground();
     drawBorder(doc, width, height);
     drawCornerDecorations(doc, width, height);
 
@@ -342,9 +357,15 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     );
     doc.text(resepsiDate.toUpperCase(), cx, 125, { align: "center" });
 
-    const boxY = 155;
-    const boxW = 85;
-    const boxH = 30;
+    const boxW = 90;
+    doc.setFont("times", "bolditalic");
+    doc.setFontSize(13);
+    const splitName = doc.splitTextToSize(guest.name, boxW - 10) as string[];
+    const nameLineHeight = 5.5;
+    const nameBlockHeight = splitName.length * nameLineHeight;
+    const boxH = Math.max(30, 18 + nameBlockHeight + (guest.address ? 8 : 2));
+    const boxY = Math.min(155, height - boxH - 22);
+
     doc.setFillColor(250, 250, 250);
     doc.setDrawColor(
       currentTheme.secondary[0],
@@ -367,14 +388,13 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       align: "center",
     });
     doc.setFont("times", "bolditalic");
-    doc.setFontSize(14);
+    doc.setFontSize(13);
     doc.setTextColor(
       currentTheme.textMain[0],
       currentTheme.textMain[1],
       currentTheme.textMain[2]
     );
-    const splitName = doc.splitTextToSize(guest.name, boxW - 5);
-    doc.text(splitName, cx, boxY + 18, { align: "center" });
+    doc.text(splitName, cx, boxY + 16, { align: "center" });
     if (guest.address) {
       doc.setFont("times", "normal");
       doc.setFontSize(9);
@@ -383,10 +403,13 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
         currentTheme.textMuted[1],
         currentTheme.textMuted[2]
       );
-      doc.text(guest.address, cx, boxY + 26, { align: "center" });
+      doc.text(guest.address, cx, boxY + 16 + nameBlockHeight + 3, {
+        align: "center",
+      });
     }
 
     doc.addPage();
+    fillPageBackground();
     drawBorder(doc, width, height);
     drawCornerDecorations(doc, width, height);
     doc.setFont("times", "bold");
@@ -396,22 +419,23 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       currentTheme.textMain[1],
       currentTheme.textMain[2]
     );
-    doc.text(salamOpening, cx, 50, { align: "center" });
+    doc.text(salamOpening, cx, 42, { align: "center" });
     doc.setFont("times", "italic");
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setTextColor(
       currentTheme.textMuted[0],
       currentTheme.textMuted[1],
       currentTheme.textMuted[2]
     );
-    const quote = doc.splitTextToSize(quoteArRum, width - 60);
-    doc.text(quote, cx, 60, { align: "center" });
+    const quote = doc.splitTextToSize(quoteArRum, width - 48) as string[];
+    doc.text(quote, cx, 52, { align: "center" });
+    const afterQuoteY = Math.max(92, 52 + quote.length * 4.5 + 8);
     doc.setFont("times", "normal");
     doc.setFontSize(10);
     doc.text(
       "Kami bermaksud menyelenggarakan pernikahan putra-putri kami:",
       cx,
-      95,
+      afterQuoteY,
       { align: "center" }
     );
     doc.setFont("times", "bold");
@@ -421,7 +445,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       currentTheme.primary[1],
       currentTheme.primary[2]
     );
-    doc.text(brideFullName, cx, 110, { align: "center" });
+    doc.text(brideFullName, cx, afterQuoteY + 14, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(9);
     doc.setTextColor(
@@ -429,10 +453,15 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       currentTheme.textMuted[1],
       currentTheme.textMuted[2]
     );
-    doc.text(brideParents, cx, 117, { align: "center" });
+    const brideParentsLines = doc.splitTextToSize(
+      brideParents,
+      width - 44
+    ) as string[];
+    doc.text(brideParentsLines, cx, afterQuoteY + 21, { align: "center" });
+    const ampY = afterQuoteY + 21 + brideParentsLines.length * 4.5 + 6;
     doc.setFont("times", "italic");
     doc.setFontSize(12);
-    doc.text("&", cx, 127, { align: "center" });
+    doc.text("&", cx, ampY, { align: "center" });
     doc.setFont("times", "bold");
     doc.setFontSize(16);
     doc.setTextColor(
@@ -440,7 +469,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       currentTheme.primary[1],
       currentTheme.primary[2]
     );
-    doc.text(groomFullName, cx, 137, { align: "center" });
+    doc.text(groomFullName, cx, ampY + 10, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(9);
     doc.setTextColor(
@@ -448,9 +477,14 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       currentTheme.textMuted[1],
       currentTheme.textMuted[2]
     );
-    doc.text(groomParents, cx, 144, { align: "center" });
+    const groomParentsLines = doc.splitTextToSize(
+      groomParents,
+      width - 44
+    ) as string[];
+    doc.text(groomParentsLines, cx, ampY + 17, { align: "center" });
 
     doc.addPage();
+    fillPageBackground();
     drawBorder(doc, width, height);
     drawCornerDecorations(doc, width, height);
     doc.setFont("times", "italic");
@@ -479,7 +513,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       currentTheme.textMain[2]
     );
     doc.text(`${akadDay}, ${akadDate}`, cx, 57, { align: "center" });
-    doc.text(`Pukul: ${akadStart} - ${akadEnd} WIB`, cx, 62, {
+    doc.text(`Pukul: ${akadStart} - ${akadEnd} ${timezone}`, cx, 62, {
       align: "center",
     });
     doc.setDrawColor(
@@ -514,7 +548,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       currentTheme.textMain[2]
     );
     doc.text(`${resepsiDay}, ${resepsiDate}`, cx, 92, { align: "center" });
-    doc.text(`Pukul: ${resepsiStart} - ${resepsiEnd} WIB`, cx, 97, {
+    doc.text(`Pukul: ${resepsiStart} - ${resepsiEnd} ${timezone}`, cx, 97, {
       align: "center",
     });
     doc.setFont("times", "bold");
@@ -556,6 +590,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     doc.text("Scan Google Maps", cx, qrY + qrSize + 5, { align: "center" });
 
     doc.addPage();
+    fillPageBackground();
     drawBorder(doc, width, height);
     drawCornerDecorations(doc, width, height);
     doc.setFont("times", "bold");
@@ -624,7 +659,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       digiY + qrDigiSize + 8,
       { align: "center" }
     );
-    const closingY = 135;
+    const closingY = 128;
     doc.setFont("times", "normal");
     doc.setFontSize(10);
     doc.setTextColor(
@@ -632,13 +667,14 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       currentTheme.textMain[1],
       currentTheme.textMain[2]
     );
-    const closing = doc.splitTextToSize(closingText, width - 60);
+    const closing = doc.splitTextToSize(closingText, width - 50) as string[];
     doc.text(closing, cx, closingY, { align: "center" });
+    const afterClosingY = Math.max(closingY + 18, closingY + closing.length * 4.5 + 6);
     doc.setFont("times", "bolditalic");
-    doc.text(salamClosing, cx, closingY + 20, { align: "center" });
+    doc.text(salamClosing, cx, afterClosingY, { align: "center" });
     doc.setFont("times", "normal");
     doc.setFontSize(9);
-    doc.text(signature, cx, closingY + 30, { align: "center" });
+    doc.text(signature, cx, afterClosingY + 10, { align: "center" });
     doc.setFont("times", "bold");
     doc.setFontSize(12);
     doc.setTextColor(
@@ -646,7 +682,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       currentTheme.primary[1],
       currentTheme.primary[2]
     );
-    doc.text(`${brideName} & ${groomName}`, cx, closingY + 38, {
+    doc.text(`${brideName} & ${groomName}`, cx, afterClosingY + 18, {
       align: "center",
     });
     doc.setDrawColor(
@@ -656,7 +692,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     );
     doc.setLineWidth(0.1);
     for (let i = 0; i < 5; i++) {
-      doc.circle(cx + (-10 + i * 5), closingY + 48, 0.4, "D");
+      doc.circle(cx + (-10 + i * 5), afterClosingY + 26, 0.4, "D");
     }
 
     return doc;
@@ -687,6 +723,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
     setIsReadingCsv(true);
     setTimeout(() => {
       Papa.parse(file, {
@@ -702,6 +739,11 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
             }
           });
           setBulkData(guests);
+          setIsReadingCsv(false);
+        },
+        error: (err) => {
+          console.error("Gagal membaca CSV:", err);
+          alert("Gagal membaca file CSV. Pastikan format file valid.");
           setIsReadingCsv(false);
         },
         header: false,
@@ -884,14 +926,14 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
             <div className="flex gap-3">
               <button
                 onClick={handlePreview}
-                disabled={!singleData.name}
+                disabled={!singleData.name || !isConfigLoaded}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-xs font-bold uppercase hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
               >
                 <Eye className="h-4 w-4" /> Preview
               </button>
               <button
                 onClick={downloadSingle}
-                disabled={!singleData.name}
+                disabled={!singleData.name || !isConfigLoaded}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-800 py-3 text-xs font-bold text-white uppercase shadow-lg hover:bg-slate-900 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
               >
                 <Printer className="h-4 w-4" /> Download PDF

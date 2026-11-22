@@ -8,28 +8,27 @@ const InstallPrompt: React.FC = () => {
   useEffect(() => {
     const isDismissed = sessionStorage.getItem("pwa-prompt-dismissed");
     if (isDismissed) return;
+    let showTimer: number | null = null;
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setTimeout(() => setShowPrompt(true), 3000);
+      showTimer = window.setTimeout(() => setShowPrompt(true), 3000);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
+      if (showTimer) window.clearTimeout(showTimer);
     };
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      setDeferredPrompt(null);
-      setShowPrompt(false);
-    }
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    setShowPrompt(false);
   };
 
   const handleDismiss = () => {
@@ -39,13 +38,15 @@ const InstallPrompt: React.FC = () => {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed right-4 bottom-24 left-4 z-[9999] flex justify-center md:right-8 md:bottom-8 md:left-auto md:w-96">
+    <div className="fixed right-4 bottom-24 left-4 z-[900] flex justify-center md:right-8 md:bottom-8 md:left-auto md:w-96">
       <div className="frosted-glass animate-reveal relative w-full overflow-hidden rounded-3xl border border-white/20 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/80">
         <div className="bg-accent/10 absolute -top-10 -right-10 h-32 w-32 rounded-full blur-2xl"></div>
 
         <button
+          type="button"
+          aria-label="Tutup banner pasang aplikasi"
           onClick={handleDismiss}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+          className="absolute top-4 right-4 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
         >
           <X className="h-5 w-5" />
         </button>
@@ -57,9 +58,9 @@ const InstallPrompt: React.FC = () => {
 
           <div className="space-y-2">
             <h3 className="font-serif text-xl font-bold text-slate-900 italic dark:text-white">
-              Install App
+              Pasang Aplikasi
             </h3>
-            <p className="text-[11px] leading-relaxed font-medium text-slate-500 dark:text-slate-400">
+            <p className="text-xs leading-relaxed font-medium text-slate-600 dark:text-slate-400">
               Pasang undangan ini di layar utama HP Anda untuk akses lebih cepat
               dan pengalaman yang lebih lancar.
             </p>
@@ -68,18 +69,20 @@ const InstallPrompt: React.FC = () => {
 
         <div className="relative z-10 mt-6 flex gap-3">
           <button
+            type="button"
             onClick={handleDismiss}
-            className="flex-1 rounded-xl border border-slate-200 py-3 text-[10px] font-bold tracking-widest text-slate-500 uppercase transition-colors hover:bg-slate-50 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5"
+            className="flex-1 rounded-xl border border-slate-200 py-3 text-xs font-bold tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
           >
             Nanti Saja
           </button>
           <button
+            type="button"
             onClick={handleInstallClick}
-            className="bg-primary dark:bg-accentDark flex-1 rounded-xl py-3 text-[10px] font-bold tracking-widest text-white uppercase shadow-lg transition-transform active:scale-95"
+            className="bg-primary dark:bg-accentDark flex-1 rounded-xl py-3 text-xs font-bold tracking-widest text-white uppercase shadow-lg transition-transform active:scale-95"
           >
             <span className="flex items-center justify-center gap-2">
               <Download className="h-4 w-4" />
-              Install
+              Pasang
             </span>
           </button>
         </div>

@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /qrcode
+Disallow: /api/
 
 # Ganti domain sesuai domain asli Anda
 Sitemap: https://wedding.zedlabs.id/sitemap-index.xml
-Robots: https://wedding.zedlabs.id/robots.txt
