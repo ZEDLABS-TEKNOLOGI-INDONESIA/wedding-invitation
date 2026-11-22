@@ -140,7 +140,10 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
         { status: 400, headers: JSON_HEADERS }
       );
     }
-    if (!proofUrl || !proofUrl.startsWith("/uploads/")) {
+    if (
+      !proofUrl ||
+      (!proofUrl.startsWith("/api/media/") && !proofUrl.startsWith("/uploads/"))
+    ) {
       return new Response(
         JSON.stringify({
           error:
