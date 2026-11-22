@@ -94,14 +94,17 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
         {/* Akad & Resepsi Cards */}
         <div
           ref={dropdownContainerRef}
-          className="mb-10 grid gap-6 md:mb-12 md:grid-cols-2 md:gap-8"
+          className="relative z-20 mb-10 grid gap-6 md:mb-12 md:grid-cols-2 md:gap-8"
         >
           {(["akad", "resepsi"] as const).map((type) => {
             const ev = config.events[type];
+            const isOpen = activeDropdown === type;
             return (
               <div
                 key={type}
-                className="editorial-card relative flex flex-col items-center justify-between space-y-6 rounded-3xl p-7 text-center ring-1 ring-accentDark/8 ring-inset sm:p-9 dark:ring-accent/10"
+                className={`editorial-card relative flex flex-col items-center justify-between space-y-6 rounded-3xl p-7 text-center ring-1 ring-accentDark/8 ring-inset sm:p-9 dark:ring-accent/10 ${
+                  isOpen ? "z-30" : "z-10"
+                }`}
               >
 
                 <div className="space-y-3 pt-1">
@@ -177,7 +180,7 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
         </div>
 
         {/* Venue & Map Card */}
-        <div className="editorial-card space-y-6 rounded-3xl p-6 sm:p-9">
+        <div className="editorial-card relative z-10 space-y-6 rounded-3xl p-6 sm:p-9">
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
             <div className="flex items-start gap-4">
               <div className="bg-accentDark/10 text-accentDark dark:bg-accent/15 dark:text-accent flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl">
