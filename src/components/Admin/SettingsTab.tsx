@@ -138,6 +138,7 @@ const EXPORTABLE_CONFIG_KEYS = [
   "WA_NOTIFY_ADMIN_RSVP",
   "WA_NOTIFY_ADMIN_WISH",
   "WA_AUTO_CONFIRM_GUEST",
+  "WA_AUTO_REMINDER_H1",
 ];
 
 const ALLOWED_CSV_CONFIG_SET = new Set(EXPORTABLE_CONFIG_KEYS);
@@ -269,8 +270,17 @@ const SettingsTab: React.FC<{
   const [mapsExtractMsg, setMapsExtractMsg] = useState<string | null>(null);
   const [showWaSecret, setShowWaSecret] = useState(false);
   const [waActionLoading, setWaActionLoading] = useState<
-    "ping" | "sync" | "test" | null
+    "ping" | "sync" | "test" | "h1" | null
   >(null);
+  const [h1Summary, setH1Summary] = useState<{
+    eligibleTotal: number;
+    pendingCount: number;
+    sentCount: number;
+    hadirPendingCount: number;
+    raguPendingCount: number;
+    excludedTidakHadirCount: number;
+    inH1Window: boolean;
+  } | null>(null);
   const [waFeedback, setWaFeedback] = useState<{
     type: "success" | "error";
     message: string;
@@ -508,6 +518,62 @@ const SettingsTab: React.FC<{
       message:
         "File CSV pengaturan diunduh (tanpa API Secret). Anda bisa edit di Excel lalu Import balik.",
     });
+  };
+
+  const loadH1Summary = async () => {
+    try {
+      const res = await fetch("/api/whatsapp/reminders", {
+        credentials: "include",
+      });
+      if (res.ok) {
+        setH1Summary(await res.json());
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  useEffect(() => {
+    if (currentSection === "whatsapp") {
+      void loadH1Summary();
+    }
+  }, [currentSection]);
+
+  const handleSendH1Reminders = async () => {
+    setWaActionLoading("h1");
+    setWaFeedback(null);
+    try {
+      const res = await fetch("/api/whatsapp/reminders", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setWaFeedback({
+          type: "error",
+          message: data.error || "Gagal mengirim pengingat H-1.",
+        });
+      } else {
+        if (data.summary) setH1Summary(data.summary);
+        if (data.skippedReason) {
+          setWaFeedback({ type: "success", message: data.skippedReason });
+        } else {
+          setWaFeedback({
+            type: data.failed > 0 && data.sent === 0 ? "error" : "success",
+            message: `Pengingat H-1 selesai diproses: ${data.sent} terkirim, ${data.failed} gagal.${
+              data.errors?.length ? ` (${data.errors[0]})` : ""
+            }`,
+          });
+        }
+      }
+    } catch {
+      setWaFeedback({
+        type: "error",
+        message: "Gagal menghubungi server untuk pengiriman pengingat H-1.",
+      });
+    } finally {
+      setWaActionLoading(null);
+    }
   };
 
   const handleWaAction = async (mode: "ping" | "sync" | "test") => {
@@ -1969,7 +2035,71 @@ const SettingsTab: React.FC<{
                 </span>
               </span>
             </label>
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-3 text-xs md:col-span-3">
+              <input
+                type="checkbox"
+                checked={(rawConfig.WA_AUTO_REMINDER_H1 ?? "true") === "true"}
+                onChange={(e) =>
+                  handleChange(
+                    "WA_AUTO_REMINDER_H1",
+                    e.target.checked ? "true" : "false"
+                  )
+                }
+                className="mt-0.5 h-4 w-4 accent-(--adm-accent)"
+              />
+              <span>
+                <strong className="block font-semibold text-(--adm-text-primary)">
+                  Pengingat Otomatis H-1 (Tamu Hadir &amp; Masih Ragu)
+                </strong>
+                <span className="text-(--adm-text-secondary)">
+                  Kirim pengingat otomatis via WhatsApp saat memasuki H-1 acara
+                  kepada tamu yang memilih <strong>Hadir</strong> maupun{" "}
+                  <strong>Masih Ragu</strong>. Tamu yang sudah memastikan{" "}
+                  <strong>Tidak Hadir</strong> otomatis dikecualikan.
+                </span>
+              </span>
+            </label>
           </div>
+
+          {h1Summary && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-3 text-xs">
+              <div className="space-y-0.5">
+                <div className="font-semibold text-(--adm-text-primary)">
+                  Status Pengingat H-1:{" "}
+                  <span className="text-(--adm-accent)">
+                    {h1Summary.pendingCount} menunggu
+                  </span>{" "}
+                  ({h1Summary.hadirPendingCount} Hadir,{" "}
+                  {h1Summary.raguPendingCount} Ragu) ·{" "}
+                  <span className="text-(--adm-green)">
+                    {h1Summary.sentCount} sudah terkirim
+                  </span>
+                </div>
+                <p className="adm-hint">
+                  {h1Summary.excludedTidakHadirCount} tamu berstatus Tidak Hadir
+                  otomatis dikecualikan.{" "}
+                  {h1Summary.inH1Window
+                    ? "Saat ini berada dalam rentang otomatis H-1."
+                    : "Pengiriman otomatis aktif mulai H-1 (36 jam s/d 2 jam sebelum acara)."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSendH1Reminders}
+                disabled={
+                  waActionLoading !== null || h1Summary.pendingCount === 0
+                }
+                className="adm-btn adm-btn-sm adm-btn-primary"
+              >
+                {waActionLoading === "h1" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" />
+                )}
+                Kirim Pengingat H-1 Sekarang ({h1Summary.pendingCount})
+              </button>
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-2 border-t border-(--adm-border) pt-4">
             <button
@@ -1996,7 +2126,7 @@ const SettingsTab: React.FC<{
               ) : (
                 <RefreshCcw className="h-3.5 w-3.5" />
               )}
-              Sinkron 4 Template ke Gateway
+              Sinkron 5 Template ke Gateway
             </button>
             <button
               type="button"

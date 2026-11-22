@@ -73,6 +73,7 @@ export const WA_TEMPLATE_CODES = {
   ADMIN_RSVP: "wedding_rsvp_admin",
   ADMIN_WISH: "wedding_ucapan_admin",
   GUEST_RSVP_CONFIRM: "wedding_rsvp_konfirmasi",
+  GUEST_REMINDER_H1: "wedding_pengingat_h1",
 } as const;
 
 // Seluruh template memenuhi aturan validator whatsapp-service:
@@ -141,6 +142,23 @@ export const WEDDING_WA_TEMPLATES: Record<string, WaTemplateDef> = {
       "Terima kasih {{nama_tamu}}, konfirmasi kehadiran Anda untuk pernikahan {{mempelai}} telah kami terima.\n\nStatus: {{status_kehadiran}}\nJumlah tamu: {{jumlah_tamu}}\nTanggal acara: {{tanggal_acara}}\nLokasi: {{tempat_acara}}\n\nSampai jumpa di hari bahagia kami.",
       "Halo {{nama_tamu}}, terima kasih telah mengisi konfirmasi kehadiran pernikahan {{mempelai}}.\n\nRincian konfirmasi Anda:\nStatus: {{status_kehadiran}}\nJumlah: {{jumlah_tamu}}\nJadwal: {{tanggal_acara}}\nTempat: {{tempat_acara}}\n\nTerima kasih atas doa restu Bapak/Ibu/Saudara/i.",
       "Konfirmasi kehadiran untuk {{nama_tamu}} pada pernikahan {{mempelai}} sudah tercatat.\n\nStatus kehadiran: {{status_kehadiran}}\nJumlah tamu: {{jumlah_tamu}}\nTanggal: {{tanggal_acara}}\nLokasi: {{tempat_acara}}\n\nKami sangat menghargai perhatian dan doa restu Anda.",
+    ],
+  },
+  [WA_TEMPLATE_CODES.GUEST_REMINDER_H1]: {
+    kategori: "Pengingat",
+    prioritas: "Medium",
+    variabel_wajib: [
+      "nama_tamu",
+      "mempelai",
+      "tanggal_acara",
+      "waktu_acara",
+      "tempat_acara",
+      "link_maps",
+    ],
+    varian: [
+      "Assalamu'alaikum Bapak/Ibu/Saudara/i {{nama_tamu}}.\n\nDengan segala kerendahan hati, kami bermaksud mengingatkan bahwa esok hari merupakan hari bahagia pernikahan {{mempelai}} pada {{tanggal_acara}} pukul {{waktu_acara}} bertempat di {{tempat_acara}}.\n\nPetunjuk arah lokasi:\n{{link_maps}}\n\nMerupakan kehormatan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan melimpahkan doa restu.",
+      "Salam hormat kepada {{nama_tamu}}.\n\nMengingatkan kembali dengan penuh sukacita bahwa rangkaian acara pernikahan {{mempelai}} akan segera dilangsungkan pada {{tanggal_acara}} pukul {{waktu_acara}} di {{tempat_acara}}.\n\nTautan lokasi acara:\n{{link_maps}}\n\nSemoga perjalanan Bapak/Ibu/Saudara/i dilancarkan dan kami menantikan kehadiran serta doa restu yang tulus.",
+      "Kepada yang terhormat {{nama_tamu}}.\n\nIzinkan kami mengingatkan kembali jadwal pernikahan {{mempelai}} yang insya Allah diselenggarakan pada {{tanggal_acara}} pukul {{waktu_acara}} di {{tempat_acara}}.\n\nAkses peta lokasi:\n{{link_maps}}\n\nTerima kasih atas perhatian dan doa restu Bapak/Ibu/Saudara/i.",
     ],
   },
 };
@@ -544,4 +562,99 @@ export const notifyAdminWishWa = async (
         })
     )
   );
+};
+
+/**
+ * Mengecek apakah waktu sekarang berada dalam jendela pengingat H-1
+ * (antara 36 jam hingga 2 jam sebelum acara dimulai).
+ */
+export const isWithinH1ReminderWindow = (
+  isoStart: string | undefined,
+  now: Date = new Date()
+): boolean => {
+  if (!isoStart) return false;
+  const eventTime = new Date(isoStart).getTime();
+  if (Number.isNaN(eventTime)) return false;
+  const diffMs = eventTime - now.getTime();
+  const TWO_HOURS = 2 * 60 * 60 * 1000;
+  const THIRTY_SIX_HOURS = 36 * 60 * 60 * 1000;
+  return diffMs > TWO_HOURS && diffMs <= THIRTY_SIX_HOURS;
+};
+
+/**
+ * Tamu yang berhak menerima pengingat H-1:
+ * status "hadir" atau "ragu" (kecuali "tidak_hadir"), memiliki nomor WA valid,
+ * dan belum pernah dikirimi pengingat sebelumnya.
+ */
+export const isEligibleForH1Reminder = (rsvp: {
+  attendance?: string | null;
+  phone?: string | null;
+  reminder_sent_at?: string | null;
+}): boolean => {
+  const status = (rsvp.attendance || "").trim().toLowerCase();
+  if (status !== "hadir" && status !== "ragu") return false;
+  if ((rsvp.reminder_sent_at || "").trim() !== "") return false;
+  return normalizeWaPhone(rsvp.phone || "") !== "";
+};
+
+export const sendGuestH1ReminderWa = async (
+  config: Record<string, string>,
+  payload: {
+    id: number;
+    guest_name: string;
+    phone: string;
+    attendance: string;
+  }
+): Promise<{ sent: boolean; error?: string }> => {
+  const creds = getWaCredentials(config);
+  const recipient = normalizeWaPhone(payload.phone);
+  if (!creds) {
+    return { sent: false, error: "Kredensial WhatsApp Gateway belum diatur." };
+  }
+  if (!recipient) {
+    return { sent: false, error: "Nomor WhatsApp tamu tidak valid." };
+  }
+
+  const client = new WaGatewayClient(creds, { timeoutMs: 12_000, maxRetries: 1 });
+  const summary = buildEventSummary(config);
+  const lat = (config.VENUE_LAT || "").trim();
+  const lng = (config.VENUE_LNG || "").trim();
+  const linkMaps =
+    lat && lng
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`
+      : "https://maps.google.com";
+  const eventTag = (config.AKAD_ISO_START || "acara").slice(0, 10);
+
+  const variables = {
+    nama_tamu: sanitizeWaVariable(payload.guest_name, "Bapak/Ibu", {
+      maxLength: 100,
+    }),
+    mempelai: sanitizeWaVariable(summary.mempelai, "Mempelai", {
+      maxLength: 80,
+    }),
+    tanggal_acara: sanitizeWaVariable(summary.tanggal, "Hari Bahagia", {
+      maxLength: 80,
+    }),
+    waktu_acara: sanitizeWaVariable(summary.waktu, "Sesuai jadwal", {
+      maxLength: 60,
+    }),
+    tempat_acara: sanitizeWaVariable(summary.tempat, "Lokasi Acara", {
+      maxLength: 160,
+    }),
+    link_maps: linkMaps,
+  };
+
+  try {
+    await client.sendMessage({
+      templateCode: WA_TEMPLATE_CODES.GUEST_REMINDER_H1,
+      recipient,
+      variables,
+      referenceId: `WED-H1-${payload.id}-${eventTag}`,
+    });
+    return { sent: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Gagal mengirim pengingat.";
+    console.error(`Gagal kirim pengingat H-1 ke ${recipient}:`, err);
+    return { sent: false, error: msg };
+  }
 };

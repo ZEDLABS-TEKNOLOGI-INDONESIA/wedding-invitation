@@ -29,6 +29,7 @@ db.exec(`
     attendance TEXT,
     guest_count INTEGER,
     message TEXT,
+    reminder_sent_at TEXT DEFAULT '',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -170,7 +171,14 @@ const DEFAULT_CONFIG: Record<string, string> = {
   WA_NOTIFY_ADMIN_RSVP: "true",
   WA_NOTIFY_ADMIN_WISH: "true",
   WA_AUTO_CONFIRM_GUEST: "true",
+  WA_AUTO_REMINDER_H1: "true",
 };
+
+try {
+  db.exec("ALTER TABLE rsvps ADD COLUMN reminder_sent_at TEXT DEFAULT ''");
+} catch {
+  // Kolom reminder_sent_at sudah ada
+}
 
 const insertDefault = db.prepare(
   "INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)"
@@ -208,6 +216,7 @@ export const PRIVATE_CONFIG_KEYS = new Set([
   "WA_NOTIFY_ADMIN_RSVP",
   "WA_NOTIFY_ADMIN_WISH",
   "WA_AUTO_CONFIRM_GUEST",
+  "WA_AUTO_REMINDER_H1",
 ]);
 
 export const getPublicConfig = (): Record<string, string> => {
