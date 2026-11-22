@@ -4,21 +4,31 @@ import {
   CheckCircle2,
   Copy,
   Download,
-  FileText,
   Loader2,
   RefreshCcw,
+  Trash2,
   Upload,
+  Users,
 } from "lucide-react";
-import Papa from "papaparse";
 import QRCode from "qrcode";
 import { QRCodeCanvas } from "qrcode.react";
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  parseGuestsText,
+  type ParsedGuestRow,
+} from "../utils/csvImport";
 import {
   ConfirmModal,
   ToastBanner,
   type ConfirmDialogState,
   type ToastState,
 } from "./Admin/AdminFeedback";
+import CsvImportModal from "./Admin/CsvImportModal";
+
+interface SavedGuestItem {
+  id: number;
+  name: string;
+}
 
 const loadImage = (src: string): Promise<HTMLImageElement | null> =>
   new Promise((resolve) => {
@@ -36,7 +46,8 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [activeTab, setActiveTab] = useState<"single" | "bulk">("single");
   const [singleName, setSingleName] = useState("");
   const [bulkNames, setBulkNames] = useState<string[]>([]);
-  const [isReadingCsv, setIsReadingCsv] = useState(false);
+  const [savedGuests, setSavedGuests] = useState<SavedGuestItem[]>([]);
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
@@ -56,6 +67,13 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           setBrideInitial(data.BRIDE_NICKNAME.charAt(0).toUpperCase());
         if (data.GROOM_NICKNAME)
           setGroomInitial(data.GROOM_NICKNAME.charAt(0).toUpperCase());
+      })
+      .catch(() => {});
+
+    fetch("/api/guests", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list) => {
+        if (Array.isArray(list)) setSavedGuests(list);
       })
       .catch(() => {});
   }, []);
@@ -96,43 +114,19 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     }
   }, [brideInitial, groomInitial]);
 
-  const downloadTemplate = () => {
-    const csvContent =
-      "Nama Tamu\nAhmad Syarief Ramadhan\nMuhammad Ikbal Pauji\nKeluarga Besar Bapak Jokowi";
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    handleSaveAs(blob, "template_tamu.csv");
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setIsReadingCsv(true);
-    setTimeout(() => {
-      Papa.parse(file, {
-        complete: (results) => {
-          const names: string[] = [];
-          results.data.forEach((row: any) => {
-            if (row[0] && typeof row[0] === "string" && row[0].trim() !== "") {
-              if (!row[0].toLowerCase().includes("nama tamu")) {
-                names.push(row[0].trim());
-              }
-            }
-          });
-          setBulkNames(names);
-          setIsReadingCsv(false);
-        },
-        error: (err) => {
-          console.error("Gagal membaca CSV:", err);
-          setToast({
-            type: "error",
-            message: "Gagal membaca file CSV. Pastikan format file valid.",
-          });
-          setIsReadingCsv(false);
-        },
-        header: false,
+  const loadFromGuestDb = () => {
+    if (savedGuests.length === 0) {
+      setToast({
+        type: "error",
+        message: "Daftar Tamu Permanen masih kosong.",
       });
-    }, 100);
+      return;
+    }
+    setBulkNames(savedGuests.map((g) => g.name));
+    setToast({
+      type: "success",
+      message: `${savedGuests.length} nama tamu dimuat dari Daftar Tamu Permanen.`,
+    });
   };
 
   const renderQrBase64 = async (
@@ -238,9 +232,43 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         dialog={confirmDialog}
         onClose={() => setConfirmDialog(null)}
       />
+
+      <CsvImportModal<ParsedGuestRow>
+        isOpen={isCsvModalOpen}
+        title="Import Daftar Nama untuk QR Code"
+        description="Upload file CSV atau tempel daftar nama (1 nama per baris) langsung dari Excel/WhatsApp."
+        templateFilename="template_qr_tamu.csv"
+        templateHeaders={["Nama Tamu"]}
+        templateRows={[
+          ["Ahmad Syarief Ramadhan"],
+          ["Muhammad Ikbal Pauji"],
+          ["Keluarga Besar H. Syarif"],
+        ]}
+        pastePlaceholder={
+          "Ahmad Syarief Ramadhan\nMuhammad Ikbal Pauji\nKeluarga Besar H. Syarif"
+        }
+        parseText={parseGuestsText}
+        columns={[
+          {
+            header: "Nama Tamu",
+            render: (r) => <span className="font-bold">{r.name}</span>,
+          },
+        ]}
+        onConfirm={(rows) => {
+          setBulkNames(rows.map((r) => r.name));
+          setToast({
+            type: "success",
+            message: `${rows.length} nama tamu siap dibuatkan QR Code.`,
+          });
+        }}
+        onClose={() => setIsCsvModalOpen(false)}
+        confirmLabel="Muat Daftar Nama"
+      />
+
       <div className="flex justify-center">
         <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
           <button
+            type="button"
             onClick={() => setActiveTab("single")}
             className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
               activeTab === "single"
@@ -251,6 +279,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             Manual (Satuan)
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab("bulk")}
             className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
               activeTab === "bulk"
@@ -258,19 +287,51 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                 : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            Import CSV (Banyak)
+            Massal (Daftar Tamu / CSV)
           </button>
         </div>
       </div>
 
       {activeTab === "single" && (
         <div className="animate-reveal grid items-center gap-8 md:grid-cols-2">
-          <div className="space-y-6">
+          <div className="space-y-5">
+            {savedGuests.length > 0 && (
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="qr-quick-pick"
+                  className="text-xs font-bold tracking-widest text-slate-400 uppercase"
+                >
+                  Pilih Cepat dari Daftar Tamu
+                </label>
+                <select
+                  id="qr-quick-pick"
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) setSingleName(e.target.value);
+                  }}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                >
+                  <option value="">
+                    -- Pilih dari {savedGuests.length} tamu tersimpan --
+                  </option>
+                  {savedGuests.map((g) => (
+                    <option key={g.id} value={g.name}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <label className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+              <label
+                htmlFor="qr-single-name"
+                className="text-xs font-bold tracking-widest text-slate-400 uppercase"
+              >
                 Nama Tamu
               </label>
               <input
+                id="qr-single-name"
                 type="text"
                 value={singleName}
                 onChange={(e) => setSingleName(e.target.value)}
@@ -283,12 +344,14 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             </div>
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={copySingleLink}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-xs font-bold uppercase hover:bg-slate-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
               >
                 <Copy className="h-4 w-4" /> Copy Link
               </button>
               <button
+                type="button"
                 onClick={downloadSingle}
                 disabled={!singleName}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-xs font-bold text-white uppercase shadow-lg transition-all hover:bg-blue-700 disabled:opacity-50"
@@ -324,44 +387,55 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       {activeTab === "bulk" && (
         <div className="animate-reveal space-y-8">
           {bulkNames.length === 0 ? (
-            <div className="space-y-6 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center md:p-10 dark:border-slate-700 dark:bg-slate-800/50">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-500 dark:bg-blue-900/20">
-                {isReadingCsv ? (
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                ) : (
-                  <Upload className="h-8 w-8" />
-                )}
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                  {isReadingCsv ? "Membaca File CSV..." : "Upload File CSV"}
-                </h3>
-                <p className="mx-auto max-w-md text-sm leading-relaxed text-slate-500">
-                  Siapkan file CSV sederhana dimana{" "}
-                  <strong>kolom pertama</strong> berisi daftar nama tamu.
-                </p>
-                <div className="flex justify-center pt-2">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex flex-col justify-between space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800/50">
+                <div className="space-y-2">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                    Ambil dari Daftar Tamu Permanen
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    Generate QR Code massal untuk seluruh {savedGuests.length}{" "}
+                    tamu tersimpan tanpa perlu upload ulang CSV.
+                  </p>
+                </div>
+                <div>
                   <button
-                    onClick={downloadTemplate}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-white hover:shadow-sm dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                    type="button"
+                    disabled={savedGuests.length === 0}
+                    onClick={loadFromGuestDb}
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
                   >
-                    <FileText className="h-3.5 w-3.5" />
-                    Download Template CSV
+                    <Users className="h-4 w-4" /> Muat {savedGuests.length} Tamu
                   </button>
                 </div>
               </div>
-              <label
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:opacity-90 dark:bg-white dark:text-slate-900 ${isReadingCsv ? "pointer-events-none opacity-50" : ""}`}
-              >
-                Pilih File CSV
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  disabled={isReadingCsv}
-                />
-              </label>
+
+              <div className="flex flex-col justify-between space-y-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800/50">
+                <div className="space-y-2">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                    <Upload className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                    Import CSV / Tempel Daftar Nama
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    Seret file CSV atau salin-tempel daftar nama dari Excel,
+                    Google Sheets, atau catatan WhatsApp.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCsvModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-xs font-bold text-white shadow-sm hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                  >
+                    <Upload className="h-4 w-4" /> Buka Import CSV / Teks
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-6">
@@ -386,7 +460,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       setConfirmDialog({
                         title: "Reset Daftar Tamu",
                         message:
-                          "Yakin ingin menghapus semua data CSV yang dimuat?",
+                          "Yakin ingin menghapus semua data yang dimuat?",
                         confirmLabel: "Reset",
                         destructive: true,
                         onConfirm: () => setBulkNames([]),
@@ -398,6 +472,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                     Reset Data
                   </button>
                   <button
+                    type="button"
                     onClick={downloadAllZip}
                     disabled={isProcessing}
                     className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-blue-600 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70"
@@ -437,6 +512,18 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                     key={idx}
                     className="group relative flex flex-col items-center gap-3 rounded-xl border border-slate-100 bg-white p-3 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
                   >
+                    <button
+                      type="button"
+                      aria-label={`Hapus ${name}`}
+                      onClick={() =>
+                        setBulkNames((prev) =>
+                          prev.filter((_, i) => i !== idx)
+                        )
+                      }
+                      className="absolute top-2 right-2 rounded-md p-1 text-red-500 opacity-0 transition-opacity hover:bg-red-50 group-hover:opacity-100 dark:hover:bg-red-900/30"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                     <div className="rounded-lg bg-white p-1">
                       <QRCodeCanvas
                         value={generateUrl(name)}

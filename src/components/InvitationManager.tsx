@@ -6,23 +6,34 @@ import {
   Download,
   Eye,
   FileSpreadsheet,
-  FileText,
   Loader2,
   Printer,
   RefreshCcw,
+  Trash2,
   Upload,
+  Users,
 } from "lucide-react";
-import Papa from "papaparse";
 import QRCode from "qrcode";
 import React, { useEffect, useState } from "react";
+import {
+  parseGuestsText,
+  type ParsedGuestRow,
+} from "../utils/csvImport";
 import {
   ConfirmModal,
   ToastBanner,
   type ConfirmDialogState,
   type ToastState,
 } from "./Admin/AdminFeedback";
+import CsvImportModal from "./Admin/CsvImportModal";
 
 interface GuestData {
+  name: string;
+  address: string;
+}
+
+interface SavedGuestItem {
+  id: number;
   name: string;
   address: string;
 }
@@ -91,7 +102,8 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     address: "Di Tempat",
   });
   const [bulkData, setBulkData] = useState<GuestData[]>([]);
-  const [isReadingCsv, setIsReadingCsv] = useState(false);
+  const [savedGuests, setSavedGuests] = useState<SavedGuestItem[]>([]);
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
@@ -112,6 +124,13 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       .catch(() => {
         setIsConfigLoaded(true);
       });
+
+    fetch("/api/guests", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list) => {
+        if (Array.isArray(list)) setSavedGuests(list);
+      })
+      .catch(() => {});
   }, []);
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
@@ -722,45 +741,24 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     );
   };
 
-  const downloadTemplate = () => {
-    const csvContent =
-      "Nama Tamu,Alamat (Opsional)\nBapak Jokowi & Ibu Iriana,Jakarta\nTeman-teman Alumni SMA 1,Di Tempat\nKeluarga Besar H. Syarif,Bandung";
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    handleSaveAs(blob, "template_undangan_pdf.csv");
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setIsReadingCsv(true);
-    setTimeout(() => {
-      Papa.parse(file, {
-        complete: (results) => {
-          const guests: GuestData[] = [];
-          results.data.forEach((row: any) => {
-            const name = row[0];
-            const address = row[1] || "Di Tempat";
-            if (name && typeof name === "string" && name.trim() !== "") {
-              if (!name.toLowerCase().includes("nama tamu")) {
-                guests.push({ name: name.trim(), address: address.trim() });
-              }
-            }
-          });
-          setBulkData(guests);
-          setIsReadingCsv(false);
-        },
-        error: (err) => {
-          console.error("Gagal membaca CSV:", err);
-          setToast({
-            type: "error",
-            message: "Gagal membaca file CSV. Pastikan format file valid.",
-          });
-          setIsReadingCsv(false);
-        },
-        header: false,
+  const loadFromGuestDb = () => {
+    if (savedGuests.length === 0) {
+      setToast({
+        type: "error",
+        message: "Daftar Tamu Permanen masih kosong.",
       });
-    }, 100);
+      return;
+    }
+    setBulkData(
+      savedGuests.map((g) => ({
+        name: g.name,
+        address: g.address || "Di Tempat",
+      }))
+    );
+    setToast({
+      type: "success",
+      message: `${savedGuests.length} tamu dimuat dari Daftar Tamu Permanen.`,
+    });
   };
 
   const processBulk = async () => {
@@ -822,6 +820,44 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       <ConfirmModal
         dialog={confirmDialog}
         onClose={() => setConfirmDialog(null)}
+      />
+
+      <CsvImportModal<ParsedGuestRow>
+        isOpen={isCsvModalOpen}
+        title="Import Daftar Tamu untuk Undangan PDF"
+        description="Upload file CSV atau salin-tempel langsung dari Excel (Nama Tamu & Alamat/Kota)."
+        templateFilename="template_undangan_pdf.csv"
+        templateHeaders={["Nama Tamu", "Alamat (Opsional)"]}
+        templateRows={[
+          ["Bapak Ahmad & Ibu Siti", "Jakarta"],
+          ["Teman-teman Alumni SMA 1", "Di Tempat"],
+          ["Keluarga Besar H. Syarif", "Bandung"],
+        ]}
+        pastePlaceholder={
+          "Bapak Ahmad & Ibu Siti,Jakarta\nTeman-teman Alumni SMA 1,Di Tempat\nKeluarga Besar H. Syarif,Bandung"
+        }
+        parseText={parseGuestsText}
+        columns={[
+          {
+            header: "Nama Tamu",
+            render: (r) => <span className="font-bold">{r.name}</span>,
+          },
+          { header: "Alamat / Kota", render: (r) => r.address },
+        ]}
+        onConfirm={(rows) => {
+          setBulkData(
+            rows.map((r) => ({
+              name: r.name,
+              address: r.address || "Di Tempat",
+            }))
+          );
+          setToast({
+            type: "success",
+            message: `${rows.length} tamu siap dicetak ke PDF.`,
+          });
+        }}
+        onClose={() => setIsCsvModalOpen(false)}
+        confirmLabel="Muat Daftar Tamu"
       />
       <div className="space-y-3 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-slate-100 to-slate-50 px-4 py-1.5 shadow-sm dark:from-slate-800 dark:to-slate-900">
@@ -888,6 +924,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       <div className="flex justify-center">
         <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
           <button
+            type="button"
             onClick={() => setActiveTab("single")}
             className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
               activeTab === "single"
@@ -898,6 +935,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
             Manual (Satuan)
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab("bulk")}
             className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
               activeTab === "bulk"
@@ -905,7 +943,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                 : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            Import CSV (Banyak)
+            Massal (Daftar Tamu / CSV)
           </button>
         </div>
       </div>
@@ -914,11 +952,51 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
         <div className="grid items-start gap-8 md:grid-cols-2">
           <div className="space-y-6">
             <div className="space-y-4">
+              {savedGuests.length > 0 && (
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="pdf-quick-pick"
+                    className="text-xs font-bold tracking-widest text-slate-400 uppercase"
+                  >
+                    Pilih Cepat dari Daftar Tamu
+                  </label>
+                  <select
+                    id="pdf-quick-pick"
+                    value=""
+                    onChange={(e) => {
+                      const found = savedGuests.find(
+                        (g) => String(g.id) === e.target.value
+                      );
+                      if (found) {
+                        setSingleData({
+                          name: found.name,
+                          address: found.address || "Di Tempat",
+                        });
+                      }
+                    }}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  >
+                    <option value="">
+                      -- Pilih dari {savedGuests.length} tamu tersimpan --
+                    </option>
+                    {savedGuests.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} ({g.address || "Di Tempat"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="space-y-2">
-                <label className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+                <label
+                  htmlFor="pdf-single-name"
+                  className="text-xs font-bold tracking-widest text-slate-400 uppercase"
+                >
                   Nama Tamu
                 </label>
                 <input
+                  id="pdf-single-name"
                   type="text"
                   value={singleData.name}
                   onChange={(e) =>
@@ -929,10 +1007,14 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+                <label
+                  htmlFor="pdf-single-address"
+                  className="text-xs font-bold tracking-widest text-slate-400 uppercase"
+                >
                   Alamat / Kota (Opsional)
                 </label>
                 <input
+                  id="pdf-single-address"
                   type="text"
                   value={singleData.address}
                   onChange={(e) =>
@@ -945,6 +1027,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
             </div>
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={handlePreview}
                 disabled={!singleData.name || !isConfigLoaded}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-xs font-bold uppercase hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
@@ -952,6 +1035,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                 <Eye className="h-4 w-4" /> Preview
               </button>
               <button
+                type="button"
                 onClick={downloadSingle}
                 disabled={!singleData.name || !isConfigLoaded}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-800 py-3 text-xs font-bold text-white uppercase shadow-lg hover:bg-slate-900 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
@@ -983,48 +1067,55 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       {activeTab === "bulk" && (
         <div className="animate-reveal space-y-8">
           {bulkData.length === 0 ? (
-            <div className="space-y-6 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 p-10 text-center dark:border-slate-700 dark:bg-slate-800/50">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                {isReadingCsv ? (
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                ) : (
-                  <Upload className="h-8 w-8" />
-                )}
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                  {isReadingCsv
-                    ? "Membaca File CSV..."
-                    : "Upload Database Tamu"}
-                </h3>
-                <p className="mx-auto max-w-md text-sm text-slate-500">
-                  Siapkan file CSV dengan format:
-                  <br />
-                  <strong>Kolom 1: Nama Tamu</strong> |{" "}
-                  <strong>Kolom 2: Alamat/Kota (Opsional)</strong>
-                </p>
-                <div className="flex justify-center pt-2">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex flex-col justify-between space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800/50">
+                <div className="space-y-2">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                    Ambil dari Daftar Tamu Permanen
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    Cetak PDF massal untuk seluruh {savedGuests.length} tamu
+                    yang sudah tersimpan di database.
+                  </p>
+                </div>
+                <div>
                   <button
-                    onClick={downloadTemplate}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-white hover:shadow-sm dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                    type="button"
+                    disabled={savedGuests.length === 0}
+                    onClick={loadFromGuestDb}
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
                   >
-                    <FileText className="h-3.5 w-3.5" />
-                    Download Template CSV
+                    <Users className="h-4 w-4" /> Muat {savedGuests.length} Tamu
                   </button>
                 </div>
               </div>
-              <label
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:opacity-90 dark:bg-white dark:text-slate-900 ${isReadingCsv ? "pointer-events-none opacity-50" : ""}`}
-              >
-                Pilih File CSV
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  disabled={isReadingCsv}
-                />
-              </label>
+
+              <div className="flex flex-col justify-between space-y-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800/50">
+                <div className="space-y-2">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                    <Upload className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                    Import CSV / Tempel dari Excel
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    Seret & lepas file CSV atau tempel daftar tamu langsung dari
+                    Excel/Google Sheets.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCsvModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-xs font-bold text-white shadow-sm hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                  >
+                    <Upload className="h-4 w-4" /> Buka Import CSV / Teks
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-6">
@@ -1050,7 +1141,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                       setConfirmDialog({
                         title: "Reset Data Tamu",
                         message:
-                          "Yakin ingin menghapus semua data CSV yang dimuat?",
+                          "Yakin ingin menghapus semua data yang dimuat?",
                         confirmLabel: "Reset",
                         destructive: true,
                         onConfirm: () => setBulkData([]),
@@ -1062,6 +1153,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                     Reset Data
                   </button>
                   <button
+                    type="button"
                     onClick={processBulk}
                     disabled={isProcessing}
                     className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-slate-900 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
@@ -1114,7 +1206,21 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                         </p>
                       </div>
                     </div>
-                    <Check className="h-4 w-4 text-green-500" />
+                    <div className="flex items-center gap-1">
+                      <Check className="h-4 w-4 text-green-500" />
+                      <button
+                        type="button"
+                        aria-label={`Hapus ${guest.name}`}
+                        onClick={() =>
+                          setBulkData((prev) =>
+                            prev.filter((_, i) => i !== idx)
+                          )
+                        }
+                        className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

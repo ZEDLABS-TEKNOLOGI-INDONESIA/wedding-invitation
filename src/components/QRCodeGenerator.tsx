@@ -77,10 +77,14 @@ const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     <div className="animate-reveal grid items-center gap-10 md:grid-cols-2">
       <div className="space-y-6">
         <div className="space-y-2">
-          <label className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+          <label
+            htmlFor="standalone-qr-guest-name"
+            className="text-xs font-bold tracking-widest text-slate-400 uppercase"
+          >
             Nama Tamu
           </label>
           <input
+            id="standalone-qr-guest-name"
             type="text"
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}

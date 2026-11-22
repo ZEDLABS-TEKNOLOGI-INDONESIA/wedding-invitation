@@ -4,36 +4,39 @@ import {
   ChevronRight,
   Download,
   Edit,
-  Eye,
-  EyeOff,
   HelpCircle,
   Loader2,
   MessageCircle,
   MessageSquare,
+  Minus,
   Plus,
   Printer,
   QrCode,
-  RefreshCcw,
   Save,
   Search,
-  Send,
   Settings,
   Trash2,
   Upload,
   UserCheck,
   Users,
-  Wifi,
   X,
   XCircle,
 } from "lucide-react";
 import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
-import { invalidateConfigCache } from "../../hooks/useConfig";
+import {
+  parseRsvpsText,
+  parseWishesText,
+  type ParsedRsvpRow,
+  type ParsedWishRow,
+} from "../../utils/csvImport";
 import {
   ConfirmModal,
   ToastBanner,
   type ConfirmDialogState,
   type ToastState,
 } from "./AdminFeedback";
+import CsvImportModal from "./CsvImportModal";
+import SettingsTab from "./SettingsTab";
 
 const GuestManager = lazy(() => import("../GuestManager"));
 const InvitationManager = lazy(() => import("../InvitationManager"));
@@ -322,1120 +325,20 @@ const DataTable = <T extends { id: number }>({
   );
 };
 
-interface ConfigField {
-  key: string;
-  label: string;
-  type: "text" | "textarea" | "url" | "number" | "json";
-  placeholder?: string;
+interface RsvpFormDraft {
+  id?: number;
+  guest_name: string;
+  phone: string;
+  attendance: "hadir" | "tidak_hadir" | "ragu";
+  guest_count: number;
+  message: string;
 }
 
-const CONFIG_SECTIONS: { title: string; fields: ConfigField[] }[] = [
-  {
-    title: "Mempelai Wanita",
-    fields: [
-      { key: "BRIDE_NICKNAME", label: "Nama Panggilan", type: "text" },
-      { key: "BRIDE_FULLNAME", label: "Nama Lengkap", type: "text" },
-      { key: "BRIDE_PARENTS", label: "Nama Orang Tua", type: "text" },
-      { key: "BRIDE_INSTAGRAM", label: "Instagram (tanpa @)", type: "text" },
-      { key: "BRIDE_IMAGE", label: "URL Foto", type: "url" },
-    ],
-  },
-  {
-    title: "Mempelai Pria",
-    fields: [
-      { key: "GROOM_NICKNAME", label: "Nama Panggilan", type: "text" },
-      { key: "GROOM_FULLNAME", label: "Nama Lengkap", type: "text" },
-      { key: "GROOM_PARENTS", label: "Nama Orang Tua", type: "text" },
-      { key: "GROOM_INSTAGRAM", label: "Instagram (tanpa @)", type: "text" },
-      { key: "GROOM_IMAGE", label: "URL Foto", type: "url" },
-    ],
-  },
-  {
-    title: "Venue",
-    fields: [
-      { key: "VENUE_NAME", label: "Nama Gedung", type: "text" },
-      { key: "VENUE_ADDRESS", label: "Alamat Lengkap", type: "textarea" },
-      {
-        key: "VENUE_LAT",
-        label: "Latitude",
-        type: "text",
-        placeholder: "-6.3032707",
-      },
-      {
-        key: "VENUE_LNG",
-        label: "Longitude",
-        type: "text",
-        placeholder: "106.1011039",
-      },
-    ],
-  },
-  {
-    title: "Akad Nikah",
-    fields: [
-      { key: "AKAD_TITLE", label: "Judul", type: "text" },
-      { key: "AKAD_DAY", label: "Hari", type: "text", placeholder: "Minggu" },
-      {
-        key: "AKAD_DATE",
-        label: "Tanggal",
-        type: "text",
-        placeholder: "11 Oktober 2025",
-      },
-      {
-        key: "AKAD_START",
-        label: "Jam Mulai",
-        type: "text",
-        placeholder: "08:00",
-      },
-      {
-        key: "AKAD_END",
-        label: "Jam Selesai",
-        type: "text",
-        placeholder: "10:00",
-      },
-      {
-        key: "AKAD_ISO_START",
-        label: "ISO Start",
-        type: "text",
-        placeholder: "2025-10-11T08:00:00+07:00",
-      },
-      {
-        key: "AKAD_ISO_END",
-        label: "ISO End",
-        type: "text",
-        placeholder: "2025-10-11T10:00:00+07:00",
-      },
-    ],
-  },
-  {
-    title: "Resepsi",
-    fields: [
-      { key: "RESEPSI_TITLE", label: "Judul", type: "text" },
-      {
-        key: "RESEPSI_DAY",
-        label: "Hari",
-        type: "text",
-        placeholder: "Minggu",
-      },
-      {
-        key: "RESEPSI_DATE",
-        label: "Tanggal",
-        type: "text",
-        placeholder: "11 Oktober 2025",
-      },
-      {
-        key: "RESEPSI_START",
-        label: "Jam Mulai",
-        type: "text",
-        placeholder: "11:00",
-      },
-      {
-        key: "RESEPSI_END",
-        label: "Jam Selesai",
-        type: "text",
-        placeholder: "14:00",
-      },
-      {
-        key: "RESEPSI_ISO_START",
-        label: "ISO Start",
-        type: "text",
-        placeholder: "2025-10-11T11:00:00+07:00",
-      },
-      {
-        key: "RESEPSI_ISO_END",
-        label: "ISO End",
-        type: "text",
-        placeholder: "2025-10-11T14:00:00+07:00",
-      },
-    ],
-  },
-  {
-    title: "Hero & Media",
-    fields: [
-      { key: "HERO_IMAGE", label: "URL Gambar Hero", type: "url" },
-      {
-        key: "ENVELOPE_IMAGE",
-        label: "URL Gambar Amplop (Opsional)",
-        type: "url",
-        placeholder: "Kosongkan untuk mengikuti gambar Hero",
-      },
-      {
-        key: "HERO_CITY",
-        label: "Kota",
-        type: "text",
-        placeholder: "Kab. Pandeglang, Banten",
-      },
-      {
-        key: "EVENT_TIMEZONE",
-        label: "Zona Waktu",
-        type: "text",
-        placeholder: "WIB / WITA / WIT",
-      },
-      { key: "MUSIC_URL", label: "URL Musik (MP3)", type: "url" },
-      {
-        key: "RSVP_MAX_GUESTS",
-        label: "Maks Tamu per RSVP",
-        type: "number",
-        placeholder: "20",
-      },
-    ],
-  },
-  {
-    title: "Teks & Konten",
-    fields: [
-      { key: "TEXT_SALAM_OPENING", label: "Salam Pembuka", type: "text" },
-      { key: "TEXT_QUOTE_AR_RUM", label: "Kutipan Ar-Rum", type: "textarea" },
-      {
-        key: "TEXT_QUOTE_SOURCE",
-        label: "Sumber Kutipan",
-        type: "text",
-        placeholder: "QS. Ar-Rum: 21",
-      },
-      { key: "TEXT_INVITATION", label: "Kalimat Undangan", type: "textarea" },
-      { key: "TEXT_CLOSING", label: "Teks Penutup", type: "textarea" },
-      { key: "TEXT_SALAM_CLOSING", label: "Salam Penutup", type: "text" },
-      {
-        key: "TEXT_SIGNATURE",
-        label: "Tanda Tangan",
-        type: "text",
-        placeholder: "Kami yang berbahagia,",
-      },
-      {
-        key: "TEXT_FAMILY",
-        label: "Nama Keluarga",
-        type: "text",
-        placeholder: "Kel. Bpk ... & Kel. Bpk ...",
-      },
-      {
-        key: "TEXT_GIFT_TITLE",
-        label: "Judul Hadiah",
-        type: "text",
-        placeholder: "Tanda Kasih",
-      },
-      { key: "TEXT_GIFT_DESC", label: "Deskripsi Hadiah", type: "textarea" },
-      {
-        key: "GIFT_ADDRESS",
-        label: "Alamat Kirim Kado Fisik (Opsional)",
-        type: "textarea",
-        placeholder: "Kosongkan untuk mengikuti alamat venue",
-      },
-    ],
-  },
-];
-
-interface BankAccountItem {
-  bank: string;
-  number: string;
+interface WishFormDraft {
+  id?: number;
   name: string;
+  message: string;
 }
-
-interface LoveStoryItem {
-  date: string;
-  title: string;
-  desc: string;
-}
-
-const safeParseList = <T,>(rawValue: string | undefined): T[] => {
-  if (!rawValue) return [];
-  try {
-    const parsed = JSON.parse(rawValue);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-const IMAGE_UPLOAD_KEYS = new Set([
-  "BRIDE_IMAGE",
-  "GROOM_IMAGE",
-  "HERO_IMAGE",
-  "ENVELOPE_IMAGE",
-]);
-
-const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
-  onNotify,
-}) => {
-  const [rawConfig, setRawConfig] = useState<Record<string, string>>({});
-  const [bankAccounts, setBankAccounts] = useState<BankAccountItem[]>([]);
-  const [loveStory, setLoveStory] = useState<LoveStoryItem[]>([]);
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
-  const [showWaSecret, setShowWaSecret] = useState(false);
-  const [waActionLoading, setWaActionLoading] = useState<
-    "ping" | "sync" | "test" | null
-  >(null);
-  const [waFeedback, setWaFeedback] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    fetch("/api/config/full", { credentials: "include" })
-      .then(async (r) => {
-        if (!r.ok) {
-          throw new Error(
-            r.status === 401
-              ? "Sesi admin telah berakhir. Silakan muat ulang halaman dan login kembali."
-              : "Gagal memuat konfigurasi dari server."
-          );
-        }
-        return r.json();
-      })
-      .then((full: Record<string, string>) => {
-        if (!active) return;
-        setRawConfig(full);
-        setBankAccounts(safeParseList<BankAccountItem>(full.BANK_ACCOUNTS));
-        setLoveStory(safeParseList<LoveStoryItem>(full.LOVE_STORY));
-        setGalleryImages(safeParseList<string>(full.GALLERY_IMAGES));
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (!active) return;
-        setLoadError(
-          err instanceof Error ? err.message : "Gagal memuat konfigurasi."
-        );
-        setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const handleChange = (key: string, value: string) => {
-    setRawConfig((prev) => ({ ...prev, [key]: value }));
-    setSaveError(null);
-  };
-
-  const uploadImageFile = async (
-    file: File,
-    uploadId: string,
-    onSuccess: (url: string) => void
-  ) => {
-    setUploadingKey(uploadId);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        credentials: "include",
-        body: fd,
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (res.ok && payload.url) {
-        onSuccess(payload.url);
-        onNotify({
-          type: "success",
-          message:
-            "Gambar berhasil diunggah. Klik 'Simpan Semua' untuk menerapkan.",
-        });
-      } else {
-        onNotify({
-          type: "error",
-          message: payload?.error || "Gagal mengunggah gambar.",
-        });
-      }
-    } catch {
-      onNotify({ type: "error", message: "Gagal terhubung saat upload." });
-    } finally {
-      setUploadingKey(null);
-    }
-  };
-
-  const handleWaAction = async (mode: "ping" | "sync" | "test") => {
-    setWaActionLoading(mode);
-    setWaFeedback(null);
-
-    const endpoint =
-      mode === "ping"
-        ? "/api/whatsapp/ping"
-        : mode === "sync"
-          ? "/api/whatsapp/sync-templates"
-          : "/api/whatsapp/test";
-
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          baseUrl: rawConfig.WA_BASE_URL || "",
-          keyId: rawConfig.WA_API_KEY || "",
-          secret: rawConfig.WA_API_SECRET || "",
-          recipient: rawConfig.WA_ADMIN_NUMBERS || "",
-        }),
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setWaFeedback({
-          type: "error",
-          message: payload?.error || "Permintaan ke WhatsApp Gateway gagal.",
-        });
-        return;
-      }
-
-      if (mode === "ping") {
-        setWaFeedback({
-          type: "success",
-          message: `Terhubung! Instansi: ${payload.instansi_id || "-"} · Sesi siap kirim: ${payload.jumlah_sesi_ready ?? 0}.`,
-        });
-      } else if (mode === "sync") {
-        const r = payload.result || {};
-        setWaFeedback({
-          type: "success",
-          message: `Sinkronisasi 4 template selesai: +${r.template_ditambah ?? 0} baru, ${r.template_diperbarui ?? 0} diperbarui, ${r.tidak_berubah ?? 0} tetap.`,
-        });
-      } else {
-        setWaFeedback({
-          type: "success",
-          message: `Pesan tes berhasil masuk antrean ke ${payload.recipient} (Job ID: ${payload.job_id || "-"}).`,
-        });
-      }
-    } catch {
-      setWaFeedback({
-        type: "error",
-        message: "Gagal terhubung ke server.",
-      });
-    } finally {
-      setWaActionLoading(null);
-    }
-  };
-
-  const handleSave = async () => {
-    const payloadToSave: Record<string, string> = {
-      ...rawConfig,
-      BANK_ACCOUNTS: JSON.stringify(
-        bankAccounts.filter(
-          (item) => item.bank.trim() || item.number.trim() || item.name.trim()
-        )
-      ),
-      LOVE_STORY: JSON.stringify(
-        loveStory.filter(
-          (item) => item.date.trim() || item.title.trim() || item.desc.trim()
-        )
-      ),
-      GALLERY_IMAGES: JSON.stringify(
-        galleryImages.map((u) => u.trim()).filter(Boolean)
-      ),
-    };
-
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const res = await fetch("/api/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payloadToSave),
-      });
-      if (res.ok) {
-        invalidateConfigCache();
-        setRawConfig(payloadToSave);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-      } else {
-        let msg = "Gagal menyimpan konfigurasi.";
-        try {
-          const payload = await res.json();
-          if (payload?.error) msg = payload.error;
-        } catch {
-          // ignore
-        }
-        setSaveError(msg);
-      }
-    } catch {
-      setSaveError("Gagal terhubung ke server saat menyimpan konfigurasi.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-      </div>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <div
-        role="alert"
-        className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm font-medium text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400"
-      >
-        {loadError}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-8">
-      {saveError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400"
-        >
-          {saveError}
-        </div>
-      )}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Perubahan akan langsung diterapkan setelah disimpan.
-        </p>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className={`flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white shadow-lg transition-all disabled:opacity-50 ${
-            saved
-              ? "bg-green-500"
-              : "bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
-          }`}
-        >
-          {saving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          {saved ? "Tersimpan!" : "Simpan Semua"}
-        </button>
-      </div>
-
-      {CONFIG_SECTIONS.map((section) => (
-        <div
-          key={section.title}
-          className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
-        >
-          <h3 className="mb-6 font-serif text-lg font-bold text-slate-800 italic dark:text-white">
-            {section.title}
-          </h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            {section.fields.map((field) => {
-              const fieldId = `cfg-${field.key}`;
-              return (
-                <div
-                  key={field.key}
-                  className={field.type === "textarea" ? "md:col-span-2" : ""}
-                >
-                  <label
-                    htmlFor={fieldId}
-                    className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-                  >
-                    {field.label}
-                  </label>
-                  {field.type === "textarea" ? (
-                    <textarea
-                      id={fieldId}
-                      value={rawConfig[field.key] ?? ""}
-                      onChange={(e) => handleChange(field.key, e.target.value)}
-                      placeholder={field.placeholder}
-                      rows={3}
-                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                    />
-                  ) : IMAGE_UPLOAD_KEYS.has(field.key) ? (
-                    <div className="flex items-center gap-2">
-                      {rawConfig[field.key]?.trim() && (
-                        <img
-                          src={rawConfig[field.key]}
-                          alt={field.label}
-                          className="h-11 w-11 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-slate-700"
-                        />
-                      )}
-                      <input
-                        id={fieldId}
-                        type="url"
-                        value={rawConfig[field.key] ?? ""}
-                        onChange={(e) =>
-                          handleChange(field.key, e.target.value)
-                        }
-                        placeholder={field.placeholder}
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                      />
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-                        {uploadingKey === field.key ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Upload className="h-4 w-4" />
-                        )}
-                        <span className="hidden sm:inline">Upload</span>
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          className="hidden"
-                          disabled={uploadingKey !== null}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            e.target.value = "";
-                            if (f) {
-                              void uploadImageFile(f, field.key, (url) =>
-                                handleChange(field.key, url)
-                              );
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-                  ) : (
-                    <input
-                      id={fieldId}
-                      type={
-                        field.type === "number"
-                          ? "number"
-                          : field.type === "url"
-                            ? "url"
-                            : "text"
-                      }
-                      value={rawConfig[field.key] ?? ""}
-                      onChange={(e) => handleChange(field.key, e.target.value)}
-                      placeholder={field.placeholder}
-                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-
-      {/* WhatsApp Gateway (whatsapp.zedlabs.id) */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
-            Integrasi WhatsApp Gateway (whatsapp.zedlabs.id)
-          </h3>
-          <span className="rounded-full bg-green-100 px-3 py-1 text-[11px] font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
-            HMAC-SHA256 v2
-          </span>
-        </div>
-        <p className="mb-6 text-xs text-slate-500 dark:text-slate-400">
-          Digunakan untuk notifikasi admin/mempelai, kirim undangan otomatis,
-          dan konfirmasi otomatis ke tamu setelah RSVP.
-        </p>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="cfg-WA_BASE_URL"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
-              URL Gateway
-            </label>
-            <input
-              id="cfg-WA_BASE_URL"
-              type="url"
-              value={rawConfig.WA_BASE_URL ?? "https://whatsapp.zedlabs.id"}
-              onChange={(e) => handleChange("WA_BASE_URL", e.target.value)}
-              placeholder="https://whatsapp.zedlabs.id"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="cfg-WA_API_KEY"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
-              API Key (key_id)
-            </label>
-            <input
-              id="cfg-WA_API_KEY"
-              type="text"
-              value={rawConfig.WA_API_KEY ?? ""}
-              onChange={(e) => handleChange("WA_API_KEY", e.target.value)}
-              placeholder="key_xxxxxxxxxxxx"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="cfg-WA_API_SECRET"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
-              HMAC Secret
-            </label>
-            <div className="relative">
-              <input
-                id="cfg-WA_API_SECRET"
-                type={showWaSecret ? "text" : "password"}
-                value={rawConfig.WA_API_SECRET ?? ""}
-                onChange={(e) => handleChange("WA_API_SECRET", e.target.value)}
-                placeholder="Secret HMAC API Key"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pr-11 pl-4 font-mono text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-              />
-              <button
-                type="button"
-                aria-label={showWaSecret ? "Sembunyikan secret" : "Tampilkan secret"}
-                onClick={() => setShowWaSecret((prev) => !prev)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                {showWaSecret ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label
-              htmlFor="cfg-WA_ADMIN_NUMBERS"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
-              Nomor WA Admin / Mempelai (pisah koma)
-            </label>
-            <input
-              id="cfg-WA_ADMIN_NUMBERS"
-              type="text"
-              value={rawConfig.WA_ADMIN_NUMBERS ?? ""}
-              onChange={(e) => handleChange("WA_ADMIN_NUMBERS", e.target.value)}
-              placeholder="081234567890, 089876543210"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            />
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 md:grid-cols-3 dark:border-slate-700">
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40">
-            <input
-              type="checkbox"
-              checked={(rawConfig.WA_NOTIFY_ADMIN_RSVP ?? "true") === "true"}
-              onChange={(e) =>
-                handleChange(
-                  "WA_NOTIFY_ADMIN_RSVP",
-                  e.target.checked ? "true" : "false"
-                )
-              }
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
-            />
-            <span>
-              <strong className="block text-slate-800 dark:text-slate-200">
-                Notif RSVP ke Admin
-              </strong>
-              Kirim WA ke admin/mempelai saat tamu mengisi atau mengubah RSVP.
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40">
-            <input
-              type="checkbox"
-              checked={(rawConfig.WA_NOTIFY_ADMIN_WISH ?? "true") === "true"}
-              onChange={(e) =>
-                handleChange(
-                  "WA_NOTIFY_ADMIN_WISH",
-                  e.target.checked ? "true" : "false"
-                )
-              }
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
-            />
-            <span>
-              <strong className="block text-slate-800 dark:text-slate-200">
-                Notif Ucapan ke Admin
-              </strong>
-              Kirim WA ke admin/mempelai saat ada ucapan & doa baru masuk.
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40">
-            <input
-              type="checkbox"
-              checked={(rawConfig.WA_AUTO_CONFIRM_GUEST ?? "true") === "true"}
-              onChange={(e) =>
-                handleChange(
-                  "WA_AUTO_CONFIRM_GUEST",
-                  e.target.checked ? "true" : "false"
-                )
-              }
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
-            />
-            <span>
-              <strong className="block text-slate-800 dark:text-slate-200">
-                Konfirmasi Otomatis Tamu
-              </strong>
-              Balas otomatis ke WA tamu berisi ringkasan RSVP & info acara.
-            </span>
-          </label>
-        </div>
-
-        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-700">
-          <button
-            type="button"
-            onClick={() => handleWaAction("ping")}
-            disabled={waActionLoading !== null}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            {waActionLoading === "ping" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Wifi className="h-3.5 w-3.5" />
-            )}
-            Uji Koneksi (Ping)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleWaAction("sync")}
-            disabled={waActionLoading !== null}
-            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700 disabled:opacity-50"
-          >
-            {waActionLoading === "sync" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCcw className="h-3.5 w-3.5" />
-            )}
-            Sinkron 4 Template ke Gateway
-          </button>
-          <button
-            type="button"
-            onClick={() => handleWaAction("test")}
-            disabled={waActionLoading !== null}
-            className="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300"
-          >
-            {waActionLoading === "test" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Send className="h-3.5 w-3.5" />
-            )}
-            Kirim Pesan Tes
-          </button>
-        </div>
-
-        {waFeedback && (
-          <p
-            className={`mt-3 text-xs font-medium ${
-              waFeedback.type === "success"
-                ? "text-green-600 dark:text-green-400"
-                : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {waFeedback.message}
-          </p>
-        )}
-      </div>
-
-      {/* Rekening Bank Editor */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
-            Rekening Bank (Amplop Digital)
-          </h3>
-          <button
-            type="button"
-            onClick={() =>
-              setBankAccounts((prev) => [
-                ...prev,
-                { bank: "", number: "", name: "" },
-              ])
-            }
-            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
-          >
-            <Plus className="h-3.5 w-3.5" /> Tambah Rekening
-          </button>
-        </div>
-        <div className="space-y-4">
-          {bankAccounts.length === 0 ? (
-            <p className="text-sm text-slate-400 italic">
-              Belum ada rekening bank. Klik &quot;Tambah Rekening&quot; untuk
-              menambahkan.
-            </p>
-          ) : (
-            bankAccounts.map((acc, idx) => (
-              <div
-                key={idx}
-                className="grid items-end gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4 md:grid-cols-10 dark:border-slate-700 dark:bg-slate-900/50"
-              >
-                <div className="md:col-span-3">
-                  <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                    Nama Bank / E-Wallet
-                  </label>
-                  <input
-                    type="text"
-                    value={acc.bank}
-                    placeholder="Bank BCA"
-                    onChange={(e) =>
-                      setBankAccounts((prev) =>
-                        prev.map((item, i) =>
-                          i === idx ? { ...item, bank: e.target.value } : item
-                        )
-                      )
-                    }
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                    Nomor Rekening
-                  </label>
-                  <input
-                    type="text"
-                    value={acc.number}
-                    placeholder="1234567890"
-                    onChange={(e) =>
-                      setBankAccounts((prev) =>
-                        prev.map((item, i) =>
-                          i === idx ? { ...item, number: e.target.value } : item
-                        )
-                      )
-                    }
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                    Atas Nama
-                  </label>
-                  <input
-                    type="text"
-                    value={acc.name}
-                    placeholder="Nama Pemilik Rekening"
-                    onChange={(e) =>
-                      setBankAccounts((prev) =>
-                        prev.map((item, i) =>
-                          i === idx ? { ...item, name: e.target.value } : item
-                        )
-                      )
-                    }
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  />
-                </div>
-                <div className="flex justify-end md:col-span-1">
-                  <button
-                    type="button"
-                    aria-label={`Hapus rekening ${idx + 1}`}
-                    onClick={() =>
-                      setBankAccounts((prev) =>
-                        prev.filter((_, i) => i !== idx)
-                      )
-                    }
-                    className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Kisah Cinta Editor */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
-            Kisah Cinta
-          </h3>
-          <button
-            type="button"
-            onClick={() =>
-              setLoveStory((prev) => [...prev, { date: "", title: "", desc: "" }])
-            }
-            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
-          >
-            <Plus className="h-3.5 w-3.5" /> Tambah Momen
-          </button>
-        </div>
-        <div className="space-y-4">
-          {loveStory.length === 0 ? (
-            <p className="text-sm text-slate-400 italic">
-              Belum ada kisah cinta. Klik &quot;Tambah Momen&quot; untuk
-              menambahkan.
-            </p>
-          ) : (
-            loveStory.map((story, idx) => (
-              <div
-                key={idx}
-                className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50"
-              >
-                <div className="grid items-end gap-3 md:grid-cols-10">
-                  <div className="md:col-span-3">
-                    <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                      Tahun / Waktu
-                    </label>
-                    <input
-                      type="text"
-                      value={story.date}
-                      placeholder="2020"
-                      onChange={(e) =>
-                        setLoveStory((prev) =>
-                          prev.map((item, i) =>
-                            i === idx ? { ...item, date: e.target.value } : item
-                          )
-                        )
-                      }
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                    />
-                  </div>
-                  <div className="md:col-span-6">
-                    <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                      Judul Momen
-                    </label>
-                    <input
-                      type="text"
-                      value={story.title}
-                      placeholder="Awal Pertemuan"
-                      onChange={(e) =>
-                        setLoveStory((prev) =>
-                          prev.map((item, i) =>
-                            i === idx
-                              ? { ...item, title: e.target.value }
-                              : item
-                          )
-                        )
-                      }
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                    />
-                  </div>
-                  <div className="flex justify-end md:col-span-1">
-                    <button
-                      type="button"
-                      aria-label={`Hapus momen ${idx + 1}`}
-                      onClick={() =>
-                        setLoveStory((prev) => prev.filter((_, i) => i !== idx))
-                      }
-                      className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                    Cerita Singkat
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={story.desc}
-                    placeholder="Ceritakan momen spesial ini..."
-                    onChange={(e) =>
-                      setLoveStory((prev) =>
-                        prev.map((item, i) =>
-                          i === idx ? { ...item, desc: e.target.value } : item
-                        )
-                      )
-                    }
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  />
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Galeri Foto Editor */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
-            Galeri Foto
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700">
-              {uploadingKey === "gallery-new" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Upload className="h-3.5 w-3.5" />
-              )}
-              Upload Foto
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                disabled={uploadingKey !== null}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = "";
-                  if (f) {
-                    void uploadImageFile(f, "gallery-new", (url) =>
-                      setGalleryImages((prev) => [...prev, url])
-                    );
-                  }
-                }}
-              />
-            </label>
-            <button
-              type="button"
-              onClick={() => setGalleryImages((prev) => [...prev, ""])}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
-            >
-              <Plus className="h-3.5 w-3.5" /> Tambah URL
-            </button>
-          </div>
-        </div>
-        <div className="space-y-3">
-          {galleryImages.length === 0 ? (
-            <p className="text-sm text-slate-400 italic">
-              Belum ada foto galeri. Klik &quot;Tambah Foto&quot; untuk
-              menambahkan URL gambar.
-            </p>
-          ) : (
-            galleryImages.map((url, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-900/50"
-              >
-                {url.trim() ? (
-                  <img
-                    src={url}
-                    alt={`Pratinjau foto ${idx + 1}`}
-                    className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-slate-700"
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-300 text-xs text-slate-400 dark:border-slate-600">
-                    {idx + 1}
-                  </div>
-                )}
-                <input
-                  type="url"
-                  aria-label={`URL foto galeri ${idx + 1}`}
-                  value={url}
-                  placeholder="https://example.com/foto.jpg"
-                  onChange={(e) =>
-                    setGalleryImages((prev) =>
-                      prev.map((item, i) => (i === idx ? e.target.value : item))
-                    )
-                  }
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-                <button
-                  type="button"
-                  aria-label={`Hapus foto ${idx + 1}`}
-                  onClick={() =>
-                    setGalleryImages((prev) => prev.filter((_, i) => i !== idx))
-                  }
-                  className="shrink-0 rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div className="flex justify-end pb-8">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className={`flex items-center gap-2 rounded-xl px-8 py-4 text-sm font-bold text-white shadow-lg transition-all disabled:opacity-50 ${
-            saved
-              ? "bg-green-500"
-              : "bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
-          }`}
-        >
-          {saving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          {saved ? "Tersimpan!" : "Simpan Semua"}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const AdminDashboard = ({
   initialRsvps,
@@ -1453,8 +356,11 @@ const AdminDashboard = ({
   const [wishes, setWishes] = useState(initialWishes);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [rsvpModal, setRsvpModal] = useState<RsvpFormDraft | null>(null);
+  const [wishModal, setWishModal] = useState<WishFormDraft | null>(null);
+  const [csvImportTab, setCsvImportTab] = useState<"rsvp" | "wish" | null>(
+    null
+  );
   const [toast, setToast] = useState<ToastState | null>(null);
   const [confirmDialog, setConfirmDialog] =
     useState<ConfirmDialogState | null>(null);
@@ -1474,13 +380,16 @@ const AdminDashboard = ({
   }, [rsvps]);
 
   useEffect(() => {
-    if (!isModalOpen) return;
+    if (!rsvpModal && !wishModal) return;
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsModalOpen(false);
+      if (e.key === "Escape") {
+        setRsvpModal(null);
+        setWishModal(null);
+      }
     };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [isModalOpen]);
+  }, [rsvpModal, wishModal]);
 
   const handleDelete = async (type: "rsvp" | "wish", ids: number[]) => {
     if (ids.length === 0) return;
@@ -1515,60 +424,148 @@ const AdminDashboard = ({
     }
   };
 
-  const handleUpdate = async (type: "rsvp" | "wish", id: number, data: any) => {
+  const handleSaveRsvpModal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rsvpModal || !rsvpModal.guest_name.trim()) return;
     setIsSaving(true);
     try {
-      const payloadData =
-        type === "rsvp"
-          ? {
-              ...data,
-              guest_count:
-                data.attendance === "hadir"
-                  ? Math.max(1, Number(data.guest_count) || 1)
-                  : 0,
-            }
-          : data;
+      const payloadData = {
+        guest_name: rsvpModal.guest_name.trim(),
+        phone: rsvpModal.phone.trim(),
+        attendance: rsvpModal.attendance,
+        guest_count:
+          rsvpModal.attendance === "hadir"
+            ? Math.max(1, Number(rsvpModal.guest_count) || 1)
+            : 0,
+        message: rsvpModal.message.trim(),
+      };
 
+      const isEdit = Boolean(rsvpModal.id);
       const res = await fetch("/api/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: type === "rsvp" ? "update_rsvp" : "update_wish",
-          id,
-          data: payloadData,
-        }),
+        body: JSON.stringify(
+          isEdit
+            ? { action: "update_rsvp", id: rsvpModal.id, data: payloadData }
+            : { action: "create_rsvp", data: payloadData }
+        ),
       });
+      const json = await res.json().catch(() => ({}));
       if (res.ok) {
-        if (type === "rsvp") {
+        if (isEdit && rsvpModal.id) {
           setRsvps((prev) =>
             prev.map((item) =>
-              item.id === id ? { ...item, ...payloadData } : item
+              item.id === rsvpModal.id ? { ...item, ...payloadData } : item
             )
           );
-        } else {
-          setWishes((prev) =>
-            prev.map((item) =>
-              item.id === id ? { ...item, ...payloadData } : item
-            )
-          );
+          setToast({ type: "success", message: "Data RSVP diperbarui." });
+        } else if (json.item) {
+          setRsvps((prev) => [json.item, ...prev]);
+          setToast({
+            type: "success",
+            message: `RSVP "${payloadData.guest_name}" berhasil ditambahkan.`,
+          });
         }
-        setIsModalOpen(false);
-        setToast({ type: "success", message: "Data berhasil diperbarui." });
+        setRsvpModal(null);
       } else {
-        let msg = "Gagal update data.";
-        try {
-          const errJson = await res.json();
-          if (errJson?.error) msg = errJson.error;
-        } catch {
-          // ignore
-        }
-        setToast({ type: "error", message: msg });
+        setToast({
+          type: "error",
+          message: json?.error || "Gagal menyimpan RSVP.",
+        });
       }
     } catch {
       setToast({ type: "error", message: "Gagal terhubung ke server." });
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSaveWishModal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!wishModal || !wishModal.name.trim() || !wishModal.message.trim())
+      return;
+    setIsSaving(true);
+    try {
+      const payloadData = {
+        name: wishModal.name.trim(),
+        message: wishModal.message.trim(),
+      };
+      const isEdit = Boolean(wishModal.id);
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          isEdit
+            ? { action: "update_wish", id: wishModal.id, data: payloadData }
+            : { action: "create_wish", data: payloadData }
+        ),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (isEdit && wishModal.id) {
+          setWishes((prev) =>
+            prev.map((item) =>
+              item.id === wishModal.id ? { ...item, ...payloadData } : item
+            )
+          );
+          setToast({ type: "success", message: "Ucapan berhasil diperbarui." });
+        } else if (json.item) {
+          setWishes((prev) => [json.item, ...prev]);
+          setToast({
+            type: "success",
+            message: `Ucapan dari "${payloadData.name}" berhasil ditambahkan.`,
+          });
+        }
+        setWishModal(null);
+      } else {
+        setToast({
+          type: "error",
+          message: json?.error || "Gagal menyimpan ucapan.",
+        });
+      }
+    } catch {
+      setToast({ type: "error", message: "Gagal terhubung ke server." });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleImportRsvps = async (rows: ParsedRsvpRow[]) => {
+    const res = await fetch("/api/admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "import_rsvp", items: rows }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(json?.error || "Gagal mengimpor data RSVP.");
+    }
+    if (Array.isArray(json.items)) {
+      setRsvps((prev) => [...json.items.reverse(), ...prev]);
+    }
+    setToast({
+      type: "success",
+      message: `${json.count || rows.length} data RSVP berhasil diimpor.`,
+    });
+  };
+
+  const handleImportWishes = async (rows: ParsedWishRow[]) => {
+    const res = await fetch("/api/admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "import_wish", items: rows }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(json?.error || "Gagal mengimpor data ucapan.");
+    }
+    if (Array.isArray(json.items)) {
+      setWishes((prev) => [...json.items.reverse(), ...prev]);
+    }
+    setToast({
+      type: "success",
+      message: `${json.count || rows.length} ucapan berhasil diimpor.`,
+    });
   };
 
   const tabs = [
@@ -1588,6 +585,84 @@ const AdminDashboard = ({
         dialog={confirmDialog}
         onClose={() => setConfirmDialog(null)}
       />
+
+      <CsvImportModal<ParsedRsvpRow>
+        isOpen={csvImportTab === "rsvp"}
+        title="Import Data RSVP (CSV / Excel)"
+        description="Upload file CSV atau tempel dari Excel. Status (Hadir/Ragu/Tidak Hadir) dinormalisasi otomatis."
+        templateFilename="template_rsvp.csv"
+        templateHeaders={["Nama Tamu", "No WhatsApp", "Status", "Pax", "Pesan"]}
+        templateRows={[
+          ["Bpk. Andi Pratama", "081234567890", "Hadir", 2, "InsyaAllah hadir"],
+          ["Ibu Dewi", "089876543210", "Tidak Hadir", 0, "Maaf sedang di luar kota"],
+          ["Raka Wijaya", "", "Ragu", 1, "Diupayakan hadir"],
+        ]}
+        pastePlaceholder={
+          "Bpk. Andi Pratama,081234567890,Hadir,2,InsyaAllah hadir\nIbu Dewi,089876543210,Tidak Hadir,0,Maaf berhalangan"
+        }
+        parseText={parseRsvpsText}
+        columns={[
+          {
+            header: "Nama Tamu",
+            render: (r) => <span className="font-bold">{r.guest_name}</span>,
+          },
+          {
+            header: "Kontak",
+            render: (r) => <span className="font-mono">{r.phone || "-"}</span>,
+          },
+          {
+            header: "Status",
+            render: (r) => (
+              <span className="uppercase">{r.attendance.replace("_", " ")}</span>
+            ),
+          },
+          { header: "Pax", render: (r) => r.guest_count },
+          {
+            header: "Pesan",
+            render: (r) => (
+              <span className="block max-w-[180px] truncate">
+                {r.message || "-"}
+              </span>
+            ),
+          },
+        ]}
+        onConfirm={handleImportRsvps}
+        onClose={() => setCsvImportTab(null)}
+        confirmLabel="Simpan RSVP"
+      />
+
+      <CsvImportModal<ParsedWishRow>
+        isOpen={csvImportTab === "wish"}
+        title="Import Ucapan & Doa (CSV / Excel)"
+        description="Upload file CSV atau salin-tempel daftar ucapan dari Excel/Google Sheets."
+        templateFilename="template_ucapan.csv"
+        templateHeaders={["Nama Pengirim", "Ucapan & Doa"]}
+        templateRows={[
+          [
+            "Keluarga Besar H. Budi",
+            "Semoga menjadi keluarga sakinah mawaddah warahmah!",
+          ],
+          ["Siti Rahma", "Selamat menempuh hidup baru, bahagia selalu."],
+        ]}
+        pastePlaceholder={
+          "Keluarga Besar H. Budi,Semoga menjadi keluarga sakinah mawaddah warahmah!\nSiti Rahma,Selamat menempuh hidup baru."
+        }
+        parseText={parseWishesText}
+        columns={[
+          {
+            header: "Nama Pengirim",
+            render: (r) => <span className="font-bold">{r.name}</span>,
+          },
+          {
+            header: "Ucapan & Doa",
+            render: (r) => <span className="line-clamp-2">{r.message}</span>,
+          },
+        ]}
+        onConfirm={handleImportWishes}
+        onClose={() => setCsvImportTab(null)}
+        confirmLabel="Simpan Ucapan"
+      />
+
       <div className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
         <div className="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
           <div className="flex items-center gap-3 text-slate-400">
@@ -1631,6 +706,7 @@ const AdminDashboard = ({
           </p>
         </div>
       </div>
+
       {isDeleting && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="flex items-center gap-4 rounded-xl bg-white p-6 shadow-2xl">
@@ -1646,6 +722,7 @@ const AdminDashboard = ({
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-bold whitespace-nowrap transition-colors ${
               activeTab === tab.id
@@ -1661,11 +738,33 @@ const AdminDashboard = ({
 
       {activeTab === "rsvp" && (
         <div className="animate-reveal space-y-6">
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                setRsvpModal({
+                  guest_name: "",
+                  phone: "",
+                  attendance: "hadir",
+                  guest_count: 2,
+                  message: "",
+                })
+              }
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" /> TAMBAH RSVP
+            </button>
+            <button
+              type="button"
+              onClick={() => setCsvImportTab("rsvp")}
+              className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600"
+            >
+              <Upload className="h-4 w-4" /> IMPORT CSV / EXCEL
+            </button>
             <a
               href="/api/export-rsvp"
               target="_blank"
-              className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-green-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-green-700"
             >
               <Download className="h-4 w-4" /> EXPORT CSV
             </a>
@@ -1717,10 +816,16 @@ const AdminDashboard = ({
                   new Date(item.created_at).toLocaleDateString("id-ID"),
               },
             ]}
-            onEdit={(item) => {
-              setEditingItem(item);
-              setIsModalOpen(true);
-            }}
+            onEdit={(item) =>
+              setRsvpModal({
+                id: item.id,
+                guest_name: item.guest_name,
+                phone: item.phone || "",
+                attendance: item.attendance,
+                guest_count: item.guest_count || 1,
+                message: item.message || "",
+              })
+            }
             onDelete={(id) => handleDelete("rsvp", [id])}
             onBulkDelete={(ids) => handleDelete("rsvp", ids)}
             onRequestConfirm={setConfirmDialog}
@@ -1730,11 +835,25 @@ const AdminDashboard = ({
 
       {activeTab === "wishes" && (
         <div className="animate-reveal space-y-6">
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setWishModal({ name: "", message: "" })}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" /> TAMBAH UCAPAN
+            </button>
+            <button
+              type="button"
+              onClick={() => setCsvImportTab("wish")}
+              className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600"
+            >
+              <Upload className="h-4 w-4" /> IMPORT CSV / EXCEL
+            </button>
             <a
               href="/api/export-wishes"
               target="_blank"
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-green-700"
             >
               <Download className="h-4 w-4" /> EXPORT CSV
             </a>
@@ -1751,7 +870,7 @@ const AdminDashboard = ({
                 header: "Ucapan",
                 accessor: (item) => (
                   <span className="block max-w-[300px] text-wrap text-slate-500 italic">
-                    "{item.message}"
+                    &quot;{item.message}&quot;
                   </span>
                 ),
               },
@@ -1761,10 +880,13 @@ const AdminDashboard = ({
                   new Date(item.created_at).toLocaleDateString("id-ID"),
               },
             ]}
-            onEdit={(item) => {
-              setEditingItem(item);
-              setIsModalOpen(true);
-            }}
+            onEdit={(item) =>
+              setWishModal({
+                id: item.id,
+                name: item.name,
+                message: item.message,
+              })
+            }
             onDelete={(id) => handleDelete("wish", [id])}
             onBulkDelete={(ids) => handleDelete("wish", ids)}
             onRequestConfirm={setConfirmDialog}
@@ -1834,140 +956,301 @@ const AdminDashboard = ({
         </div>
       )}
 
-      {isModalOpen && editingItem && (
+      {/* Modal Tambah / Edit RSVP */}
+      {rsvpModal && (
         <div
+          role="dialog"
+          aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setIsModalOpen(false);
+            if (e.target === e.currentTarget) setRsvpModal(null);
           }}
         >
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold dark:text-white">Edit Data</h3>
+              <h3 className="text-lg font-bold dark:text-white">
+                {rsvpModal.id ? "Edit Data RSVP" : "Tambah Data RSVP Manual"}
+              </h3>
               <button
                 type="button"
-                aria-label="Tutup modal"
-                onClick={() => setIsModalOpen(false)}
+                aria-label="Tutup modal RSVP"
+                onClick={() => setRsvpModal(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
               >
-                <X className="h-5 w-5 text-slate-400" />
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                const data = Object.fromEntries(formData.entries());
-                handleUpdate(
-                  activeTab === "rsvp" ? "rsvp" : "wish",
-                  editingItem.id,
-                  data
-                );
-              }}
-              className="space-y-4"
-            >
-              {activeTab === "rsvp" ? (
-                <>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase">
-                      Nama Tamu
-                    </label>
-                    <input
-                      name="guest_name"
-                      defaultValue={editingItem.guest_name}
-                      className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase">
-                      No. HP / WhatsApp
-                    </label>
-                    <input
-                      name="phone"
-                      defaultValue={editingItem.phone || ""}
-                      placeholder="08xxxxxxxxxx"
-                      className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-500 uppercase">
-                        Status
-                      </label>
-                      <select
-                        name="attendance"
-                        defaultValue={editingItem.attendance}
-                        className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+            <form onSubmit={handleSaveRsvpModal} className="space-y-4">
+              <div className="space-y-1">
+                <label
+                  htmlFor="modal-rsvp-name"
+                  className="text-xs font-bold text-slate-500 uppercase"
+                >
+                  Nama Tamu *
+                </label>
+                <input
+                  id="modal-rsvp-name"
+                  value={rsvpModal.guest_name}
+                  onChange={(e) =>
+                    setRsvpModal({ ...rsvpModal, guest_name: e.target.value })
+                  }
+                  placeholder="Contoh: Bpk. Ahmad & Ibu Siti"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <label
+                  htmlFor="modal-rsvp-phone"
+                  className="text-xs font-bold text-slate-500 uppercase"
+                >
+                  No. HP / WhatsApp (Opsional)
+                </label>
+                <input
+                  id="modal-rsvp-phone"
+                  type="tel"
+                  inputMode="tel"
+                  value={rsvpModal.phone}
+                  onChange={(e) =>
+                    setRsvpModal({ ...rsvpModal, phone: e.target.value })
+                  }
+                  placeholder="08xxxxxxxxxx"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="block text-xs font-bold text-slate-500 uppercase">
+                  Status Kehadiran
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      ["hadir", "Hadir"],
+                      ["ragu", "Ragu"],
+                      ["tidak_hadir", "Tidak Hadir"],
+                    ] as const
+                  ).map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() =>
+                        setRsvpModal({
+                          ...rsvpModal,
+                          attendance: val,
+                          guest_count:
+                            val === "hadir"
+                              ? Math.max(1, rsvpModal.guest_count)
+                              : 0,
+                        })
+                      }
+                      className={`rounded-xl border py-2.5 text-xs font-bold transition-all ${
+                        rsvpModal.attendance === val
+                          ? val === "hadir"
+                            ? "border-green-600 bg-green-600 text-white"
+                            : val === "tidak_hadir"
+                              ? "border-red-600 bg-red-600 text-white"
+                              : "border-amber-500 bg-amber-500 text-white"
+                          : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {rsvpModal.attendance === "hadir" && (
+                <div className="space-y-1.5">
+                  <span className="block text-xs font-bold text-slate-500 uppercase">
+                    Jumlah Tamu (Pax)
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 p-1 dark:border-slate-600">
+                      <button
+                        type="button"
+                        aria-label="Kurangi pax"
+                        onClick={() =>
+                          setRsvpModal({
+                            ...rsvpModal,
+                            guest_count: Math.max(1, rsvpModal.guest_count - 1),
+                          })
+                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
                       >
-                        <option value="hadir">Hadir</option>
-                        <option value="ragu">Ragu</option>
-                        <option value="tidak_hadir">Tidak Hadir</option>
-                      </select>
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="w-14 text-center text-sm font-bold">
+                        {rsvpModal.guest_count} Pax
+                      </span>
+                      <button
+                        type="button"
+                        aria-label="Tambah pax"
+                        onClick={() =>
+                          setRsvpModal({
+                            ...rsvpModal,
+                            guest_count: Math.min(
+                              100,
+                              rsvpModal.guest_count + 1
+                            ),
+                          })
+                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-500 uppercase">
-                        Pax
-                      </label>
-                      <input
-                        type="number"
-                        name="guest_count"
-                        defaultValue={editingItem.guest_count}
-                        min={1}
-                        className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                      />
-                    </div>
+                    {[1, 2, 3, 4].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() =>
+                          setRsvpModal({ ...rsvpModal, guest_count: n })
+                        }
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold ${
+                          rsvpModal.guest_count === n
+                            ? "border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                            : "border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-600"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase">
-                      Pesan
-                    </label>
-                    <textarea
-                      name="message"
-                      defaultValue={editingItem.message}
-                      className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                      rows={3}
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase">
-                      Nama Pengirim
-                    </label>
-                    <input
-                      name="name"
-                      defaultValue={editingItem.name}
-                      className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase">
-                      Ucapan
-                    </label>
-                    <textarea
-                      name="message"
-                      defaultValue={editingItem.message}
-                      className="w-full rounded-lg border p-2 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                      rows={5}
-                      required
-                    />
-                  </div>
-                </>
+                </div>
               )}
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="modal-rsvp-msg"
+                    className="text-xs font-bold text-slate-500 uppercase"
+                  >
+                    Pesan (Opsional)
+                  </label>
+                  <span className="text-[10px] text-slate-400">
+                    {rsvpModal.message.length}/500
+                  </span>
+                </div>
+                <textarea
+                  id="modal-rsvp-msg"
+                  maxLength={500}
+                  value={rsvpModal.message}
+                  onChange={(e) =>
+                    setRsvpModal({ ...rsvpModal, message: e.target.value })
+                  }
+                  rows={3}
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+
               <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-700">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="rounded-lg px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                  onClick={() => setRsvpModal(null)}
+                  className="rounded-xl px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Tambah / Edit Ucapan */}
+      {wishModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setWishModal(null);
+          }}
+        >
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold dark:text-white">
+                {wishModal.id ? "Edit Ucapan & Doa" : "Tambah Ucapan Manual"}
+              </h3>
+              <button
+                type="button"
+                aria-label="Tutup modal ucapan"
+                onClick={() => setWishModal(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSaveWishModal} className="space-y-4">
+              <div className="space-y-1">
+                <label
+                  htmlFor="modal-wish-name"
+                  className="text-xs font-bold text-slate-500 uppercase"
+                >
+                  Nama Pengirim *
+                </label>
+                <input
+                  id="modal-wish-name"
+                  maxLength={100}
+                  value={wishModal.name}
+                  onChange={(e) =>
+                    setWishModal({ ...wishModal, name: e.target.value })
+                  }
+                  placeholder="Contoh: Keluarga Besar H. Budi"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="modal-wish-msg"
+                    className="text-xs font-bold text-slate-500 uppercase"
+                  >
+                    Ucapan & Doa *
+                  </label>
+                  <span className="text-[10px] text-slate-400">
+                    {wishModal.message.length}/1000
+                  </span>
+                </div>
+                <textarea
+                  id="modal-wish-msg"
+                  maxLength={1000}
+                  value={wishModal.message}
+                  onChange={(e) =>
+                    setWishModal({ ...wishModal, message: e.target.value })
+                  }
+                  rows={5}
+                  placeholder="Tuliskan ucapan & doa..."
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  required
+                />
+              </div>
+              <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setWishModal(null)}
+                  className="rounded-xl px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {isSaving ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

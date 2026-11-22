@@ -23,18 +23,18 @@ Website undangan pernikahan digital modern, cepat, dan interaktif yang dibangun 
 
 ### Admin Dashboard (`/admin` & `/checkin`)
 - **Statistik Reaktif:** Total respon, hadir (beserta total pax), ragu, dan tidak hadir langsung diperbarui saat edit/hapus data.
-- **Data RSVP & Ucapan:** Pencarian, paginasi, edit data (termasuk nomor kontak), hapus satuan/massal, serta export CSV aman dari CSV Formula Injection.
+- **Data RSVP & Ucapan:** Tambah manual, edit data (status interaktif & stepper pax), hapus satuan/massal, **Import CSV / Tempel dari Excel** (dengan pratinjau & deteksi kolom otomatis), serta export CSV aman dari CSV Formula Injection.
 - **Manajemen Daftar Tamu Permanen & QR Check-In (`/checkin`):**
-  - Simpan daftar tamu permanen di SQLite dengan kode check-in unik (`G-XXXXXXXX`), grup, dan kuota pax.
-  - Import & Export CSV daftar tamu, salin link personal, kirim undangan WA langsung, serta check-in manual.
-  - **Scanner QR Check-In Hari H:** Memindai QR via kamera (`BarcodeDetector` API) atau input manual (kode/nama/URL QR), lengkap dengan dukungan tamu *walk-in* 1-klik.
+  - Simpan daftar tamu permanen di SQLite dengan kode check-in unik (`G-XXXXXXXX`), grup, dan kuota pax (lengkap dengan form berlabel, edit tamu, dan stepper kuota).
+  - **Import CSV / Tempel dari Excel** (drag & drop, dukung pemisah `,`, `;` Excel ID, dan Tab) & Export CSV daftar tamu, salin link personal, kirim undangan WA langsung, serta check-in manual.
+  - **Scanner QR Check-In Hari H:** Memindai QR via kamera (`BarcodeDetector` API) atau input manual dengan saran cepat nama tamu belum check-in, lengkap dengan dukungan tamu *walk-in* 1-klik.
 - **Integrasi WhatsApp Gateway (`whatsapp.zedlabs.id` — HMAC-SHA256 v2):**
   - **Notifikasi Otomatis ke Admin/Mempelai:** Pemberitahuan otomatis ke satu atau lebih nomor WA admin saat ada RSVP atau ucapan baru/diperbarui.
   - **Konfirmasi Otomatis ke Tamu:** Balasan WA otomatis berisi ringkasan RSVP & jadwal acara saat tamu mengisi nomor HP.
-  - **Kirim Undangan Otomatis (Satuan & Massal CSV):** Mengirim undangan personal ke antrean gateway dengan opsi lampiran gambar QR Code PNG, tabel riwayat pengiriman, polling status (*Antre / Terkirim / Sampai / Dibaca / Gagal*), dan kirim ulang.
+  - **Kirim Undangan Otomatis (Satuan, Daftar Tamu & Massal CSV/Excel):** Tarik langsung penerima dari Daftar Tamu Permanen (dengan filter grup) atau Import CSV/Excel, opsi lampiran QR Code PNG, riwayat pengiriman, polling status, dan kirim ulang.
   - **Sinkronisasi 4 Template 1-Klik** langsung ke gateway + tombol **Uji Koneksi (Ping)** & **Kirim Pesan Tes**.
-- **QR Generator & Design PDF:** Generator QR resolusi seragam `300×300px` (satuan & massal ZIP) dan undangan cetak PDF 4 halaman A5 multi-tema.
-- **Pengaturan Konten Visual & Upload Gambar Lokal:** Editor repeater visual untuk Rekening Bank, Kisah Cinta, dan Galeri Foto, plus tombol **Upload Gambar** langsung ke penyimpanan lokal (`database/uploads/`).
+- **QR Generator & Design PDF:** Generator QR resolusi seragam `300×300px` dan undangan cetak PDF 4 halaman A5 multi-tema; mendukung pilih cepat atau muat massal 1-klik dari Daftar Tamu maupun Import CSV/Excel.
+- **Pengaturan Konten User-Friendly & Import/Export CSV:** Date/Time picker otomatis (mengisi hari, tanggal Indonesia, dan ISO sekaligus), ekstrak koordinat otomatis dari link Google Maps, auto-clean username Instagram, preset bank/e-wallet, upload banyak foto galeri sekaligus, sticky save bar, serta **Import & Export CSV** untuk pengaturan, rekening bank, dan kisah cinta.
 
 ---
 

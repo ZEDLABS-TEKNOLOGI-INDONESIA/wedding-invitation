@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { dbService } from "../services/dbService";
 import type { Wish, AppConfig } from "../types";
+import { QUICK_WISH_TEMPLATES } from "../utils/formHelpers";
 import {
   Quote,
   Heart,
@@ -150,16 +151,16 @@ const Wishes: React.FC<{ config: AppConfig }> = ({ config: _config }) => {
                 </div>
                 <form
                   onSubmit={handleSubmit}
-                  className="space-y-8 md:space-y-12"
+                  className="space-y-6 md:space-y-8"
                 >
-                  <div className="space-y-6 md:space-y-10">
-                    <div className="group/input relative">
-                      <div className="mb-1 flex items-center justify-between">
+                  <div className="space-y-5">
+                    <div className="group/input space-y-1.5">
+                      <div className="flex items-center justify-between">
                         <label
                           htmlFor="wish-name"
                           className="text-[11px] font-black tracking-widest text-slate-500 uppercase dark:text-slate-400"
                         >
-                          Nama Anda
+                          Nama Anda <span className="text-red-500">*</span>
                         </label>
                         {isNameLocked && (
                           <button
@@ -175,32 +176,61 @@ const Wishes: React.FC<{ config: AppConfig }> = ({ config: _config }) => {
                         id="wish-name"
                         required
                         type="text"
+                        autoComplete="name"
                         maxLength={100}
                         disabled={isNameLocked}
-                        className={`focus:border-accentDark dark:focus:border-accent w-full border-b-2 border-slate-200 bg-transparent py-3 font-serif text-lg text-slate-900 italic transition-all outline-none placeholder:text-slate-400 md:py-5 md:text-2xl dark:border-white/15 dark:text-white dark:placeholder:text-slate-500 ${
+                        className={`focus:border-accentDark dark:focus:border-accent w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 font-serif text-lg text-slate-900 italic transition-all outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200 md:py-3.5 md:text-xl dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 ${
                           isNameLocked ? "cursor-not-allowed opacity-60" : ""
                         }`}
-                        placeholder="Nama Lengkap"
+                        placeholder="Ketik nama lengkap Anda"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                       />
                     </div>
-                    <div className="group/input relative">
-                      <label
-                        htmlFor="wish-message"
-                        className="mb-1 block text-[11px] font-black tracking-widest text-slate-500 uppercase dark:text-slate-400"
-                      >
-                        Ucapan & Doa
-                      </label>
+                    <div className="group/input space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label
+                          htmlFor="wish-message"
+                          className="block text-[11px] font-black tracking-widest text-slate-500 uppercase dark:text-slate-400"
+                        >
+                          Ucapan & Doa <span className="text-red-500">*</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          {message.length}/1000
+                        </span>
+                      </div>
                       <textarea
                         id="wish-message"
                         required
                         maxLength={1000}
-                        className="focus:border-accentDark dark:focus:border-accent h-32 w-full resize-none border-b-2 border-slate-200 bg-transparent py-3 font-serif text-lg leading-relaxed text-slate-900 italic transition-all outline-none placeholder:text-slate-400 md:h-52 md:py-5 md:text-2xl dark:border-white/15 dark:text-white dark:placeholder:text-slate-500"
-                        placeholder="Tuliskan harapan terbaik Anda..."
+                        className="focus:border-accentDark dark:focus:border-accent h-32 w-full resize-none rounded-xl border border-slate-200 bg-white/80 px-4 py-3 font-serif text-base leading-relaxed text-slate-900 italic transition-all outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200 md:h-40 md:text-lg dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                        placeholder="Tuliskan harapan terbaik Anda atau pilih contoh di bawah..."
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                       />
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                          Pilih Doa Cepat (1 Klik):
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {QUICK_WISH_TEMPLATES.map((tpl, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setMessage(tpl)}
+                              className="rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-slate-400 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                            >
+                              {idx === 0
+                                ? "Doa Samawa"
+                                : idx === 1
+                                  ? "Selamat Menikah"
+                                  : idx === 2
+                                    ? "Menua Bersama"
+                                    : "Turut Berbahagia"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   {errorMsg && (

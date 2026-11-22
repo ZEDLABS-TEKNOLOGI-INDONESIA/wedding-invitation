@@ -164,16 +164,16 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                     </div>
                     <form
                       onSubmit={handleSubmit}
-                      className="space-y-6 md:space-y-10"
+                      className="space-y-6 md:space-y-8"
                     >
-                      <div className="space-y-6 md:space-y-8">
-                        <div className="group/input relative pt-3">
+                      <div className="space-y-5">
+                        <div className="group/input space-y-1.5">
                           <div className="flex items-center justify-between">
                             <label
                               htmlFor="rsvp-guest-name"
                               className="tracking-editorial group-focus-within/input:text-accentDark text-[11px] font-bold text-slate-500 uppercase transition-colors dark:text-slate-400"
                             >
-                              Nama Tamu
+                              Nama Tamu <span className="text-red-500">*</span>
                             </label>
                             {isNameLocked && (
                               <button
@@ -189,14 +189,15 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                             id="rsvp-guest-name"
                             required
                             type="text"
+                            autoComplete="name"
                             maxLength={100}
                             disabled={isNameLocked}
-                            className={`focus:border-accentDark dark:focus:border-accent w-full border-b border-slate-200 bg-transparent py-2.5 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-400 md:py-4 md:text-xl dark:border-white/15 dark:text-white dark:placeholder:text-slate-500 ${
+                            className={`focus:border-accentDark dark:focus:border-accent w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200 md:py-3.5 md:text-lg dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10 ${
                               isNameLocked
                                 ? "cursor-not-allowed text-slate-500 opacity-60"
                                 : ""
                             }`}
-                            placeholder="Nama lengkap Anda"
+                            placeholder="Ketik nama lengkap Anda"
                             value={formData.guest_name}
                             onChange={(e) =>
                               setFormData({
@@ -206,19 +207,21 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                             }
                           />
                         </div>
-                        <div className="group/input relative pt-2">
+                        <div className="group/input space-y-1.5">
                           <label
                             htmlFor="rsvp-phone"
                             className="tracking-editorial group-focus-within/input:text-accentDark block text-[11px] font-bold text-slate-500 uppercase transition-colors dark:text-slate-400"
                           >
-                            Kontak (WhatsApp / HP)
+                            No. WhatsApp / HP (Opsional)
                           </label>
                           <input
                             id="rsvp-phone"
                             type="tel"
+                            inputMode="tel"
+                            autoComplete="tel"
                             maxLength={30}
-                            className="focus:border-accentDark dark:focus:border-accent w-full border-b border-slate-200 bg-transparent py-2.5 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-400 md:py-4 md:text-xl dark:border-white/15 dark:text-white dark:placeholder:text-slate-500"
-                            placeholder="08xxxxxxxxxx (Opsional)"
+                            className="focus:border-accentDark dark:focus:border-accent w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200 md:py-3.5 md:text-lg dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
+                            placeholder="Contoh: 081234567890"
                             value={formData.phone}
                             onChange={(e) =>
                               setFormData({
@@ -227,20 +230,29 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                               })
                             }
                           />
+                          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                            Isi jika ingin menerima pesan konfirmasi & pengingat
+                            acara via WhatsApp.
+                          </p>
                         </div>
                       </div>
-                      <div className="group/input relative pt-2">
-                        <label
-                          htmlFor="rsvp-message"
-                          className="tracking-editorial group-focus-within/input:text-accentDark block text-[11px] font-bold text-slate-500 uppercase transition-colors dark:text-slate-400"
-                        >
-                          Pesan
-                        </label>
+                      <div className="group/input space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label
+                            htmlFor="rsvp-message"
+                            className="tracking-editorial group-focus-within/input:text-accentDark block text-[11px] font-bold text-slate-500 uppercase transition-colors dark:text-slate-400"
+                          >
+                            Pesan Singkat (Opsional)
+                          </label>
+                          <span className="text-[10px] text-slate-400">
+                            {formData.message.length}/500
+                          </span>
+                        </div>
                         <textarea
                           id="rsvp-message"
                           maxLength={500}
-                          className="focus:border-accentDark dark:focus:border-accent w-full resize-none border-b border-slate-200 bg-transparent py-2.5 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-400 md:py-4 md:text-xl dark:border-white/15 dark:text-white dark:placeholder:text-slate-500"
-                          placeholder="Pesan untuk mempelai (Opsional)"
+                          className="focus:border-accentDark dark:focus:border-accent w-full resize-none rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200 md:text-lg dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
+                          placeholder="Tulis pesan atau catatan kehadiran untuk mempelai..."
                           rows={2}
                           value={formData.message}
                           onChange={(e) =>
@@ -251,29 +263,38 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                           }
                         />
                       </div>
-                      <div className="space-y-3 md:space-y-5">
+                      <div className="space-y-3">
                         <p className="tracking-editorial mb-1 text-[11px] font-bold text-slate-500 uppercase dark:text-slate-400">
                           Status Kehadiran
                         </p>
                         <div className="grid grid-cols-1 gap-2">
                           {[
-                            AttendanceStatus.HADIR,
-                            AttendanceStatus.TIDAK_HADIR,
-                            AttendanceStatus.RAGU,
-                          ].map((status) => (
+                            {
+                              status: AttendanceStatus.HADIR,
+                              label: "Ya, InsyaAllah Hadir",
+                            },
+                            {
+                              status: AttendanceStatus.TIDAK_HADIR,
+                              label: "Maaf, Belum Bisa Hadir",
+                            },
+                            {
+                              status: AttendanceStatus.RAGU,
+                              label: "Masih Ragu / Belum Pasti",
+                            },
+                          ].map(({ status, label }) => (
                             <button
                               key={status}
                               type="button"
                               onClick={() =>
                                 setFormData({ ...formData, attendance: status })
                               }
-                              className={`tracking-editorial group flex items-center justify-between rounded-lg border px-5 py-3.5 text-xs font-bold uppercase transition-all md:rounded-2xl md:py-5 ${
+                              className={`tracking-editorial group flex items-center justify-between rounded-xl border px-5 py-3.5 text-xs font-bold uppercase transition-all md:py-4 ${
                                 formData.attendance === status
                                   ? "bg-primary dark:text-primary border-primary text-white shadow-md dark:border-white dark:bg-white"
-                                  : "border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5"
+                                  : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
                               }`}
                             >
-                              {status.replace("_", " ")}
+                              {label}
                               {formData.attendance === status && (
                                 <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
                               )}
@@ -285,8 +306,31 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                       {formData.attendance === AttendanceStatus.HADIR && (
                         <div className="animate-reveal space-y-3">
                           <p className="tracking-editorial mb-1 text-[11px] font-bold text-slate-500 uppercase dark:text-slate-400">
-                            Jumlah Tamu (Maks. {maxGuests})
+                            Jumlah Tamu (Maks. {maxGuests} Orang)
                           </p>
+                          <div className="flex flex-wrap gap-2">
+                            {[1, 2, 3, 4]
+                              .filter((n) => n <= maxGuests)
+                              .map((preset) => (
+                                <button
+                                  key={preset}
+                                  type="button"
+                                  onClick={() =>
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      guest_count: preset,
+                                    }))
+                                  }
+                                  className={`rounded-lg border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                    formData.guest_count === preset
+                                      ? "bg-primary border-primary text-white dark:border-white dark:bg-white dark:text-slate-900"
+                                      : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300"
+                                  }`}
+                                >
+                                  {preset} Orang
+                                </button>
+                              ))}
+                          </div>
                           <div className="flex items-center gap-4">
                             <button
                               type="button"
@@ -297,7 +341,7 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                             >
                               <Minus className="h-4 w-4" />
                             </button>
-                            <div className="flex-1 border-b border-slate-100 pb-1 text-center font-serif text-xl italic md:text-2xl dark:border-white/5">
+                            <div className="flex-1 rounded-xl border border-slate-100 bg-slate-50/70 py-2 text-center font-serif text-xl italic md:text-2xl dark:border-white/5 dark:bg-white/5">
                               {formData.guest_count} Orang
                             </div>
                             <button

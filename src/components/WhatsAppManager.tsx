@@ -1,27 +1,38 @@
-import FileSaver from "file-saver";
 import {
   CheckCircle2,
   Clock,
   Eye,
-  FileText,
   Loader2,
   RefreshCcw,
   Send,
   Trash2,
   Upload,
+  Users,
   XCircle,
 } from "lucide-react";
-import Papa from "papaparse";
 import React, { useCallback, useEffect, useState } from "react";
+import {
+  parseGuestsText,
+  type ParsedGuestRow,
+} from "../utils/csvImport";
 import {
   ConfirmModal,
   type ConfirmDialogState,
 } from "./Admin/AdminFeedback";
+import CsvImportModal from "./Admin/CsvImportModal";
 
 interface GuestInviteRow {
   name: string;
   phone: string;
   address: string;
+}
+
+interface SavedGuestItem {
+  id: number;
+  name: string;
+  phone: string;
+  address: string;
+  group_name: string;
 }
 
 interface WaInvitationRecord {
@@ -41,11 +52,13 @@ interface WaInvitationRecord {
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   queued: {
     label: "Antre",
-    className: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
+    className:
+      "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
   },
   processing: {
     label: "Diproses",
-    className: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    className:
+      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   },
   sent: {
     label: "Terkirim",
@@ -76,7 +89,9 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   });
   const [attachQr, setAttachQr] = useState(true);
   const [bulkGuests, setBulkGuests] = useState<GuestInviteRow[]>([]);
-  const [isReadingCsv, setIsReadingCsv] = useState(false);
+  const [savedGuests, setSavedGuests] = useState<SavedGuestItem[]>([]);
+  const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>("all");
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(0);
   const [feedback, setFeedback] = useState<{
@@ -109,58 +124,70 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     }
   }, []);
 
+  const loadSavedGuests = useCallback(async () => {
+    try {
+      const res = await fetch("/api/guests", { credentials: "include" });
+      if (res.ok) {
+        const data = (await res.json()) as SavedGuestItem[];
+        setSavedGuests(data);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     loadHistory();
-  }, [loadHistory]);
+    loadSavedGuests();
+  }, [loadHistory, loadSavedGuests]);
 
-  const handleSaveAs = (blob: Blob, filename: string) => {
-    const saveAsFunc = (FileSaver as any).saveAs || FileSaver;
-    saveAsFunc(blob, filename);
+  const savedGuestsWithPhone = savedGuests.filter((g) => g.phone.trim() !== "");
+  const availableGroups = Array.from(
+    new Set(
+      savedGuestsWithPhone
+        .map((g) => g.group_name.trim())
+        .filter((g) => g !== "")
+    )
+  );
+
+  const loadFromGuestDb = () => {
+    const filtered = savedGuestsWithPhone.filter(
+      (g) =>
+        selectedGroupFilter === "all" ||
+        g.group_name.trim() === selectedGroupFilter
+    );
+    if (filtered.length === 0) {
+      setFeedback({
+        type: "error",
+        message:
+          "Belum ada tamu dengan nomor WhatsApp pada Daftar Tamu Permanen (atau grup terpilih).",
+      });
+      return;
+    }
+    setBulkGuests(
+      filtered.map((g) => ({
+        name: g.name,
+        phone: g.phone,
+        address: g.address || "Di Tempat",
+      }))
+    );
+    setFeedback({
+      type: "success",
+      message: `${filtered.length} tamu berhasil dimuat dari Daftar Tamu Permanen.`,
+    });
   };
 
-  const downloadCsvTemplate = () => {
-    const csvContent =
-      "Nama Tamu,No WhatsApp,Alamat (Opsional)\nBapak Ahmad & Ibu Siti,081234567890,Jakarta\nRina Kusuma,6289876543210,Di Tempat";
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    handleSaveAs(blob, "template_undangan_whatsapp.csv");
-  };
-
-  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setIsReadingCsv(true);
-    setFeedback(null);
-
-    Papa.parse(file, {
-      header: false,
-      complete: (results) => {
-        const parsed: GuestInviteRow[] = [];
-        for (const row of results.data as unknown[]) {
-          if (!Array.isArray(row)) continue;
-          const name = typeof row[0] === "string" ? row[0].trim() : "";
-          const phone =
-            typeof row[1] === "string" || typeof row[1] === "number"
-              ? String(row[1]).trim()
-              : "";
-          const address =
-            typeof row[2] === "string" && row[2].trim()
-              ? row[2].trim()
-              : "Di Tempat";
-
-          if (!name || name.toLowerCase().includes("nama tamu")) continue;
-          parsed.push({ name, phone, address });
-        }
-        setBulkGuests(parsed);
-        setIsReadingCsv(false);
-      },
-      error: () => {
-        setFeedback({
-          type: "error",
-          message: "Gagal membaca file CSV. Pastikan format file valid.",
-        });
-        setIsReadingCsv(false);
-      },
+  const handleCsvConfirmed = (rows: ParsedGuestRow[]) => {
+    setBulkGuests(
+      rows.map((r) => ({
+        name: r.name,
+        phone: r.phone,
+        address: r.address || "Di Tempat",
+      }))
+    );
+    setFeedback({
+      type: "success",
+      message: `${rows.length} baris tamu siap dikirim lewat WhatsApp.`,
     });
   };
 
@@ -240,7 +267,8 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         totalFailed += Number(payload.failed || 0);
         setBulkProgress(
           Math.round(
-            (Math.min(i + chunk.length, bulkGuests.length) / bulkGuests.length) *
+            (Math.min(i + chunk.length, bulkGuests.length) /
+              bulkGuests.length) *
               100
           )
         );
@@ -356,15 +384,52 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         dialog={confirmDialog}
         onClose={() => setConfirmDialog(null)}
       />
+
+      <CsvImportModal<ParsedGuestRow>
+        isOpen={isCsvModalOpen}
+        title="Import Penerima Undangan WhatsApp"
+        description="Upload file CSV atau salin-tempel daftar tamu + nomor WhatsApp dari Excel."
+        templateFilename="template_undangan_whatsapp.csv"
+        templateHeaders={["Nama Tamu", "No WhatsApp", "Alamat (Opsional)"]}
+        templateRows={[
+          ["Bapak Ahmad & Ibu Siti", "081234567890", "Jakarta"],
+          ["Rina Kusuma", "6289876543210", "Di Tempat"],
+        ]}
+        pastePlaceholder={
+          "Bapak Ahmad & Ibu Siti,081234567890,Jakarta\nRina Kusuma,089876543210,Di Tempat"
+        }
+        parseText={parseGuestsText}
+        columns={[
+          {
+            header: "Nama Tamu",
+            render: (r) => <span className="font-bold">{r.name}</span>,
+          },
+          {
+            header: "No WhatsApp",
+            render: (r) => (
+              <span
+                className={`font-mono ${!r.phone ? "text-red-500" : ""}`}
+              >
+                {r.phone || "(Kosong)"}
+              </span>
+            ),
+          },
+          { header: "Alamat", render: (r) => r.address },
+        ]}
+        onConfirm={handleCsvConfirmed}
+        onClose={() => setIsCsvModalOpen(false)}
+        confirmLabel="Muat ke Antrean"
+      />
+
       <div className="space-y-2 text-center">
         <h3 className="font-serif text-3xl font-bold text-slate-900 italic dark:text-white">
           Kirim Undangan via WhatsApp
         </h3>
         <p className="mx-auto max-w-2xl text-sm text-slate-500 dark:text-slate-400">
           Kirim tautan undangan personal secara otomatis melalui antrean
-          WhatsApp Gateway (<code>whatsapp.zedlabs.id</code>). Pastikan
-          kredensial sudah diatur dan template telah disinkronkan di tab{" "}
-          <strong>Pengaturan</strong>.
+          WhatsApp Gateway (<code>whatsapp.zedlabs.id</code>). Anda bisa
+          mengambil data langsung dari <strong>Daftar Tamu</strong> atau{" "}
+          <strong>Import CSV / Excel</strong>.
         </p>
       </div>
 
@@ -408,7 +473,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                 : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            Kirim Massal (CSV)
+            Kirim Massal (Daftar Tamu / CSV)
           </button>
         </div>
 
@@ -429,6 +494,43 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           className="grid gap-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-6 md:grid-cols-2 dark:border-slate-700 dark:bg-slate-900/40"
         >
           <div className="space-y-4">
+            {savedGuestsWithPhone.length > 0 && (
+              <div>
+                <label
+                  htmlFor="wa-quick-pick"
+                  className="mb-1.5 block text-xs font-bold text-slate-500 uppercase"
+                >
+                  Pilih Cepat dari Daftar Tamu (Opsional)
+                </label>
+                <select
+                  id="wa-quick-pick"
+                  value=""
+                  onChange={(e) => {
+                    const found = savedGuestsWithPhone.find(
+                      (g) => String(g.id) === e.target.value
+                    );
+                    if (found) {
+                      setSingleForm({
+                        name: found.name,
+                        phone: found.phone,
+                        address: found.address || "Di Tempat",
+                      });
+                    }
+                  }}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                >
+                  <option value="">
+                    -- Pilih dari {savedGuestsWithPhone.length} tamu tersimpan --
+                  </option>
+                  {savedGuestsWithPhone.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name} ({g.phone})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div>
               <label
                 htmlFor="wa-guest-name"
@@ -459,6 +561,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               <input
                 id="wa-guest-phone"
                 type="tel"
+                inputMode="tel"
                 required
                 maxLength={25}
                 value={singleForm.phone}
@@ -500,14 +603,18 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               </p>
               <p className="pt-2 text-xs text-slate-500 dark:text-slate-400">
                 Gateway akan memilih salah satu dari 3 varian template{" "}
-                <code>wedding_undangan_tamu</code> secara otomatis dengan antrean
-                aman.
+                <code>wedding_undangan_tamu</code> secara otomatis dengan
+                antrean aman.
               </p>
             </div>
 
             <button
               type="submit"
-              disabled={isSending || !singleForm.name.trim() || !singleForm.phone.trim()}
+              disabled={
+                isSending ||
+                !singleForm.name.trim() ||
+                !singleForm.phone.trim()
+              }
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3.5 text-xs font-bold tracking-wider text-white uppercase shadow-lg transition-all hover:bg-green-700 disabled:opacity-50"
             >
               {isSending ? (
@@ -515,49 +622,78 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              {isSending ? "Mengirim ke Antrean..." : "Kirim Undangan WhatsApp"}
+              {isSending
+                ? "Mengirim ke Antrean..."
+                : "Kirim Undangan WhatsApp"}
             </button>
           </div>
         </form>
       ) : (
         <div className="space-y-6">
           {bulkGuests.length === 0 ? (
-            <div className="space-y-5 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-slate-700 dark:bg-slate-900/40">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400">
-                {isReadingCsv ? (
-                  <Loader2 className="h-7 w-7 animate-spin" />
-                ) : (
-                  <Upload className="h-7 w-7" />
-                )}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex flex-col justify-between space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-900/40">
+                <div className="space-y-2">
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-base font-bold text-slate-800 dark:text-white">
+                    Ambil dari Daftar Tamu Permanen
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Muat otomatis {savedGuestsWithPhone.length} tamu yang sudah
+                    memiliki nomor WhatsApp di tab Tamu & Check-In.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {availableGroups.length > 0 && (
+                    <select
+                      aria-label="Filter grup tamu"
+                      value={selectedGroupFilter}
+                      onChange={(e) => setSelectedGroupFilter(e.target.value)}
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                    >
+                      <option value="all">Semua Grup</option>
+                      {availableGroups.map((grp) => (
+                        <option key={grp} value={grp}>
+                          {grp}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    type="button"
+                    onClick={loadFromGuestDb}
+                    disabled={savedGuestsWithPhone.length === 0}
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    <Users className="h-3.5 w-3.5" /> Muat Daftar Tamu
+                  </button>
+                </div>
               </div>
-              <div className="space-y-1">
-                <h4 className="text-lg font-bold text-slate-800 dark:text-white">
-                  Upload Daftar Tamu CSV
-                </h4>
-                <p className="mx-auto max-w-md text-sm text-slate-500 dark:text-slate-400">
-                  Format: <strong>Kolom 1: Nama Tamu</strong> |{" "}
-                  <strong>Kolom 2: No WhatsApp</strong> |{" "}
-                  <strong>Kolom 3: Alamat (Opsional)</strong>
-                </p>
-              </div>
-              <div className="flex flex-wrap justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={downloadCsvTemplate}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-                >
-                  <FileText className="h-4 w-4" /> Download Template CSV
-                </button>
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-green-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-green-700">
-                  Pilih File CSV
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleCsvUpload}
-                    className="hidden"
-                    disabled={isReadingCsv}
-                  />
-                </label>
+
+              <div className="flex flex-col justify-between space-y-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-900/40">
+                <div className="space-y-2">
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                    <Upload className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-base font-bold text-slate-800 dark:text-white">
+                    Import CSV / Tempel dari Excel
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Seret & lepas file CSV (koma atau titik koma Excel) atau
+                    copy-paste langsung dari Google Sheets/Excel.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCsvModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-green-700"
+                  >
+                    <Upload className="h-3.5 w-3.5" /> Buka Import CSV / Excel
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -591,7 +727,9 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                     ) : (
                       <Send className="h-4 w-4" />
                     )}
-                    {isSending ? `Mengirim (${bulkProgress}%)...` : "Kirim Semua"}
+                    {isSending
+                      ? `Mengirim (${bulkProgress}%)...`
+                      : "Kirim Semua"}
                   </button>
                 </div>
               </div>
@@ -607,12 +745,13 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
               <div className="custom-scrollbar max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase dark:bg-slate-900/60 dark:text-slate-400">
+                  <thead className="sticky top-0 bg-slate-50 text-slate-500 uppercase dark:bg-slate-900 dark:text-slate-400">
                     <tr>
                       <th className="px-4 py-3">#</th>
                       <th className="px-4 py-3">Nama Tamu</th>
                       <th className="px-4 py-3">No WhatsApp</th>
                       <th className="px-4 py-3">Alamat</th>
+                      <th className="px-4 py-3 text-right">Hapus</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -620,9 +759,25 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       <tr key={i}>
                         <td className="px-4 py-2.5 text-slate-400">{i + 1}</td>
                         <td className="px-4 py-2.5 font-medium">{g.name}</td>
-                        <td className="px-4 py-2.5 font-mono">{g.phone || "-"}</td>
+                        <td className="px-4 py-2.5 font-mono">
+                          {g.phone || "-"}
+                        </td>
                         <td className="px-4 py-2.5 text-slate-500">
                           {g.address}
+                        </td>
+                        <td className="px-4 py-2.5 text-right">
+                          <button
+                            type="button"
+                            aria-label={`Hapus ${g.name} dari antrean`}
+                            onClick={() =>
+                              setBulkGuests((prev) =>
+                                prev.filter((_, idx) => idx !== i)
+                              )
+                            }
+                            className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -688,7 +843,8 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                   </tr>
                 ) : (
                   history.map((row) => {
-                    const badge = STATUS_BADGE[row.status] || STATUS_BADGE.queued;
+                    const badge =
+                      STATUS_BADGE[row.status] || STATUS_BADGE.queued;
                     return (
                       <tr
                         key={row.id}

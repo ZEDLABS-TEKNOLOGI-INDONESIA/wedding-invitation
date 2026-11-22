@@ -36,6 +36,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       id?: unknown;
       ids?: unknown;
       data?: Record<string, unknown>;
+      items?: unknown[];
     };
 
     if (action === "delete_rsvp" || action === "delete_wish") {
@@ -153,6 +154,186 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         status: 200,
         headers: JSON_HEADERS,
       });
+    }
+
+    if (action === "create_rsvp" || action === "import_rsvp") {
+      const rawItems =
+        action === "import_rsvp"
+          ? Array.isArray(body.items)
+            ? body.items
+            : []
+          : data && typeof data === "object"
+            ? [data]
+            : [];
+
+      if (rawItems.length === 0 || rawItems.length > 500) {
+        return new Response(
+          JSON.stringify({
+            error: "Jumlah data RSVP harus antara 1 sampai 500.",
+          }),
+          { status: 400, headers: JSON_HEADERS }
+        );
+      }
+
+      const insertStmt = db.prepare(`
+        INSERT INTO rsvps (guest_name, phone, attendance, guest_count, message, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      const nowIso = new Date().toISOString();
+      const created: Array<{
+        id: number;
+        guest_name: string;
+        phone: string;
+        attendance: "hadir" | "tidak_hadir" | "ragu";
+        guest_count: number;
+        message: string;
+        created_at: string;
+      }> = [];
+
+      const runInsert = db.transaction(() => {
+        for (const raw of rawItems) {
+          if (!raw || typeof raw !== "object") continue;
+          const rec = raw as Record<string, unknown>;
+          const guest_name =
+            typeof rec.guest_name === "string"
+              ? rec.guest_name.trim().slice(0, 100)
+              : "";
+          if (!guest_name) continue;
+
+          const phone =
+            typeof rec.phone === "string" ? rec.phone.trim().slice(0, 30) : "";
+          const rawAtt =
+            typeof rec.attendance === "string" ? rec.attendance.trim() : "hadir";
+          const attendance = (
+            VALID_ATTENDANCE.has(rawAtt) ? rawAtt : "hadir"
+          ) as "hadir" | "tidak_hadir" | "ragu";
+          const rawCount = Number(rec.guest_count);
+          const guest_count =
+            attendance === "hadir"
+              ? Number.isInteger(rawCount) && rawCount >= 1 && rawCount <= 100
+                ? rawCount
+                : 1
+              : 0;
+          const message =
+            typeof rec.message === "string"
+              ? rec.message.trim().slice(0, 500)
+              : "";
+
+          const res = insertStmt.run(
+            guest_name,
+            phone,
+            attendance,
+            guest_count,
+            message,
+            nowIso
+          );
+          created.push({
+            id: Number(res.lastInsertRowid),
+            guest_name,
+            phone,
+            attendance,
+            guest_count,
+            message,
+            created_at: nowIso,
+          });
+        }
+      });
+
+      runInsert();
+
+      if (created.length === 0) {
+        return new Response(
+          JSON.stringify({
+            error: "Minimal satu data RSVP dengan nama tamu valid wajib diisi.",
+          }),
+          { status: 400, headers: JSON_HEADERS }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          count: created.length,
+          item: created[0],
+          items: created,
+        }),
+        { status: 200, headers: JSON_HEADERS }
+      );
+    }
+
+    if (action === "create_wish" || action === "import_wish") {
+      const rawItems =
+        action === "import_wish"
+          ? Array.isArray(body.items)
+            ? body.items
+            : []
+          : data && typeof data === "object"
+            ? [data]
+            : [];
+
+      if (rawItems.length === 0 || rawItems.length > 500) {
+        return new Response(
+          JSON.stringify({
+            error: "Jumlah data ucapan harus antara 1 sampai 500.",
+          }),
+          { status: 400, headers: JSON_HEADERS }
+        );
+      }
+
+      const insertStmt = db.prepare(`
+        INSERT INTO wishes (name, message, created_at)
+        VALUES (?, ?, ?)
+      `);
+      const nowIso = new Date().toISOString();
+      const created: Array<{
+        id: number;
+        name: string;
+        message: string;
+        created_at: string;
+      }> = [];
+
+      const runInsert = db.transaction(() => {
+        for (const raw of rawItems) {
+          if (!raw || typeof raw !== "object") continue;
+          const rec = raw as Record<string, unknown>;
+          const name =
+            typeof rec.name === "string" ? rec.name.trim().slice(0, 100) : "";
+          const message =
+            typeof rec.message === "string"
+              ? rec.message.trim().slice(0, 1000)
+              : "";
+          if (!name || !message) continue;
+
+          const res = insertStmt.run(name, message, nowIso);
+          created.push({
+            id: Number(res.lastInsertRowid),
+            name,
+            message,
+            created_at: nowIso,
+          });
+        }
+      });
+
+      runInsert();
+
+      if (created.length === 0) {
+        return new Response(
+          JSON.stringify({
+            error: "Minimal satu data ucapan dengan nama dan pesan valid wajib diisi.",
+          }),
+          { status: 400, headers: JSON_HEADERS }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          count: created.length,
+          item: created[0],
+          items: created,
+        }),
+        { status: 200, headers: JSON_HEADERS }
+      );
     }
 
     return new Response(JSON.stringify({ error: "Invalid action" }), {

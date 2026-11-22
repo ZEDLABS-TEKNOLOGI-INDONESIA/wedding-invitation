@@ -1,5 +1,13 @@
 ---
-import { ExternalLink, LogOut, Moon, QrCode, Sun } from "lucide-react";
+import {
+  ExternalLink,
+  Eye,
+  EyeOff,
+  LogOut,
+  Moon,
+  QrCode,
+  Sun,
+} from "lucide-react";
 import AdminDashboard from "../components/Admin/AdminDashboard";
 import Layout from "../layouts/Layout.astro";
 import {
@@ -120,19 +128,30 @@ if (isAuthenticated) {
               <div>
                 <label
                   for="admin-credential"
-                  class="sr-only"
+                  class="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
                 >
                   Password Admin
                 </label>
-                <input
-                  id="admin-credential"
-                  name="password"
-                  type="password"
-                  required
-                  autocomplete="current-password"
-                  class="block w-full rounded-lg border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                  placeholder="Masukkan akses kunci..."
-                />
+                <div class="relative">
+                  <input
+                    id="admin-credential"
+                    name="password"
+                    type="password"
+                    required
+                    autocomplete="current-password"
+                    class="block w-full rounded-lg border border-slate-300 bg-slate-50 py-4 pr-12 pl-4 text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                    placeholder="Masukkan password admin..."
+                  />
+                  <button
+                    id="toggle-password-btn"
+                    type="button"
+                    aria-label="Tampilkan atau sembunyikan password"
+                    class="absolute top-1/2 right-3 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <Eye id="pw-icon-show" className="h-5 w-5" />
+                    <EyeOff id="pw-icon-hide" className="hidden h-5 w-5" />
+                  </button>
+                </div>
               </div>
               <button
                 id="login-btn"
@@ -252,6 +271,18 @@ if (isAuthenticated) {
           loginBtn.textContent = "MASUK";
           loginBtn.removeAttribute("disabled");
         }
+      });
+    }
+
+    const togglePasswordBtn = document.getElementById("toggle-password-btn");
+    const pwIconShow = document.getElementById("pw-icon-show");
+    const pwIconHide = document.getElementById("pw-icon-hide");
+    if (togglePasswordBtn && credentialInput) {
+      togglePasswordBtn.addEventListener("click", () => {
+        const isHidden = credentialInput.type === "password";
+        credentialInput.type = isHidden ? "text" : "password";
+        pwIconShow?.classList.toggle("hidden", isHidden);
+        pwIconHide?.classList.toggle("hidden", !isHidden);
       });
     }
 

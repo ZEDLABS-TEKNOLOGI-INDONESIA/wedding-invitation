@@ -1,12 +1,12 @@
-import FileSaver from "file-saver";
 import {
   Camera,
   CameraOff,
   CheckCircle2,
   Copy,
   Download,
-  FileText,
+  Edit,
   Loader2,
+  Minus,
   Plus,
   QrCode,
   RotateCcw,
@@ -16,15 +16,21 @@ import {
   Upload,
   UserCheck,
   Users,
+  X,
 } from "lucide-react";
-import Papa from "papaparse";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  parseGuestsText,
+  type ParsedGuestRow,
+} from "../utils/csvImport";
+import { GUEST_GROUP_PRESETS } from "../utils/formHelpers";
 import {
   ConfirmModal,
   ToastBanner,
   type ConfirmDialogState,
   type ToastState,
 } from "./Admin/AdminFeedback";
+import CsvImportModal from "./Admin/CsvImportModal";
 
 interface GuestItem {
   id: number;
@@ -53,12 +59,13 @@ const GuestManager: React.FC<GuestManagerProps> = ({
   const [guests, setGuests] = useState<GuestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "checked" | "pending">(
-    "all"
-  );
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "checked" | "pending"
+  >("all");
   const [toast, setToast] = useState<ToastState | null>(null);
   const [confirmDialog, setConfirmDialog] =
     useState<ConfirmDialogState | null>(null);
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
   // Add guest form
   const [newGuest, setNewGuest] = useState({
@@ -69,8 +76,11 @@ const GuestManager: React.FC<GuestManagerProps> = ({
     quota: 2,
   });
   const [savingGuest, setSavingGuest] = useState(false);
-  const [importingCsv, setImportingCsv] = useState(false);
   const [sendingWaId, setSendingWaId] = useState<number | null>(null);
+
+  // Edit guest modal
+  const [editingGuest, setEditingGuest] = useState<GuestItem | null>(null);
+  const [updatingGuest, setUpdatingGuest] = useState(false);
 
   // Scanner state
   const [scanInput, setScanInput] = useState("");
@@ -112,6 +122,15 @@ const GuestManager: React.FC<GuestManagerProps> = ({
   useEffect(() => {
     loadGuests();
   }, [loadGuests]);
+
+  useEffect(() => {
+    if (!editingGuest) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setEditingGuest(null);
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [editingGuest]);
 
   const stopCamera = useCallback(() => {
     if (rafRef.current) {
@@ -158,6 +177,20 @@ const GuestManager: React.FC<GuestManagerProps> = ({
     });
   }, [guests, filterStatus, search]);
 
+  const scannerSuggestions = useMemo(() => {
+    const q = scanInput.trim().toLowerCase();
+    if (!q || q.startsWith("http")) return [];
+    return guests
+      .filter(
+        (g) =>
+          g.checked_in === 0 &&
+          (g.name.toLowerCase().includes(q) ||
+            g.code.toLowerCase().includes(q) ||
+            g.group_name.toLowerCase().includes(q))
+      )
+      .slice(0, 6);
+  }, [guests, scanInput]);
+
   const guestInviteLink = (g: GuestItem) =>
     `${baseUrl}/?to=${encodeURIComponent(g.name)}&code=${encodeURIComponent(g.code)}`;
 
@@ -199,89 +232,72 @@ const GuestManager: React.FC<GuestManagerProps> = ({
     }
   };
 
-  const downloadCsvTemplate = () => {
-    const csv =
-      "Nama Tamu,No WhatsApp,Alamat,Grup,Kuota\nBapak Ahmad & Ibu Siti,081234567890,Jakarta,Keluarga,2\nRina Kusuma,089876543210,Bandung,Teman Kuliah,2";
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const saveAsFunc = (FileSaver as any).saveAs || FileSaver;
-    saveAsFunc(blob, "template_daftar_tamu.csv");
+  const handleUpdateGuest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingGuest || !editingGuest.name.trim()) return;
+    setUpdatingGuest(true);
+    try {
+      const res = await fetch("/api/guests", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          id: editingGuest.id,
+          action: "update",
+          name: editingGuest.name,
+          phone: editingGuest.phone,
+          address: editingGuest.address,
+          group_name: editingGuest.group_name,
+          quota: editingGuest.quota,
+        }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (res.ok && payload.guest) {
+        setGuests((prev) =>
+          prev.map((g) => (g.id === editingGuest.id ? payload.guest : g))
+        );
+        setToast({
+          type: "success",
+          message: `Data tamu "${editingGuest.name.trim()}" berhasil diperbarui.`,
+        });
+        setEditingGuest(null);
+      } else {
+        setToast({
+          type: "error",
+          message: payload?.error || "Gagal memperbarui tamu.",
+        });
+      }
+    } catch {
+      setToast({ type: "error", message: "Gagal terhubung ke server." });
+    } finally {
+      setUpdatingGuest(false);
+    }
   };
 
-  const handleImportCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setImportingCsv(true);
+  const handleConfirmCsvImport = async (rows: ParsedGuestRow[]) => {
+    const CHUNK_SIZE = 200;
+    let totalImported = 0;
 
-    Papa.parse(file, {
-      header: false,
-      complete: async (results) => {
-        const rows: Array<{
-          name: string;
-          phone: string;
-          address: string;
-          group_name: string;
-          quota: number;
-        }> = [];
-        for (const r of results.data as unknown[]) {
-          if (!Array.isArray(r)) continue;
-          const name = typeof r[0] === "string" ? r[0].trim() : "";
-          if (!name || name.toLowerCase().includes("nama tamu")) continue;
-          rows.push({
-            name,
-            phone:
-              typeof r[1] === "string" || typeof r[1] === "number"
-                ? String(r[1]).trim()
-                : "",
-            address:
-              typeof r[2] === "string" && r[2].trim()
-                ? r[2].trim()
-                : "Di Tempat",
-            group_name: typeof r[3] === "string" ? r[3].trim() : "",
-            quota: Math.max(1, Number(r[4]) || 2),
-          });
-        }
+    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+      const chunk = rows.slice(i, i + CHUNK_SIZE);
+      const res = await fetch("/api/guests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ guests: chunk }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(payload?.error || "Gagal mengimpor data tamu.");
+      }
+      totalImported += Number(payload.count || chunk.length);
+    }
 
-        if (rows.length === 0) {
-          setToast({
-            type: "error",
-            message: "Tidak ada baris tamu valid di file CSV.",
-          });
-          setImportingCsv(false);
-          return;
-        }
-
-        try {
-          const res = await fetch("/api/guests", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ guests: rows }),
-          });
-          const payload = await res.json().catch(() => ({}));
-          if (res.ok) {
-            setToast({
-              type: "success",
-              message: `${payload.count} tamu berhasil diimpor ke database.`,
-            });
-            await loadGuests();
-          } else {
-            setToast({
-              type: "error",
-              message: payload?.error || "Gagal mengimpor CSV.",
-            });
-          }
-        } catch {
-          setToast({ type: "error", message: "Gagal mengimpor CSV." });
-        } finally {
-          setImportingCsv(false);
-        }
-      },
-      error: () => {
-        setToast({ type: "error", message: "File CSV tidak dapat dibaca." });
-        setImportingCsv(false);
-      },
+    setToast({
+      type: "success",
+      message: `${totalImported} tamu berhasil diimpor ke database.`,
     });
+    await loadGuests();
   };
 
   const toggleManualCheckin = async (guest: GuestItem) => {
@@ -311,7 +327,10 @@ const GuestManager: React.FC<GuestManagerProps> = ({
         });
       }
     } catch {
-      setToast({ type: "error", message: "Gagal memperbarui status check-in." });
+      setToast({
+        type: "error",
+        message: "Gagal memperbarui status check-in.",
+      });
     }
   };
 
@@ -506,6 +525,44 @@ const GuestManager: React.FC<GuestManagerProps> = ({
         onClose={() => setConfirmDialog(null)}
       />
 
+      <CsvImportModal<ParsedGuestRow>
+        isOpen={isCsvModalOpen}
+        title="Import Daftar Tamu (CSV / Excel)"
+        description="Upload file CSV atau tempel langsung dari Excel/Google Sheets. Kolom terdeteksi otomatis."
+        templateFilename="template_daftar_tamu.csv"
+        templateHeaders={[
+          "Nama Tamu",
+          "No WhatsApp",
+          "Alamat",
+          "Grup",
+          "Kuota",
+        ]}
+        templateRows={[
+          ["Bapak Ahmad & Ibu Siti", "081234567890", "Jakarta", "Keluarga", 2],
+          ["Rina Kusuma", "089876543210", "Bandung", "Teman Kuliah", 2],
+        ]}
+        pastePlaceholder={
+          "Bapak Ahmad & Ibu Siti,081234567890,Jakarta,Keluarga,2\nRina Kusuma,089876543210,Bandung,Sahabat,2\n(Atau salin langsung beberapa kolom dari Excel lalu Ctrl+V di sini)"
+        }
+        parseText={parseGuestsText}
+        columns={[
+          {
+            header: "Nama Tamu",
+            render: (r) => <span className="font-bold">{r.name}</span>,
+          },
+          {
+            header: "WhatsApp",
+            render: (r) => <span className="font-mono">{r.phone || "-"}</span>,
+          },
+          { header: "Alamat", render: (r) => r.address },
+          { header: "Grup", render: (r) => r.group_name || "-" },
+          { header: "Kuota", render: (r) => `${r.quota} Pax` },
+        ]}
+        onConfirm={handleConfirmCsvImport}
+        onClose={() => setIsCsvModalOpen(false)}
+        confirmLabel="Simpan Tamu"
+      />
+
       {/* Ringkasan Tamu */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
@@ -642,29 +699,76 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                 htmlFor="manual-checkin-query"
                 className="block text-xs font-bold text-slate-500 uppercase"
               >
-                Check-In Manual (Kode Tamu / Nama / URL QR)
+                Check-In Manual (Ketik Nama / Kode / Tempel URL QR)
               </label>
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 <input
                   id="manual-checkin-query"
                   type="text"
                   value={scanInput}
                   onChange={(e) => setScanInput(e.target.value)}
-                  placeholder="Contoh: G-A1B2C3D4 atau Nama Tamu..."
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="Contoh: Ahmad atau G-A1B2C3D4..."
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
-                <input
-                  type="number"
-                  aria-label="Jumlah Pax"
-                  min={1}
-                  max={50}
-                  value={scanPax}
-                  onChange={(e) =>
-                    setScanPax(Math.max(1, Number(e.target.value) || 1))
-                  }
-                  className="w-20 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  title="Jumlah Pax Hadir"
-                />
+
+                {scannerSuggestions.length > 0 && (
+                  <div className="rounded-xl border border-blue-100 bg-white p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                    <p className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase">
+                      Klik tamu untuk langsung check-in ({scanPax} pax):
+                    </p>
+                    <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                      {scannerSuggestions.map((g) => (
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() =>
+                            void processCheckin(g.code, g.quota || scanPax)
+                          }
+                          className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs hover:bg-blue-50 dark:hover:bg-slate-700"
+                        >
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-white">
+                              {g.name}
+                            </span>
+                            <span className="ml-2 font-mono text-[11px] text-slate-400">
+                              {g.code}
+                            </span>
+                          </div>
+                          <span className="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                            Check-In ({g.quota} Pax)
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-2 dark:border-slate-700 dark:bg-slate-800">
+                  <span className="text-xs font-bold text-slate-500">
+                    Jumlah Pax Hadir
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label="Kurangi pax"
+                      onClick={() => setScanPax((p) => Math.max(1, p - 1))}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="w-10 text-center text-sm font-bold">
+                      {scanPax}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Tambah pax"
+                      onClick={() => setScanPax((p) => Math.min(50, p + 1))}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
               <button
                 type="submit"
@@ -694,21 +798,23 @@ const GuestManager: React.FC<GuestManagerProps> = ({
               >
                 <h4 className="text-lg font-bold">{scanResult.title}</h4>
                 <p className="mt-1 text-sm">{scanResult.detail}</p>
-                {scanResult.type === "not_found" && scanResult.suggestedName && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void processCheckin(
-                        scanResult.suggestedName!,
-                        scanPax,
-                        true
-                      )
-                    }
-                    className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
-                  >
-                    + Check-In sebagai Tamu Walk-In ({scanResult.suggestedName})
-                  </button>
-                )}
+                {scanResult.type === "not_found" &&
+                  scanResult.suggestedName && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void processCheckin(
+                          scanResult.suggestedName!,
+                          scanPax,
+                          true
+                        )
+                      }
+                      className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                    >
+                      + Check-In sebagai Tamu Walk-In (
+                      {scanResult.suggestedName})
+                    </button>
+                  )}
               </div>
             )}
 
@@ -761,98 +867,157 @@ const GuestManager: React.FC<GuestManagerProps> = ({
             className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-900/40"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h4 className="text-sm font-bold text-slate-800 dark:text-white">
-                Tambah Tamu Undangan
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={downloadCsvTemplate}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+              <div>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+                  Tambah Tamu Undangan
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Isi form di bawah atau gunakan Import CSV / tempel langsung
+                  dari Excel untuk banyak tamu sekaligus.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCsvModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                <Upload className="h-3.5 w-3.5" /> Import CSV / Excel
+              </button>
+            </div>
+
+            <datalist id="guest-group-presets">
+              {GUEST_GROUP_PRESETS.map((grp) => (
+                <option key={grp} value={grp} />
+              ))}
+            </datalist>
+
+            <div className="grid gap-3 md:grid-cols-12">
+              <div className="md:col-span-4">
+                <label
+                  htmlFor="add-guest-name"
+                  className="mb-1 block text-[11px] font-bold text-slate-500 uppercase"
                 >
-                  <FileText className="h-3.5 w-3.5" /> Template CSV
-                </button>
-                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900">
-                  {importingCsv ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Upload className="h-3.5 w-3.5" />
-                  )}
-                  Import CSV
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleImportCsv}
-                    className="hidden"
-                    disabled={importingCsv}
-                  />
+                  Nama Tamu <span className="text-red-500">*</span>
                 </label>
+                <input
+                  id="add-guest-name"
+                  type="text"
+                  required
+                  placeholder="Contoh: Bpk. Ahmad & Ibu Siti"
+                  value={newGuest.name}
+                  onChange={(e) =>
+                    setNewGuest({ ...newGuest, name: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <div className="md:col-span-3">
+                <label
+                  htmlFor="add-guest-phone"
+                  className="mb-1 block text-[11px] font-bold text-slate-500 uppercase"
+                >
+                  No. WhatsApp
+                </label>
+                <input
+                  id="add-guest-phone"
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="081234567890"
+                  value={newGuest.phone}
+                  onChange={(e) =>
+                    setNewGuest({ ...newGuest, phone: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label
+                  htmlFor="add-guest-address"
+                  className="mb-1 block text-[11px] font-bold text-slate-500 uppercase"
+                >
+                  Alamat / Kota
+                </label>
+                <input
+                  id="add-guest-address"
+                  type="text"
+                  placeholder="Di Tempat"
+                  value={newGuest.address}
+                  onChange={(e) =>
+                    setNewGuest({ ...newGuest, address: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <div className="md:col-span-3">
+                <label
+                  htmlFor="add-guest-group"
+                  className="mb-1 block text-[11px] font-bold text-slate-500 uppercase"
+                >
+                  Grup / Kategori
+                </label>
+                <input
+                  id="add-guest-group"
+                  type="text"
+                  list="guest-group-presets"
+                  placeholder="Keluarga / Sahabat / VIP"
+                  value={newGuest.group_name}
+                  onChange={(e) =>
+                    setNewGuest({ ...newGuest, group_name: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
               </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-12">
-              <input
-                type="text"
-                required
-                placeholder="Nama Tamu *"
-                value={newGuest.name}
-                onChange={(e) =>
-                  setNewGuest({ ...newGuest, name: e.target.value })
-                }
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm md:col-span-3 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-              <input
-                type="tel"
-                placeholder="No. WhatsApp"
-                value={newGuest.phone}
-                onChange={(e) =>
-                  setNewGuest({ ...newGuest, phone: e.target.value })
-                }
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm md:col-span-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-              <input
-                type="text"
-                placeholder="Alamat / Kota"
-                value={newGuest.address}
-                onChange={(e) =>
-                  setNewGuest({ ...newGuest, address: e.target.value })
-                }
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm md:col-span-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-              <input
-                type="text"
-                placeholder="Grup (Keluarga/Teman)"
-                value={newGuest.group_name}
-                onChange={(e) =>
-                  setNewGuest({ ...newGuest, group_name: e.target.value })
-                }
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm md:col-span-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-              <input
-                type="number"
-                min={1}
-                max={50}
-                title="Kuota Pax"
-                value={newGuest.quota}
-                onChange={(e) =>
-                  setNewGuest({
-                    ...newGuest,
-                    quota: Math.max(1, Number(e.target.value) || 1),
-                  })
-                }
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center text-sm md:col-span-1 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
+            <div className="flex flex-wrap items-end justify-between gap-3 pt-1">
+              <div>
+                <span className="mb-1 block text-[11px] font-bold text-slate-500 uppercase">
+                  Kuota Pax
+                </span>
+                <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
+                  <button
+                    type="button"
+                    aria-label="Kurangi kuota"
+                    onClick={() =>
+                      setNewGuest((prev) => ({
+                        ...prev,
+                        quota: Math.max(1, prev.quota - 1),
+                      }))
+                    }
+                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="w-16 text-center text-sm font-bold">
+                    {newGuest.quota} Pax
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Tambah kuota"
+                    onClick={() =>
+                      setNewGuest((prev) => ({
+                        ...prev,
+                        quota: Math.min(50, prev.quota + 1),
+                      }))
+                    }
+                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={savingGuest || !newGuest.name.trim()}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 md:col-span-2"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
               >
                 {savingGuest ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                Simpan
+                Tambah ke Daftar Tamu
               </button>
             </div>
           </form>
@@ -963,6 +1128,15 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                           <div className="flex justify-end gap-1">
                             <button
                               type="button"
+                              aria-label={`Edit ${guest.name}`}
+                              title="Edit Data Tamu"
+                              onClick={() => setEditingGuest({ ...guest })}
+                              className="rounded p-1.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
                               aria-label={`Salin tautan ${guest.name}`}
                               title="Salin Link Undangan"
                               onClick={() => {
@@ -1030,6 +1204,165 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit Tamu */}
+      {editingGuest && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingGuest(null);
+          }}
+        >
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Edit Data Tamu
+              </h3>
+              <button
+                type="button"
+                aria-label="Tutup modal edit tamu"
+                onClick={() => setEditingGuest(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateGuest} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="edit-guest-name"
+                  className="mb-1 block text-xs font-bold text-slate-500 uppercase"
+                >
+                  Nama Tamu *
+                </label>
+                <input
+                  id="edit-guest-name"
+                  type="text"
+                  required
+                  value={editingGuest.name}
+                  onChange={(e) =>
+                    setEditingGuest({ ...editingGuest, name: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="edit-guest-phone"
+                  className="mb-1 block text-xs font-bold text-slate-500 uppercase"
+                >
+                  No. WhatsApp
+                </label>
+                <input
+                  id="edit-guest-phone"
+                  type="tel"
+                  value={editingGuest.phone}
+                  onChange={(e) =>
+                    setEditingGuest({ ...editingGuest, phone: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="edit-guest-address"
+                    className="mb-1 block text-xs font-bold text-slate-500 uppercase"
+                  >
+                    Alamat / Kota
+                  </label>
+                  <input
+                    id="edit-guest-address"
+                    type="text"
+                    value={editingGuest.address}
+                    onChange={(e) =>
+                      setEditingGuest({
+                        ...editingGuest,
+                        address: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="edit-guest-group"
+                    className="mb-1 block text-xs font-bold text-slate-500 uppercase"
+                  >
+                    Grup
+                  </label>
+                  <input
+                    id="edit-guest-group"
+                    type="text"
+                    list="guest-group-presets"
+                    value={editingGuest.group_name}
+                    onChange={(e) =>
+                      setEditingGuest({
+                        ...editingGuest,
+                        group_name: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  />
+                </div>
+              </div>
+              <div>
+                <span className="mb-1 block text-xs font-bold text-slate-500 uppercase">
+                  Kuota Pax
+                </span>
+                <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 p-1 dark:border-slate-600">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditingGuest({
+                        ...editingGuest,
+                        quota: Math.max(1, editingGuest.quota - 1),
+                      })
+                    }
+                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="w-16 text-center text-sm font-bold">
+                    {editingGuest.quota} Pax
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditingGuest({
+                        ...editingGuest,
+                        quota: Math.min(50, editingGuest.quota + 1),
+                      })
+                    }
+                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setEditingGuest(null)}
+                  className="rounded-xl px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingGuest}
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {updatingGuest && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
