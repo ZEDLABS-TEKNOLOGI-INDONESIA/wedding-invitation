@@ -53,6 +53,50 @@ function hasNegativeValue(...values: unknown[]): boolean {
   });
 }
 
+function getIdempotencyKey(
+  request: Request,
+  body: Record<string, unknown>
+): string {
+  const fromHeader = request.headers.get("x-idempotency-key") || "";
+  const fromBody =
+    typeof body.idempotencyKey === "string" ? body.idempotencyKey : "";
+  const raw = (fromHeader || fromBody).trim();
+  if (!raw || raw.length > 128) return "";
+  return raw;
+}
+
+function findIdempotentResponse(key: string): string | null {
+  if (!key) return null;
+  const row = db
+    .prepare(
+      "SELECT response_json FROM planner_idempotency WHERE idempotency_key = ? LIMIT 1"
+    )
+    .get(key) as { response_json: string } | undefined;
+  return row ? row.response_json : null;
+}
+
+function saveIdempotentResponse(
+  key: string,
+  resource: string,
+  payload: Record<string, unknown>,
+  nowIso: string
+): void {
+  if (!key) return;
+  try {
+    db.prepare(
+      `INSERT OR IGNORE INTO planner_idempotency (idempotency_key, resource, response_json, created_at)
+       VALUES (?, ?, ?, ?)`
+    ).run(key, resource, JSON.stringify({ ...payload, deduplicated: true }), nowIso);
+    // Bersihkan kunci idempotency lebih dari 24 jam agar tabel tetap ringan
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    db.prepare("DELETE FROM planner_idempotency WHERE created_at < ?").run(
+      cutoff
+    );
+  } catch {
+    // Abaikan kegagalan non-kritis penyimpanan cache idempotency
+  }
+}
+
 function fetchAllPlannerData() {
   const cfg = getConfig();
   return {
@@ -130,6 +174,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const action = typeof body.action === "string" ? body.action : "create";
     const resource = typeof body.resource === "string" ? body.resource : "";
     const nowIso = new Date().toISOString();
+    const idempotencyKey = getIdempotencyKey(request, body);
+
+    if (idempotencyKey) {
+      const cached = findIdempotentResponse(idempotencyKey);
+      if (cached) {
+        return new Response(cached, { status: 200, headers: JSON_HEADERS });
+      }
+    }
 
     if (action === "set_target") {
       const target = cleanInt(body.target, 0);
@@ -248,6 +300,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           { status: 400, headers: JSON_HEADERS }
         );
       }
+      const phase = cleanText(body.phase, 40, "H-3 Bulan");
+      const dupTodo = db
+        .prepare(
+          "SELECT id FROM planner_todos WHERE LOWER(title) = LOWER(?) AND LOWER(phase) = LOWER(?) LIMIT 1"
+        )
+        .get(title, phase);
+      if (dupTodo) {
+        return new Response(
+          JSON.stringify({
+            error: "Tugas dengan judul dan fase yang sama sudah terdaftar.",
+          }),
+          { status: 409, headers: JSON_HEADERS }
+        );
+      }
       const res = db
         .prepare(
           `INSERT INTO planner_todos (title, phase, category, due_date, pic, done, notes, created_at)
@@ -255,9 +321,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         )
         .run(
           title,
-          cleanText(body.phase, 40, "H-3 Bulan"),
+          phase,
           cleanText(body.category, 60, "Umum"),
-          cleanText(body.due_date, 30, ""),
+          cleanDate(body.due_date, ""),
           cleanText(body.pic, 60, "Bersama"),
           cleanText(body.notes, 500, ""),
           nowIso
@@ -265,7 +331,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const item = db
         .prepare("SELECT * FROM planner_todos WHERE id = ?")
         .get(Number(res.lastInsertRowid));
-      return new Response(JSON.stringify({ success: true, item }), {
+      const payload = { success: true, item };
+      saveIdempotentResponse(idempotencyKey, "todos", payload, nowIso);
+      return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
       });
@@ -291,6 +359,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           { status: 400, headers: JSON_HEADERS }
         );
       }
+      const category = cleanText(body.category, 60, "Lainnya");
+      const dupBudget = db
+        .prepare(
+          "SELECT id FROM planner_budget WHERE LOWER(name) = LOWER(?) AND LOWER(category) = LOWER(?) LIMIT 1"
+        )
+        .get(name, category);
+      if (dupBudget) {
+        return new Response(
+          JSON.stringify({
+            error: "Pos anggaran / vendor dengan nama dan kategori yang sama sudah ada.",
+          }),
+          { status: 409, headers: JSON_HEADERS }
+        );
+      }
       const status = ["belum", "dp", "cicilan", "lunas"].includes(
         String(body.payment_status)
       )
@@ -303,7 +385,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         )
         .run(
           name,
-          cleanText(body.category, 60, "Lainnya"),
+          category,
           cleanInt(body.estimated_cost, 0),
           cleanInt(body.actual_cost, 0),
           cleanInt(body.paid_amount, 0),
@@ -316,7 +398,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const item = db
         .prepare("SELECT * FROM planner_budget WHERE id = ?")
         .get(Number(res.lastInsertRowid));
-      return new Response(JSON.stringify({ success: true, item }), {
+      const payload = { success: true, item };
+      saveIdempotentResponse(idempotencyKey, "budget", payload, nowIso);
+      return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
       });
@@ -331,28 +415,35 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         );
       }
       const entryType = body.entry_type === "tarik" ? "tarik" : "setor";
-      const entryDate = cleanText(
-        body.entry_date,
-        20,
-        nowIso.slice(0, 10)
-      );
+      const entryDate = cleanDate(body.entry_date, nowIso.slice(0, 10));
+      const contributor = cleanText(body.contributor, 60, "Bersama");
+      const note = cleanText(body.note, 300, "");
+      const recentCutoff = new Date(Date.now() - 10_000).toISOString();
+      const recentDup = db
+        .prepare(
+          `SELECT * FROM planner_savings
+           WHERE entry_date = ? AND contributor = ? AND entry_type = ? AND amount = ? AND LOWER(note) = LOWER(?) AND created_at >= ?
+           LIMIT 1`
+        )
+        .get(entryDate, contributor, entryType, amount, note, recentCutoff);
+      if (recentDup) {
+        return new Response(
+          JSON.stringify({ success: true, item: recentDup, deduplicated: true }),
+          { status: 200, headers: JSON_HEADERS }
+        );
+      }
       const res = db
         .prepare(
           `INSERT INTO planner_savings (entry_date, contributor, entry_type, amount, note, created_at)
            VALUES (?, ?, ?, ?, ?, ?)`
         )
-        .run(
-          entryDate,
-          cleanText(body.contributor, 60, "Bersama"),
-          entryType,
-          amount,
-          cleanText(body.note, 300, ""),
-          nowIso
-        );
+        .run(entryDate, contributor, entryType, amount, note, nowIso);
       const item = db
         .prepare("SELECT * FROM planner_savings WHERE id = ?")
         .get(Number(res.lastInsertRowid));
-      return new Response(JSON.stringify({ success: true, item }), {
+      const payload = { success: true, item };
+      saveIdempotentResponse(idempotencyKey, "savings", payload, nowIso);
+      return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
       });
@@ -366,9 +457,28 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           { status: 400, headers: JSON_HEADERS }
         );
       }
+      if (hasNegativeValue(body.price)) {
+        return new Response(
+          JSON.stringify({ error: "Perkiraan harga tidak boleh negatif." }),
+          { status: 400, headers: JSON_HEADERS }
+        );
+      }
       const kind = ["mahar", "seserahan", "kua"].includes(String(body.kind))
         ? String(body.kind)
         : "seserahan";
+      const dupEssential = db
+        .prepare(
+          "SELECT id FROM planner_essentials WHERE kind = ? AND LOWER(title) = LOWER(?) LIMIT 1"
+        )
+        .get(kind, title);
+      if (dupEssential) {
+        return new Response(
+          JSON.stringify({
+            error: "Item dengan nama yang sama sudah ada pada daftar ini.",
+          }),
+          { status: 409, headers: JSON_HEADERS }
+        );
+      }
       const status = ["rencana", "dibeli", "siap"].includes(String(body.status))
         ? String(body.status)
         : "rencana";
@@ -391,7 +501,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const item = db
         .prepare("SELECT * FROM planner_essentials WHERE id = ?")
         .get(Number(res.lastInsertRowid));
-      return new Response(JSON.stringify({ success: true, item }), {
+      const payload = { success: true, item };
+      saveIdempotentResponse(idempotencyKey, "essentials", payload, nowIso);
+      return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
       });
@@ -415,7 +527,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       ].includes(String(body.mood))
         ? String(body.mood)
         : "bersyukur";
-      const entryDate = cleanText(body.entry_date, 20, nowIso.slice(0, 10));
+      const entryDate = cleanDate(body.entry_date, nowIso.slice(0, 10));
+      const dupJournal = db
+        .prepare(
+          "SELECT id FROM planner_journal WHERE entry_date = ? AND LOWER(title) = LOWER(?) LIMIT 1"
+        )
+        .get(entryDate, title);
+      if (dupJournal) {
+        return new Response(
+          JSON.stringify({
+            error: "Catatan jurnal dengan judul dan tanggal yang sama sudah ada.",
+          }),
+          { status: 409, headers: JSON_HEADERS }
+        );
+      }
       const res = db
         .prepare(
           `INSERT INTO planner_journal (entry_date, author, mood, title, content, created_at)
@@ -432,7 +557,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const item = db
         .prepare("SELECT * FROM planner_journal WHERE id = ?")
         .get(Number(res.lastInsertRowid));
-      return new Response(JSON.stringify({ success: true, item }), {
+      const payload = { success: true, item };
+      saveIdempotentResponse(idempotencyKey, "journal", payload, nowIso);
+      return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
       });

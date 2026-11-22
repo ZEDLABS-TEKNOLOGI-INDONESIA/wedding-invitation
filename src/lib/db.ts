@@ -137,6 +137,13 @@ db.exec(`
     content TEXT NOT NULL,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS planner_idempotency (
+    idempotency_key TEXT PRIMARY KEY,
+    resource TEXT NOT NULL,
+    response_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
 `);
 
 const DEFAULT_CONFIG: Record<string, string> = {

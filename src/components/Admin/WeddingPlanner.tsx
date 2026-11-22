@@ -20,7 +20,7 @@ import {
   Trash2,
   Wallet,
 } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildCsvBlob } from "../../utils/csvImport";
 import {
   BUDGET_CATEGORIES,
@@ -97,6 +97,14 @@ function toWaHref(phone: string): string {
   return `https://wa.me/${digits}`;
 }
 
+function makeIdempotencyKey(prefix: string): string {
+  const rand =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `pln-${prefix}-${rand}`;
+}
+
 const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
   activeSection,
   onSectionChange,
@@ -111,6 +119,17 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
 
   const [loading, setLoading] = useState(true);
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const submittingRef = useRef<string | null>(null);
+  const idempotencyKeysRef = useRef<Record<string, string>>({
+    todos: makeIdempotencyKey("todos"),
+    budget: makeIdempotencyKey("budget"),
+    savings: makeIdempotencyKey("savings"),
+    essentials: makeIdempotencyKey("essentials"),
+    journal: makeIdempotencyKey("journal"),
+  });
+  const rotateKey = (resource: string) => {
+    idempotencyKeysRef.current[resource] = makeIdempotencyKey(resource);
+  };
   const [todos, setTodos] = useState<PlannerTodo[]>([]);
   const [budget, setBudget] = useState<PlannerBudgetItem[]>([]);
   const [savings, setSavings] = useState<PlannerSaving[]>([]);
@@ -341,7 +360,8 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
 
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!todoDraft.title.trim()) return;
+    if (!todoDraft.title.trim() || submittingRef.current) return;
+    submittingRef.current = "add-todo";
     setBusyAction("add-todo");
     try {
       const existing = editingTodoId
@@ -349,7 +369,12 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
         : undefined;
       const res = await fetch("/api/planner", {
         method: editingTodoId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(editingTodoId
+            ? {}
+            : { "X-Idempotency-Key": idempotencyKeysRef.current.todos }),
+        },
         credentials: "include",
         body: JSON.stringify({
           resource: "todos",
@@ -361,6 +386,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
       const payload = await res.json().catch(() => ({}));
       if (res.ok) {
         const wasEdit = Boolean(editingTodoId);
+        rotateKey("todos");
         resetTodoDraft();
         await loadAll();
         setToast({
@@ -370,12 +396,14 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
             : "Tugas persiapan ditambahkan.",
         });
       } else {
+        if (res.status === 409) rotateKey("todos");
         setToast({
           type: "error",
           message: payload?.error || "Gagal menyimpan tugas.",
         });
       }
     } finally {
+      submittingRef.current = null;
       setBusyAction(null);
     }
   };
@@ -415,13 +443,19 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
 
   const handleSaveBudget = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!budgetDraft.name.trim()) return;
+    if (!budgetDraft.name.trim() || submittingRef.current) return;
+    submittingRef.current = "save-budget";
     setBusyAction("save-budget");
     try {
       const method = editingBudgetId ? "PUT" : "POST";
       const res = await fetch("/api/planner", {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(editingBudgetId
+            ? {}
+            : { "X-Idempotency-Key": idempotencyKeysRef.current.budget }),
+        },
         credentials: "include",
         body: JSON.stringify({
           resource: "budget",
@@ -432,17 +466,27 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
           paid_amount: Number(budgetDraft.paid_amount) || 0,
         }),
       });
+      const payload = await res.json().catch(() => ({}));
       if (res.ok) {
+        const wasEdit = Boolean(editingBudgetId);
+        rotateKey("budget");
         resetBudgetDraft();
         await loadAll();
         setToast({
           type: "success",
-          message: editingBudgetId
+          message: wasEdit
             ? "Pos anggaran diperbarui."
             : "Pos anggaran ditambahkan.",
         });
+      } else {
+        if (res.status === 409) rotateKey("budget");
+        setToast({
+          type: "error",
+          message: payload?.error || "Gagal menyimpan pos anggaran.",
+        });
       }
     } finally {
+      submittingRef.current = null;
       setBusyAction(null);
     }
   };
@@ -516,6 +560,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
 
   const handleAddSaving = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
     const amt = Number(savingDraft.amount);
     if (!amt || amt <= 0) {
       setToast({
@@ -524,11 +569,17 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
       });
       return;
     }
+    submittingRef.current = "add-saving";
     setBusyAction("add-saving");
     try {
       const res = await fetch("/api/planner", {
         method: editingSavingId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(editingSavingId
+            ? {}
+            : { "X-Idempotency-Key": idempotencyKeysRef.current.savings }),
+        },
         credentials: "include",
         body: JSON.stringify({
           resource: "savings",
@@ -540,6 +591,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
       const payload = await res.json().catch(() => ({}));
       if (res.ok) {
         const wasEdit = Boolean(editingSavingId);
+        rotateKey("savings");
         resetSavingDraft();
         await loadAll();
         setToast({
@@ -557,6 +609,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
         });
       }
     } finally {
+      submittingRef.current = null;
       setBusyAction(null);
     }
   };
@@ -575,7 +628,8 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
 
   const handleAddEssential = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!essentialDraft.title.trim()) return;
+    if (!essentialDraft.title.trim() || submittingRef.current) return;
+    submittingRef.current = "add-essential";
     setBusyAction("add-essential");
     try {
       const existing = editingEssentialId
@@ -583,7 +637,12 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
         : undefined;
       const res = await fetch("/api/planner", {
         method: editingEssentialId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(editingEssentialId
+            ? {}
+            : { "X-Idempotency-Key": idempotencyKeysRef.current.essentials }),
+        },
         credentials: "include",
         body: JSON.stringify({
           resource: "essentials",
@@ -599,6 +658,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
       const payload = await res.json().catch(() => ({}));
       if (res.ok) {
         const wasEdit = Boolean(editingEssentialId);
+        rotateKey("essentials");
         resetEssentialDraft();
         await loadAll();
         setToast({
@@ -608,12 +668,14 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
             : "Item berhasil ditambahkan.",
         });
       } else {
+        if (res.status === 409) rotateKey("essentials");
         setToast({
           type: "error",
           message: payload?.error || "Gagal menyimpan item.",
         });
       }
     } finally {
+      submittingRef.current = null;
       setBusyAction(null);
     }
   };
@@ -677,12 +739,24 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
 
   const handleAddJournal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!journalDraft.title.trim() || !journalDraft.content.trim()) return;
+    if (
+      !journalDraft.title.trim() ||
+      !journalDraft.content.trim() ||
+      submittingRef.current
+    ) {
+      return;
+    }
+    submittingRef.current = "add-journal";
     setBusyAction("add-journal");
     try {
       const res = await fetch("/api/planner", {
         method: editingJournalId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(editingJournalId
+            ? {}
+            : { "X-Idempotency-Key": idempotencyKeysRef.current.journal }),
+        },
         credentials: "include",
         body: JSON.stringify({
           resource: "journal",
@@ -693,6 +767,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
       const payload = await res.json().catch(() => ({}));
       if (res.ok) {
         const wasEdit = Boolean(editingJournalId);
+        rotateKey("journal");
         resetJournalDraft();
         await loadAll();
         setToast({
@@ -702,12 +777,14 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
             : "Catatan jurnal menuju halal tersimpan.",
         });
       } else {
+        if (res.status === 409) rotateKey("journal");
         setToast({
           type: "error",
           message: payload?.error || "Gagal menyimpan jurnal.",
         });
       }
     } finally {
+      submittingRef.current = null;
       setBusyAction(null);
     }
   };
@@ -1198,7 +1275,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                   id="budget-est"
                   type="number"
                   min={0}
-                  step={50000}
+                  step={1}
                   value={budgetDraft.estimated_cost}
                   onChange={(e) =>
                     setBudgetDraft({
@@ -1218,7 +1295,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                   id="budget-act"
                   type="number"
                   min={0}
-                  step={50000}
+                  step={1}
                   value={budgetDraft.actual_cost}
                   onChange={(e) =>
                     setBudgetDraft({
@@ -1241,7 +1318,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                   id="budget-paid"
                   type="number"
                   min={0}
-                  step={50000}
+                  step={1}
                   value={budgetDraft.paid_amount}
                   onChange={(e) =>
                     setBudgetDraft({
@@ -1518,7 +1595,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                     id="savings-target"
                     type="number"
                     min={0}
-                    step={500000}
+                    step={1}
                     value={targetInput}
                     onChange={(e) => setTargetInput(e.target.value)}
                     className="adm-input adm-input-sm w-40"
@@ -1643,8 +1720,8 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                   id="sav-amt"
                   type="number"
                   required
-                  min={1000}
-                  step={50000}
+                  min={1}
+                  step={1}
                   value={savingDraft.amount}
                   onChange={(e) =>
                     setSavingDraft({ ...savingDraft, amount: e.target.value })
@@ -1862,7 +1939,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                 id="ess-price"
                 type="number"
                 min={0}
-                step={25000}
+                step={1}
                 value={essentialDraft.price}
                 onChange={(e) =>
                   setEssentialDraft({
