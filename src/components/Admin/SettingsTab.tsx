@@ -63,6 +63,7 @@ import {
 } from "../WeddingOrnaments";
 import type { ToastState } from "./AdminFeedback";
 import CsvImportModal from "./CsvImportModal";
+import WaSessionPanel from "./WaSessionPanel";
 
 interface BankAccountItem {
   bank: string;
@@ -2140,6 +2141,21 @@ const SettingsTab: React.FC<{
               </button>
             </div>
           )}
+
+          <WaSessionPanel
+            baseUrl={rawConfig.WA_BASE_URL ?? ""}
+            apiKey={rawConfig.WA_API_KEY ?? ""}
+            apiSecret={rawConfig.WA_API_SECRET ?? ""}
+            defaultLabel={`Undangan ${rawConfig.BRIDE_NICKNAME || "Mempelai"} & ${rawConfig.GROOM_NICKNAME || "Pasangan"}`}
+            onCredentialsProvisioned={(keyId, secret) => {
+              setRawConfig((prev) => ({
+                ...prev,
+                WA_API_KEY: keyId,
+                WA_API_SECRET: secret,
+              }));
+            }}
+            onNotify={onNotify}
+          />
 
           <div className="flex flex-wrap items-center gap-2 border-t border-(--adm-border) pt-4">
             <button

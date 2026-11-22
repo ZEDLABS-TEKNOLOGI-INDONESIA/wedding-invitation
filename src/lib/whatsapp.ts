@@ -50,6 +50,30 @@ export interface WaMessageStatusResult {
   keterangan_gagal: string;
 }
 
+export interface WaSessionItem {
+  id: string;
+  nomor?: string;
+  nama?: string;
+  status: string;
+  metode_auth?: string;
+  label_warmup?: string;
+}
+
+export interface WaSessionQrResult {
+  kode?: string;
+  status: string;
+  sesi_status: string;
+  proses_berjalan: boolean;
+}
+
+export interface WaPersonalAccountResult {
+  akun_id: string;
+  instansi_id: string;
+  nama_akun: string;
+  key_id: string;
+  secret: string;
+}
+
 export class WaGatewayError extends Error {
   status: number;
   pesan: string;
@@ -308,6 +332,83 @@ export class WaGatewayClient {
       "GET",
       `/api/v1/messages/${encodeURIComponent(jobId)}`
     );
+  }
+
+  listSessions(): Promise<WaSessionItem[]> {
+    return this.request<WaSessionItem[]>("GET", "/api/v1/integrasi/sesi");
+  }
+
+  startSessionQr(nama: string): Promise<{ sesi_id: string }> {
+    return this.request<{ sesi_id: string }>(
+      "POST",
+      "/api/v1/integrasi/sesi/qr",
+      { nama }
+    );
+  }
+
+  getSessionQr(sesiId: string): Promise<WaSessionQrResult> {
+    return this.request<WaSessionQrResult>(
+      "GET",
+      `/api/v1/integrasi/sesi/${encodeURIComponent(sesiId)}/qr`
+    );
+  }
+
+  startSessionPairing(
+    nomorTujuan: string,
+    nama: string
+  ): Promise<{ sesi_id: string; kode_pairing: string }> {
+    return this.request<{ sesi_id: string; kode_pairing: string }>(
+      "POST",
+      "/api/v1/integrasi/sesi/pairing",
+      { nomor_tujuan: nomorTujuan, nama }
+    );
+  }
+
+  logoutSession(sesiId: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(
+      "POST",
+      `/api/v1/integrasi/sesi/${encodeURIComponent(sesiId)}/logout`,
+      {}
+    );
+  }
+
+  deleteSession(sesiId: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(
+      "DELETE",
+      `/api/v1/integrasi/sesi/${encodeURIComponent(sesiId)}`
+    );
+  }
+
+  static async registerPersonalAccount(
+    baseUrl: string,
+    params: { namaAplikasi?: string; namaAkun?: string; namaApiKey?: string }
+  ): Promise<WaPersonalAccountResult> {
+    const cleanBase = baseUrl.trim().replace(/\/+$/, "");
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
+    try {
+      const res = await fetch(`${cleanBase}/api/v1/integrasi/akun-mandiri`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama_aplikasi: params.namaAplikasi || "Wedding Invitation",
+          nama_akun: params.namaAkun || "Undangan Pernikahan",
+          nama_api_key: params.namaApiKey || "Wedding Invitation",
+        }),
+        signal: controller.signal,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg =
+          typeof data?.error === "string"
+            ? data.error
+            : `Gagal mendaftarkan akun mandiri (HTTP ${res.status})`;
+        throw new WaGatewayError(res.status, msg);
+      }
+      return data as WaPersonalAccountResult;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 }
 
