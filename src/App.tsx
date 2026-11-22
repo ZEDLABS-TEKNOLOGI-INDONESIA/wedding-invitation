@@ -14,7 +14,11 @@ import Envelope from "./components/Envelope";
 import InstallPrompt from "./components/InstallPrompt";
 import { useConfig } from "./hooks/useConfig";
 import { Heart, ChevronUp } from "lucide-react";
-import { BotanicalWatermark, SectionDivider } from "./components/WeddingOrnaments";
+import {
+  BotanicalWatermark,
+  HeartFrameWatermark,
+  SectionDivider,
+} from "./components/WeddingOrnaments";
 import {
   normalizePublicTheme,
   type PublicThemeId,
@@ -202,6 +206,7 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
       />
 
       <footer className="wedding-section-glow relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-x-clip px-5 pt-20 pb-28 transition-colors duration-700 md:pt-24 md:pb-32">
+        <HeartFrameWatermark />
         <BotanicalWatermark side="left" />
         <BotanicalWatermark side="right" />
         <div className="relative z-10 container mx-auto flex max-w-3xl flex-col items-center gap-10 text-center">
