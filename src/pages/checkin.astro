@@ -14,41 +14,46 @@ if (!isAdminAuthenticated(Astro.cookies)) {
 <Layout title="Scanner Check-In Tamu" noindex={true}>
   <div class="admin-shell flex min-h-dvh flex-col bg-(--adm-bg-secondary) text-(--adm-text-primary)">
     <header class="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-(--adm-border) bg-(--adm-bg-secondary) px-3 md:px-6">
-      <div class="flex items-center gap-2 text-[13px]">
-        <QrCode className="h-4 w-4 text-(--adm-accent)" />
+      <div class="flex min-w-0 items-center gap-2 text-[13px]">
+        <QrCode className="h-4 w-4 shrink-0 text-(--adm-accent)" />
         <a
           href="/admin"
-          class="hidden text-(--adm-text-secondary) hover:text-(--adm-accent) sm:inline"
+          class="hidden shrink-0 text-(--adm-text-secondary) hover:text-(--adm-accent) sm:inline"
         >
           Wedding Panel
         </a>
         <span class="hidden text-(--adm-text-muted) sm:inline">/</span>
-        <span class="font-semibold text-(--adm-text-primary)">
-          Scanner Check-In Hari H
+        <span class="truncate font-semibold text-(--adm-text-primary)">
+          Scanner Check-In<span class="hidden sm:inline"> Hari H</span>
         </span>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex shrink-0 items-center gap-2">
         <button
           id="checkin-theme-toggle"
           type="button"
           aria-label="Ganti tema terang/gelap"
           title="Ganti Tema"
-          class="inline-flex h-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
         >
           <Moon className="h-4 w-4 dark:hidden" />
           <Sun className="hidden h-4 w-4 dark:inline" />
         </button>
-        <a href="/admin" class="adm-btn adm-btn-secondary">
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Dashboard
+        <a
+          href="/admin"
+          aria-label="Kembali ke Dashboard"
+          title="Kembali ke Dashboard"
+          class="adm-btn adm-btn-secondary adm-btn-sm px-2.5 sm:px-3"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+          <span class="hidden sm:inline">Dashboard</span>
         </a>
       </div>
     </header>
 
-    <main class="adm-panel-main m-2 flex-1 px-4 py-5 md:m-3 md:px-6 md:py-6">
+    <main class="adm-panel-main m-2 flex-1 px-3 py-4 sm:px-4 sm:py-5 md:m-3 md:px-6 md:py-6">
       <div class="mx-auto max-w-[1200px] space-y-5">
         <div>
-          <h1 class="text-xl font-semibold text-(--adm-text-primary)">
+          <h1 class="text-lg font-semibold text-(--adm-text-primary) sm:text-xl">
             Buku Tamu &amp; Check-In Hari H
           </h1>
           <p class="mt-1 text-xs text-(--adm-text-secondary)">
@@ -56,7 +61,7 @@ if (!isAdminAuthenticated(Astro.cookies)) {
           </p>
         </div>
 
-        <div class="adm-card p-4 md:p-5">
+        <div class="adm-card p-3 sm:p-4 md:p-5">
           <GuestManager
             client:load
             siteUrl={Astro.site?.toString() || "https://wedding.zedlabs.id"}
@@ -65,6 +70,16 @@ if (!isAdminAuthenticated(Astro.cookies)) {
         </div>
       </div>
     </main>
+
+    <footer class="flex min-h-[44px] shrink-0 flex-col items-center justify-center gap-0.5 border-t border-(--adm-border) bg-(--adm-bg-secondary) px-4 py-2 text-center text-[11px] text-(--adm-text-secondary) sm:flex-row sm:justify-between sm:py-1.5 sm:text-left md:px-6">
+      <span>
+        &copy; 2018 - {new Date().getFullYear()}{" "}
+        <strong class="font-semibold uppercase">
+          ZEDLABS Teknologi Indonesia
+        </strong>
+      </span>
+      <span>Wedding Invitation Admin Panel</span>
+    </footer>
   </div>
 
   <script>

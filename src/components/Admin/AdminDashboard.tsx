@@ -1222,7 +1222,7 @@ const AdminDashboard = ({
               {activeTab === "rsvp" && (
                 <div
                   data-tour="page-actions"
-                  className="flex flex-wrap items-center gap-2"
+                  className="flex w-full flex-wrap items-center gap-2 sm:w-auto"
                 >
                   <button
                     type="button"
@@ -1235,23 +1235,32 @@ const AdminDashboard = ({
                         message: "",
                       })
                     }
-                    className="adm-btn adm-btn-primary"
+                    className="adm-btn adm-btn-primary flex-1 sm:flex-none"
                   >
-                    <Plus className="h-3.5 w-3.5" /> Tambah RSVP
+                    <Plus className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Tambah<span className="hidden sm:inline"> RSVP</span>
+                    </span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setCsvImportTab("rsvp")}
-                    className="adm-btn adm-btn-outline-primary"
+                    className="adm-btn adm-btn-outline-primary flex-1 sm:flex-none"
                   >
-                    <Upload className="h-3.5 w-3.5" /> Import CSV
+                    <Upload className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Impor<span className="hidden sm:inline"> CSV</span>
+                    </span>
                   </button>
                   <a
                     href="/api/export-rsvp"
                     target="_blank"
-                    className="adm-btn adm-btn-secondary"
+                    className="adm-btn adm-btn-secondary flex-1 sm:flex-none"
                   >
-                    <Download className="h-3.5 w-3.5" /> Export CSV
+                    <Download className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Ekspor<span className="hidden sm:inline"> CSV</span>
+                    </span>
                   </a>
                 </div>
               )}
@@ -1259,28 +1268,37 @@ const AdminDashboard = ({
               {activeTab === "wishes" && (
                 <div
                   data-tour="page-actions"
-                  className="flex flex-wrap items-center gap-2"
+                  className="flex w-full flex-wrap items-center gap-2 sm:w-auto"
                 >
                   <button
                     type="button"
                     onClick={() => setWishModal({ name: "", message: "" })}
-                    className="adm-btn adm-btn-primary"
+                    className="adm-btn adm-btn-primary flex-1 sm:flex-none"
                   >
-                    <Plus className="h-3.5 w-3.5" /> Tambah Ucapan
+                    <Plus className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Tambah<span className="hidden sm:inline"> Ucapan</span>
+                    </span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setCsvImportTab("wish")}
-                    className="adm-btn adm-btn-outline-primary"
+                    className="adm-btn adm-btn-outline-primary flex-1 sm:flex-none"
                   >
-                    <Upload className="h-3.5 w-3.5" /> Import CSV
+                    <Upload className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Impor<span className="hidden sm:inline"> CSV</span>
+                    </span>
                   </button>
                   <a
                     href="/api/export-wishes"
                     target="_blank"
-                    className="adm-btn adm-btn-secondary"
+                    className="adm-btn adm-btn-secondary flex-1 sm:flex-none"
                   >
-                    <Download className="h-3.5 w-3.5" /> Export CSV
+                    <Download className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Ekspor<span className="hidden sm:inline"> CSV</span>
+                    </span>
                   </a>
                 </div>
               )}
@@ -1518,7 +1536,7 @@ const AdminDashboard = ({
         </main>
 
         {/* Compact Footer */}
-        <footer className="flex min-h-[44px] shrink-0 flex-wrap items-center justify-between gap-2 border-t border-(--adm-border) bg-(--adm-bg-secondary) px-4 py-1.5 text-[11px] text-(--adm-text-secondary) md:px-6">
+        <footer className="flex min-h-[44px] shrink-0 flex-col items-center justify-center gap-0.5 border-t border-(--adm-border) bg-(--adm-bg-secondary) px-4 py-2 text-center text-[11px] text-(--adm-text-secondary) sm:flex-row sm:justify-between sm:py-1.5 sm:text-left md:px-6">
           <span>
             &copy; 2018 - {currentYear}{" "}
             <strong className="font-semibold uppercase">

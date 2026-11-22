@@ -560,20 +560,25 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         data-tour="wa-mode-switch"
         className="flex flex-wrap items-center justify-between gap-3"
       >
-        <div className="adm-seg">
+        <div className="adm-seg grid w-full grid-cols-2 sm:inline-flex sm:w-auto">
           <button
             type="button"
             onClick={() => setActiveMode("single")}
-            className={`adm-seg-btn ${activeMode === "single" ? "is-active" : ""}`}
+            className={`adm-seg-btn justify-center ${activeMode === "single" ? "is-active" : ""}`}
           >
-            Kirim Satuan
+            <span>
+              <span className="hidden sm:inline">Kirim </span>Satuan
+            </span>
           </button>
           <button
             type="button"
             onClick={() => setActiveMode("bulk")}
-            className={`adm-seg-btn ${activeMode === "bulk" ? "is-active" : ""}`}
+            className={`adm-seg-btn justify-center ${activeMode === "bulk" ? "is-active" : ""}`}
           >
-            Kirim Massal (Daftar Tamu / CSV)
+            <span>
+              <span className="hidden sm:inline">Kirim </span>Massal
+              <span className="hidden sm:inline"> (Daftar Tamu / CSV)</span>
+            </span>
           </button>
         </div>
 
@@ -676,9 +681,9 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       {activeMode === "single" ? (
         <form
           onSubmit={sendSingle}
-          className="grid gap-5 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4 md:grid-cols-2"
+          className="grid min-w-0 gap-5 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-3.5 sm:p-4 md:grid-cols-2"
         >
-          <div className="space-y-3.5">
+          <div className="min-w-0 space-y-3.5">
             {savedGuestsWithPhone.length > 0 && (
               <div>
                 <label htmlFor="wa-quick-pick" className="adm-label">
@@ -767,18 +772,18 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             </div>
           </div>
 
-          <div className="flex flex-col justify-between space-y-4">
-            <div className="space-y-2 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary) p-4">
+          <div className="flex min-w-0 flex-col justify-between space-y-4">
+            <div className="min-w-0 space-y-2 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary) p-3.5 sm:p-4">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-(--adm-text-secondary)">
-                <Eye className="h-3.5 w-3.5" /> Pratinjau Tautan Personal
+                <Eye className="h-3.5 w-3.5 shrink-0" /> Pratinjau Tautan Personal
               </div>
               <p className="font-mono text-xs break-all text-(--adm-text-primary)">
                 {previewLink}
               </p>
-              <p className="pt-1 text-xs text-(--adm-text-secondary)">
+              <p className="pt-1 text-xs leading-relaxed break-words text-(--adm-text-secondary)">
                 Gateway akan memilih salah satu dari 3 varian template{" "}
-                <code>wedding_undangan_tamu</code> secara otomatis dengan
-                antrean aman.
+                <code className="break-all">wedding_undangan_tamu</code> secara
+                otomatis dengan antrean aman.
               </p>
             </div>
 
@@ -787,22 +792,39 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               disabled={
                 isSending || !singleForm.name.trim() || !singleForm.phone.trim()
               }
-              className="adm-btn adm-btn-edit adm-btn-lg w-full"
+              className="adm-btn adm-btn-edit adm-btn-lg h-auto min-h-[40px] w-full py-2 text-center leading-snug whitespace-normal"
             >
               {isSending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
               ) : (
-                <Send className="h-4 w-4" />
+                <Send className="h-4 w-4 shrink-0" />
               )}
-              {isSending
-                ? sendingLabel || "Mengirim ke Antrean..."
-                : attachPdf && attachQr
-                  ? "Kirim Undangan + PDF & QR via WhatsApp"
-                  : attachPdf
-                    ? "Kirim Undangan & PDF via WhatsApp"
-                    : attachQr
-                      ? "Kirim Undangan & QR via WhatsApp"
-                      : "Kirim Undangan WhatsApp"}
+              <span>
+                {isSending ? (
+                  sendingLabel || "Mengirim ke Antrean..."
+                ) : attachPdf && attachQr ? (
+                  <>
+                    Kirim<span className="hidden sm:inline"> Undangan</span> +
+                    PDF &amp; QR
+                    <span className="hidden sm:inline"> via WhatsApp</span>
+                  </>
+                ) : attachPdf ? (
+                  <>
+                    Kirim<span className="hidden sm:inline"> Undangan</span> +
+                    PDF<span className="hidden sm:inline"> via WhatsApp</span>
+                  </>
+                ) : attachQr ? (
+                  <>
+                    Kirim<span className="hidden sm:inline"> Undangan</span> +
+                    QR<span className="hidden sm:inline"> via WhatsApp</span>
+                  </>
+                ) : (
+                  <>
+                    Kirim<span className="hidden sm:inline"> Undangan</span>{" "}
+                    WhatsApp
+                  </>
+                )}
+              </span>
             </button>
           </div>
         </form>

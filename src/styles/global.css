@@ -716,6 +716,7 @@
 
 /* Cards */
 .adm-card {
+  min-width: 0;
   background: var(--adm-bg-secondary);
   border: 1px solid var(--adm-border);
   border-radius: 8px;
@@ -801,6 +802,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
   height: 34px;
   padding: 0 14px;
   border-radius: 6px;

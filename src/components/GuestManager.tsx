@@ -802,22 +802,28 @@ const GuestManager: React.FC<GuestManagerProps> = ({
       {/* Switcher Sub-Tab */}
       <div
         data-tour="guest-subtabs"
-        className="flex flex-wrap items-center justify-between gap-2.5"
+        className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
       >
-        <div className="adm-seg">
+        <div className="adm-seg grid w-full grid-cols-2 sm:inline-flex sm:w-auto">
           <button
             type="button"
             onClick={() => setSubTab("list")}
-            className={`adm-seg-btn ${subTab === "list" ? "is-active" : ""}`}
+            className={`adm-seg-btn justify-center ${subTab === "list" ? "is-active" : ""}`}
           >
-            <Users className="h-3.5 w-3.5" /> Daftar Tamu Permanen
+            <Users className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              Daftar Tamu<span className="hidden sm:inline"> Permanen</span>
+            </span>
           </button>
           <button
             type="button"
             onClick={() => setSubTab("scanner")}
-            className={`adm-seg-btn ${subTab === "scanner" ? "is-active" : ""}`}
+            className={`adm-seg-btn justify-center ${subTab === "scanner" ? "is-active" : ""}`}
           >
-            <QrCode className="h-3.5 w-3.5" /> Scanner Check-In Hari H
+            <QrCode className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              Scanner<span className="hidden sm:inline"> Check-In Hari H</span>
+            </span>
           </button>
         </div>
 
@@ -825,31 +831,40 @@ const GuestManager: React.FC<GuestManagerProps> = ({
           href="/api/export-guests"
           target="_blank"
           rel="noopener noreferrer"
-          className="adm-btn adm-btn-secondary"
+          className="adm-btn adm-btn-secondary w-full justify-center sm:w-auto"
         >
-          <Download className="h-3.5 w-3.5" /> Export CSV Tamu
+          <Download className="h-3.5 w-3.5 shrink-0" />
+          <span>
+            Ekspor CSV<span className="hidden sm:inline"> Tamu</span>
+          </span>
         </a>
       </div>
 
       {subTab === "scanner" ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="adm-card space-y-3 p-4">
-            <div className="flex items-center justify-between">
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
+          <div className="adm-card min-w-0 space-y-3 p-3.5 sm:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h4 className="adm-card-title">Pindai QR Kamera</h4>
               <button
                 type="button"
                 onClick={cameraActive ? stopCamera : startCamera}
-                className={`adm-btn adm-btn-sm ${
+                className={`adm-btn adm-btn-sm shrink-0 ${
                   cameraActive ? "adm-btn-danger" : "adm-btn-edit"
                 }`}
               >
                 {cameraActive ? (
                   <>
-                    <CameraOff className="h-3.5 w-3.5" /> Matikan Kamera
+                    <CameraOff className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Matikan<span className="hidden sm:inline"> Kamera</span>
+                    </span>
                   </>
                 ) : (
                   <>
-                    <Camera className="h-3.5 w-3.5" /> Aktifkan Kamera
+                    <Camera className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Aktifkan<span className="hidden sm:inline"> Kamera</span>
+                    </span>
                   </>
                 )}
               </button>
@@ -1221,21 +1236,22 @@ const GuestManager: React.FC<GuestManagerProps> = ({
 
           {/* Filter & Pencarian */}
           <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-center">
-            <div className="adm-seg">
+            <div className="adm-seg grid w-full grid-cols-3 sm:inline-flex sm:w-auto">
               {(
                 [
-                  ["all", "Semua"],
-                  ["checked", "Sudah Check-In"],
-                  ["pending", "Belum Hadir"],
+                  ["all", "Semua", "Semua"],
+                  ["checked", "Hadir", "Sudah Check-In"],
+                  ["pending", "Belum", "Belum Hadir"],
                 ] as const
-              ).map(([val, label]) => (
+              ).map(([val, shortLabel, fullLabel]) => (
                 <button
                   key={val}
                   type="button"
                   onClick={() => setFilterStatus(val)}
-                  className={`adm-seg-btn ${filterStatus === val ? "is-active" : ""}`}
+                  className={`adm-seg-btn justify-center ${filterStatus === val ? "is-active" : ""}`}
                 >
-                  {label}
+                  <span className="sm:hidden">{shortLabel}</span>
+                  <span className="hidden sm:inline">{fullLabel}</span>
                 </button>
               ))}
             </div>

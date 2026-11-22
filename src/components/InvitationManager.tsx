@@ -459,20 +459,25 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       </div>
 
       <div className="flex justify-start">
-        <div className="adm-seg">
+        <div className="adm-seg grid w-full grid-cols-2 sm:inline-flex sm:w-auto">
           <button
             type="button"
             onClick={() => setActiveTab("single")}
-            className={`adm-seg-btn ${activeTab === "single" ? "is-active" : ""}`}
+            className={`adm-seg-btn justify-center ${activeTab === "single" ? "is-active" : ""}`}
           >
-            Satuan (Per Tamu)
+            <span>
+              Satuan<span className="hidden sm:inline"> (Per Tamu)</span>
+            </span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("bulk")}
-            className={`adm-seg-btn ${activeTab === "bulk" ? "is-active" : ""}`}
+            className={`adm-seg-btn justify-center ${activeTab === "bulk" ? "is-active" : ""}`}
           >
-            Massal (Daftar Tamu / CSV)
+            <span>
+              Massal
+              <span className="hidden sm:inline"> (Daftar Tamu / CSV)</span>
+            </span>
           </button>
         </div>
       </div>
