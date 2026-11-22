@@ -64,6 +64,7 @@ export interface WaSessionQrResult {
   status: string;
   sesi_status: string;
   proses_berjalan: boolean;
+  alasan_gagal?: string;
 }
 
 export interface WaPersonalAccountResult {
@@ -381,7 +382,12 @@ export class WaGatewayClient {
 
   static async registerPersonalAccount(
     baseUrl: string,
-    params: { namaAplikasi?: string; namaAkun?: string; namaApiKey?: string }
+    params: {
+      namaAplikasi?: string;
+      namaAkun?: string;
+      namaApiKey?: string;
+      domainAsal?: string;
+    }
   ): Promise<WaPersonalAccountResult> {
     const cleanBase = baseUrl.trim().replace(/\/+$/, "");
     const controller = new AbortController();
@@ -389,11 +395,15 @@ export class WaGatewayClient {
     try {
       const res = await fetch(`${cleanBase}/api/v1/integrasi/akun-mandiri`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(params.domainAsal ? { "X-Forwarded-Host": params.domainAsal } : {}),
+        },
         body: JSON.stringify({
           nama_aplikasi: params.namaAplikasi || "Wedding Invitation",
           nama_akun: params.namaAkun || "Undangan Pernikahan",
           nama_api_key: params.namaApiKey || "Wedding Invitation",
+          ...(params.domainAsal ? { domain_asal: params.domainAsal } : {}),
         }),
         signal: controller.signal,
       });

@@ -133,9 +133,15 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
             setQrOutcome("failed");
             setQrDataUrl("");
             setPairingCode("");
-            setQrStatusText(
-              "Waktu pindai QR habis atau penautan dibatalkan. Klik tombol di atas untuk membuat QR / Kode Pairing baru."
-            );
+            const reason =
+              typeof data.alasan_gagal === "string" && data.alasan_gagal.trim()
+                ? data.alasan_gagal.trim()
+                : "Waktu pindai QR habis atau penautan dibatalkan. Klik tombol di atas untuk membuat QR / Kode Pairing baru.";
+            setQrStatusText(reason);
+            onNotify({
+              type: "error",
+              message: reason,
+            });
             setActiveQrSesiId(null);
             stopPolling();
             await loadSessions();

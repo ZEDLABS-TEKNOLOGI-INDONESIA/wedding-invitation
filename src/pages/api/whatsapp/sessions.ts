@@ -30,9 +30,31 @@ function resolveBaseUrl(
   }
 }
 
+function resolveDomainAsal(request: Request, url: URL): string {
+  const forwardedHost = (request.headers.get("x-forwarded-host") || "")
+    .split(",")[0]
+    .trim();
+  const host = (forwardedHost || request.headers.get("host") || url.hostname || "")
+    .trim()
+    .toLowerCase();
+  if (!host) return "";
+  // Buang port jika ada (contoh: 127.0.0.1:4321 -> 127.0.0.1)
+  if (host.startsWith("[")) {
+    const end = host.indexOf("]");
+    return end > 0 ? host.slice(1, end) : host;
+  }
+  const idx = host.indexOf(":");
+  return idx >= 0 ? host.slice(0, idx) : host;
+}
+
 async function ensureCredentialsOrAutoRegister(
   config: Record<string, string>,
-  overrides?: { baseUrl?: string; keyId?: string; secret?: string }
+  overrides?: {
+    baseUrl?: string;
+    keyId?: string;
+    secret?: string;
+    domainAsal?: string;
+  }
 ): Promise<{
   creds: { baseUrl: string; keyId: string; secret: string };
   autoRegistered: boolean;
@@ -58,6 +80,7 @@ async function ensureCredentialsOrAutoRegister(
     namaAplikasi: "Wedding Invitation",
     namaAkun,
     namaApiKey: "Wedding Invitation",
+    domainAsal: overrides?.domainAsal,
   });
 
   setConfig("WA_BASE_URL", baseUrl);
@@ -148,7 +171,7 @@ export const GET: APIRoute = async ({ cookies, url }) => {
   }
 };
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, url }) => {
   if (!isAdminAuthenticated(cookies)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
@@ -157,6 +180,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   try {
+    const domainAsal = resolveDomainAsal(request, url);
     const body = (await request.json().catch(() => ({}))) as {
       action?: string;
       baseUrl?: string;
@@ -191,6 +215,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         namaAplikasi: "Wedding Invitation",
         namaAkun,
         namaApiKey: "Wedding Invitation",
+        domainAsal,
       });
 
       setConfig("WA_BASE_URL", baseUrl);
@@ -225,7 +250,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     if (action === "start_qr") {
       const { creds, autoRegistered } = await ensureCredentialsOrAutoRegister(
         config,
-        { baseUrl: body.baseUrl, keyId: body.keyId, secret: body.secret }
+        {
+          baseUrl: body.baseUrl,
+          keyId: body.keyId,
+          secret: body.secret,
+          domainAsal,
+        }
       );
       const client = new WaGatewayClient(creds, {
         timeoutMs: 20_000,
@@ -259,7 +289,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
       const { creds, autoRegistered } = await ensureCredentialsOrAutoRegister(
         config,
-        { baseUrl: body.baseUrl, keyId: body.keyId, secret: body.secret }
+        {
+          baseUrl: body.baseUrl,
+          keyId: body.keyId,
+          secret: body.secret,
+          domainAsal,
+        }
       );
       const client = new WaGatewayClient(creds, {
         timeoutMs: 20_000,
