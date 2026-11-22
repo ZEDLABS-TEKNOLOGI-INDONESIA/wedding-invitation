@@ -464,7 +464,7 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
                 onChange={(e) =>
                   setNewPartner((p) => ({ ...p, username: e.target.value }))
                 }
-                placeholder="contoh: ikbal"
+                placeholder="contoh: yahya"
                 className="adm-input bg-(--adm-bg-secondary)"
               />
             </div>

@@ -78,7 +78,7 @@ export const POST: APIRoute = async ({ request, url, clientAddress }) => {
     return new Response(
       JSON.stringify({
         error:
-          "Alamat URL undangan (slug) harus 4–50 karakter huruf kecil/angka/tanda hubung dan bukan kata terlarang (contoh: danik-ikbal).",
+          "Alamat URL undangan (slug) harus 4–50 karakter huruf kecil/angka/tanda hubung dan bukan kata terlarang (contoh: fera-yahya).",
       }),
       { status: 400, headers: JSON_HEADERS }
     );

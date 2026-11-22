@@ -22,13 +22,13 @@ test("hashPassword dan verifyPasswordHash menggunakan scrypt + salt acak", () =>
 });
 
 test("validasi username dan slug undangan menolak kata terlarang", () => {
-  assert.equal(normalizeUsername("  Danik_01 "), "danik_01");
-  assert.equal(isValidUsername("danik_01"), true);
+  assert.equal(normalizeUsername("  Fera_01 "), "fera_01");
+  assert.equal(isValidUsername("fera_01"), true);
   assert.equal(isValidUsername("ab"), false);
   assert.equal(isValidUsername("ada spasi"), false);
 
-  assert.equal(normalizeWeddingSlug("Danik & Ikbal!"), "danik-ikbal");
-  assert.equal(isValidWeddingSlug("danik-ikbal"), true);
+  assert.equal(normalizeWeddingSlug("Fera & Yahya!"), "fera-yahya");
+  assert.equal(isValidWeddingSlug("fera-yahya"), true);
   assert.equal(isValidWeddingSlug("admin"), false);
   assert.equal(isValidWeddingSlug("superadmin"), false);
   assert.equal(isValidWeddingSlug("demo"), false);
