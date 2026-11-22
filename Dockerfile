@@ -30,7 +30,7 @@ ENV NODE_ENV=production \
     ASTRO_TELEMETRY_DISABLED=1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates wget tini \
+    && apt-get install -y --no-install-recommends ca-certificates wget tini gosu \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 app \
     && useradd --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app \
@@ -42,7 +42,10 @@ COPY --from=builder --chown=app:app /app/dist ./dist
 COPY --from=builder --chown=app:app /app/node_modules ./node_modules
 COPY --from=builder --chown=app:app /app/package.json ./package.json
 
-EXPOSE 4321
-USER app
+RUN printf '#!/bin/sh\nset -e\nmkdir -p /app/database/uploads\nchown -R app:app /app/database\nexec gosu app "$@"\n' > /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
 
-ENTRYPOINT ["/usr/bin/tini", "--", "node", "./dist/server/entry.mjs"]
+EXPOSE 4321
+
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
+CMD ["node", "./dist/server/entry.mjs"]

@@ -28,7 +28,7 @@ Website undangan pernikahan digital modern, cepat, dan interaktif yang dibangun 
   - Simpan daftar tamu permanen di SQLite dengan kode check-in unik (`G-XXXXXXXX`), grup, dan kuota pax (lengkap dengan form berlabel, edit tamu, dan stepper kuota).
   - **Import CSV / Tempel dari Excel** (drag & drop, dukung pemisah `,`, `;` Excel ID, dan Tab) & Export CSV daftar tamu, salin link personal, kirim undangan WA langsung, serta check-in manual.
   - **Scanner QR Check-In Hari H:** Memindai QR via kamera (`BarcodeDetector` API) atau input manual dengan saran cepat nama tamu belum check-in, lengkap dengan dukungan tamu *walk-in* 1-klik.
-- **Integrasi WhatsApp Gateway (`whatsapp.zedlabs.id` — HMAC-SHA256 v2):**
+- **Integrasi WhatsApp Gateway (`whatsapp.zedlabs.id` | HMAC-SHA256 v2):**
   - **Notifikasi Otomatis ke Admin/Mempelai:** Pemberitahuan otomatis ke satu atau lebih nomor WA admin saat ada RSVP atau ucapan baru/diperbarui.
   - **Konfirmasi Otomatis ke Tamu:** Balasan WA otomatis berisi ringkasan RSVP & jadwal acara saat tamu mengisi nomor HP.
   - **Kirim Undangan Otomatis (Satuan, Daftar Tamu & Massal CSV/Excel):** Tarik langsung penerima dari Daftar Tamu Permanen (dengan filter grup) atau Import CSV/Excel, opsi lampiran QR Code PNG, riwayat pengiriman, polling status, dan kirim ulang.
@@ -112,9 +112,9 @@ Akses aplikasi:
 2. Buka `/admin` → tab **Pengaturan** → bagian **Integrasi WhatsApp Gateway**.
 3. Isi **URL Gateway**, **API Key (`key_id`)**, **HMAC Secret**, dan **Nomor WA Admin/Mempelai** (bisa lebih dari satu, pisahkan dengan koma).
 4. Klik **Simpan Semua**, lalu jalankan secara berurutan:
-   1. **Uji Koneksi (Ping)** — memastikan tanda tangan HMAC v2 valid dan sesi WA siap kirim.
-   2. **Sinkron 4 Template ke Gateway** — mendaftarkan otomatis template `wedding_undangan_tamu`, `wedding_rsvp_admin`, `wedding_ucapan_admin`, dan `wedding_rsvp_konfirmasi`.
-   3. **Kirim Pesan Tes** — memverifikasi pengiriman nyata ke nomor admin.
+   1. **Uji Koneksi (Ping)** | memastikan tanda tangan HMAC v2 valid dan sesi WA siap kirim.
+   2. **Sinkron 4 Template ke Gateway** | mendaftarkan otomatis template `wedding_undangan_tamu`, `wedding_rsvp_admin`, `wedding_ucapan_admin`, dan `wedding_rsvp_konfirmasi`.
+   3. **Kirim Pesan Tes** | memverifikasi pengiriman nyata ke nomor admin.
 
 ---
 
