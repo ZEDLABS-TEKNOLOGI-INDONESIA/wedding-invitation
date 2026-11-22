@@ -1,3 +1,4 @@
+import jsQR from "jsqr";
 import {
   Camera,
   CameraOff,
@@ -102,10 +103,15 @@ const GuestManager: React.FC<GuestManagerProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
+  const scanPaxRef = useRef<number>(scanPax);
   const lastScannedRef = useRef<{ value: string; time: number }>({
     value: "",
     time: 0,
   });
+
+  useEffect(() => {
+    scanPaxRef.current = scanPax;
+  }, [scanPax]);
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
 
@@ -471,17 +477,17 @@ const GuestManager: React.FC<GuestManagerProps> = ({
 
   const startCamera = async () => {
     setCameraError(null);
-    const BarcodeDetectorCtor = (window as any).BarcodeDetector;
-    if (!BarcodeDetectorCtor) {
+
+    if (!navigator.mediaDevices?.getUserMedia) {
       setCameraError(
-        "Browser ini belum mendukung BarcodeDetector API. Gunakan Chrome/Edge Android atau ketik nama/kode secara manual di bawah."
+        "Akses kamera memerlukan koneksi aman (HTTPS) atau localhost. Silakan gunakan input manual di bawah."
       );
       return;
     }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
+        video: { facingMode: { ideal: "environment" } },
       });
       streamRef.current = stream;
       setCameraActive(true);
@@ -493,34 +499,109 @@ const GuestManager: React.FC<GuestManagerProps> = ({
         }
       }, 50);
 
-      const detector = new BarcodeDetectorCtor({ formats: ["qr_code"] });
+      // Gunakan BarcodeDetector bawaan jika didukung, atau fallback otomatis ke jsQR (lintas browser)
+      type NativeBarcodeDetector = {
+        detect: (
+          source: HTMLVideoElement
+        ) => Promise<Array<{ rawValue?: string }>>;
+      };
+      const BarcodeDetectorCtor = (
+        window as unknown as {
+          BarcodeDetector?: new (opts: {
+            formats: string[];
+          }) => NativeBarcodeDetector;
+        }
+      ).BarcodeDetector;
+
+      let nativeDetector: NativeBarcodeDetector | null = null;
+      if (BarcodeDetectorCtor) {
+        try {
+          nativeDetector = new BarcodeDetectorCtor({ formats: ["qr_code"] });
+        } catch {
+          nativeDetector = null;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      let lastDecodeAt = 0;
+
+      const decodeFrame = async (
+        video: HTMLVideoElement
+      ): Promise<string | null> => {
+        if (nativeDetector) {
+          try {
+            const barcodes = await nativeDetector.detect(video);
+            if (barcodes.length > 0 && barcodes[0].rawValue) {
+              return String(barcodes[0].rawValue);
+            }
+            return null;
+          } catch {
+            // Jika BarcodeDetector gagal di runtime, beralih ke jsQR
+            nativeDetector = null;
+          }
+        }
+
+        if (!ctx || !video.videoWidth || !video.videoHeight) return null;
+        const maxDim = 720;
+        const scale = Math.min(
+          1,
+          maxDim / Math.max(video.videoWidth, video.videoHeight)
+        );
+        const w = Math.max(1, Math.round(video.videoWidth * scale));
+        const h = Math.max(1, Math.round(video.videoHeight * scale));
+        if (canvas.width !== w || canvas.height !== h) {
+          canvas.width = w;
+          canvas.height = h;
+        }
+        ctx.drawImage(video, 0, 0, w, h);
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const decoded = jsQR(imageData.data, w, h, {
+          inversionAttempts: "dontInvert",
+        });
+        return decoded?.data || null;
+      };
+
       const scanFrame = async () => {
         if (!streamRef.current) return;
-        if (videoRef.current && videoRef.current.readyState === 4) {
+        const now = Date.now();
+        if (
+          videoRef.current &&
+          videoRef.current.readyState >= 2 &&
+          now - lastDecodeAt >= 120
+        ) {
+          lastDecodeAt = now;
           try {
-            const barcodes = await detector.detect(videoRef.current);
-            if (barcodes.length > 0 && barcodes[0].rawValue) {
-              const rawVal = String(barcodes[0].rawValue);
-              const now = Date.now();
+            const rawVal = await decodeFrame(videoRef.current);
+            if (rawVal) {
               if (
                 rawVal !== lastScannedRef.current.value ||
                 now - lastScannedRef.current.time > 4000
               ) {
                 lastScannedRef.current = { value: rawVal, time: now };
-                await processCheckin(rawVal, scanPax);
+                await processCheckin(rawVal, scanPaxRef.current);
               }
             }
           } catch {
-            // ignore transient frame errors
+            // Abaikan galat sementara pada frame
           }
         }
-        rafRef.current = requestAnimationFrame(scanFrame);
+        if (streamRef.current) {
+          rafRef.current = requestAnimationFrame(scanFrame);
+        }
       };
       rafRef.current = requestAnimationFrame(scanFrame);
-    } catch {
-      setCameraError(
-        "Izin kamera ditolak atau kamera tidak tersedia. Gunakan input manual di bawah."
-      );
+    } catch (err) {
+      const name = err instanceof Error ? err.name : "";
+      if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+        setCameraError(
+          "Perangkat kamera tidak ditemukan. Silakan gunakan input manual di bawah."
+        );
+      } else {
+        setCameraError(
+          "Izin kamera ditolak atau sedang digunakan aplikasi lain. Silakan izinkan kamera atau gunakan input manual di bawah."
+        );
+      }
     }
   };
 
