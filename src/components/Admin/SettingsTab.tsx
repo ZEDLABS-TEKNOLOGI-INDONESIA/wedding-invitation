@@ -248,7 +248,13 @@ const SettingsTab: React.FC<{
   onNotify: (toast: ToastState) => void;
   activeSection?: SettingsSubMenuId;
   onSectionChange?: (section: SettingsSubMenuId) => void;
-}> = ({ onNotify, activeSection, onSectionChange }) => {
+  publicInvitationPath?: string;
+}> = ({
+  onNotify,
+  activeSection,
+  onSectionChange,
+  publicInvitationPath = "/demo",
+}) => {
   const [internalSection, setInternalSection] =
     useState<SettingsSubMenuId>("tema");
   const currentSection = activeSection ?? internalSection;
@@ -1231,7 +1237,7 @@ const SettingsTab: React.FC<{
             </p>
           </div>
           <a
-            href="/"
+            href={publicInvitationPath}
             target="_blank"
             rel="noopener noreferrer"
             className="adm-btn adm-btn-secondary adm-btn-sm"

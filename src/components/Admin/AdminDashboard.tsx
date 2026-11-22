@@ -1291,21 +1291,23 @@ const AdminDashboard = ({
             </button>
 
             <a
-              href="/"
+              href={publicInvitationPath}
               target="_blank"
               rel="noopener noreferrer"
-              title="Buka Halaman Undangan"
+              title={`Buka Halaman Undangan (${publicInvitationPath})`}
               className="inline-flex h-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
 
             <div className="ml-0.5 flex items-center gap-2 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) py-1 pr-2.5 pl-1.5">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--adm-accent-soft) text-[11px] font-semibold text-(--adm-accent)">
-                A
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--adm-accent-soft) text-[11px] font-semibold text-(--adm-accent) uppercase">
+                {(currentUser?.fullName || currentUser?.username || "A")
+                  .charAt(0)
+                  .toUpperCase()}
               </span>
-              <span className="hidden text-xs font-medium text-(--adm-text-primary) sm:inline">
-                Admin
+              <span className="hidden max-w-[120px] truncate text-xs font-medium text-(--adm-text-primary) sm:inline">
+                {currentUser?.fullName || currentUser?.username || "Admin"}
               </span>
             </div>
           </div>
@@ -1651,6 +1653,7 @@ const AdminDashboard = ({
                 onNotify={setToast}
                 activeSection={settingsSubTab}
                 onSectionChange={setSettingsSubTab}
+                publicInvitationPath={publicInvitationPath}
               />
             )}
 
