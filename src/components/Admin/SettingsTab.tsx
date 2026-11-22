@@ -186,22 +186,74 @@ const TEXT_CONTENT_FIELDS: {
   },
 ];
 
-const QUICK_NAV_ITEMS = [
-  { id: "sec-tema", label: "Tema Publik" },
-  { id: "sec-mempelai", label: "Mempelai" },
-  { id: "sec-lokasi", label: "Lokasi" },
-  { id: "sec-jadwal", label: "Jadwal" },
-  { id: "sec-media", label: "Hero & Media" },
-  { id: "sec-teks", label: "Teks" },
-  { id: "sec-wa", label: "WhatsApp" },
-  { id: "sec-rekening", label: "Rekening" },
-  { id: "sec-story", label: "Kisah Cinta" },
-  { id: "sec-galeri", label: "Galeri" },
+export type SettingsSubMenuId =
+  | "tema"
+  | "mempelai"
+  | "acara"
+  | "media"
+  | "konten"
+  | "whatsapp";
+
+export const SETTINGS_SUBMENUS: {
+  id: SettingsSubMenuId;
+  label: string;
+  desc: string;
+  keywords: string;
+}[] = [
+  {
+    id: "tema",
+    label: "Tema & Tampilan",
+    desc: "Pilih nuansa warna publik, mode bawaan, ornamen samping, dan animasi latar.",
+    keywords: "tema warna publik ornamen animasi merpati bunga gelap terang",
+  },
+  {
+    id: "mempelai",
+    label: "Data Mempelai",
+    desc: "Atur nama panggilan, nama lengkap, nama orang tua, Instagram, dan foto mempelai.",
+    keywords: "mempelai pria wanita orang tua instagram foto",
+  },
+  {
+    id: "acara",
+    label: "Lokasi & Jadwal",
+    desc: "Tentukan alamat venue, titik peta Google Maps, serta jadwal Akad & Resepsi.",
+    keywords: "lokasi venue alamat peta maps jadwal akad resepsi tanggal waktu",
+  },
+  {
+    id: "media",
+    label: "Hero, Musik & Galeri",
+    desc: "Unggah foto sampul, musik latar (backsound), batas tamu RSVP, dan galeri foto.",
+    keywords: "hero amplop musik audio backsound mp3 galeri foto rsvp",
+  },
+  {
+    id: "konten",
+    label: "Teks, Kisah & Kado",
+    desc: "Ubah salam pembuka, kutipan ayat, kisah cinta, rekening bank, dan alamat tanda kasih.",
+    keywords: "teks salam kutipan kisah cinta story rekening bank kado hadiah",
+  },
+  {
+    id: "whatsapp",
+    label: "WhatsApp Gateway",
+    desc: "Hubungkan layanan WhatsApp Gateway, sinkronisasi template, dan notifikasi otomatis.",
+    keywords: "whatsapp wa gateway api secret notifikasi otomatis",
+  },
 ];
 
-const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
-  onNotify,
-}) => {
+const SettingsTab: React.FC<{
+  onNotify: (toast: ToastState) => void;
+  activeSection?: SettingsSubMenuId;
+  onSectionChange?: (section: SettingsSubMenuId) => void;
+}> = ({ onNotify, activeSection, onSectionChange }) => {
+  const [internalSection, setInternalSection] =
+    useState<SettingsSubMenuId>("tema");
+  const currentSection = activeSection ?? internalSection;
+  const selectSection = (next: SettingsSubMenuId) => {
+    if (onSectionChange) {
+      onSectionChange(next);
+    } else {
+      setInternalSection(next);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const [rawConfig, setRawConfig] = useState<Record<string, string>>({});
   const [bankAccounts, setBankAccounts] = useState<BankAccountItem[]>([]);
   const [loveStory, setLoveStory] = useState<LoveStoryItem[]>([]);
@@ -1038,19 +1090,28 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
         </div>
 
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-          {QUICK_NAV_ITEMS.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              className="rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-2.5 py-1 text-[11px] font-medium whitespace-nowrap text-(--adm-text-secondary) hover:border-(--adm-accent) hover:text-(--adm-accent)"
-            >
-              {item.label}
-            </a>
-          ))}
+          {SETTINGS_SUBMENUS.map((item) => {
+            const active = currentSection === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => selectSection(item.id)}
+                className={`rounded-md border px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
+                  active
+                    ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
+                    : "border-(--adm-border) bg-(--adm-bg-primary) text-(--adm-text-secondary) hover:border-(--adm-accent) hover:text-(--adm-accent)"
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Tema & Tampilan Undangan Publik */}
+      {currentSection === "tema" && (
       <div id="sec-tema" className="adm-card scroll-mt-36">
         <div className="adm-card-header flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -1415,14 +1476,19 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           </div>
         </div>
       </div>
+      )}
 
       {/* Mempelai */}
+      {currentSection === "mempelai" && (
       <div id="sec-mempelai" className="scroll-mt-32 space-y-6">
         {renderCoupleCard("BRIDE", "Mempelai Wanita")}
         {renderCoupleCard("GROOM", "Mempelai Pria")}
       </div>
+      )}
 
       {/* Lokasi / Venue */}
+      {currentSection === "acara" && (
+      <div className="space-y-6">
       <div id="sec-lokasi" className="adm-card scroll-mt-36">
         <div className="adm-card-header">
           <h3 className="adm-card-title">Lokasi / Venue Acara</h3>
@@ -1549,8 +1615,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           )}
         </div>
       </div>
+      </div>
+      )}
 
       {/* Hero & Media */}
+      {currentSection === "media" && (
       <div id="sec-media" className="adm-card scroll-mt-36">
         <div className="adm-card-header">
           <h3 className="adm-card-title">
@@ -1688,8 +1757,10 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           </div>
         </div>
       </div>
+      )}
 
       {/* Teks & Konten */}
+      {currentSection === "konten" && (
       <div id="sec-teks" className="adm-card scroll-mt-36">
         <div className="adm-card-header">
           <h3 className="adm-card-title">Teks &amp; Konten Undangan</h3>
@@ -1729,8 +1800,10 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           })}
         </div>
       </div>
+      )}
 
       {/* WhatsApp Gateway */}
+      {currentSection === "whatsapp" && (
       <div id="sec-wa" className="adm-card scroll-mt-36">
         <div className="adm-card-header">
           <div>
@@ -1953,8 +2026,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           )}
         </div>
       </div>
+      )}
 
       {/* Rekening Bank Editor */}
+      {currentSection === "konten" && (
+      <div className="space-y-6">
       <div id="sec-rekening" className="adm-card scroll-mt-36">
         <datalist id="bank-presets-list">
           {BANK_PRESETS.map((bank) => (
@@ -2205,8 +2281,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           )}
         </div>
       </div>
+      </div>
+      )}
 
       {/* Galeri Foto Editor */}
+      {currentSection === "media" && (
       <div id="sec-galeri" className="adm-card scroll-mt-36">
         <div className="adm-card-header">
           <div>
@@ -2304,6 +2383,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           )}
         </div>
       </div>
+      )}
 
       <div className="flex justify-end pb-4">
         <button

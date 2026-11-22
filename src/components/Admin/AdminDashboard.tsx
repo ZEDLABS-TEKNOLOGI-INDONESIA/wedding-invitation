@@ -1,4 +1,5 @@
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -48,7 +49,10 @@ import {
 } from "./AdminFeedback";
 import Coachmark from "./Coachmark";
 import CsvImportModal from "./CsvImportModal";
-import SettingsTab from "./SettingsTab";
+import SettingsTab, {
+  SETTINGS_SUBMENUS,
+  type SettingsSubMenuId,
+} from "./SettingsTab";
 
 const GuestManager = lazy(() => import("../GuestManager"));
 const InvitationManager = lazy(() => import("../InvitationManager"));
@@ -396,6 +400,9 @@ const AdminDashboard = ({
   coupleLabel?: string;
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTabId>("rsvp");
+  const [settingsSubTab, setSettingsSubTab] =
+    useState<SettingsSubMenuId>("tema");
+  const [settingsMenuOpen, setSettingsMenuOpen] = useState(true);
   const [coachmarkNonce, setCoachmarkNonce] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -763,7 +770,8 @@ const AdminDashboard = ({
           id: "settings",
           label: "Pengaturan",
           icon: Settings,
-          keywords: "mempelai jadwal peta musik audio backsound galeri bank",
+          keywords:
+            "tema warna ornamen animasi merpati mempelai jadwal akad resepsi peta lokasi musik audio backsound galeri bank rekening kisah story teks whatsapp gateway",
         },
       ],
     },
@@ -783,7 +791,16 @@ const AdminDashboard = ({
     }))
     .filter((group) => group.items.length > 0);
 
-  const activeMeta = TAB_META[activeTab];
+  const activeMeta =
+    activeTab === "settings"
+      ? (() => {
+          const sub = SETTINGS_SUBMENUS.find((s) => s.id === settingsSubTab);
+          return {
+            title: sub ? `Pengaturan — ${sub.label}` : TAB_META.settings.title,
+            desc: sub ? sub.desc : TAB_META.settings.desc,
+          };
+        })()
+      : TAB_META[activeTab];
   const currentYear = new Date().getFullYear();
 
   return (
@@ -906,14 +923,38 @@ const AdminDashboard = ({
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const active = activeTab === item.id;
+                    const isSettingsItem = item.id === "settings";
+                    const matchingSubmenus = isSettingsItem
+                      ? SETTINGS_SUBMENUS.filter(
+                          (sub) =>
+                            !q ||
+                            sub.label.toLowerCase().includes(q) ||
+                            sub.keywords.includes(q) ||
+                            item.label.toLowerCase().includes(q)
+                        )
+                      : [];
+                    const showSubmenus =
+                      isSettingsItem &&
+                      !sidebarCollapsed &&
+                      (settingsMenuOpen || Boolean(q));
+
                     return (
                       <li key={item.id}>
                         <button
                           type="button"
                           title={item.label}
                           onClick={() => {
-                            setActiveTab(item.id);
-                            setMobileMenuOpen(false);
+                            if (isSettingsItem) {
+                              if (activeTab === "settings" && !sidebarCollapsed) {
+                                setSettingsMenuOpen((prev) => !prev);
+                              } else {
+                                setActiveTab("settings");
+                                setSettingsMenuOpen(true);
+                              }
+                            } else {
+                              setActiveTab(item.id);
+                              setMobileMenuOpen(false);
+                            }
                           }}
                           className={`adm-sidebar-item ${active ? "is-active" : ""} ${
                             sidebarCollapsed ? "md:justify-center md:px-0" : ""
@@ -927,16 +968,54 @@ const AdminDashboard = ({
                           >
                             {item.label}
                           </span>
-                          {typeof item.badge === "number" && (
-                            <span
-                              className={`ml-auto rounded-full bg-(--adm-bg-tertiary) px-1.5 py-0.5 text-[10px] font-semibold text-(--adm-text-secondary) tabular-nums ${
+                          {isSettingsItem ? (
+                            <ChevronDown
+                              className={`ml-auto h-3.5 w-3.5 shrink-0 text-(--adm-text-muted) transition-transform duration-200 ${
                                 sidebarCollapsed ? "md:hidden" : ""
-                              }`}
-                            >
-                              {item.badge}
-                            </span>
+                              } ${showSubmenus ? "rotate-180" : ""}`}
+                            />
+                          ) : (
+                            typeof item.badge === "number" && (
+                              <span
+                                className={`ml-auto rounded-full bg-(--adm-bg-tertiary) px-1.5 py-0.5 text-[10px] font-semibold text-(--adm-text-secondary) tabular-nums ${
+                                  sidebarCollapsed ? "md:hidden" : ""
+                                }`}
+                              >
+                                {item.badge}
+                              </span>
+                            )
                           )}
                         </button>
+
+                        {/* Sub-menu Pengaturan */}
+                        {showSubmenus && matchingSubmenus.length > 0 && (
+                          <ul className="mt-1 ml-5 flex flex-col gap-0.5 border-l border-(--adm-border) pl-2">
+                            {matchingSubmenus.map((sub) => {
+                              const subActive =
+                                activeTab === "settings" &&
+                                settingsSubTab === sub.id;
+                              return (
+                                <li key={sub.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveTab("settings");
+                                      setSettingsSubTab(sub.id);
+                                      setMobileMenuOpen(false);
+                                    }}
+                                    className={`flex w-full items-center rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors ${
+                                      subActive
+                                        ? "bg-(--adm-accent-soft) font-semibold text-(--adm-accent)"
+                                        : "font-medium text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)"
+                                    }`}
+                                  >
+                                    <span className="truncate">{sub.label}</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
                       </li>
                     );
                   })}
@@ -1418,7 +1497,13 @@ const AdminDashboard = ({
               </div>
             )}
 
-            {activeTab === "settings" && <SettingsTab onNotify={setToast} />}
+            {activeTab === "settings" && (
+              <SettingsTab
+                onNotify={setToast}
+                activeSection={settingsSubTab}
+                onSectionChange={setSettingsSubTab}
+              />
+            )}
           </div>
         </main>
 
