@@ -2153,6 +2153,7 @@ const SettingsTab: React.FC<{
                 WA_API_KEY: keyId,
                 WA_API_SECRET: secret,
               }));
+              setWaFeedback(null);
             }}
             onNotify={onNotify}
           />

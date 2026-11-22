@@ -9,6 +9,7 @@ import {
   Smartphone,
   Sparkles,
   Trash2,
+  XCircle,
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
@@ -37,6 +38,7 @@ const SESSION_BADGE: Record<string, { label: string; className: string }> = {
   pairing_pending: { label: "Menunggu Pairing", className: "adm-badge adm-badge-warning" },
   logged_out: { label: "Terputus", className: "adm-badge adm-badge-danger" },
   disconnected: { label: "Terputus", className: "adm-badge adm-badge-danger" },
+  failed: { label: "Kedaluwarsa / Gagal", className: "adm-badge adm-badge-danger" },
 };
 
 const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
@@ -59,6 +61,9 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
   const [activeQrSesiId, setActiveQrSesiId] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [qrStatusText, setQrStatusText] = useState<string>("");
+  const [qrOutcome, setQrOutcome] = useState<"idle" | "success" | "failed">(
+    "idle"
+  );
   const [pairingCode, setPairingCode] = useState<string>("");
   const pollTimerRef = useRef<number | null>(null);
 
@@ -110,8 +115,10 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
 
           if (data.qrDataUrl) {
             setQrDataUrl(data.qrDataUrl);
+            setQrOutcome("idle");
             setQrStatusText("Pindai QR ini dari WhatsApp → Perangkat Tertaut");
           } else if (data.sesi_status === "ready") {
+            setQrOutcome("success");
             setQrStatusText("Nomor WhatsApp berhasil terhubung!");
             setQrDataUrl("");
             setPairingCode("");
@@ -123,8 +130,11 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
             });
             await loadSessions();
           } else if (data.proses_berjalan === false) {
+            setQrOutcome("failed");
+            setQrDataUrl("");
+            setPairingCode("");
             setQrStatusText(
-              `Proses penautan berakhir (status: ${data.sesi_status || "selesai"}).`
+              "Waktu pindai QR habis atau penautan dibatalkan. Klik tombol di atas untuk membuat QR / Kode Pairing baru."
             );
             setActiveQrSesiId(null);
             stopPolling();
@@ -502,7 +512,7 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
         </div>
 
         {/* Tampilan QR Code atau Kode Pairing aktif */}
-        {(qrDataUrl || pairingCode || activeQrSesiId) && (
+        {(qrDataUrl || pairingCode || activeQrSesiId || qrStatusText) && (
           <div className="flex flex-col items-center gap-2.5 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary) p-4 text-center">
             {qrDataUrl && (
               <img
@@ -535,9 +545,20 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
               <Loader2 className="h-6 w-6 animate-spin text-(--adm-accent)" />
             )}
             {qrStatusText && (
-              <p className="flex items-center gap-1.5 text-xs text-(--adm-text-secondary)">
-                {!activeQrSesiId && (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-(--adm-green)" />
+              <p
+                className={`flex items-center gap-1.5 text-xs ${
+                  qrOutcome === "failed"
+                    ? "text-(--adm-red)"
+                    : qrOutcome === "success"
+                      ? "text-(--adm-green)"
+                      : "text-(--adm-text-secondary)"
+                }`}
+              >
+                {qrOutcome === "success" && (
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-(--adm-green)" />
+                )}
+                {qrOutcome === "failed" && (
+                  <XCircle className="h-3.5 w-3.5 shrink-0 text-(--adm-red)" />
                 )}
                 <span>{qrStatusText}</span>
               </p>
