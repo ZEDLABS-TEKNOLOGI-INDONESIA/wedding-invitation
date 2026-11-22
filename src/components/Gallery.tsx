@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import type { AppConfig } from "../types";
 import { SectionDivider } from "./WeddingOrnaments";
@@ -29,7 +30,7 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
       setIsClosing(false);
       document.body.style.overflow = "";
       closeTimerRef.current = null;
-    }, 300);
+    }, 250);
   }, []);
 
   const navigate = useCallback(
@@ -67,6 +68,109 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
   }, []);
 
   if (images.length === 0) return null;
+
+  const lightboxModal =
+    selectedImg !== null && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Pratinjau foto galeri"
+            onClick={closeLightbox}
+            className={`bg-darkBg/95 fixed inset-0 z-[2500] flex flex-col justify-between p-4 backdrop-blur-2xl transition-opacity duration-250 sm:p-6 md:p-8 ${
+              isClosing ? "opacity-0" : "opacity-100"
+            }`}
+          >
+            {/* Top Bar: Counter & Close Button */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4"
+            >
+              <div className="rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-medium tracking-[0.2em] text-white/90 uppercase backdrop-blur-md">
+                Momen{" "}
+                <span className="text-accent font-bold">{selectedImg + 1}</span>{" "}
+                / {images.length}
+              </div>
+
+              <button
+                type="button"
+                aria-label="Tutup pratinjau galeri"
+                onClick={closeLightbox}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/85 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white active:scale-95"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Center Stage: Prev + Image + Next */}
+            <div className="relative mx-auto my-4 flex min-h-0 w-full max-w-6xl flex-1 items-center justify-center gap-3 md:gap-6">
+              {images.length > 1 && (
+                <button
+                  type="button"
+                  aria-label="Foto sebelumnya"
+                  onClick={(e) => navigate("prev", e)}
+                  className="absolute left-0 z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white/85 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white active:scale-95 md:static md:h-12 md:w-12 md:bg-white/10"
+                >
+                  <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
+                </button>
+              )}
+
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="flex max-h-full min-w-0 flex-1 items-center justify-center"
+              >
+                <img
+                  src={images[selectedImg]}
+                  alt={`Momen Pernikahan ${selectedImg + 1}`}
+                  className="max-h-[68vh] max-w-full rounded-2xl border border-white/15 object-contain shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:max-h-[72vh]"
+                />
+              </div>
+
+              {images.length > 1 && (
+                <button
+                  type="button"
+                  aria-label="Foto berikutnya"
+                  onClick={(e) => navigate("next", e)}
+                  className="absolute right-0 z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white/85 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white active:scale-95 md:static md:h-12 md:w-12 md:bg-white/10"
+                >
+                  <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
+                </button>
+              )}
+            </div>
+
+            {/* Bottom Thumbnail Strip */}
+            {images.length > 1 ? (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="mx-auto flex max-w-full items-center gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-md"
+              >
+                {images.map((thumb, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    aria-label={`Pilih foto ${idx + 1}`}
+                    onClick={() => setSelectedImg(idx)}
+                    className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition-all sm:h-14 sm:w-14 ${
+                      idx === selectedImg
+                        ? "border-accent scale-105 opacity-100 shadow-md"
+                        : "border-transparent opacity-50 hover:opacity-85"
+                    }`}
+                  >
+                    <img
+                      src={thumb}
+                      alt={`Thumbnail ${idx + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="h-4" />
+            )}
+          </div>,
+          document.body
+        )
+      : null;
 
   return (
     <section
@@ -112,65 +216,7 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
         </div>
       </div>
 
-      {/* Lightbox */}
-      {selectedImg !== null && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Pratinjau foto galeri"
-          className={`fixed inset-0 z-[1000] flex items-center justify-center overflow-hidden p-4 transition-opacity duration-300 ${
-            isClosing ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          <div
-            className="bg-darkBg/92 absolute inset-0 backdrop-blur-xl"
-            onClick={closeLightbox}
-          />
-
-          <button
-            type="button"
-            aria-label="Tutup pratinjau galeri"
-            onClick={closeLightbox}
-            className="absolute top-4 right-4 z-[1030] flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white md:top-8 md:right-8"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Foto sebelumnya"
-            onClick={(e) => navigate("prev", e)}
-            className="fixed top-1/2 left-3 z-[1020] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white md:left-8 md:h-12 md:w-12"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </button>
-
-          <div className="relative z-[1010] flex max-h-[82vh] max-w-[90vw] items-center justify-center">
-            <img
-              src={images[selectedImg]}
-              alt={`Momen Pernikahan ${selectedImg + 1}`}
-              className="max-h-[82vh] max-w-full rounded-2xl border border-white/15 object-contain shadow-2xl"
-            />
-          </div>
-
-          <button
-            type="button"
-            aria-label="Foto berikutnya"
-            onClick={(e) => navigate("next", e)}
-            className="fixed top-1/2 right-3 z-[1020] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white md:right-8 md:h-12 md:w-12"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </button>
-
-          <div className="pointer-events-none absolute right-0 bottom-6 left-0 z-[1030] flex justify-center">
-            <div className="rounded-full border border-white/15 bg-black/50 px-5 py-2 text-xs font-medium tracking-[0.2em] text-white/90 uppercase backdrop-blur-md">
-              Momen{" "}
-              <span className="text-accent font-bold">{selectedImg + 1}</span> /{" "}
-              {images.length}
-            </div>
-          </div>
-        </div>
-      )}
+      {lightboxModal}
     </section>
   );
 };
