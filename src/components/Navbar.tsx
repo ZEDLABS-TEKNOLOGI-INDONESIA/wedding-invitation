@@ -56,7 +56,44 @@ const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [activeSection, setActiveSection] = useState<string>("hero");
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const navRef = useRef<HTMLElement | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
+  const isInteractingRef = useRef(false);
+
+  useEffect(() => {
+    const scheduleHide = () => {
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+      if (isInteractingRef.current || paletteOpen) return;
+      hideTimerRef.current = window.setTimeout(() => {
+        if (!isInteractingRef.current && !paletteOpen) {
+          setIsVisible(false);
+        }
+      }, 3000);
+    };
+
+    const handleActivity = () => {
+      setIsVisible(true);
+      scheduleHide();
+    };
+
+    scheduleHide();
+
+    window.addEventListener("scroll", handleActivity, { passive: true });
+    window.addEventListener("mousemove", handleActivity, { passive: true });
+    window.addEventListener("pointerdown", handleActivity, { passive: true });
+    window.addEventListener("touchstart", handleActivity, { passive: true });
+    window.addEventListener("keydown", handleActivity);
+
+    return () => {
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+      window.removeEventListener("scroll", handleActivity);
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("pointerdown", handleActivity);
+      window.removeEventListener("touchstart", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+    };
+  }, [paletteOpen]);
 
   useEffect(() => {
     const sections = NAV_ITEMS.map((item) =>
@@ -105,7 +142,35 @@ const Navbar: React.FC<NavbarProps> = ({
     <nav
       ref={navRef}
       aria-label="Navigasi utama undangan"
-      className="pointer-events-none fixed bottom-4 left-1/2 z-[100] w-[96%] max-w-xl -translate-x-1/2 px-1 transition-all duration-500 md:bottom-8 md:w-fit md:max-w-none"
+      onMouseEnter={() => {
+        isInteractingRef.current = true;
+        if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+        setIsVisible(true);
+      }}
+      onMouseLeave={() => {
+        isInteractingRef.current = false;
+        if (!paletteOpen) {
+          if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+          hideTimerRef.current = window.setTimeout(() => {
+            setIsVisible(false);
+          }, 2200);
+        }
+      }}
+      onFocus={() => {
+        isInteractingRef.current = true;
+        if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+        setIsVisible(true);
+      }}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          isInteractingRef.current = false;
+        }
+      }}
+      className={`pointer-events-none fixed bottom-4 left-1/2 z-[100] w-[96%] max-w-xl -translate-x-1/2 px-1 transition-all duration-500 ease-out md:bottom-8 md:w-fit md:max-w-none ${
+        isVisible || paletteOpen
+          ? "translate-y-0 opacity-100"
+          : "translate-y-24 opacity-0"
+      }`}
     >
       {/* Popover Pemilih Tema Warna Publik */}
       {allowGuestThemeSwitch && paletteOpen && (
@@ -160,7 +225,11 @@ const Navbar: React.FC<NavbarProps> = ({
         </div>
       )}
 
-      <div className="dark:bg-darkSurface/75 pointer-events-auto flex items-center justify-between gap-0.5 overflow-x-auto rounded-full border border-white/40 bg-white/75 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-2xl transition-colors duration-500 md:justify-center md:gap-1 md:p-2 dark:border-white/10">
+      <div
+        className={`dark:bg-darkSurface/75 flex items-center justify-between gap-0.5 overflow-x-auto rounded-full border border-white/40 bg-white/75 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-2xl transition-colors duration-500 md:justify-center md:gap-1 md:p-2 dark:border-white/10 ${
+          isVisible || paletteOpen ? "pointer-events-auto" : "pointer-events-none"
+        }`}
+      >
         {NAV_ITEMS.map((item) => {
           const isActive = activeSection === item.sectionId;
           return (
