@@ -22,6 +22,7 @@ function sanitizeUser(u: UserRecord) {
     role: u.role,
     fullName: u.full_name,
     phone: u.phone,
+    avatarUrl: u.avatar_url || "",
     status: u.status,
     createdAt: u.created_at,
   };
@@ -55,6 +56,7 @@ export const GET: APIRoute = async ({ cookies }) => {
         role: session.role,
         fullName: session.fullName,
         phone: session.phone,
+        avatarUrl: session.avatarUrl,
       },
       wedding: {
         id: session.weddingId,
@@ -197,6 +199,7 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
     action?: string;
     fullName?: string;
     phone?: string;
+    avatarUrl?: string;
     currentPassword?: string;
     newPassword?: string;
     status?: string;
@@ -235,6 +238,23 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    let avatarUrl = me.avatar_url || "";
+    if (typeof body.avatarUrl === "string") {
+      const cleaned = body.avatarUrl.trim();
+      if (
+        cleaned === "" ||
+        cleaned.startsWith("/api/media/") ||
+        cleaned.startsWith("/uploads/")
+      ) {
+        avatarUrl = cleaned.slice(0, 300);
+      } else {
+        return new Response(
+          JSON.stringify({ error: "URL foto profil tidak valid." }),
+          { status: 400, headers: JSON_HEADERS }
+        );
+      }
+    }
+
     if (body.newPassword) {
       if (!verifyPasswordHash(String(body.currentPassword || ""), me.password_hash)) {
         return new Response(
@@ -250,17 +270,15 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
         });
       }
       db.prepare(
-        "UPDATE users SET full_name = ?, phone = ?, password_hash = ? WHERE id = ?"
-      ).run(fullName, phone, hashPassword(body.newPassword), me.id);
+        "UPDATE users SET full_name = ?, phone = ?, avatar_url = ?, password_hash = ? WHERE id = ?"
+      ).run(fullName, phone, avatarUrl, hashPassword(body.newPassword), me.id);
     } else {
-      db.prepare("UPDATE users SET full_name = ?, phone = ? WHERE id = ?").run(
-        fullName,
-        phone,
-        me.id
-      );
+      db.prepare(
+        "UPDATE users SET full_name = ?, phone = ?, avatar_url = ? WHERE id = ?"
+      ).run(fullName, phone, avatarUrl, me.id);
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, avatarUrl }), {
       status: 200,
       headers: JSON_HEADERS,
     });

@@ -351,6 +351,11 @@ try {
 } catch {
   // Kolom guest_quota_limit sudah ada
 }
+try {
+  db.exec("ALTER TABLE users ADD COLUMN avatar_url TEXT NOT NULL DEFAULT ''");
+} catch {
+  // Kolom avatar_url sudah ada
+}
 
 export const DEFAULT_WEDDING_ID = 1;
 
@@ -372,6 +377,7 @@ export interface UserRecord {
   wedding_id: number | null;
   full_name: string;
   phone: string;
+  avatar_url?: string;
   phone_verified: number;
   status: "active" | "suspended";
   created_at: string;

@@ -72,7 +72,10 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   failed: { label: "Gagal", className: "adm-badge adm-badge-danger" },
 };
 
-const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
+const WhatsAppManager: React.FC<{
+  siteUrl: string;
+  onQuotaExceeded?: (projectedTotal?: number, message?: string) => void;
+}> = ({ siteUrl, onQuotaExceeded }) => {
   const [activeMode, setActiveMode] = useState<"single" | "bulk">("single");
   const [singleForm, setSingleForm] = useState<GuestInviteRow>({
     name: "",
@@ -297,6 +300,12 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         });
         setSingleForm({ name: "", phone: "", address: "Di Tempat" });
         await loadHistory();
+      } else if (res.status === 402 || payload?.code === "QUOTA_EXCEEDED") {
+        if (onQuotaExceeded) {
+          onQuotaExceeded(payload?.projectedTotal, payload?.error);
+          return;
+        }
+        setFeedback({ type: "error", message: payload?.error || "Kuota tamu terlampaui." });
       } else {
         const detail =
           payload?.results?.[0]?.error_message ||
@@ -372,6 +381,13 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           }),
         });
         const payload = await res.json().catch(() => ({}));
+        if (res.status === 402 || payload?.code === "QUOTA_EXCEEDED") {
+          if (onQuotaExceeded) {
+            onQuotaExceeded(payload?.projectedTotal, payload?.error);
+            return;
+          }
+          throw new Error(payload?.error || "Kuota tamu terlampaui.");
+        }
         if (!res.ok) {
           throw new Error(
             payload?.error || "Gagal mengirim batch undangan WhatsApp."
@@ -458,6 +474,12 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           type: "success",
           message: `Undangan${attachmentSummaryLabel} untuk ${row.guest_name} dikirim ulang ke antrean.`,
         });
+      } else if (res.status === 402 || payload?.code === "QUOTA_EXCEEDED") {
+        if (onQuotaExceeded) {
+          onQuotaExceeded(payload?.projectedTotal, payload?.error);
+          return;
+        }
+        setFeedback({ type: "error", message: payload?.error || "Kuota tamu terlampaui." });
       } else {
         setFeedback({
           type: "error",

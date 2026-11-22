@@ -1,4 +1,5 @@
 import {
+  Camera,
   Copy,
   ExternalLink,
   HeartHandshake,
@@ -26,6 +27,7 @@ interface PartnerPayload {
     role: string;
     fullName: string;
     phone: string;
+    avatarUrl?: string;
   };
   wedding: {
     id: number;
@@ -41,14 +43,17 @@ interface PartnerPayload {
 
 interface PartnerAccountPanelProps {
   onNotify: (toast: { type: "success" | "error"; message: string }) => void;
+  onAvatarUpdated?: (avatarUrl: string) => void;
 }
 
 const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
   onNotify,
+  onAvatarUpdated,
 }) => {
   const [info, setInfo] = useState<PartnerPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [newPartner, setNewPartner] = useState({
     username: "",
@@ -66,6 +71,7 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
   const [myForm, setMyForm] = useState({
     fullName: "",
     phone: "",
+    avatarUrl: "",
     currentPassword: "",
     newPassword: "",
   });
@@ -83,6 +89,7 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
         ...p,
         fullName: data.currentUser.fullName || "",
         phone: data.currentUser.phone || "",
+        avatarUrl: data.currentUser.avatarUrl || "",
       }));
       if (data.partner) {
         setEditPartner({
@@ -182,6 +189,64 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
       }
       onNotify({ type: "success", message: "Akun pasangan berhasil dihapus." });
       await loadInfo();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleUploadAvatar = async (file: File) => {
+    setUploadingAvatar(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.url) {
+        onNotify({
+          type: "error",
+          message: json.error || "Gagal mengunggah foto profil.",
+        });
+        return;
+      }
+      const saveRes = await fetch("/api/couple/partner", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          action: "change_my_password",
+          avatarUrl: json.url,
+        }),
+      });
+      if (saveRes.ok) {
+        setMyForm((p) => ({ ...p, avatarUrl: json.url }));
+        onAvatarUpdated?.(json.url);
+        onNotify({ type: "success", message: "Foto profil berhasil diperbarui." });
+        await loadInfo();
+      }
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setBusy("remove-avatar");
+    try {
+      const res = await fetch("/api/couple/partner", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ action: "change_my_password", avatarUrl: "" }),
+      });
+      if (res.ok) {
+        setMyForm((p) => ({ ...p, avatarUrl: "" }));
+        onAvatarUpdated?.("");
+        onNotify({ type: "success", message: "Foto profil dihapus." });
+        await loadInfo();
+      }
     } finally {
       setBusy(null);
     }
@@ -457,6 +522,51 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
             <p className="text-xs text-(--adm-text-secondary)">
               Perbarui nama, nomor WhatsApp (untuk fitur Lupa Password OTP), atau ganti password login Anda.
             </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-3.5">
+          {myForm.avatarUrl ? (
+            <img
+              src={myForm.avatarUrl}
+              alt={info.currentUser.fullName}
+              className="h-14 w-14 rounded-full border border-(--adm-border) object-cover"
+            />
+          ) : (
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-(--adm-accent-soft) text-lg font-bold text-(--adm-accent) uppercase">
+              {(info.currentUser.fullName || info.currentUser.username).charAt(0)}
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <div className="text-xs font-medium text-(--adm-text-primary)">
+              Foto Profil / Avatar
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="adm-btn adm-btn-secondary adm-btn-sm cursor-pointer">
+                <Camera className="h-3.5 w-3.5" />
+                {uploadingAvatar ? "Mengunggah..." : "Unggah Foto"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  disabled={uploadingAvatar}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void handleUploadAvatar(f);
+                  }}
+                />
+              </label>
+              {myForm.avatarUrl && (
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void handleRemoveAvatar()}
+                  className="adm-btn adm-btn-danger adm-btn-sm"
+                >
+                  Hapus Foto
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

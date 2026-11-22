@@ -79,12 +79,22 @@ interface ScannerCandidate {
 interface GuestManagerProps {
   siteUrl: string;
   initialSubTab?: "list" | "scanner";
+  onQuotaExceeded?: (projectedTotal?: number, message?: string) => void;
 }
 
 const GuestManager: React.FC<GuestManagerProps> = ({
   siteUrl,
   initialSubTab = "list",
+  onQuotaExceeded,
 }) => {
+  const triggerQuotaRedirect = (projectedTotal?: number, message?: string) => {
+    if (onQuotaExceeded) {
+      onQuotaExceeded(projectedTotal, message);
+      return;
+    }
+    const qs = projectedTotal ? `&target=${encodeURIComponent(String(projectedTotal))}` : "";
+    window.location.href = `/admin?tab=billing${qs}`;
+  };
   const [subTab, setSubTab] = useState<"list" | "scanner">(initialSubTab);
   const [guests, setGuests] = useState<GuestItem[]>([]);
   const [rsvpGuests, setRsvpGuests] = useState<RsvpSummaryItem[]>([]);
@@ -316,6 +326,8 @@ const GuestManager: React.FC<GuestManagerProps> = ({
           quota: 2,
         });
         await loadGuests();
+      } else if (res.status === 402 || payload?.code === "QUOTA_EXCEEDED") {
+        triggerQuotaRedirect(payload?.projectedTotal, payload?.error);
       } else {
         setToast({
           type: "error",
@@ -372,23 +384,22 @@ const GuestManager: React.FC<GuestManagerProps> = ({
   };
 
   const handleConfirmCsvImport = async (rows: ParsedGuestRow[]) => {
-    const CHUNK_SIZE = 200;
-    let totalImported = 0;
-
-    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-      const chunk = rows.slice(i, i + CHUNK_SIZE);
-      const res = await fetch("/api/guests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ guests: chunk }),
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(payload?.error || "Gagal mengimpor data tamu.");
-      }
-      totalImported += Number(payload.count || chunk.length);
+    const res = await fetch("/api/guests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ guests: rows }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (res.status === 402 || payload?.code === "QUOTA_EXCEEDED") {
+      setIsCsvModalOpen(false);
+      triggerQuotaRedirect(payload?.projectedTotal, payload?.error);
+      return;
     }
+    if (!res.ok) {
+      throw new Error(payload?.error || "Gagal mengimpor data tamu.");
+    }
+    const totalImported = Number(payload.count || rows.length);
 
     setToast({
       type: "success",

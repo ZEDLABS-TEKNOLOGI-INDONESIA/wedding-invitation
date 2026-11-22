@@ -1,7 +1,12 @@
 import crypto from "node:crypto";
 import type { APIRoute } from "astro";
 import { getAuthSession } from "../../../lib/auth";
-import db, { getConfig } from "../../../lib/db";
+import {
+  FREE_GUEST_QUOTA,
+  calculateGuestQuotaPrice,
+  formatIdr,
+} from "../../../lib/billing";
+import db, { getConfig, getWeddingById } from "../../../lib/db";
 import {
   WA_TEMPLATE_CODES,
   WaGatewayClient,
@@ -169,6 +174,47 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
             "Konfigurasi WhatsApp Gateway belum lengkap. Lengkapi di tab Pengaturan terlebih dahulu.",
         }),
         { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    // Tolak seluruh batch bila total kontak baru akan melampaui kuota tamu aktif
+    const wedding = getWeddingById(session.weddingId);
+    const quotaLimit = Math.max(
+      FREE_GUEST_QUOTA,
+      Number(wedding?.guest_quota_limit || FREE_GUEST_QUOTA)
+    );
+    const existingGuests = db
+      .prepare("SELECT LOWER(name) AS name, phone FROM guests WHERE wedding_id = ?")
+      .all(session.weddingId) as Array<{ name: string; phone: string }>;
+    const knownNames = new Set(existingGuests.map((g) => g.name));
+    const knownPhones = new Set(
+      existingGuests.map((g) => g.phone).filter(Boolean)
+    );
+    let newContacts = 0;
+    for (const item of guests) {
+      const n = typeof item?.name === "string" ? item.name.trim().toLowerCase() : "";
+      const p = typeof item?.phone === "string" ? normalizeWaPhone(item.phone) : "";
+      if (!n || !p) continue;
+      if (!knownNames.has(n) && !knownPhones.has(p)) {
+        knownNames.add(n);
+        knownPhones.add(p);
+        newContacts++;
+      }
+    }
+    const projectedTotal = existingGuests.length + newContacts;
+    if (projectedTotal > quotaLimit) {
+      const quote = calculateGuestQuotaPrice(projectedTotal, quotaLimit);
+      return new Response(
+        JSON.stringify({
+          code: "QUOTA_EXCEEDED",
+          error: `Seluruh pengiriman/impor ditolak karena total kontak (${projectedTotal}) melebihi kuota aktif (${quotaLimit} tamu). Silakan tambah kuota di halaman Kuota & Tagihan (${formatIdr(quote.amount)}).`,
+          quotaLimit,
+          usedGuests: existingGuests.length,
+          incomingCount: newContacts,
+          projectedTotal,
+          quote,
+        }),
+        { status: 402, headers: JSON_HEADERS }
       );
     }
 

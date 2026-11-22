@@ -103,6 +103,7 @@ export const GET: APIRoute = async ({ cookies }) => {
         username: session.username,
         fullName: session.fullName,
         phone: session.phone,
+        avatarUrl: session.avatarUrl,
       },
     }),
     { status: 200, headers: JSON_HEADERS }
@@ -396,6 +397,23 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
         ? body.fullName.trim().slice(0, 80)
         : me.full_name;
 
+    let avatarUrl = me.avatar_url || "";
+    if (typeof body.avatarUrl === "string") {
+      const cleaned = body.avatarUrl.trim();
+      if (
+        cleaned === "" ||
+        cleaned.startsWith("/api/media/") ||
+        cleaned.startsWith("/uploads/")
+      ) {
+        avatarUrl = cleaned.slice(0, 300);
+      } else {
+        return new Response(
+          JSON.stringify({ error: "URL foto profil tidak valid." }),
+          { status: 400, headers: JSON_HEADERS }
+        );
+      }
+    }
+
     if (typeof body.newPassword === "string" && body.newPassword) {
       if (
         !verifyPasswordHash(String(body.currentPassword || ""), me.password_hash)
@@ -413,15 +431,22 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
         });
       }
       db.prepare(
-        "UPDATE users SET username = ?, full_name = ?, phone = ?, password_hash = ? WHERE id = ?"
-      ).run(nextUsername, fullName, phone, hashPassword(body.newPassword), me.id);
+        "UPDATE users SET username = ?, full_name = ?, phone = ?, avatar_url = ?, password_hash = ? WHERE id = ?"
+      ).run(
+        nextUsername,
+        fullName,
+        phone,
+        avatarUrl,
+        hashPassword(body.newPassword),
+        me.id
+      );
     } else {
       db.prepare(
-        "UPDATE users SET username = ?, full_name = ?, phone = ? WHERE id = ?"
-      ).run(nextUsername, fullName, phone, me.id);
+        "UPDATE users SET username = ?, full_name = ?, phone = ?, avatar_url = ? WHERE id = ?"
+      ).run(nextUsername, fullName, phone, avatarUrl, me.id);
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, avatarUrl }), {
       status: 200,
       headers: JSON_HEADERS,
     });

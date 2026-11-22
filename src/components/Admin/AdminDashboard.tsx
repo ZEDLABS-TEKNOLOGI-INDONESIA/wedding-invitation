@@ -433,9 +433,50 @@ const AdminDashboard = ({
   siteUrl: string;
   coupleLabel?: string;
   publicInvitationPath?: string;
-  currentUser?: { username: string; fullName: string; role: string };
+  currentUser?: {
+    username: string;
+    fullName: string;
+    role: string;
+    avatarUrl?: string;
+  };
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTabId>("rsvp");
+  const [userAvatar, setUserAvatar] = useState<string>(
+    currentUser?.avatarUrl || ""
+  );
+  const [billingSuggestedTotal, setBillingSuggestedTotal] = useState<
+    number | null
+  >(null);
+  const [billingQuotaNotice, setBillingQuotaNotice] = useState<string | null>(
+    null
+  );
+
+  const redirectToBilling = (projectedTotal?: number, message?: string) => {
+    if (projectedTotal && projectedTotal > 0) {
+      setBillingSuggestedTotal(projectedTotal);
+    }
+    setBillingQuotaNotice(
+      message ||
+        "Jumlah tamu/kontak melebihi kuota aktif Anda. Seluruh impor ditolak — silakan selesaikan pembayaran penambahan kuota di bawah ini."
+    );
+    setToast({
+      type: "error",
+      message:
+        message ||
+        "Kuota tamu terlampaui. Mengalihkan ke halaman Kuota & Tagihan...",
+    });
+    setActiveTab("billing");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "billing") {
+      const target = Number(params.get("target") || "0");
+      if (target > 0) setBillingSuggestedTotal(target);
+      setActiveTab("billing");
+    }
+  }, []);
   const [plannerSubTab, setPlannerSubTab] = useState<PlannerSectionId>("todo");
   const [plannerMenuOpen, setPlannerMenuOpen] = useState(true);
   const [settingsSubTab, setSettingsSubTab] =
@@ -641,6 +682,9 @@ const AdminDashboard = ({
           });
         }
         setRsvpModal(null);
+      } else if (res.status === 402 || json?.code === "QUOTA_EXCEEDED") {
+        setRsvpModal(null);
+        redirectToBilling(json?.projectedTotal, json?.error);
       } else {
         setToast({
           type: "error",
@@ -711,6 +755,11 @@ const AdminDashboard = ({
       body: JSON.stringify({ action: "import_rsvp", items: rows }),
     });
     const json = await res.json().catch(() => ({}));
+    if (res.status === 402 || json?.code === "QUOTA_EXCEEDED") {
+      setCsvImportTab(null);
+      redirectToBilling(json?.projectedTotal, json?.error);
+      return;
+    }
     if (!res.ok) {
       throw new Error(json?.error || "Gagal mengimpor data RSVP.");
     }
@@ -1314,11 +1363,19 @@ const AdminDashboard = ({
             </a>
 
             <div className="ml-0.5 flex items-center gap-2 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) py-1 pr-2.5 pl-1.5">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--adm-accent-soft) text-[11px] font-semibold text-(--adm-accent) uppercase">
-                {(currentUser?.fullName || currentUser?.username || "A")
-                  .charAt(0)
-                  .toUpperCase()}
-              </span>
+              {userAvatar ? (
+                <img
+                  src={userAvatar}
+                  alt={currentUser?.fullName || "Avatar"}
+                  className="h-6 w-6 rounded-full object-cover"
+                />
+              ) : (
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--adm-accent-soft) text-[11px] font-semibold text-(--adm-accent) uppercase">
+                  {(currentUser?.fullName || currentUser?.username || "A")
+                    .charAt(0)
+                    .toUpperCase()}
+                </span>
+              )}
               <span className="hidden max-w-[120px] truncate text-xs font-medium text-(--adm-text-primary) sm:inline">
                 {currentUser?.fullName || currentUser?.username || "Admin"}
               </span>
@@ -1599,7 +1656,10 @@ const AdminDashboard = ({
                     </div>
                   }
                 >
-                  <GuestManager siteUrl={siteUrl} />
+                  <GuestManager
+                    siteUrl={siteUrl}
+                    onQuotaExceeded={redirectToBilling}
+                  />
                 </Suspense>
               </div>
             )}
@@ -1613,7 +1673,10 @@ const AdminDashboard = ({
                     </div>
                   }
                 >
-                  <WhatsAppManager siteUrl={siteUrl} />
+                  <WhatsAppManager
+                    siteUrl={siteUrl}
+                    onQuotaExceeded={redirectToBilling}
+                  />
                 </Suspense>
               </div>
             )}
@@ -1679,7 +1742,10 @@ const AdminDashboard = ({
                   </div>
                 }
               >
-                <PartnerAccountPanel onNotify={setToast} />
+                <PartnerAccountPanel
+                  onNotify={setToast}
+                  onAvatarUpdated={setUserAvatar}
+                />
               </Suspense>
             )}
 
@@ -1692,7 +1758,11 @@ const AdminDashboard = ({
                   </div>
                 }
               >
-                <BillingPanel onNotify={setToast} />
+                <BillingPanel
+                  onNotify={setToast}
+                  initialTargetGuests={billingSuggestedTotal}
+                  quotaNotice={billingQuotaNotice}
+                />
               </Suspense>
             )}
           </div>

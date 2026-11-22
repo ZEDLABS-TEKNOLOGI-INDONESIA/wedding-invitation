@@ -17,6 +17,7 @@ export interface AuthSession {
   role: "superadmin" | "couple_owner" | "couple_partner";
   fullName: string;
   phone: string;
+  avatarUrl: string;
   weddingId: number;
   weddingSlug: string;
   weddingTitle: string;
@@ -198,6 +199,7 @@ export const getAuthSession = (cookies: AstroCookies): AuthSession | null => {
     role: user.role,
     fullName: user.full_name || user.username,
     phone: user.phone || "",
+    avatarUrl: user.avatar_url || "",
     weddingId: effectiveWedding?.id || DEFAULT_WEDDING_ID,
     weddingSlug: effectiveWedding?.slug || "demo",
     weddingTitle: effectiveWedding?.title || "Undangan Pernikahan",

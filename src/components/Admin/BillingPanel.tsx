@@ -54,12 +54,22 @@ interface BillingData {
 
 interface BillingPanelProps {
   onNotify: (toast: { type: "success" | "error"; message: string }) => void;
+  initialTargetGuests?: number | null;
+  quotaNotice?: string | null;
 }
 
-const BillingPanel: React.FC<BillingPanelProps> = ({ onNotify }) => {
+const BillingPanel: React.FC<BillingPanelProps> = ({
+  onNotify,
+  initialTargetGuests,
+  quotaNotice,
+}) => {
   const [data, setData] = useState<BillingData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [targetGuests, setTargetGuests] = useState<number>(450);
+  const [targetGuests, setTargetGuests] = useState<number>(
+    initialTargetGuests && initialTargetGuests > FREE_GUEST_QUOTA
+      ? initialTargetGuests
+      : 450
+  );
   const [paymentNote, setPaymentNote] = useState("");
   const [proofUrl, setProofUrl] = useState("");
   const [uploadingProof, setUploadingProof] = useState(false);
@@ -72,13 +82,16 @@ const BillingPanel: React.FC<BillingPanelProps> = ({ onNotify }) => {
       if (!res.ok) return;
       const json = (await res.json()) as BillingData;
       setData(json);
-      setTargetGuests((prev) =>
-        prev <= json.quotaLimit ? json.quotaLimit + 250 : prev
-      );
+      setTargetGuests((prev) => {
+        if (initialTargetGuests && initialTargetGuests > json.quotaLimit) {
+          return initialTargetGuests;
+        }
+        return prev <= json.quotaLimit ? json.quotaLimit + 250 : prev;
+      });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [initialTargetGuests]);
 
   useEffect(() => {
     void loadBilling();
@@ -183,6 +196,13 @@ const BillingPanel: React.FC<BillingPanelProps> = ({ onNotify }) => {
 
   return (
     <div className="space-y-5">
+      {quotaNotice && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+          <div className="font-semibold">Impor / Input Tamu Ditolak — Kuota Terlampaui</div>
+          <p className="mt-0.5 opacity-90">{quotaNotice}</p>
+        </div>
+      )}
+
       {/* Status Kuota Saat Ini */}
       <div className="adm-card space-y-3 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">

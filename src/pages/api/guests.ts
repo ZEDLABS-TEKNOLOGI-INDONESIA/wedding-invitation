@@ -84,9 +84,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     };
 
     const items = Array.isArray(body.guests) ? body.guests : [body];
-    if (items.length === 0 || items.length > 500) {
+    if (items.length === 0 || items.length > 5000) {
       return new Response(
-        JSON.stringify({ error: "Jumlah data tamu harus antara 1 sampai 500." }),
+        JSON.stringify({ error: "Jumlah data tamu harus antara 1 sampai 5000." }),
         { status: 400, headers: JSON_HEADERS }
       );
     }

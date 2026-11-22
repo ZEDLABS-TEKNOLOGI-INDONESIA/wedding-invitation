@@ -1,6 +1,11 @@
 import type { APIRoute } from "astro";
 import { getAuthSession } from "../../lib/auth";
-import db from "../../lib/db";
+import {
+  FREE_GUEST_QUOTA,
+  calculateGuestQuotaPrice,
+  formatIdr,
+} from "../../lib/billing";
+import db, { getWeddingById } from "../../lib/db";
 
 const VALID_ATTENDANCE = new Set(["hadir", "tidak_hadir", "ragu"]);
 const JSON_HEADERS = {
@@ -172,6 +177,40 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             error: "Jumlah data RSVP harus antara 1 sampai 500.",
           }),
           { status: 400, headers: JSON_HEADERS }
+        );
+      }
+
+      const validRsvpCount = rawItems.filter(
+        (raw: unknown) =>
+          Boolean(raw) &&
+          typeof raw === "object" &&
+          typeof (raw as Record<string, unknown>).guest_name === "string" &&
+          String((raw as Record<string, unknown>).guest_name).trim().length > 0
+      ).length;
+      const wedding = getWeddingById(weddingId);
+      const quotaLimit = Math.max(
+        FREE_GUEST_QUOTA,
+        Number(wedding?.guest_quota_limit || FREE_GUEST_QUOTA)
+      );
+      const usedRsvps = (
+        db
+          .prepare("SELECT COUNT(*) as c FROM rsvps WHERE wedding_id = ?")
+          .get(weddingId) as { c: number }
+      ).c;
+      const projectedTotal = usedRsvps + validRsvpCount;
+      if (projectedTotal > quotaLimit) {
+        const quote = calculateGuestQuotaPrice(projectedTotal, quotaLimit);
+        return new Response(
+          JSON.stringify({
+            code: "QUOTA_EXCEEDED",
+            error: `Seluruh impor ditolak karena melebihi batas kuota (${quotaLimit} kontak). Total akan menjadi ${projectedTotal} kontak. Silakan tambah kuota di halaman Kuota & Tagihan (${formatIdr(quote.amount)}).`,
+            quotaLimit,
+            usedGuests: usedRsvps,
+            incomingCount: validRsvpCount,
+            projectedTotal,
+            quote,
+          }),
+          { status: 402, headers: JSON_HEADERS }
         );
       }
 

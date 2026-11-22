@@ -1,4 +1,5 @@
 import {
+  Camera,
   CheckCircle2,
   CreditCard,
   ExternalLink,
@@ -73,6 +74,7 @@ interface SuperadminData {
     username: string;
     fullName: string;
     phone: string;
+    avatarUrl?: string;
   };
 }
 
@@ -113,9 +115,11 @@ const SuperadminDashboard: React.FC = () => {
     username: "",
     fullName: "",
     phone: "",
+    avatarUrl: "",
     currentPassword: "",
     newPassword: "",
   });
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const notify = (type: "success" | "error", message: string) => {
     setToast({ type, message });
@@ -184,6 +188,7 @@ const SuperadminDashboard: React.FC = () => {
         username: json.currentAdmin.username || "",
         fullName: json.currentAdmin.fullName || "",
         phone: json.currentAdmin.phone || "",
+        avatarUrl: json.currentAdmin.avatarUrl || "",
       }));
     } catch {
       notify("error", "Gagal memuat data Superadmin.");
@@ -229,15 +234,90 @@ const SuperadminDashboard: React.FC = () => {
     window.location.href = "/masuk";
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      notify("error", "File foto profil harus berupa gambar (JPG, PNG, WebP).");
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      notify("error", "Ukuran foto profil maksimal 3 MB.");
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      const uploadData = await uploadRes.json().catch(() => ({}));
+      if (!uploadRes.ok || !uploadData.url) {
+        notify("error", uploadData.error || "Gagal mengunggah foto profil.");
+        return;
+      }
+      const nextUrl = String(uploadData.url);
+      const saved = await callAction(
+        "save-avatar",
+        {
+          action: "update_superadmin_account",
+          username: accForm.username,
+          fullName: accForm.fullName,
+          phone: accForm.phone,
+          avatarUrl: nextUrl,
+        },
+        "Foto profil Superadmin berhasil diperbarui."
+      );
+      if (saved) {
+        setAccForm((p) => ({ ...p, avatarUrl: nextUrl }));
+        await loadData();
+      }
+    } catch {
+      notify("error", "Gagal mengunggah foto profil.");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    const saved = await callAction(
+      "remove-avatar",
+      {
+        action: "update_superadmin_account",
+        username: accForm.username,
+        fullName: accForm.fullName,
+        phone: accForm.phone,
+        avatarUrl: "",
+      },
+      "Foto profil Superadmin dihapus."
+    );
+    if (saved) {
+      setAccForm((p) => ({ ...p, avatarUrl: "" }));
+      await loadData();
+    }
+  };
+
   return (
     <div className="admin-shell min-h-dvh bg-(--adm-bg-secondary) text-(--adm-text-primary)">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-(--adm-border) bg-(--adm-bg-secondary)/95 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--adm-accent-soft) text-(--adm-accent)">
-              <Shield className="h-4 w-4" />
-            </span>
+            {data?.currentAdmin.avatarUrl ? (
+              <img
+                src={data.currentAdmin.avatarUrl}
+                alt={data.currentAdmin.fullName || data.currentAdmin.username}
+                className="h-8 w-8 rounded-full border border-(--adm-border) object-cover"
+              />
+            ) : (
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--adm-accent-soft) text-(--adm-accent)">
+                <Shield className="h-4 w-4" />
+              </span>
+            )}
             <div>
               <div className="text-sm font-semibold text-(--adm-text-primary)">
                 Superadmin Platform
@@ -882,10 +962,60 @@ const SuperadminDashboard: React.FC = () => {
             className="adm-card max-w-xl space-y-4 p-5"
           >
             <div>
-              <h2 className="text-sm font-semibold">Kredensial Superadmin</h2>
+              <h2 className="text-sm font-semibold">Kredensial &amp; Profil Superadmin</h2>
               <p className="mt-1 text-xs text-(--adm-text-secondary)">
-                Atur username, nomor WhatsApp (untuk reset password OTP), dan password Superadmin.
+                Atur foto profil, username, nomor WhatsApp (untuk reset password OTP), dan password Superadmin.
               </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-3.5">
+              {accForm.avatarUrl ? (
+                <img
+                  src={accForm.avatarUrl}
+                  alt={accForm.fullName || accForm.username || "Superadmin"}
+                  className="h-14 w-14 rounded-full border border-(--adm-border) object-cover"
+                />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-(--adm-border) bg-(--adm-accent-soft) text-(--adm-accent)">
+                  <Shield className="h-6 w-6" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold text-(--adm-text-primary)">
+                  Foto Profil / Avatar
+                </div>
+                <p className="mt-0.5 text-[11px] text-(--adm-text-secondary)">
+                  Format JPG, PNG, atau WebP maksimal 3 MB.
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <label className="adm-btn adm-btn-secondary adm-btn-sm cursor-pointer">
+                    {uploadingAvatar ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5" />
+                    )}
+                    {uploadingAvatar ? "Mengunggah..." : "Unggah Foto"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      disabled={uploadingAvatar || busy !== null}
+                      onChange={(e) => void handleAvatarUpload(e)}
+                      className="hidden"
+                    />
+                  </label>
+                  {accForm.avatarUrl && (
+                    <button
+                      type="button"
+                      disabled={uploadingAvatar || busy !== null}
+                      onClick={() => void handleAvatarRemove()}
+                      className="adm-btn adm-btn-danger adm-btn-sm"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Hapus Foto
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
