@@ -139,6 +139,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       "PAYMENT_BANK_NAME",
       "PAYMENT_BANK_ACCOUNT",
       "PAYMENT_BANK_HOLDER",
+      "PAYMENT_BANK_ACCOUNTS",
       "PAYMENT_WHATSAPP_CONFIRM",
     ] as const;
     for (const k of keys) {

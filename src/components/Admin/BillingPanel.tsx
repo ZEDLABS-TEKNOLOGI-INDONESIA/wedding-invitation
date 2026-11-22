@@ -46,6 +46,7 @@ interface BillingData {
     bankName: string;
     bankAccount: string;
     bankHolder: string;
+    bankAccounts?: Array<{ bank: string; number: string; holder: string }>;
     whatsappConfirm: string;
   };
   orders: BillingOrder[];
@@ -368,19 +369,46 @@ const BillingPanel: React.FC<BillingPanelProps> = ({ onNotify }) => {
             <h3 className="text-sm font-semibold">Instruksi Transfer</h3>
           </div>
 
-          <div className="space-y-2 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4 text-xs">
-            <div className="text-(--adm-text-secondary)">Bank / Metode</div>
-            <div className="text-sm font-semibold text-(--adm-text-primary)">
-              {data.paymentInfo.bankName}
-            </div>
-            <div className="pt-1 text-(--adm-text-secondary)">Nomor Rekening</div>
-            <div className="font-mono text-base font-bold text-(--adm-accent)">
-              {data.paymentInfo.bankAccount || "Hubungi pengelola platform"}
-            </div>
-            <div className="pt-1 text-(--adm-text-secondary)">Atas Nama</div>
-            <div className="font-medium text-(--adm-text-primary)">
-              {data.paymentInfo.bankHolder}
-            </div>
+          <div className="space-y-2.5">
+            {data.paymentInfo.bankAccounts && data.paymentInfo.bankAccounts.length > 0 ? (
+              data.paymentInfo.bankAccounts.map((acc, idx) => (
+                <div
+                  key={`${acc.bank}-${acc.number}-${idx}`}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-3.5 text-xs"
+                >
+                  <div>
+                    <div className="font-semibold text-(--adm-text-primary)">
+                      {acc.bank}
+                    </div>
+                    <div className="mt-0.5 font-mono text-sm font-bold text-(--adm-accent)">
+                      {acc.number}
+                    </div>
+                    {acc.holder && (
+                      <div className="mt-0.5 text-[11px] text-(--adm-text-secondary)">
+                        a.n. {acc.holder}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(acc.number);
+                      onNotify({
+                        type: "success",
+                        message: `Nomor rekening ${acc.bank} disalin.`,
+                      });
+                    }}
+                    className="adm-btn adm-btn-secondary adm-btn-sm"
+                  >
+                    Salin
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-300">
+                Rekening tujuan belum diatur pengelola platform.
+              </div>
+            )}
           </div>
 
           <ol className="list-decimal space-y-1.5 pl-4 text-xs text-(--adm-text-secondary)">

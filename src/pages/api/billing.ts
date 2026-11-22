@@ -58,6 +58,30 @@ export const GET: APIRoute = async ({ cookies }) => {
     .all(session.weddingId) as BillingOrderRow[];
 
   const platformCfg = getPlatformConfig();
+  let bankAccounts: Array<{ bank: string; number: string; holder: string }> = [];
+  if (platformCfg.PAYMENT_BANK_ACCOUNTS) {
+    try {
+      const parsed = JSON.parse(platformCfg.PAYMENT_BANK_ACCOUNTS);
+      if (Array.isArray(parsed)) {
+        bankAccounts = parsed
+          .filter((a) => a && typeof a.bank === "string" && typeof a.number === "string" && a.bank.trim() && a.number.trim())
+          .map((a) => ({
+            bank: String(a.bank).trim(),
+            number: String(a.number).trim(),
+            holder: String(a.holder || "").trim(),
+          }));
+      }
+    } catch {
+      bankAccounts = [];
+    }
+  }
+  if (bankAccounts.length === 0 && platformCfg.PAYMENT_BANK_ACCOUNT?.trim()) {
+    bankAccounts.push({
+      bank: platformCfg.PAYMENT_BANK_NAME || "Bank BCA",
+      number: platformCfg.PAYMENT_BANK_ACCOUNT.trim(),
+      holder: platformCfg.PAYMENT_BANK_HOLDER || "ZEDLABS Teknologi Indonesia",
+    });
+  }
 
   return new Response(
     JSON.stringify({
@@ -70,10 +94,13 @@ export const GET: APIRoute = async ({ cookies }) => {
         minPayment: MIN_PAYMENT_AMOUNT,
       },
       paymentInfo: {
-        bankName: platformCfg.PAYMENT_BANK_NAME || "Bank BCA",
-        bankAccount: platformCfg.PAYMENT_BANK_ACCOUNT || "",
+        bankName: bankAccounts[0]?.bank || platformCfg.PAYMENT_BANK_NAME || "Bank BCA",
+        bankAccount: bankAccounts[0]?.number || platformCfg.PAYMENT_BANK_ACCOUNT || "",
         bankHolder:
-          platformCfg.PAYMENT_BANK_HOLDER || "ZEDLABS Teknologi Indonesia",
+          bankAccounts[0]?.holder ||
+          platformCfg.PAYMENT_BANK_HOLDER ||
+          "ZEDLABS Teknologi Indonesia",
+        bankAccounts,
         whatsappConfirm: platformCfg.PAYMENT_WHATSAPP_CONFIRM || "",
       },
       orders,

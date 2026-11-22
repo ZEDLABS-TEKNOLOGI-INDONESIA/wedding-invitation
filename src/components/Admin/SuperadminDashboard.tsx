@@ -100,6 +100,14 @@ const SuperadminDashboard: React.FC = () => {
     PAYMENT_WHATSAPP_CONFIRM: "",
   });
 
+  const [bankSlots, setBankSlots] = useState<
+    Array<{ bank: string; number: string; holder: string }>
+  >([
+    { bank: "", number: "", holder: "" },
+    { bank: "", number: "", holder: "" },
+    { bank: "", number: "", holder: "" },
+  ]);
+
   // Superadmin account form
   const [accForm, setAccForm] = useState({
     username: "",
@@ -140,6 +148,37 @@ const SuperadminDashboard: React.FC = () => {
         PAYMENT_WHATSAPP_CONFIRM:
           json.platformConfig.PAYMENT_WHATSAPP_CONFIRM || "",
       });
+      let parsedBanks: Array<{ bank: string; number: string; holder: string }> =
+        [];
+      if (json.platformConfig.PAYMENT_BANK_ACCOUNTS) {
+        try {
+          const arr = JSON.parse(json.platformConfig.PAYMENT_BANK_ACCOUNTS);
+          if (Array.isArray(arr)) parsedBanks = arr;
+        } catch {
+          parsedBanks = [];
+        }
+      }
+      if (
+        parsedBanks.length === 0 &&
+        json.platformConfig.PAYMENT_BANK_ACCOUNT
+      ) {
+        parsedBanks = [
+          {
+            bank: json.platformConfig.PAYMENT_BANK_NAME || "Bank BCA",
+            number: json.platformConfig.PAYMENT_BANK_ACCOUNT,
+            holder:
+              json.platformConfig.PAYMENT_BANK_HOLDER ||
+              "ZEDLABS Teknologi Indonesia",
+          },
+        ];
+      }
+      setBankSlots(
+        [0, 1, 2].map((i) => ({
+          bank: parsedBanks[i]?.bank || "",
+          number: parsedBanks[i]?.number || "",
+          holder: parsedBanks[i]?.holder || "",
+        }))
+      );
       setAccForm((prev) => ({
         ...prev,
         username: json.currentAdmin.username || "",
@@ -484,82 +523,111 @@ const SuperadminDashboard: React.FC = () => {
             <div className="adm-card space-y-4 p-5">
               <div>
                 <h2 className="text-sm font-semibold">
-                  Rekening &amp; Info Pembayaran Platform
+                  Rekening Tujuan Transfer (Tersimpan Permanen di Database)
                 </h2>
                 <p className="mt-0.5 text-xs text-(--adm-text-secondary)">
-                  Ditampilkan ke pasangan saat kuota tamu melebihi 200 kontak (Rp200/tamu, min. Rp50.000).
+                  Hingga 3 rekening tujuan untuk pembayaran kuota tamu (&gt;200 kontak · Rp200/tamu, min. Rp50.000). Tidak hilang saat deploy ulang.
                 </p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="adm-label">Bank / Metode Pembayaran</label>
-                  <input
-                    type="text"
-                    value={waForm.PAYMENT_BANK_NAME}
-                    onChange={(e) =>
-                      setWaForm((p) => ({ ...p, PAYMENT_BANK_NAME: e.target.value }))
-                    }
-                    className="adm-input"
-                  />
-                </div>
-                <div>
-                  <label className="adm-label">Nomor Rekening</label>
-                  <input
-                    type="text"
-                    value={waForm.PAYMENT_BANK_ACCOUNT}
-                    onChange={(e) =>
-                      setWaForm((p) => ({
-                        ...p,
-                        PAYMENT_BANK_ACCOUNT: e.target.value,
-                      }))
-                    }
-                    placeholder="Contoh: 1234567890"
-                    className="adm-input font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="adm-label">Atas Nama</label>
-                  <input
-                    type="text"
-                    value={waForm.PAYMENT_BANK_HOLDER}
-                    onChange={(e) =>
-                      setWaForm((p) => ({
-                        ...p,
-                        PAYMENT_BANK_HOLDER: e.target.value,
-                      }))
-                    }
-                    className="adm-input"
-                  />
-                </div>
-                <div>
-                  <label className="adm-label">No. WhatsApp Konfirmasi</label>
-                  <input
-                    type="tel"
-                    value={waForm.PAYMENT_WHATSAPP_CONFIRM}
-                    onChange={(e) =>
-                      setWaForm((p) => ({
-                        ...p,
-                        PAYMENT_WHATSAPP_CONFIRM: e.target.value,
-                      }))
-                    }
-                    placeholder="081234567890"
-                    className="adm-input"
-                  />
-                </div>
+              <div className="space-y-2.5">
+                {bankSlots.map((slot, idx) => (
+                  <div
+                    key={idx}
+                    className="grid gap-2.5 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-3 sm:grid-cols-3"
+                  >
+                    <div>
+                      <label className="adm-label">Bank #{idx + 1}</label>
+                      <input
+                        type="text"
+                        value={slot.bank}
+                        onChange={(e) =>
+                          setBankSlots((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, bank: e.target.value } : item
+                            )
+                          )
+                        }
+                        placeholder="Contoh: Bank BCA"
+                        className="adm-input bg-(--adm-bg-secondary)"
+                      />
+                    </div>
+                    <div>
+                      <label className="adm-label">Nomor Rekening</label>
+                      <input
+                        type="text"
+                        value={slot.number}
+                        onChange={(e) =>
+                          setBankSlots((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, number: e.target.value } : item
+                            )
+                          )
+                        }
+                        placeholder="Contoh: 1234567890"
+                        className="adm-input bg-(--adm-bg-secondary) font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="adm-label">Atas Nama</label>
+                      <input
+                        type="text"
+                        value={slot.holder}
+                        onChange={(e) =>
+                          setBankSlots((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, holder: e.target.value } : item
+                            )
+                          )
+                        }
+                        placeholder="ZEDLABS Teknologi Indonesia"
+                        className="adm-input bg-(--adm-bg-secondary)"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="max-w-sm">
+                <label className="adm-label">No. WhatsApp Konfirmasi</label>
+                <input
+                  type="tel"
+                  value={waForm.PAYMENT_WHATSAPP_CONFIRM}
+                  onChange={(e) =>
+                    setWaForm((p) => ({
+                      ...p,
+                      PAYMENT_WHATSAPP_CONFIRM: e.target.value,
+                    }))
+                  }
+                  placeholder="081234567890"
+                  className="adm-input"
+                />
               </div>
               <button
                 type="button"
                 disabled={busy !== null}
-                onClick={() =>
+                onClick={() => {
+                  const cleaned = bankSlots
+                    .map((s) => ({
+                      bank: s.bank.trim(),
+                      number: s.number.trim(),
+                      holder: s.holder.trim(),
+                    }))
+                    .filter((s) => s.bank && s.number);
                   void callAction(
                     "save-pay",
-                    { action: "save_platform_wa", ...waForm },
-                    "Informasi pembayaran platform disimpan."
-                  )
-                }
+                    {
+                      action: "save_platform_wa",
+                      ...waForm,
+                      PAYMENT_BANK_NAME: cleaned[0]?.bank || "",
+                      PAYMENT_BANK_ACCOUNT: cleaned[0]?.number || "",
+                      PAYMENT_BANK_HOLDER: cleaned[0]?.holder || "",
+                      PAYMENT_BANK_ACCOUNTS: JSON.stringify(cleaned),
+                    },
+                    "Rekening & info pembayaran platform disimpan permanen ke database."
+                  );
+                }}
                 className="adm-btn adm-btn-primary adm-btn-sm"
               >
-                Simpan Info Pembayaran
+                Simpan Rekening Pembayaran
               </button>
             </div>
 
