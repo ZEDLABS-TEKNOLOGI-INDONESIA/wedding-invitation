@@ -1,5 +1,5 @@
 .PHONY: help dev build preview lint typecheck test check format \
-	install update clean backup pull up up-local down restart logs ps sync push
+	install update clean backup pull up up-local rebuild rebuild-local down restart logs ps sync push
 
 help: ## Tampilkan daftar perintah
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -52,6 +52,16 @@ up: pull ## Tarik update terbaru lalu build & jalankan via Docker Compose
 up-local: ## Build & jalankan via Docker Compose tanpa git pull
 	@mkdir -p database/uploads
 	docker compose up -d --build
+
+rebuild: pull ## Tarik update terbaru lalu build ulang Docker tanpa cache
+	@mkdir -p database/uploads
+	docker compose build --no-cache
+	docker compose up -d --force-recreate
+
+rebuild-local: ## Build ulang Docker tanpa cache dan tanpa git pull
+	@mkdir -p database/uploads
+	docker compose build --no-cache
+	docker compose up -d --force-recreate
 
 down: ## Hentikan container Docker Compose
 	docker compose down
