@@ -8,6 +8,7 @@ dist/
 *.db-wal
 wedding.db
 database/
+backups/
 .env
 .env.production
 .env.development

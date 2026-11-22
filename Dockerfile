@@ -1,5 +1,5 @@
 # Stage 1: Build Astro SSR + React + native better-sqlite3
-FROM node:22-bookworm-slim AS builder
+FROM node:24-bookworm-slim AS builder
 ENV CI=true ASTRO_TELEMETRY_DISABLED=1
 
 RUN apt-get update \
@@ -16,7 +16,7 @@ RUN pnpm run build \
     && pnpm prune --prod
 
 # Stage 2: Production runtime (non-root + tini + healthcheck)
-FROM node:22-bookworm-slim AS runtime
+FROM node:24-bookworm-slim AS runtime
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=4321 \
