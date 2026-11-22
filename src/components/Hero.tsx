@@ -87,11 +87,15 @@ const Hero: React.FC<{ config: AppConfig }> = ({ config }) => {
           </h1>
 
           {guestName && (
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md">
-              <span className="text-[10px] tracking-[0.18em] text-white/75 uppercase">
+            <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2.5 gap-y-1 rounded-full border border-white/20 bg-white/10 px-5 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.2)] backdrop-blur-md">
+              <span className="font-serif text-sm leading-none tracking-[0.06em] text-white/80 italic sm:text-[15px]">
                 Kepada Yth.
               </span>
-              <span className="font-serif text-base font-medium text-white italic sm:text-lg">
+              <span
+                aria-hidden="true"
+                className="bg-accent/70 h-3 w-[1px] shrink-0"
+              />
+              <span className="font-serif text-sm leading-none font-semibold tracking-[0.04em] text-white sm:text-[15px]">
                 {guestName}
               </span>
             </div>

@@ -1,4 +1,4 @@
-import { MailOpen, Sparkles } from "lucide-react";
+import { Calendar, MailOpen } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import type { AppConfig } from "../types";
 
@@ -84,9 +84,9 @@ const Envelope: React.FC<EnvelopeProps> = ({ onOpen, config }) => {
             </h1>
 
             {config.events.akad.date && (
-              <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1 text-[11px] font-medium tracking-[0.2em] text-white/85 uppercase backdrop-blur-md">
-                <Sparkles className="text-accent h-3 w-3" />
-                {config.events.akad.date}
+              <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-[11px] font-medium tracking-[0.2em] text-white/85 uppercase backdrop-blur-md">
+                <Calendar className="text-accent h-3.5 w-3.5 shrink-0" />
+                <span>{config.events.akad.date}</span>
               </p>
             )}
           </div>
