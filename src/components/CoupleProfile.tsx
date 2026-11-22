@@ -1,7 +1,7 @@
 import { SiInstagram } from "@icons-pack/react-simple-icons";
 import React from "react";
 import type { AppConfig } from "../types";
-import { SectionDivider } from "./WeddingOrnaments";
+import { BotanicalWatermark, SectionDivider } from "./WeddingOrnaments";
 
 const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
   const { bride, groom } = config.couple;
@@ -53,8 +53,10 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="couple"
-      className="wedding-section-tinted relative py-20 transition-colors duration-700 md:py-28"
+      className="relative overflow-hidden py-20 transition-colors duration-700 md:py-28"
     >
+      <BotanicalWatermark side="left" />
+      <BotanicalWatermark side="right" />
       <div className="relative z-10 container mx-auto max-w-5xl px-5 md:px-6">
         <div className="mb-16 space-y-4 text-center md:mb-20">
           <span className="text-accentDark dark:text-accent font-serif text-lg italic sm:text-xl">

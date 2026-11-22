@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Gift, Copy, Check, MapPin, CreditCard } from "lucide-react";
+import { Gift, Copy, Check, MapPin } from "lucide-react";
 import type { AppConfig } from "../types";
-import { CornerFiligree, SectionDivider } from "./WeddingOrnaments";
+import { BotanicalWatermark, SectionDivider } from "./WeddingOrnaments";
 
 const GiftInfo: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -16,8 +16,9 @@ const GiftInfo: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="gift"
-      className="wedding-section-tinted py-20 transition-colors duration-700 md:py-28"
+      className="relative overflow-hidden py-20 transition-colors duration-700 md:py-28"
     >
+      <BotanicalWatermark side="left" />
       <div className="container mx-auto max-w-5xl px-5 md:px-6">
         <div className="mb-14 space-y-3 text-center md:mb-18">
           <div className="bg-accentDark/10 text-accentDark dark:bg-accent/15 dark:text-accent mx-auto flex h-12 w-12 items-center justify-center rounded-2xl">
@@ -37,10 +38,8 @@ const GiftInfo: React.FC<{ config: AppConfig }> = ({ config }) => {
           {config.bankAccounts.map((acc, idx) => (
             <div
               key={idx}
-              className="editorial-card group relative overflow-hidden rounded-3xl p-7 sm:p-8"
+              className="editorial-card group relative overflow-hidden rounded-3xl p-7 ring-1 ring-accentDark/8 ring-inset sm:p-8 dark:ring-accent/10"
             >
-              <CornerFiligree position="tr" />
-              <CreditCard className="text-accentDark/5 dark:text-accent/5 pointer-events-none absolute -right-6 -bottom-6 h-36 w-36 -rotate-12 transition-transform duration-700 group-hover:scale-105" />
 
               <div className="relative z-10 flex h-full flex-col justify-between gap-6">
                 <div className="space-y-2">

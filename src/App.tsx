@@ -14,7 +14,7 @@ import Envelope from "./components/Envelope";
 import InstallPrompt from "./components/InstallPrompt";
 import { useConfig } from "./hooks/useConfig";
 import { Heart, ChevronUp } from "lucide-react";
-import { SectionDivider } from "./components/WeddingOrnaments";
+import { BotanicalWatermark, SectionDivider } from "./components/WeddingOrnaments";
 import {
   normalizePublicTheme,
   type PublicThemeId,
@@ -90,15 +90,14 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
     }
 
     const observerOptions = {
-      threshold: 0.01,
-      rootMargin: "0px 0px -40px 0px",
+      threshold: 0.04,
+      rootMargin: "0px 0px -24px 0px",
     };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.classList.add("reveal-active");
-          entry.target.classList.remove("opacity-0");
+          entry.target.classList.add("wedding-revealed");
           observer.unobserve(entry.target);
         }
       });
@@ -106,13 +105,13 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
 
     if (isOpened) {
       document.querySelectorAll("main section").forEach((section) => {
-        section.classList.add(
-          "opacity-0",
-          "transition-all",
-          "duration-[1.5s]",
-          "ease-out"
-        );
-        observer.observe(section);
+        section.classList.add("wedding-reveal");
+        const rect = section.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.95) {
+          section.classList.add("wedding-revealed");
+        } else {
+          observer.observe(section);
+        }
       });
     }
 
@@ -148,6 +147,7 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
   const handleOpenInvitation = () => {
     setIsOpened(true);
     window.dispatchEvent(new CustomEvent("play-wedding-music"));
+    window.dispatchEvent(new CustomEvent("wedding-opened"));
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
@@ -173,7 +173,7 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
   })();
 
   return (
-    <div className="selection:bg-accent/30 selection:text-primary relative min-h-screen overflow-x-hidden">
+    <div className="wedding-canvas selection:bg-accent/30 selection:text-primary relative min-h-screen overflow-x-hidden transition-colors duration-700">
       {!isOpened && <Envelope onOpen={handleOpenInvitation} config={config} />}
 
       <InstallPrompt />
@@ -201,7 +201,9 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
         onResetColorTheme={handleResetColorTheme}
       />
 
-      <footer className="dark:bg-darkSurface relative w-full overflow-hidden bg-white px-5 py-20 pb-32 transition-colors duration-700 md:py-28 md:pb-36">
+      <footer className="wedding-section-soft relative w-full overflow-hidden px-5 py-20 pb-32 transition-colors duration-700 md:py-28 md:pb-36">
+        <BotanicalWatermark side="left" />
+        <BotanicalWatermark side="right" />
         <div className="relative z-10 container mx-auto flex max-w-3xl flex-col items-center gap-10 text-center">
           <div className="space-y-4">
             <Heart className="text-accentDark/60 dark:text-accent/60 mx-auto h-6 w-6 animate-pulse" />

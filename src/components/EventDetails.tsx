@@ -13,7 +13,7 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import type { AppConfig } from "../types";
 import { downloadICS, generateGoogleCalendarUrl } from "../utils/calendarUtils";
-import { CornerFiligree, SectionDivider } from "./WeddingOrnaments";
+import { BotanicalWatermark, SectionDivider } from "./WeddingOrnaments";
 
 const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [copied, setCopied] = useState(false);
@@ -74,8 +74,9 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="event"
-      className="wedding-section-tinted px-5 py-20 transition-colors duration-700 md:px-6 md:py-28"
+      className="relative overflow-hidden px-5 py-20 transition-colors duration-700 md:px-6 md:py-28"
     >
+      <BotanicalWatermark side="left" />
       <div className="container mx-auto max-w-5xl">
         <div className="mb-14 space-y-3 text-center md:mb-18">
           <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">
@@ -100,12 +101,8 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
             return (
               <div
                 key={type}
-                className="editorial-card relative flex flex-col items-center justify-between space-y-6 rounded-3xl p-7 text-center sm:p-9"
+                className="editorial-card relative flex flex-col items-center justify-between space-y-6 rounded-3xl p-7 text-center ring-1 ring-accentDark/8 ring-inset sm:p-9 dark:ring-accent/10"
               >
-                <CornerFiligree position="tl" />
-                <CornerFiligree position="tr" />
-                <CornerFiligree position="bl" />
-                <CornerFiligree position="br" />
 
                 <div className="space-y-3 pt-1">
                   <div className="bg-accentDark/10 text-accentDark dark:bg-accent/15 dark:text-accent mx-auto flex h-12 w-12 items-center justify-center rounded-full">

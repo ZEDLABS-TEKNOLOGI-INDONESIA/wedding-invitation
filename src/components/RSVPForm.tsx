@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { dbService } from "../services/dbService";
 import { AttendanceStatus, type RSVP, type AppConfig } from "../types";
-import { SectionDivider } from "./WeddingOrnaments";
+import { BotanicalWatermark, SectionDivider } from "./WeddingOrnaments";
 
 const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [formData, setFormData] = useState({
@@ -111,8 +111,9 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="rsvp"
-      className="wedding-section-tinted py-20 transition-colors duration-700 md:py-28"
+      className="relative overflow-hidden py-20 transition-colors duration-700 md:py-28"
     >
+      <BotanicalWatermark side="right" />
       <div className="container mx-auto max-w-6xl px-5 md:px-6">
         <div className="mb-14 space-y-3 text-center md:mb-18">
           <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">

@@ -155,14 +155,14 @@
 
 /* Custom Classes */
 .editorial-card {
-  @apply border border-accentDark/12 bg-white/90 shadow-[0_14px_40px_-18px_rgba(15,23,42,0.12)] backdrop-blur-sm transition-all duration-500;
+  @apply border border-accentDark/12 bg-white/85 shadow-[0_14px_38px_-20px_rgba(15,23,42,0.14)] backdrop-blur-md transition-all duration-500;
 }
 .dark .editorial-card {
-  @apply bg-darkSurface/90 border-accent/15 shadow-[0_18px_48px_-16px_rgba(0,0,0,0.45)];
+  @apply bg-darkSurface/85 border-accent/15 shadow-[0_18px_46px_-18px_rgba(0,0,0,0.48)];
 }
 
 .frosted-glass {
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.45);
 }
@@ -171,31 +171,176 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.wedding-section-tinted {
-  background: radial-gradient(
-      circle at 12% 10%,
-      color-mix(in srgb, var(--color-accent) 12%, transparent),
-      transparent 48%
+.wedding-canvas {
+  background-color: var(--color-secondary);
+  background-image:
+    radial-gradient(
+      ellipse 80% 50% at 10% 15%,
+      color-mix(in srgb, var(--color-accent) 11%, transparent),
+      transparent 60%
     ),
     radial-gradient(
-      circle at 88% 90%,
-      color-mix(in srgb, var(--color-accent) 10%, transparent),
-      transparent 50%
-    ),
-    var(--color-secondary);
-}
-.dark .wedding-section-tinted {
-  background: radial-gradient(
-      circle at 12% 10%,
+      ellipse 70% 50% at 90% 55%,
       color-mix(in srgb, var(--color-accent) 9%, transparent),
-      transparent 48%
+      transparent 60%
+    );
+}
+.dark .wedding-canvas {
+  background-color: var(--color-darkBg);
+  background-image:
+    radial-gradient(
+      ellipse 80% 50% at 10% 15%,
+      color-mix(in srgb, var(--color-accent) 8%, transparent),
+      transparent 60%
     ),
     radial-gradient(
-      circle at 88% 90%,
-      color-mix(in srgb, var(--color-accentDark) 14%, transparent),
-      transparent 50%
-    ),
-    var(--color-darkBg);
+      ellipse 70% 50% at 90% 55%,
+      color-mix(in srgb, var(--color-accentDark) 13%, transparent),
+      transparent 60%
+    );
+}
+
+.wedding-section-soft {
+  background-color: color-mix(in srgb, #ffffff 55%, var(--color-secondary));
+  border-top: 1px solid color-mix(in srgb, var(--color-accentDark) 8%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accentDark) 8%, transparent);
+}
+.dark .wedding-section-soft {
+  background-color: color-mix(
+    in srgb,
+    var(--color-darkSurface) 52%,
+    var(--color-darkBg)
+  );
+  border-top: 1px solid color-mix(in srgb, var(--color-accent) 10%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.wedding-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.wedding-reveal.wedding-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes doveWingFront {
+  0%,
+  100% {
+    transform: rotate(0deg) scaleY(1);
+  }
+  50% {
+    transform: rotate(-22deg) scaleY(0.72);
+  }
+}
+
+@keyframes doveWingBack {
+  0%,
+  100% {
+    transform: rotate(0deg) scaleY(1);
+  }
+  50% {
+    transform: rotate(-16deg) scaleY(0.78);
+  }
+}
+
+.dove-wing-front {
+  transform-origin: 31px 32px;
+  animation: doveWingFront 0.75s ease-in-out infinite;
+}
+
+.dove-wing-back {
+  transform-origin: 27px 31px;
+  animation: doveWingBack 0.75s ease-in-out 0.12s infinite;
+}
+
+@keyframes doveFlyRight {
+  0% {
+    transform: translate3d(-10vw, 24px, 0) rotate(-4deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  35% {
+    transform: translate3d(34vw, -22px, 0) rotate(3deg);
+  }
+  65% {
+    transform: translate3d(72vw, 12px, 0) rotate(-3deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(115vw, -28px, 0) rotate(2deg);
+    opacity: 0;
+  }
+}
+
+@keyframes doveFlyLeft {
+  0% {
+    transform: translate3d(10vw, 18px, 0) rotate(4deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  35% {
+    transform: translate3d(-34vw, -24px, 0) rotate(-3deg);
+  }
+  65% {
+    transform: translate3d(-72vw, 14px, 0) rotate(3deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-115vw, -22px, 0) rotate(-2deg);
+    opacity: 0;
+  }
+}
+
+@keyframes doveBurstRight {
+  0% {
+    transform: translate3d(-5vw, 40px, 0) scale(0.85);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(115vw, -160px, 0) scale(1.05);
+    opacity: 0;
+  }
+}
+
+@keyframes doveBurstLeft {
+  0% {
+    transform: translate3d(5vw, 40px, 0) scale(0.85);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-115vw, -160px, 0) scale(1.05);
+    opacity: 0;
+  }
+}
+
+@keyframes weddingSparkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.7) translateY(0);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.15) translateY(-6px);
+  }
 }
 
 .reveal-active {

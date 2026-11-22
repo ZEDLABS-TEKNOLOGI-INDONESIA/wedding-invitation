@@ -1,7 +1,7 @@
 import React from "react";
 import { Heart } from "lucide-react";
 import type { AppConfig } from "../types";
-import { SectionDivider } from "./WeddingOrnaments";
+import { BotanicalWatermark, SectionDivider } from "./WeddingOrnaments";
 
 const LoveStory: React.FC<{ config: AppConfig }> = ({ config }) => {
   if (!config.loveStory || config.loveStory.length === 0) return null;
@@ -9,8 +9,9 @@ const LoveStory: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="story"
-      className="dark:bg-darkSurface relative overflow-hidden bg-white py-20 transition-colors duration-700 md:py-28"
+      className="wedding-section-soft relative overflow-hidden py-20 transition-colors duration-700 md:py-28"
     >
+      <BotanicalWatermark side="right" />
       <div className="relative z-10 container mx-auto max-w-5xl px-5 md:px-6">
         <div className="mb-14 space-y-3 text-center md:mb-20">
           <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">
