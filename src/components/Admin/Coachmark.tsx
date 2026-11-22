@@ -152,6 +152,75 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
       },
     ],
   },
+  sa_weddings: {
+    key: "sa_weddings",
+    name: "Superadmin — Pasangan & Undangan",
+    steps: [
+      {
+        selector: "[data-tour='sa-sidebar-nav']",
+        title: "Navigasi Panel Superadmin",
+        body: "Gunakan sidebar di kiri untuk berpindah antara daftar tenant pasangan, verifikasi tagihan, gateway WhatsApp platform, dan profil akun. Sidebar bisa diciutkan melalui tombol panah di pojok kiri bawah, dan tekan '/' atau Ctrl+K untuk cari menu cepat.",
+      },
+      {
+        selector: "[data-tour='sa-stat-cards']",
+        title: "Ringkasan Platform Real-Time",
+        body: "Pantau total undangan terdaftar, undangan aktif, jumlah bukti transfer yang perlu diperiksa, serta total RSVP lintas seluruh pasangan.",
+      },
+      {
+        selector: "[data-tour='sa-weddings-table']",
+        title: "Kelola Tenant & Impersonate",
+        body: "Klik Kelola untuk masuk ke dashboard pasangan tertentu, Tangguhkan untuk menonaktifkan akses undangan, atau buka URL publik masing-masing pasangan.",
+      },
+      {
+        selector: "[data-tour='sa-topbar-controls']",
+        title: "Panduan, Tema & Profil",
+        body: "Putar ulang panduan halaman ini kapan saja, ganti tema terang/gelap, buka demo publik, atau klik profil Anda untuk mengubah foto avatar.",
+      },
+    ],
+  },
+  sa_billing: {
+    key: "sa_billing",
+    name: "Superadmin — Tagihan & Pembayaran",
+    steps: [
+      {
+        selector: "[data-tour='sa-billing-filter']",
+        title: "Filter Status Tagihan",
+        body: "Saring tagihan berdasarkan status: Perlu diperiksa (bukti sudah diunggah), Belum dibayar, Lunas, Ditolak, atau Semua.",
+      },
+      {
+        selector: "[data-tour='sa-billing-table']",
+        title: "Review Bukti Transfer & Invoicing WA",
+        body: "Klik Review Bukti untuk melihat foto nota bayar ukuran penuh, lalu Setujui (kuota langsung aktif + invoice lunas terkirim via WhatsApp) atau Tolak beserta alasannya.",
+      },
+      {
+        selector: "[data-tour='sa-billing-settings']",
+        title: "Rekening Tujuan Permanen di Database",
+        body: "Atur hingga 3 rekening bank/e-wallet tujuan dan nomor WhatsApp penerima notifikasi pembayaran. Data tersimpan permanen di database dan aman saat pembaruan aplikasi.",
+      },
+    ],
+  },
+  sa_platform_wa: {
+    key: "sa_platform_wa",
+    name: "Superadmin — WhatsApp Gateway Platform",
+    steps: [
+      {
+        selector: "[data-tour='sa-wa-card']",
+        title: "Gateway OTP & Notifikasi Invoicing",
+        body: "Masukkan kredensial API Key dan HMAC Secret dari whatsapp.zedlabs.id, lalu klik Sinkron 5 Template Platform agar OTP pendaftaran, reset password, dan notifikasi pembayaran terkirim otomatis.",
+      },
+    ],
+  },
+  sa_account: {
+    key: "sa_account",
+    name: "Superadmin — Akun & Profil",
+    steps: [
+      {
+        selector: "[data-tour='sa-account-form']",
+        title: "Foto Profil & Nomor WhatsApp Admin",
+        body: "Unggah foto profil Anda, perbarui username atau password, dan pastikan nomor WhatsApp diisi agar Anda menerima notifikasi otomatis setiap ada pembayaran baru.",
+      },
+    ],
+  },
 };
 
 const STORAGE_KEY = "wedding_admin_coachmark_done_v2";

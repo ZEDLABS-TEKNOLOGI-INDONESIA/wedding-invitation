@@ -1,24 +1,26 @@
 import {
   Camera,
   CheckCircle2,
+  ChevronLeft,
   CreditCard,
   ExternalLink,
   Eye,
   FileText,
   Globe,
   Heart,
+  HelpCircle,
   KeyRound,
   Loader2,
   LogOut,
   Menu,
   MessageSquare,
-  PanelLeftClose,
-  PanelLeftOpen,
+  Moon,
   RefreshCcw,
   Search,
   Send,
   Shield,
   ShieldAlert,
+  Sun,
   Trash2,
   Users,
   X,
@@ -26,6 +28,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatIdr } from "../../lib/billing";
+import Coachmark from "./Coachmark";
 
 interface MemberRow {
   id: number;
@@ -146,6 +149,7 @@ const SuperadminDashboard: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuQuery, setMenuQuery] = useState("");
+  const [coachmarkNonce, setCoachmarkNonce] = useState(0);
   const searchMenuRef = useRef<HTMLInputElement | null>(null);
 
   const [toast, setToast] = useState<{
@@ -199,19 +203,65 @@ const SuperadminDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (
-        e.key === "/" &&
-        document.activeElement?.tagName !== "INPUT" &&
-        document.activeElement?.tagName !== "TEXTAREA"
-      ) {
-        e.preventDefault();
-        searchMenuRef.current?.focus();
+    try {
+      const stored = localStorage.getItem("wedding_admin_sidebar_collapsed");
+      if (stored !== null) {
+        setSidebarCollapsed(stored === "1");
+      } else if (window.innerWidth < 1200) {
+        setSidebarCollapsed(true);
       }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    } catch {
+      // ignore
+    }
   }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inField = target?.closest(
+        "input, textarea, select, [contenteditable='true']"
+      );
+      const isShortcut =
+        (e.key === "/" && !inField) ||
+        (e.key.toLowerCase() === "k" && (e.ctrlKey || e.metaKey));
+      if (!isShortcut) return;
+      e.preventDefault();
+      if (window.innerWidth < 768) {
+        setMobileMenuOpen(true);
+      } else if (sidebarCollapsed) {
+        setSidebarCollapsed(false);
+      }
+      window.setTimeout(() => searchMenuRef.current?.focus(), 40);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [sidebarCollapsed]);
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(
+          "wedding_admin_sidebar_collapsed",
+          next ? "1" : "0"
+        );
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  const toggleTheme = () => {
+    const isDark = document.documentElement.classList.toggle("dark");
+    const next = isDark ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("theme", next);
+    } catch {
+      // ignore
+    }
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -476,6 +526,8 @@ const SuperadminDashboard: React.FC = () => {
 
   return (
     <div className="admin-shell flex min-h-dvh bg-(--adm-bg-secondary) text-(--adm-text-primary)">
+      <Coachmark guideKey={`sa_${tab}`} replayNonce={coachmarkNonce} />
+
       {/* Mobile Sidebar Backdrop */}
       {mobileMenuOpen && (
         <div
@@ -490,7 +542,7 @@ const SuperadminDashboard: React.FC = () => {
           mobileMenuOpen
             ? "translate-x-0"
             : "-translate-x-full md:translate-x-0"
-        } ${sidebarCollapsed ? "w-[260px] md:w-[64px]" : "w-[260px] md:w-[232px]"}`}
+        } ${sidebarCollapsed ? "w-[260px] md:w-[64px]" : "w-[260px] md:w-[220px]"}`}
       >
         {/* Brand */}
         <div
@@ -558,6 +610,7 @@ const SuperadminDashboard: React.FC = () => {
 
         {/* Nav Items */}
         <nav
+          data-tour="sa-sidebar-nav"
           aria-label="Menu utama superadmin"
           className="custom-scrollbar flex-1 overflow-x-hidden overflow-y-auto py-2"
         >
@@ -681,62 +734,129 @@ const SuperadminDashboard: React.FC = () => {
           </div>
         </nav>
 
-        {/* Sidebar Footer Logout */}
-        <div className="shrink-0 border-t border-(--adm-border) p-2">
+        {/* Sidebar Footer (matching AdminDashboard) */}
+        <div
+          className={`flex shrink-0 items-stretch border-t border-(--adm-border) ${
+            sidebarCollapsed ? "h-11 md:h-auto md:flex-col-reverse" : "h-11"
+          }`}
+        >
           <button
             type="button"
             onClick={() => void handleLogout()}
             title="Keluar"
-            className={`adm-sidebar-item text-red-400 hover:bg-red-500/10 hover:text-red-300 ${
-              sidebarCollapsed ? "md:justify-center md:px-0" : ""
+            aria-label="Keluar"
+            className={`flex flex-1 items-center gap-2.5 text-[12.5px] font-medium text-(--adm-red) hover:bg-(--adm-red-soft) ${
+              sidebarCollapsed
+                ? "px-4 md:h-[44px] md:w-full md:flex-none md:justify-center md:border-t md:border-(--adm-border) md:px-0"
+                : "px-4"
             }`}
           >
-            <LogOut className="h-[17px] w-[17px] shrink-0" />
+            <LogOut className="h-4 w-4 shrink-0" />
             <span className={sidebarCollapsed ? "md:hidden" : ""}>Keluar</span>
+          </button>
+          <button
+            type="button"
+            onClick={toggleSidebarCollapsed}
+            title={sidebarCollapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
+            aria-label={
+              sidebarCollapsed ? "Perluas sidebar" : "Ciutkan sidebar"
+            }
+            className={`hidden items-center justify-center text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) md:flex ${
+              sidebarCollapsed
+                ? "h-[44px] w-full"
+                : "w-10 border-l border-(--adm-border)"
+            }`}
+          >
+            <ChevronLeft
+              className={`h-4 w-4 transition-transform duration-200 ${
+                sidebarCollapsed ? "rotate-180" : ""
+              }`}
+            />
           </button>
         </div>
       </aside>
 
       {/* Main Column */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Topbar Header */}
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-(--adm-border) bg-(--adm-bg-secondary)/95 px-4 backdrop-blur-md md:px-6">
-          <div className="flex min-w-0 items-center gap-2.5">
+        {/* Sticky 56px Topbar (matching AdminDashboard) */}
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-(--adm-border) bg-(--adm-bg-secondary) px-3 md:px-5">
+          <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
               aria-label="Buka menu"
               onClick={() => setMobileMenuOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-(--adm-border) text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) md:hidden"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-(--adm-text-primary) hover:bg-(--adm-bg-overlay) md:hidden"
             >
               <Menu className="h-4 w-4" />
             </button>
-            <button
-              type="button"
-              aria-label={sidebarCollapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
-              onClick={() => setSidebarCollapsed((c) => !c)}
-              className="hidden h-8 w-8 items-center justify-center rounded-md border border-(--adm-border) text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) md:flex"
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen className="h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4" />
-              )}
-            </button>
-            <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-(--adm-text-primary)">
-                {activeMeta.title}
-              </div>
-              <div className="hidden truncate text-[11px] text-(--adm-text-secondary) sm:block">
-                {activeMeta.desc}
-              </div>
-            </div>
+            <nav aria-label="Breadcrumb" className="min-w-0">
+              <ol className="flex items-center gap-1.5 text-[13px]">
+                <li className="hidden whitespace-nowrap text-(--adm-text-secondary) sm:block">
+                  Superadmin Platform
+                </li>
+                <li className="hidden text-(--adm-text-muted) sm:block">/</li>
+                <li className="truncate font-semibold text-(--adm-text-primary)">
+                  {activeMeta.title}
+                </li>
+              </ol>
+            </nav>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div
+            data-tour="sa-topbar-controls"
+            className="flex shrink-0 items-center gap-1.5"
+          >
+            {data && (
+              <div className="hidden h-7 items-center gap-1.5 rounded-full border border-(--adm-border) px-2.5 text-[11.5px] text-(--adm-text-secondary) sm:inline-flex">
+                <span className="h-2 w-2 rounded-full bg-(--adm-green)" />
+                <span className="tabular-nums">
+                  {data.stats.activeWeddings} Aktif ·{" "}
+                  {data.stats.pendingOrders ?? 0} Perlu Diperiksa
+                </span>
+              </div>
+            )}
+
+            <span
+              className="mx-1 hidden h-4 w-px bg-(--adm-border) sm:block"
+              aria-hidden="true"
+            />
+
+            <button
+              type="button"
+              onClick={() => setCoachmarkNonce((n) => n + 1)}
+              aria-label="Putar panduan halaman ini"
+              title="Panduan Halaman"
+              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-xs font-medium text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
+            >
+              <HelpCircle className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">Panduan</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Ganti tema terang/gelap"
+              title="Ganti Tema"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
+            >
+              <Moon className="h-4 w-4 dark:hidden" />
+              <Sun className="hidden h-4 w-4 dark:inline" />
+            </button>
+
+            <a
+              href="/demo"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Buka Demo Undangan Publik (/demo)"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+
             <button
               type="button"
               onClick={() => setTab("account")}
-              className="flex items-center gap-2 rounded-full border border-(--adm-border) bg-(--adm-bg-primary) py-1 pr-3 pl-1.5 text-xs hover:border-(--adm-accent)"
+              className="ml-0.5 flex items-center gap-2 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) py-1 pr-2.5 pl-1.5 hover:border-(--adm-accent)"
               title="Buka Profil & Akun Superadmin"
             >
               {data?.currentAdmin.avatarUrl ? (
@@ -746,11 +866,17 @@ const SuperadminDashboard: React.FC = () => {
                   className="h-6 w-6 rounded-full object-cover"
                 />
               ) : (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--adm-accent-soft) text-(--adm-accent)">
-                  <Shield className="h-3.5 w-3.5" />
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--adm-accent-soft) text-[11px] font-semibold text-(--adm-accent) uppercase">
+                  {(
+                    data?.currentAdmin.fullName ||
+                    data?.currentAdmin.username ||
+                    "S"
+                  )
+                    .charAt(0)
+                    .toUpperCase()}
                 </span>
               )}
-              <span className="hidden max-w-[120px] truncate font-medium sm:inline">
+              <span className="hidden max-w-[120px] truncate text-xs font-medium text-(--adm-text-primary) sm:inline">
                 {data?.currentAdmin.fullName ||
                   data?.currentAdmin.username ||
                   "Superadmin"}
@@ -759,9 +885,20 @@ const SuperadminDashboard: React.FC = () => {
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="flex-1 px-4 py-5 md:px-6 md:py-6">
-          <div className="mx-auto max-w-6xl space-y-5">
+        {/* Rounded Content Panel (matching AdminDashboard .adm-panel-main) */}
+        <main className="adm-panel-main m-2 flex-1 px-4 py-4 md:m-3 md:px-6 md:py-5">
+          <div className="mx-auto w-full max-w-[1280px] space-y-5">
+            {/* Page Header */}
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h1 className="text-lg font-semibold tracking-tight text-(--adm-text-primary)">
+                  {activeMeta.title}
+                </h1>
+                <p className="mt-0.5 text-xs text-(--adm-text-secondary)">
+                  {activeMeta.desc}
+                </p>
+              </div>
+            </div>
             {toast && (
               <div
                 className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 text-xs font-medium ${
@@ -781,7 +918,10 @@ const SuperadminDashboard: React.FC = () => {
 
             {/* Stats */}
             {data && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div
+                data-tour="sa-stat-cards"
+                className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+              >
                 <div className="adm-card p-4">
                   <div className="text-xs text-(--adm-text-secondary)">
                     Total Undangan
@@ -823,7 +963,10 @@ const SuperadminDashboard: React.FC = () => {
                 Memuat data platform...
               </div>
             ) : tab === "weddings" && data ? (
-              <div className="adm-card overflow-hidden">
+              <div
+                data-tour="sa-weddings-table"
+                className="adm-card overflow-hidden"
+              >
                 <div className="flex items-center justify-between border-b border-(--adm-border) px-4 py-3">
                   <div>
                     <h2 className="text-sm font-semibold">
@@ -997,7 +1140,10 @@ const SuperadminDashboard: React.FC = () => {
             ) : tab === "billing" && data ? (
               <div className="space-y-5">
                 {/* Filter status seperti whatsapp-service/superadmin/tagihan */}
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div
+                  data-tour="sa-billing-filter"
+                  className="flex flex-wrap items-center justify-between gap-2"
+                >
                   <div className="flex flex-wrap gap-1.5">
                     {(
                       [
@@ -1033,7 +1179,10 @@ const SuperadminDashboard: React.FC = () => {
                 </div>
 
                 {/* Daftar Tagihan */}
-                <div className="adm-card overflow-hidden">
+                <div
+                  data-tour="sa-billing-table"
+                  className="adm-card overflow-hidden"
+                >
                   {filteredOrders.length === 0 ? (
                     <div className="p-8 text-center text-xs text-(--adm-text-secondary)">
                       {billingFilter === "review"
@@ -1204,7 +1353,10 @@ const SuperadminDashboard: React.FC = () => {
                 </div>
 
                 {/* Pengaturan Rekening Tujuan Permanen di Database */}
-                <div className="adm-card space-y-4 p-5">
+                <div
+                  data-tour="sa-billing-settings"
+                  className="adm-card space-y-4 p-5"
+                >
                   <div>
                     <h2 className="text-sm font-semibold">
                       Pengaturan Rekening Tujuan &amp; WhatsApp Notifikasi Pembayaran
@@ -1330,7 +1482,10 @@ const SuperadminDashboard: React.FC = () => {
                 </div>
               </div>
             ) : tab === "platform_wa" ? (
-              <div className="adm-card space-y-4 p-5">
+              <div
+                data-tour="sa-wa-card"
+                className="adm-card space-y-4 p-5"
+              >
                 <div>
                   <h2 className="text-sm font-semibold">
                     WhatsApp Gateway Platform (OTP &amp; Invoicing Pembayaran)
@@ -1466,6 +1621,7 @@ const SuperadminDashboard: React.FC = () => {
                   }
                 }}
                 className="adm-card max-w-xl space-y-4 p-5"
+                data-tour="sa-account-form"
               >
                 <div>
                   <h2 className="text-sm font-semibold">
