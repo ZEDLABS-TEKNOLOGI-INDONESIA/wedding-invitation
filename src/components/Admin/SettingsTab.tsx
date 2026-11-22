@@ -2,6 +2,7 @@ import FileSaver from "file-saver";
 import {
   ArrowDown,
   ArrowUp,
+  BookOpen,
   Calendar,
   Check,
   Clock,
@@ -10,8 +11,11 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Heart,
+  Image as ImageIcon,
   Loader2,
   MapPin,
+  MessageSquare,
   Minus,
   Music,
   Palette,
@@ -1104,72 +1108,107 @@ const SettingsTab: React.FC<{
       {/* Sticky Action & Quick-Jump Bar */}
       <div
         data-tour="settings-sticky-bar"
-        className="sticky top-[62px] z-20 space-y-2.5 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary)/95 p-3 shadow-xs backdrop-blur-md"
+        className="sticky top-[62px] z-20 space-y-2 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary)/95 p-2.5 shadow-xs backdrop-blur-md sm:space-y-2.5 sm:p-3"
       >
-        <div className="flex flex-wrap items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <span
-              className={`h-2 w-2 rounded-full ${
+              className={`h-2 w-2 shrink-0 rounded-full ${
                 hasUnsaved
                   ? "animate-pulse bg-(--adm-yellow)"
                   : "bg-(--adm-green)"
               }`}
             />
-            <span className="text-xs font-medium text-(--adm-text-secondary)">
-              {hasUnsaved
-                ? "Ada perubahan belum disimpan"
-                : "Semua perubahan tersimpan"}
+            <span className="truncate text-xs font-medium text-(--adm-text-secondary)">
+              <span className="sm:hidden">
+                {hasUnsaved ? "Belum disimpan" : "Tersimpan"}
+              </span>
+              <span className="hidden sm:inline">
+                {hasUnsaved
+                  ? "Ada perubahan belum disimpan"
+                  : "Semua perubahan tersimpan"}
+              </span>
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => setCsvModalType("config")}
-              className="adm-btn adm-btn-outline-primary adm-btn-sm"
+              title="Impor CSV Pengaturan"
+              aria-label="Impor CSV Pengaturan"
+              className="adm-btn adm-btn-outline-primary adm-btn-sm px-2 sm:px-3"
             >
-              <Upload className="h-3.5 w-3.5" /> Import CSV
+              <Upload className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">Impor CSV</span>
             </button>
             <button
               type="button"
               onClick={handleExportConfigCsv}
-              className="adm-btn adm-btn-secondary adm-btn-sm"
+              title="Ekspor CSV Pengaturan"
+              aria-label="Ekspor CSV Pengaturan"
+              className="adm-btn adm-btn-secondary adm-btn-sm px-2 sm:px-3"
             >
-              <Download className="h-3.5 w-3.5" /> Export CSV
+              <Download className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">Ekspor CSV</span>
             </button>
             <button
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className={`adm-btn adm-btn-sm ${
+              title={saved ? "Tersimpan" : "Simpan Semua Perubahan"}
+              className={`adm-btn adm-btn-sm px-2.5 sm:px-3 ${
                 saved ? "adm-btn-edit" : "adm-btn-primary"
               }`}
             >
               {saving ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
               ) : (
-                <Save className="h-3.5 w-3.5" />
+                <Save className="h-3.5 w-3.5 shrink-0" />
               )}
-              {saved ? "Tersimpan!" : "Simpan Semua"}
+              <span>
+                {saved ? (
+                  "Tersimpan!"
+                ) : (
+                  <>
+                    Simpan<span className="hidden sm:inline"> Semua</span>
+                  </>
+                )}
+              </span>
             </button>
           </div>
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+        <div className="grid grid-cols-6 gap-1 sm:flex sm:flex-wrap sm:gap-1.5">
           {SETTINGS_SUBMENUS.map((item) => {
             const active = currentSection === item.id;
+            const SectionIcon =
+              item.id === "tema"
+                ? Palette
+                : item.id === "mempelai"
+                  ? Heart
+                  : item.id === "acara"
+                    ? Calendar
+                    : item.id === "media"
+                      ? ImageIcon
+                      : item.id === "konten"
+                        ? BookOpen
+                        : MessageSquare;
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => selectSection(item.id)}
-                className={`rounded-md border px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
+                title={item.label}
+                aria-label={item.label}
+                className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-md border px-2 text-[11px] font-medium whitespace-nowrap transition-colors sm:h-auto sm:px-2.5 sm:py-1 ${
                   active
                     ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
                     : "border-(--adm-border) bg-(--adm-bg-primary) text-(--adm-text-secondary) hover:border-(--adm-accent) hover:text-(--adm-accent)"
                 }`}
               >
-                {item.label}
+                <SectionIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">{item.label}</span>
               </button>
             );
           })}
@@ -1254,14 +1293,14 @@ const SettingsTab: React.FC<{
           </div>
 
           <div className="grid gap-3.5 border-t border-(--adm-border) pt-3.5 md:grid-cols-2">
-            <div>
+            <div className="min-w-0">
               <span className="adm-label">Mode Terang / Gelap Bawaan</span>
-              <div className="adm-seg mt-1">
+              <div className="adm-seg mt-1 grid w-full grid-cols-3 sm:inline-flex sm:w-auto">
                 {(
                   [
-                    { id: "system", label: "Ikuti Perangkat" },
-                    { id: "light", label: "Terang (Light)" },
-                    { id: "dark", label: "Gelap (Dark)" },
+                    { id: "system", shortLabel: "Otomatis", label: "Ikuti Perangkat" },
+                    { id: "light", shortLabel: "Terang", label: "Terang (Light)" },
+                    { id: "dark", shortLabel: "Gelap", label: "Gelap (Dark)" },
                   ] as const
                 ).map((mode) => {
                   const activeMode =
@@ -1275,9 +1314,10 @@ const SettingsTab: React.FC<{
                       onClick={() =>
                         handleChange("PUBLIC_DEFAULT_MODE", mode.id)
                       }
-                      className={`adm-seg-btn ${activeMode ? "is-active" : ""}`}
+                      className={`adm-seg-btn justify-center ${activeMode ? "is-active" : ""}`}
                     >
-                      {mode.label}
+                      <span className="sm:hidden">{mode.shortLabel}</span>
+                      <span className="hidden sm:inline">{mode.label}</span>
                     </button>
                   );
                 })}
@@ -1342,7 +1382,7 @@ const SettingsTab: React.FC<{
                 <div className="space-y-4">
                   {/* Live Combined Stage Preview: Tema + Ornamen + Bingkai Love + Animasi */}
                   <div>
-                    <div className="mb-1.5 flex items-center justify-between">
+                    <div className="mb-1.5 flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
                       <span className="adm-label mb-0">
                         Pratinjau Gabungan (Tema + Ornamen + Bingkai Love +
                         Animasi)
@@ -1807,8 +1847,8 @@ const SettingsTab: React.FC<{
               )}
             </div>
             {rawConfig.MUSIC_URL?.trim() && (
-              <div className="mt-2.5 flex flex-wrap items-center gap-3 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-3 py-2">
-                <span className="text-[11px] font-medium text-(--adm-text-secondary)">
+              <div className="mt-2.5 flex flex-col gap-2 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-3 py-2 sm:flex-row sm:items-center sm:gap-3">
+                <span className="shrink-0 text-[11px] font-medium text-(--adm-text-secondary)">
                   Pratinjau Backsound:
                 </span>
                 <audio
@@ -1816,7 +1856,7 @@ const SettingsTab: React.FC<{
                   controls
                   preload="metadata"
                   src={rawConfig.MUSIC_URL}
-                  className="h-8 flex-1"
+                  className="h-8 w-full min-w-0 sm:flex-1"
                 />
               </div>
             )}
