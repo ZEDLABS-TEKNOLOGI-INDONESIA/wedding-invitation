@@ -4,7 +4,7 @@ import { getConfig } from "../../../lib/db";
 import {
   WA_TEMPLATE_CODES,
   WaGatewayClient,
-  WaGatewayError,
+  formatWaGatewayError,
   getWaCredentials,
   normalizeWaPhone,
   parseAdminWaNumbers,
@@ -23,6 +23,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   }
 
+  let targetBaseUrl = "";
   try {
     const body = (await request.json().catch(() => ({}))) as {
       baseUrl?: string;
@@ -31,6 +32,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       recipient?: string;
     };
     const stored = getConfig();
+    targetBaseUrl = (body.baseUrl || stored.WA_BASE_URL || "").trim();
     const creds = getWaCredentials(stored, {
       baseUrl: body.baseUrl,
       keyId: body.keyId,
@@ -83,20 +85,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       { status: 200, headers: JSON_HEADERS }
     );
   } catch (err) {
-    if (err instanceof WaGatewayError) {
-      return new Response(
-        JSON.stringify({
-          error:
-            err.status === 403
-              ? "Template belum tersinkron dengan API key ini. Klik 'Sinkron Template' terlebih dahulu."
-              : `${err.pesan} (HTTP ${err.status})`,
-        }),
-        { status: 400, headers: JSON_HEADERS }
-      );
-    }
-    return new Response(
-      JSON.stringify({ error: "Gagal mengirim pesan tes WhatsApp." }),
-      { status: 500, headers: JSON_HEADERS }
-    );
+    const formatted = formatWaGatewayError(err, {
+      baseUrl: targetBaseUrl || getConfig().WA_BASE_URL,
+      context: "send",
+    });
+    return new Response(JSON.stringify({ error: formatted.message }), {
+      status: formatted.status >= 500 ? formatted.status : 400,
+      headers: JSON_HEADERS,
+    });
   }
 };

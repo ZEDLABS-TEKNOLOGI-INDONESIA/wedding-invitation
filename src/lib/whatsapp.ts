@@ -93,6 +93,227 @@ export class WaGatewayError extends Error {
   }
 }
 
+export type WaErrorContext =
+  | "register"
+  | "session"
+  | "ping"
+  | "sync"
+  | "send"
+  | "general";
+
+function extractGatewayHost(baseUrl?: string): string {
+  if (!baseUrl) return "WhatsApp Gateway";
+  try {
+    return new URL(baseUrl).host || baseUrl;
+  } catch {
+    return baseUrl;
+  }
+}
+
+function cleanRawHttpText(text: string, status: number): string {
+  const trimmed = text.trim();
+  if (!trimmed) return `HTTP ${status}`;
+  if (/<html[\s>]|<!doctype/i.test(trimmed)) {
+    return `Server mengembalikan respons HTML (HTTP ${status})`;
+  }
+  return trimmed.slice(0, 240);
+}
+
+/**
+ * Mengubah galat jaringan (Node undici "fetch failed"), timeout, SSL, CORS,
+ * pembatasan domain, atau galat HTTP dari WhatsApp Gateway menjadi pesan
+ * peringatan bahasa Indonesia yang jelas & actionable.
+ */
+export function formatWaGatewayError(
+  err: unknown,
+  options?: { baseUrl?: string; context?: WaErrorContext }
+): { status: number; message: string } {
+  const host = extractGatewayHost(options?.baseUrl);
+  const ctx = options?.context ?? "general";
+
+  if (err instanceof WaGatewayError) {
+    const rawMsg = (err.pesan || "").trim();
+    const lower = rawMsg.toLowerCase();
+    const detail =
+      err.item.length > 0
+        ? ` (${err.item.map((i) => `${i.kode}: ${i.pesan}`).join("; ")})`
+        : "";
+
+    if (err.status === 401) {
+      return {
+        status: 401,
+        message:
+          "Autentikasi API Key / HMAC Secret ditolak oleh WhatsApp Gateway (HTTP 401). Pastikan API Key & Secret cocok atau daftarkan akun otomatis kembali.",
+      };
+    }
+
+    if (err.status === 403) {
+      if (
+        lower.includes("domain") ||
+        lower.includes("asal") ||
+        lower.includes("belum dibuka") ||
+        lower.includes("tidak diizinkan") ||
+        lower.includes("cors") ||
+        lower.includes("origin")
+      ) {
+        return {
+          status: 403,
+          message: `Pembatasan domain/CORS dari WhatsApp Gateway (HTTP 403): ${rawMsg}. Tambahkan domain atau IP aplikasi ini di menu Superadmin → Domain Integrasi (atau CORS_ORIGINS) pada ${host}.`,
+        };
+      }
+      if (ctx === "send") {
+        return {
+          status: 403,
+          message:
+            "Template belum tersinkron dengan API Key ini (HTTP 403). Klik 'Sinkron 5 Template ke Gateway' terlebih dahulu.",
+        };
+      }
+      return {
+        status: 403,
+        message: `Akses ditolak oleh WhatsApp Gateway (HTTP 403): ${rawMsg || "Periksa izin domain/CORS dan status akun instansi."}`,
+      };
+    }
+
+    if (err.status === 404) {
+      if (ctx === "register") {
+        return {
+          status: 404,
+          message: `Endpoint pendaftaran akun mandiri tidak ditemukan di ${host} (HTTP 404). Pastikan server WhatsApp Gateway sudah diperbarui (make up) ke versi terbaru.`,
+        };
+      }
+      return {
+        status: 404,
+        message: `Data atau endpoint tidak ditemukan di WhatsApp Gateway (HTTP 404): ${rawMsg || "Periksa URL Gateway."}`,
+      };
+    }
+
+    if (err.status === 409) {
+      return {
+        status: 409,
+        message: `Konflik data di WhatsApp Gateway (HTTP 409): ${rawMsg}.`,
+      };
+    }
+
+    if (err.status === 429) {
+      return {
+        status: 429,
+        message:
+          "Terlalu banyak permintaan ke WhatsApp Gateway (HTTP 429 / rate limit). Tunggu beberapa saat lalu coba lagi.",
+      };
+    }
+
+    if (err.status === 502 || err.status === 503 || err.status === 504) {
+      return {
+        status: err.status,
+        message: `Server WhatsApp Gateway (${host}) sedang tidak tersedia atau sedang restart/deploy (HTTP ${err.status}). Tunggu beberapa detik lalu coba lagi.`,
+      };
+    }
+
+    if (err.status >= 500) {
+      if (ctx === "register") {
+        return {
+          status: err.status,
+          message: `Gagal membuat akun/instansi otomatis di WhatsApp Gateway (HTTP ${err.status}): ${rawMsg || "Terjadi galat internal server."}`,
+        };
+      }
+      return {
+        status: err.status,
+        message: `Terjadi galat internal di WhatsApp Gateway (HTTP ${err.status}): ${rawMsg}${detail}`,
+      };
+    }
+
+    return {
+      status: err.status || 400,
+      message: `${rawMsg || `Permintaan ditolak (HTTP ${err.status})`}${detail}`,
+    };
+  }
+
+  // Tangani galat jaringan Node.js / undici ("fetch failed") & timeout
+  const e = err as {
+    name?: string;
+    message?: string;
+    code?: string;
+    cause?: { code?: string; message?: string; errno?: number };
+  } | null;
+
+  const code = String(e?.cause?.code || e?.code || "").toUpperCase();
+  const msgLower = String(e?.message || "").toLowerCase();
+  const causeLower = String(e?.cause?.message || "").toLowerCase();
+
+  if (
+    e?.name === "AbortError" ||
+    e?.name === "TimeoutError" ||
+    code === "ETIMEDOUT" ||
+    code === "UND_ERR_CONNECT_TIMEOUT" ||
+    code === "UND_ERR_HEADERS_TIMEOUT" ||
+    msgLower.includes("timed out") ||
+    msgLower.includes("aborted")
+  ) {
+    return {
+      status: 504,
+      message: `Waktu koneksi ke WhatsApp Gateway (${host}) habis (timeout). Pastikan server gateway aktif dan dapat dijangkau dari jaringan ini.`,
+    };
+  }
+
+  if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
+    return {
+      status: 502,
+      message: `Domain WhatsApp Gateway (${host}) tidak ditemukan (DNS ${code}). Periksa kembali URL Gateway dan koneksi internet server.`,
+    };
+  }
+
+  if (code === "ECONNREFUSED") {
+    return {
+      status: 502,
+      message: `Koneksi ke WhatsApp Gateway (${host}) ditolak (ECONNREFUSED). Server gateway kemungkinan sedang mati, restart, atau port belum terbuka.`,
+    };
+  }
+
+  if (
+    code.startsWith("CERT_") ||
+    code.startsWith("ERR_TLS_") ||
+    code === "DEPTH_ZERO_SELF_SIGNED_CERT" ||
+    code === "UNABLE_TO_VERIFY_LEAF_SIGNATURE" ||
+    causeLower.includes("certificate") ||
+    causeLower.includes("tls")
+  ) {
+    return {
+      status: 502,
+      message: `Sertifikat SSL/HTTPS WhatsApp Gateway (${host}) tidak valid atau bermasalah (${code || "TLS error"}). Periksa konfigurasi HTTPS/sertifikat di server gateway.`,
+    };
+  }
+
+  if (
+    code === "ECONNRESET" ||
+    code === "EPIPE" ||
+    code === "UND_ERR_SOCKET" ||
+    code === "EHOSTUNREACH" ||
+    code === "ENETUNREACH"
+  ) {
+    return {
+      status: 502,
+      message: `Koneksi ke WhatsApp Gateway (${host}) terputus (${code}). Server gateway mungkin sedang restart/deploy atau terblokir firewall.`,
+    };
+  }
+
+  if (msgLower.includes("fetch failed") || msgLower.includes("failed to fetch")) {
+    const extra = code ? ` (${code})` : "";
+    return {
+      status: 502,
+      message: `Tidak dapat terhubung ke WhatsApp Gateway (${host})${extra}. Pastikan server aktif, URL benar, sertifikat HTTPS valid, dan tidak terblokir firewall/CORS.`,
+    };
+  }
+
+  if (err instanceof Error && err.message.trim()) {
+    return { status: 502, message: err.message.trim() };
+  }
+
+  return {
+    status: 502,
+    message: `Gagal menghubungi WhatsApp Gateway (${host}).`,
+  };
+}
+
 export const WA_TEMPLATE_CODES = {
   INVITATION: "wedding_undangan_tamu",
   ADMIN_RSVP: "wedding_rsvp_admin",
@@ -278,7 +499,7 @@ export class WaGatewayClient {
 
       const gatewayErr = new WaGatewayError(
         res.status,
-        data?.error || text.trim() || `HTTP ${res.status}`,
+        data?.error || cleanRawHttpText(text, res.status),
         Array.isArray(data?.galat) ? data.galat : []
       );
       lastError = gatewayErr;
@@ -407,15 +628,21 @@ export class WaGatewayClient {
         }),
         signal: controller.signal,
       });
-      const data = await res.json().catch(() => ({}));
+      const text = await res.text();
+      let data: Record<string, unknown> = {};
+      try {
+        data = text ? (JSON.parse(text) as Record<string, unknown>) : {};
+      } catch {
+        data = {};
+      }
       if (!res.ok) {
         const msg =
-          typeof data?.error === "string"
-            ? data.error
-            : `Gagal mendaftarkan akun mandiri (HTTP ${res.status})`;
+          typeof data?.error === "string" && data.error.trim()
+            ? data.error.trim()
+            : cleanRawHttpText(text, res.status);
         throw new WaGatewayError(res.status, msg);
       }
-      return data as WaPersonalAccountResult;
+      return data as unknown as WaPersonalAccountResult;
     } finally {
       clearTimeout(timer);
     }

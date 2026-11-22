@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   CheckCircle2,
   Copy,
   KeyRound,
@@ -9,6 +10,7 @@ import {
   Smartphone,
   Sparkles,
   Trash2,
+  X,
   XCircle,
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -65,9 +67,25 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
     "idle"
   );
   const [pairingCode, setPairingCode] = useState<string>("");
+  const [panelAlert, setPanelAlert] = useState<{
+    type: "warning" | "error";
+    title: string;
+    message: string;
+  } | null>(null);
   const pollTimerRef = useRef<number | null>(null);
 
   const isConfigured = Boolean(baseUrl.trim() && apiKey.trim() && apiSecret.trim());
+
+  const formatBrowserFetchError = (err: unknown, fallback: string): string => {
+    if (err instanceof Error) {
+      const m = err.message.toLowerCase();
+      if (m.includes("failed to fetch") || m.includes("networkerror") || m.includes("load failed")) {
+        return "Gagal menjangkau server aplikasi atau permintaan diblokir jaringan/CORS. Periksa koneksi internet dan pastikan server aktif.";
+      }
+      if (err.message.trim()) return err.message.trim();
+    }
+    return fallback;
+  };
 
   const loadSessions = useCallback(async () => {
     setLoadingList(true);
@@ -78,7 +96,31 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
       const data = await res.json().catch(() => ({}));
       if (res.ok && Array.isArray(data.sessions)) {
         setSessions(data.sessions);
+        setPanelAlert(null);
+      } else if (!res.ok) {
+        const msg =
+          data?.error ||
+          `Gagal memuat daftar sesi WhatsApp (HTTP ${res.status}).`;
+        setPanelAlert({
+          type: res.status === 403 || res.status === 401 ? "warning" : "error",
+          title:
+            res.status === 403
+              ? "Pembatasan Akses / Domain Gateway"
+              : res.status === 401
+                ? "Kredensial API Key Tidak Valid"
+                : "Gagal Terhubung ke WhatsApp Gateway",
+          message: msg,
+        });
       }
+    } catch (err) {
+      setPanelAlert({
+        type: "error",
+        title: "Koneksi ke Server Bermasalah",
+        message: formatBrowserFetchError(
+          err,
+          "Gagal memuat daftar nomor WhatsApp dari server."
+        ),
+      });
     } finally {
       setLoadingList(false);
     }
@@ -168,6 +210,7 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
       return;
     }
     setBusy("register");
+    setPanelAlert(null);
     try {
       const res = await fetch("/api/whatsapp/sessions", {
         method: "POST",
@@ -182,17 +225,38 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.key_id && data.secret) {
         onCredentialsProvisioned(data.key_id, data.secret);
+        setPanelAlert(null);
         onNotify({
           type: "success",
           message: `Akun otomatis terdaftar (${data.nama_akun})${data.templates_synced ? " & 5 template tersinkron" : ""}. Sekarang Anda dapat langsung menautkan nomor WhatsApp!`,
         });
         await loadSessions();
       } else {
+        const msg = data?.error || "Gagal mendaftarkan akun/instansi otomatis.";
+        setPanelAlert({
+          type: res.status === 403 ? "warning" : "error",
+          title:
+            res.status === 403
+              ? "Pendaftaran Dibatasi oleh Domain / CORS Gateway"
+              : "Gagal Membuat Akun / Instansi Otomatis",
+          message: msg,
+        });
         onNotify({
           type: "error",
-          message: data?.error || "Gagal mendaftarkan akun otomatis.",
+          message: msg,
         });
       }
+    } catch (err) {
+      const msg = formatBrowserFetchError(
+        err,
+        "Gagal menghubungi server saat mendaftarkan akun otomatis."
+      );
+      setPanelAlert({
+        type: "error",
+        title: "Koneksi Gagal",
+        message: msg,
+      });
+      onNotify({ type: "error", message: msg });
     } finally {
       setBusy(null);
     }
@@ -207,8 +271,10 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
       return;
     }
     setBusy("qr");
+    setPanelAlert(null);
     setPairingCode("");
     setQrDataUrl("");
+    setQrOutcome("idle");
     setQrStatusText("Menyiapkan kode QR dari WhatsApp Gateway...");
     try {
       const res = await fetch("/api/whatsapp/sessions", {
@@ -231,11 +297,32 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
         startPollingSesi(data.sesi_id);
       } else {
         setQrStatusText("");
+        const msg = data?.error || "Gagal memulai penautan QR.";
+        setPanelAlert({
+          type: res.status === 403 ? "warning" : "error",
+          title:
+            res.status === 403
+              ? "Akses Dibatasi oleh WhatsApp Gateway"
+              : "Gagal Membuat QR Tautan",
+          message: msg,
+        });
         onNotify({
           type: "error",
-          message: data?.error || "Gagal memulai penautan QR.",
+          message: msg,
         });
       }
+    } catch (err) {
+      setQrStatusText("");
+      const msg = formatBrowserFetchError(
+        err,
+        "Gagal menghubungi server saat membuat QR tautan."
+      );
+      setPanelAlert({
+        type: "error",
+        title: "Koneksi Gagal",
+        message: msg,
+      });
+      onNotify({ type: "error", message: msg });
     } finally {
       setBusy(null);
     }
@@ -250,8 +337,10 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
       return;
     }
     setBusy("pairing");
+    setPanelAlert(null);
     setQrDataUrl("");
     setPairingCode("");
+    setQrOutcome("idle");
     try {
       const res = await fetch("/api/whatsapp/sessions", {
         method: "POST",
@@ -277,11 +366,31 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
         );
         startPollingSesi(data.sesi_id);
       } else {
+        const msg = data?.error || "Gagal meminta kode pairing.";
+        setPanelAlert({
+          type: res.status === 403 ? "warning" : "error",
+          title:
+            res.status === 403
+              ? "Akses Dibatasi oleh WhatsApp Gateway"
+              : "Gagal Meminta Kode Pairing",
+          message: msg,
+        });
         onNotify({
           type: "error",
-          message: data?.error || "Gagal meminta kode pairing.",
+          message: msg,
         });
       }
+    } catch (err) {
+      const msg = formatBrowserFetchError(
+        err,
+        "Gagal menghubungi server saat meminta kode pairing."
+      );
+      setPanelAlert({
+        type: "error",
+        title: "Koneksi Gagal",
+        message: msg,
+      });
+      onNotify({ type: "error", message: msg });
     } finally {
       setBusy(null);
     }
@@ -365,6 +474,38 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
           )}
         </div>
       </div>
+
+      {/* Peringatan / Galat Kontekstual */}
+      {panelAlert && (
+        <div
+          role="alert"
+          className={`flex items-start justify-between gap-3 rounded-lg border px-3.5 py-2.5 text-xs ${
+            panelAlert.type === "warning"
+              ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
+              : "border-red-500/40 bg-red-500/10 text-red-200"
+          }`}
+        >
+          <div className="flex items-start gap-2.5">
+            {panelAlert.type === "warning" ? (
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            ) : (
+              <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+            )}
+            <div className="space-y-0.5">
+              <div className="font-semibold">{panelAlert.title}</div>
+              <p className="leading-relaxed opacity-90">{panelAlert.message}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPanelAlert(null)}
+            aria-label="Tutup peringatan"
+            className="rounded p-0.5 opacity-70 hover:opacity-100"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Daftar Nomor Tertaut */}
       {isConfigured && (

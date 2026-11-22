@@ -4,7 +4,7 @@ import { getConfig } from "../../../lib/db";
 import {
   WEDDING_WA_TEMPLATES,
   WaGatewayClient,
-  WaGatewayError,
+  formatWaGatewayError,
   getWaCredentials,
 } from "../../../lib/whatsapp";
 
@@ -21,6 +21,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   }
 
+  let targetBaseUrl = "";
   try {
     const body = (await request.json().catch(() => ({}))) as {
       baseUrl?: string;
@@ -28,6 +29,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       secret?: string;
     };
     const stored = getConfig();
+    targetBaseUrl = (body.baseUrl || stored.WA_BASE_URL || "").trim();
     const creds = getWaCredentials(stored, {
       baseUrl: body.baseUrl,
       keyId: body.keyId,
@@ -55,19 +57,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       headers: JSON_HEADERS,
     });
   } catch (err) {
-    if (err instanceof WaGatewayError) {
-      const detail =
-        err.item.length > 0
-          ? ` (${err.item.map((i) => `${i.kode}: ${i.pesan}`).join("; ")})`
-          : "";
-      return new Response(
-        JSON.stringify({ error: `${err.pesan}${detail}` }),
-        { status: 400, headers: JSON_HEADERS }
-      );
-    }
-    return new Response(
-      JSON.stringify({ error: "Gagal menyinkronkan template ke Gateway." }),
-      { status: 500, headers: JSON_HEADERS }
-    );
+    const formatted = formatWaGatewayError(err, {
+      baseUrl: targetBaseUrl || getConfig().WA_BASE_URL,
+      context: "sync",
+    });
+    return new Response(JSON.stringify({ error: formatted.message }), {
+      status: formatted.status >= 500 ? formatted.status : 400,
+      headers: JSON_HEADERS,
+    });
   }
 };

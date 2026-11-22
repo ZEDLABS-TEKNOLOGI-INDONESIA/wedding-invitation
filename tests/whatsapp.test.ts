@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   WEDDING_WA_TEMPLATES,
+  WaGatewayError,
+  formatWaGatewayError,
   isEligibleForH1Reminder,
   isWithinH1ReminderWindow,
   normalizeWaPhone,
@@ -163,4 +165,37 @@ test("isWithinH1ReminderWindow aktif hanya antara 36 jam sampai 2 jam sebelum ac
     isWithinH1ReminderWindow(eventIso, new Date("2026-12-21T08:00:00+07:00")),
     false
   );
+});
+
+test("formatWaGatewayError menerjemahkan fetch failed, CORS/domain 403, dan gagal buat instansi 500", () => {
+  const fetchErr = Object.assign(new TypeError("fetch failed"), {
+    cause: { code: "ECONNREFUSED" },
+  });
+  const resRefused = formatWaGatewayError(fetchErr, {
+    baseUrl: "https://whatsapp.zedlabs.id",
+    context: "session",
+  });
+  assert.equal(resRefused.status, 502);
+  assert.match(resRefused.message, /ECONNREFUSED/);
+  assert.match(resRefused.message, /whatsapp\.zedlabs\.id/);
+
+  const corsErr = new WaGatewayError(
+    403,
+    "domain atau alamat asal tidak diizinkan untuk pendaftaran akun mandiri"
+  );
+  const resCors = formatWaGatewayError(corsErr, {
+    baseUrl: "https://whatsapp.zedlabs.id",
+    context: "register",
+  });
+  assert.equal(resCors.status, 403);
+  assert.match(resCors.message, /Pembatasan domain\/CORS/);
+  assert.match(resCors.message, /Domain Integrasi/);
+
+  const reg500 = new WaGatewayError(500, "gagal membuat instansi");
+  const resReg = formatWaGatewayError(reg500, {
+    baseUrl: "https://whatsapp.zedlabs.id",
+    context: "register",
+  });
+  assert.equal(resReg.status, 500);
+  assert.match(resReg.message, /Gagal membuat akun\/instansi otomatis/);
 });

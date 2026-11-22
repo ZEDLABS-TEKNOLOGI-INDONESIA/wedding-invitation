@@ -3,7 +3,7 @@ import { isAdminAuthenticated } from "../../../lib/auth";
 import { getConfig } from "../../../lib/db";
 import {
   WaGatewayClient,
-  WaGatewayError,
+  formatWaGatewayError,
   getWaCredentials,
 } from "../../../lib/whatsapp";
 
@@ -20,6 +20,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   }
 
+  let targetBaseUrl = "";
   try {
     const body = (await request.json().catch(() => ({}))) as {
       baseUrl?: string;
@@ -27,6 +28,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       secret?: string;
     };
     const stored = getConfig();
+    targetBaseUrl = (body.baseUrl || stored.WA_BASE_URL || "").trim();
     const creds = getWaCredentials(stored, {
       baseUrl: body.baseUrl,
       keyId: body.keyId,
@@ -51,14 +53,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       headers: JSON_HEADERS,
     });
   } catch (err) {
-    const msg =
-      err instanceof WaGatewayError
-        ? `${err.pesan} (HTTP ${err.status})`
-        : err instanceof Error
-          ? err.message
-          : "Gagal terhubung ke WhatsApp Gateway.";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 400,
+    const formatted = formatWaGatewayError(err, {
+      baseUrl: targetBaseUrl || getConfig().WA_BASE_URL,
+      context: "ping",
+    });
+    return new Response(JSON.stringify({ error: formatted.message }), {
+      status: formatted.status >= 500 ? formatted.status : 400,
       headers: JSON_HEADERS,
     });
   }

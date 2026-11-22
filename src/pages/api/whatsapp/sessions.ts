@@ -6,6 +6,7 @@ import {
   WEDDING_WA_TEMPLATES,
   WaGatewayClient,
   WaGatewayError,
+  formatWaGatewayError,
   getWaCredentials,
   normalizeWaPhone,
 } from "../../../lib/whatsapp";
@@ -158,14 +159,13 @@ export const GET: APIRoute = async ({ cookies, url }) => {
       { status: 200, headers: JSON_HEADERS }
     );
   } catch (err) {
-    const msg =
-      err instanceof WaGatewayError
-        ? err.pesan
-        : err instanceof Error
-          ? err.message
-          : "Gagal memuat daftar nomor WhatsApp dari Gateway.";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: err instanceof WaGatewayError ? err.status : 502,
+    const config = getConfig();
+    const formatted = formatWaGatewayError(err, {
+      baseUrl: config.WA_BASE_URL,
+      context: "session",
+    });
+    return new Response(JSON.stringify({ error: formatted.message }), {
+      status: formatted.status,
       headers: JSON_HEADERS,
     });
   }
@@ -179,6 +179,8 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     });
   }
 
+  let activeAction = "";
+  let activeBaseUrl = "";
   try {
     const domainAsal = resolveDomainAsal(request, url);
     const body = (await request.json().catch(() => ({}))) as {
@@ -193,6 +195,8 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
 
     const config = getConfig();
     const action = body.action || "";
+    activeAction = action;
+    activeBaseUrl = resolveBaseUrl(config, body.baseUrl);
 
     if (action === "auto_register") {
       const baseUrl = resolveBaseUrl(config, body.baseUrl);
@@ -356,14 +360,12 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       headers: JSON_HEADERS,
     });
   } catch (err) {
-    const msg =
-      err instanceof WaGatewayError
-        ? err.pesan
-        : err instanceof Error
-          ? err.message
-          : "Terjadi kesalahan saat menghubungi WhatsApp Gateway.";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: err instanceof WaGatewayError ? err.status : 502,
+    const formatted = formatWaGatewayError(err, {
+      baseUrl: activeBaseUrl || getConfig().WA_BASE_URL,
+      context: activeAction === "auto_register" ? "register" : "session",
+    });
+    return new Response(JSON.stringify({ error: formatted.message }), {
+      status: formatted.status,
       headers: JSON_HEADERS,
     });
   }
