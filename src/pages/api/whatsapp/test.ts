@@ -8,6 +8,7 @@ import {
   getWaCredentials,
   normalizeWaPhone,
   parseAdminWaNumbers,
+  resolveOriginDomain,
 } from "../../../lib/whatsapp";
 
 const JSON_HEADERS = {
@@ -15,7 +16,7 @@ const JSON_HEADERS = {
   "Cache-Control": "no-store",
 };
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, url }) => {
   if (!isAdminAuthenticated(cookies)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
@@ -65,7 +66,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    const client = new WaGatewayClient(creds, { timeoutMs: 15_000, maxRetries: 1 });
+    const client = new WaGatewayClient(creds, {
+      timeoutMs: 15_000,
+      maxRetries: 1,
+      originDomain: resolveOriginDomain(request, url),
+    });
     const job = await client.sendMessage({
       templateCode: WA_TEMPLATE_CODES.ADMIN_RSVP,
       recipient: target,

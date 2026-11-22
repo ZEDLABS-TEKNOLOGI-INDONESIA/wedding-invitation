@@ -9,6 +9,7 @@ import {
   formatWaGatewayError,
   getWaCredentials,
   normalizeWaPhone,
+  resolveOriginDomain,
 } from "../../../lib/whatsapp";
 
 const JSON_HEADERS = {
@@ -96,7 +97,11 @@ async function ensureCredentialsOrAutoRegister(
 
   // Langsung sinkronkan 5 template undangan pernikahan agar akun siap pakai
   try {
-    const client = new WaGatewayClient(creds, { timeoutMs: 15_000, maxRetries: 1 });
+    const client = new WaGatewayClient(creds, {
+      timeoutMs: 15_000,
+      maxRetries: 1,
+      originDomain: overrides?.domainAsal,
+    });
     await client.syncTemplates(WEDDING_WA_TEMPLATES);
   } catch {
     // Non-fatal: admin tetap bisa klik Sinkron Template nanti
@@ -105,7 +110,7 @@ async function ensureCredentialsOrAutoRegister(
   return { creds, autoRegistered: true };
 }
 
-export const GET: APIRoute = async ({ cookies, url }) => {
+export const GET: APIRoute = async ({ request, cookies, url }) => {
   if (!isAdminAuthenticated(cookies)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
@@ -114,6 +119,7 @@ export const GET: APIRoute = async ({ cookies, url }) => {
   }
 
   try {
+    const originDomain = resolveOriginDomain(request, url);
     const config = getConfig();
     const creds = getWaCredentials(config);
     if (!creds) {
@@ -127,7 +133,11 @@ export const GET: APIRoute = async ({ cookies, url }) => {
       );
     }
 
-    const client = new WaGatewayClient(creds, { timeoutMs: 15_000, maxRetries: 0 });
+    const client = new WaGatewayClient(creds, {
+      timeoutMs: 15_000,
+      maxRetries: 0,
+      originDomain,
+    });
     const sesiId = (url.searchParams.get("sesi_id") || "").trim();
 
     if (sesiId) {
@@ -264,6 +274,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       const client = new WaGatewayClient(creds, {
         timeoutMs: 20_000,
         maxRetries: 0,
+        originDomain: domainAsal,
       });
       const label =
         (body.nama || "").trim().slice(0, 60) || "Nomor Undangan Utama";
@@ -303,6 +314,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       const client = new WaGatewayClient(creds, {
         timeoutMs: 20_000,
         maxRetries: 0,
+        originDomain: domainAsal,
       });
       const label =
         (body.nama || "").trim().slice(0, 60) || "Nomor Undangan Utama";
@@ -343,6 +355,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       const client = new WaGatewayClient(creds, {
         timeoutMs: 15_000,
         maxRetries: 0,
+        originDomain: domainAsal,
       });
       if (action === "logout") {
         await client.logoutSession(sesiId);

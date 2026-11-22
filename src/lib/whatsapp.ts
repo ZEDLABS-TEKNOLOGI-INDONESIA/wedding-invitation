@@ -153,6 +153,7 @@ export function formatWaGatewayError(
         lower.includes("asal") ||
         lower.includes("belum dibuka") ||
         lower.includes("tidak diizinkan") ||
+        lower.includes("dinonaktifkan") ||
         lower.includes("cors") ||
         lower.includes("origin")
       ) {
@@ -422,6 +423,39 @@ export const signRequestV2 = (
   return createHmac("sha256", secret).update(canonical).digest("hex");
 };
 
+export function resolveOriginDomain(request?: Request, url?: URL): string {
+  const fromHeaders = request
+    ? (request.headers.get("x-forwarded-host") || "")
+        .split(",")[0]
+        .trim() ||
+      (request.headers.get("host") || "").trim()
+    : "";
+  const raw = (
+    fromHeaders ||
+    url?.hostname ||
+    process.env.SITE_URL ||
+    process.env.PUBLIC_SITE_URL ||
+    process.env.HOST ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
+  if (!raw) return "";
+  try {
+    if (raw.includes("://")) {
+      return new URL(raw).hostname.toLowerCase();
+    }
+  } catch {
+    // lanjutkan strip port manual
+  }
+  if (raw.startsWith("[")) {
+    const end = raw.indexOf("]");
+    return end > 0 ? raw.slice(1, end) : raw;
+  }
+  const idx = raw.indexOf(":");
+  return idx >= 0 ? raw.slice(0, idx) : raw;
+}
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class WaGatewayClient {
@@ -430,16 +464,18 @@ export class WaGatewayClient {
   private readonly secret: string;
   private readonly timeoutMs: number;
   private readonly maxRetries: number;
+  private readonly originDomain: string;
 
   constructor(
     creds: WaGatewayCredentials,
-    options?: { timeoutMs?: number; maxRetries?: number }
+    options?: { timeoutMs?: number; maxRetries?: number; originDomain?: string }
   ) {
     this.baseUrl = creds.baseUrl.replace(/\/+$/, "");
     this.keyId = creds.keyId.trim();
     this.secret = creds.secret.trim();
     this.timeoutMs = options?.timeoutMs ?? 20_000;
     this.maxRetries = options?.maxRetries ?? 2;
+    this.originDomain = (options?.originDomain ?? resolveOriginDomain()).trim();
   }
 
   async request<T = unknown>(
@@ -473,6 +509,7 @@ export class WaGatewayClient {
             "Content-Type": "application/json",
             Accept: "application/json",
             "User-Agent": "wedding-invitation/1.0.0",
+            ...(this.originDomain ? { "X-Origin-Domain": this.originDomain } : {}),
             "X-API-Key": this.keyId,
             "X-Signature-Version": "2",
             "X-Timestamp": ts,
@@ -618,7 +655,12 @@ export class WaGatewayClient {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(params.domainAsal ? { "X-Forwarded-Host": params.domainAsal } : {}),
+          ...(params.domainAsal
+            ? {
+                "X-Origin-Domain": params.domainAsal,
+                "X-Forwarded-Host": params.domainAsal,
+              }
+            : {}),
         },
         body: JSON.stringify({
           nama_aplikasi: params.namaAplikasi || "Wedding Invitation",

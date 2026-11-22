@@ -9,6 +9,7 @@ import {
   buildEventSummary,
   getWaCredentials,
   normalizeWaPhone,
+  resolveOriginDomain,
   sanitizeWaVariable,
   type WaMedia,
 } from "../../../lib/whatsapp";
@@ -128,7 +129,7 @@ export const GET: APIRoute = async ({ cookies }) => {
   }
 };
 
-export const POST: APIRoute = async ({ request, cookies, site }) => {
+export const POST: APIRoute = async ({ request, cookies, site, url }) => {
   if (!isAdminAuthenticated(cookies)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
@@ -173,7 +174,11 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
     ).replace(/\/+$/, "");
 
     const summary = buildEventSummary(config);
-    const client = new WaGatewayClient(creds, { timeoutMs: 30_000, maxRetries: 1 });
+    const client = new WaGatewayClient(creds, {
+      timeoutMs: 30_000,
+      maxRetries: 1,
+      originDomain: resolveOriginDomain(request, url),
+    });
     const insertStmt = db.prepare(`
       INSERT INTO wa_invitations
         (guest_name, phone, address, invitation_url, job_id, reference_id, status, error_message, created_at, updated_at)

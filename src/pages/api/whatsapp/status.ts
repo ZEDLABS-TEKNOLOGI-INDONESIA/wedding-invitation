@@ -1,14 +1,18 @@
 import type { APIRoute } from "astro";
 import { isAdminAuthenticated } from "../../../lib/auth";
 import db, { getConfig } from "../../../lib/db";
-import { WaGatewayClient, getWaCredentials } from "../../../lib/whatsapp";
+import {
+  WaGatewayClient,
+  getWaCredentials,
+  resolveOriginDomain,
+} from "../../../lib/whatsapp";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json",
   "Cache-Control": "no-store",
 };
 
-export const POST: APIRoute = async ({ cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, url }) => {
   if (!isAdminAuthenticated(cookies)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
@@ -34,7 +38,11 @@ export const POST: APIRoute = async ({ cookies }) => {
       )
       .all() as Array<{ id: number; job_id: string }>;
 
-    const client = new WaGatewayClient(creds, { timeoutMs: 10_000, maxRetries: 0 });
+    const client = new WaGatewayClient(creds, {
+      timeoutMs: 10_000,
+      maxRetries: 0,
+      originDomain: resolveOriginDomain(request, url),
+    });
     const updateStmt = db.prepare(
       "UPDATE wa_invitations SET status = ?, error_message = ?, updated_at = ? WHERE id = ?"
     );
