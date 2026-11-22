@@ -431,7 +431,7 @@ const demoExists = db.prepare("SELECT id FROM weddings WHERE id = 1").get() as
 
 if (!demoExists) {
   db.prepare(
-    "INSERT INTO weddings (id, slug, title, status, is_demo) VALUES (1, 'demo', 'Undangan Demo (Fey & Yaya)', 'active', 1)"
+    "INSERT INTO weddings (id, slug, title, status, is_demo) VALUES (1, 'demo', 'Undangan Demo', 'active', 1)"
   ).run();
 }
 
