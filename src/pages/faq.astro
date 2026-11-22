@@ -1,0 +1,50 @@
+---
+import PublicLayout from "../layouts/PublicLayout.astro";
+
+const faqs = [
+  {
+    q: "Apakah benar-benar gratis untuk membuat undangan?",
+    a: "Ya. Setiap pasangan mendapat kuota gratis hingga 200 kontak/tamu beserta seluruh fitur undangan digital, 6 modul manajemen pernikahan, 2 akun (suami & istri), QR Check-In, dan desain PDF 4 halaman.",
+  },
+  {
+    q: "Bagaimana hitungan biaya jika tamu melebihi 200 kontak?",
+    a: "Jika total kontak/tamu yang Anda tambah atau impor melebihi 200, biaya penambahan kuota adalah Rp200 per tamu dengan minimum pembayaran Rp50.000 (langsung mendapat minimal +250 kuota, sehingga total menjadi 450 tamu). Misalnya untuk 1.000 tamu (tambahan 800 tamu), biayanya 800 × Rp200 = Rp160.000.",
+  },
+  {
+    q: "Apakah data undangan saya bisa terlihat oleh pasangan lain?",
+    a: "Tidak. Setiap pasangan memiliki alamat unik (/u/nama-pasangan) dan seluruh data tamu, RSVP, ucapan, anggaran, tabungan, hingga sesi WhatsApp terisolasi per pasangan di database.",
+  },
+  {
+    q: "Bagaimana cara menambahkan akun untuk pasangan saya?",
+    a: "Setelah login ke /admin, buka menu Konfigurasi → Akun & Pasangan. Anda dapat mendaftarkan 1 akun pendamping dengan username, password, dan nomor WhatsApp masing-masing.",
+  },
+  {
+    q: "Bagaimana jika saya atau pasangan lupa password?",
+    a: "Klik 'Lupa password?' di halaman /masuk, masukkan username atau nomor WhatsApp terdaftar, lalu verifikasi kode OTP 6 digit yang dikirim ke WhatsApp untuk membuat password baru.",
+  },
+];
+---
+
+<PublicLayout title="FAQ — Wedding Platform">
+  <div class="mx-auto max-w-3xl space-y-6 px-6 py-12">
+    <div>
+      <h1 class="text-2xl font-semibold text-(--adm-text-primary)">
+        Pertanyaan yang Sering Diajukan (FAQ)
+      </h1>
+      <p class="mt-1.5 text-sm text-(--adm-text-secondary)">
+        Jawaban cepat seputar pendaftaran, isolasi akun pasangan, dan perhitungan kuota tamu.
+      </p>
+    </div>
+
+    <div class="space-y-3">
+      {faqs.map((item) => (
+        <div class="adm-card space-y-1.5 p-5">
+          <h2 class="text-sm font-semibold text-(--adm-text-primary)">{item.q}</h2>
+          <p class="text-[13px] leading-relaxed text-(--adm-text-secondary)">
+            {item.a}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</PublicLayout>

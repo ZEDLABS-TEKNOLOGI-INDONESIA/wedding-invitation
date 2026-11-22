@@ -1,6 +1,6 @@
 ---
-import { ArrowLeft, Heart, ShieldCheck } from "lucide-react";
-import Layout from "../layouts/Layout.astro";
+import { ShieldCheck } from "lucide-react";
+import AuthLayout from "../layouts/AuthLayout.astro";
 import { getAuthSession } from "../lib/auth";
 
 Astro.response.headers.set("Cache-Control", "no-store");
@@ -11,228 +11,196 @@ if (session) {
 }
 ---
 
-<Layout title="Daftar Akun Undangan — Wedding SaaS" noindex={true}>
-  <div class="flex min-h-dvh flex-col items-center justify-center bg-slate-950 px-4 py-10 text-slate-100">
-    <div class="w-full max-w-lg space-y-6">
-      <div class="text-center">
-        <a
-          href="/"
-          class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30"
-        >
-          <Heart className="h-5 w-5" />
-        </a>
-        <h1 class="mt-4 font-serif text-2xl font-semibold text-white">
-          Daftar Akun Undangan Baru
-        </h1>
-        <p class="mt-1 text-xs text-slate-400">
-          Verifikasi via OTP WhatsApp. Setelah terdaftar, Anda dapat langsung
-          menambahkan 1 akun pasangan Anda di dalam dashboard.
-        </p>
-      </div>
-
-      {/* Step 1: Data Pendaftaran */}
-      <form
-        id="register-step1"
-        class="space-y-4 rounded-2xl border border-white/10 bg-slate-900/90 p-6 shadow-xl"
-      >
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div class="space-y-1">
-            <label for="brideNickname" class="block text-xs font-medium text-slate-300">
-              Panggilan Mempelai Wanita *
-            </label>
-            <input
-              id="brideNickname"
-              name="brideNickname"
-              type="text"
-              required
-              placeholder="Contoh: Danik"
-              class="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none"
-            />
-          </div>
-          <div class="space-y-1">
-            <label for="groomNickname" class="block text-xs font-medium text-slate-300">
-              Panggilan Mempelai Pria *
-            </label>
-            <input
-              id="groomNickname"
-              name="groomNickname"
-              type="text"
-              required
-              placeholder="Contoh: Ikbal"
-              class="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div class="space-y-1">
-          <label for="slug" class="block text-xs font-medium text-slate-300">
-            Alamat URL Undangan (Unik) *
-          </label>
-          <div class="flex items-center overflow-hidden rounded-xl border border-white/10 bg-slate-950 focus-within:border-sky-400">
-            <span class="border-r border-white/10 bg-slate-900 px-3 py-2 text-xs text-slate-400">
-              /u/
-            </span>
-            <input
-              id="slug"
-              name="slug"
-              type="text"
-              required
-              placeholder="danik-ikbal"
-              class="w-full bg-transparent px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none"
-            />
-          </div>
-          <p class="text-[11px] text-slate-400">
-            Hanya huruf kecil, angka, dan tanda hubung. Tidak akan bercampur dengan pasangan lain.
-          </p>
-        </div>
-
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div class="space-y-1">
-            <label for="fullName" class="block text-xs font-medium text-slate-300">
-              Nama Lengkap Anda *
-            </label>
-            <input
-              id="fullName"
-              name="fullName"
-              type="text"
-              required
-              placeholder="Nama Anda"
-              class="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none"
-            />
-          </div>
-          <div class="space-y-1">
-            <label for="phone" class="block text-xs font-medium text-slate-300">
-              Nomor WhatsApp (untuk OTP) *
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              required
-              placeholder="081234567890"
-              class="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div class="space-y-1">
-            <label for="username" class="block text-xs font-medium text-slate-300">
-              Username Login *
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              required
-              autocomplete="username"
-              placeholder="contoh: danik_ikbal"
-              class="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none"
-            />
-          </div>
-          <div class="space-y-1">
-            <label for="password" class="block text-xs font-medium text-slate-300">
-              Password (min. 6 karakter) *
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minlength="6"
-              autocomplete="new-password"
-              placeholder="••••••••"
-              class="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div
-          id="reg-error"
-          class="hidden rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-200"
-        >
-        </div>
-
-        <button
-          id="btn-send-otp"
-          type="submit"
-          class="w-full rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:opacity-50"
-        >
-          Kirim Kode OTP ke WhatsApp
-        </button>
-
-        <div class="border-t border-white/10 pt-4 text-center text-xs text-slate-400">
-          Sudah punya akun?{" "}
-          <a href="/masuk" class="font-semibold text-sky-400 hover:text-sky-300">
-            Masuk di sini
-          </a>
-        </div>
-      </form>
-
-      {/* Step 2: Verifikasi OTP */}
-      <form
-        id="register-step2"
-        class="hidden space-y-4 rounded-2xl border border-white/10 bg-slate-900/90 p-6 shadow-xl"
-      >
-        <div class="flex items-start gap-3 rounded-xl border border-sky-400/25 bg-sky-500/10 p-3.5 text-xs text-sky-100">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" />
-          <div id="otp-info-text">
-            Kode OTP 6 digit telah dikirim ke WhatsApp Anda. Berlaku selama 10 menit.
-          </div>
-        </div>
-
-        <div class="space-y-1.5">
-          <label for="otp-code" class="block text-xs font-medium text-slate-300">
-            Masukkan 6 Digit Kode OTP *
+<AuthLayout
+  title="Daftar Akun Undangan"
+  description="Gratis hingga 200 tamu. Verifikasi via OTP WhatsApp, lalu Anda dapat langsung menambahkan 1 akun pasangan Anda di dalam panel."
+  wide
+>
+  {/* Step 1: Data Pendaftaran */}
+  <form id="register-step1" class="space-y-5">
+    <div class="space-y-3">
+      <h2 class="text-xs font-semibold tracking-wide text-(--adm-text-secondary) uppercase">
+        1. Data Undangan Pasangan
+      </h2>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label for="brideNickname" class="adm-label">
+            Panggilan Mempelai Wanita *
           </label>
           <input
-            id="otp-code"
-            name="code"
+            id="brideNickname"
+            name="brideNickname"
             type="text"
-            inputmode="numeric"
-            maxlength="6"
             required
-            placeholder="123456"
-            class="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-3 text-center font-mono text-2xl tracking-[0.4em] text-white placeholder-slate-600 focus:border-sky-400 focus:outline-none"
+            placeholder="Contoh: Fera"
+            class="adm-input"
           />
         </div>
-
-        <div
-          id="verify-error"
-          class="hidden rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-200"
-        >
+        <div>
+          <label for="groomNickname" class="adm-label">
+            Panggilan Mempelai Pria *
+          </label>
+          <input
+            id="groomNickname"
+            name="groomNickname"
+            type="text"
+            required
+            placeholder="Contoh: Yahya"
+            class="adm-input"
+          />
         </div>
+      </div>
 
-        <div class="flex gap-2">
-          <button
-            id="btn-back-step1"
-            type="button"
-            class="rounded-xl border border-white/15 px-4 py-2.5 text-xs font-medium text-slate-300 hover:bg-white/5"
-          >
-            Ubah Data
-          </button>
-          <button
-            id="btn-verify-otp"
-            type="submit"
-            class="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400 disabled:opacity-50"
-          >
-            Verifikasi &amp; Buat Undangan
-          </button>
+      <div>
+        <label for="slug" class="adm-label">Alamat URL Undangan Unik *</label>
+        <div class="flex items-center overflow-hidden rounded-md border border-(--adm-border) bg-(--adm-bg-primary) focus-within:border-(--adm-accent)">
+          <span class="border-r border-(--adm-border) bg-(--adm-bg-tertiary) px-3 py-2 text-xs text-(--adm-text-secondary)">
+            /u/
+          </span>
+          <input
+            id="slug"
+            name="slug"
+            type="text"
+            required
+            placeholder="fera-yahya"
+            class="w-full bg-transparent px-3 py-2 text-sm text-(--adm-text-primary) focus:outline-none"
+          />
         </div>
-      </form>
-
-      <div class="text-center">
-        <a
-          href="/"
-          class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Kembali ke Beranda
-        </a>
+        <p class="adm-hint mt-1">
+          Hanya huruf kecil, angka, dan tanda hubung. Terpisah penuh dari undangan pasangan lain.
+        </p>
       </div>
     </div>
-  </div>
-</Layout>
+
+    <div class="space-y-3 border-t border-(--adm-border) pt-4">
+      <h2 class="text-xs font-semibold tracking-wide text-(--adm-text-secondary) uppercase">
+        2. Akun Pemilik Utama (Anda)
+      </h2>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label for="fullName" class="adm-label">Nama Lengkap *</label>
+          <input
+            id="fullName"
+            name="fullName"
+            type="text"
+            required
+            placeholder="Nama lengkap Anda"
+            class="adm-input"
+          />
+        </div>
+        <div>
+          <label for="phone" class="adm-label">
+            Nomor WhatsApp (untuk OTP) *
+          </label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            inputmode="tel"
+            required
+            placeholder="081234567890"
+            class="adm-input"
+          />
+        </div>
+        <div>
+          <label for="username" class="adm-label">Username Login *</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            required
+            autocomplete="username"
+            placeholder="contoh: fera_oktapia"
+            class="adm-input"
+          />
+        </div>
+        <div>
+          <label for="password" class="adm-label">
+            Password (min. 6 karakter) *
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            minlength="6"
+            autocomplete="new-password"
+            placeholder="••••••••"
+            class="adm-input"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="reg-error"
+      class="hidden rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-400"
+    >
+    </div>
+
+    <button id="btn-send-otp" type="submit" class="adm-btn adm-btn-primary w-full">
+      Kirim Kode OTP ke WhatsApp
+    </button>
+
+    <p class="text-center text-xs text-(--adm-text-secondary)">
+      Sudah punya akun?{" "}
+      <a href="/masuk" class="font-medium text-(--adm-accent) hover:underline">
+        Masuk di sini
+      </a>
+    </p>
+
+    <p class="text-center text-[11px] text-(--adm-text-secondary)">
+      Dengan mendaftar, Anda menyetujui{" "}
+      <a href="/syarat-ketentuan" class="text-(--adm-accent) hover:underline">
+        Syarat dan Ketentuan
+      </a>{" "}
+      dan{" "}
+      <a href="/kebijakan-privasi" class="text-(--adm-accent) hover:underline">
+        Kebijakan Privasi
+      </a>
+      .
+    </p>
+  </form>
+
+  {/* Step 2: Verifikasi OTP */}
+  <form id="register-step2" class="hidden space-y-4">
+    <div class="flex items-start gap-2.5 rounded-lg border border-(--adm-accent)/30 bg-(--adm-accent-soft) p-3.5 text-xs text-(--adm-text-primary)">
+      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-(--adm-accent)" />
+      <div id="otp-info-text">
+        Kode OTP 6 digit telah dikirim ke WhatsApp Anda. Berlaku selama 10 menit.
+      </div>
+    </div>
+
+    <div>
+      <label for="otp-code" class="adm-label">Masukkan 6 Digit Kode OTP *</label>
+      <input
+        id="otp-code"
+        name="code"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        required
+        placeholder="123456"
+        class="adm-input text-center font-mono text-2xl tracking-[0.4em]"
+      />
+    </div>
+
+    <div
+      id="verify-error"
+      class="hidden rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-400"
+    >
+    </div>
+
+    <div class="flex gap-2">
+      <button id="btn-back-step1" type="button" class="adm-btn adm-btn-secondary">
+        Ubah Data
+      </button>
+      <button id="btn-verify-otp" type="submit" class="adm-btn adm-btn-primary flex-1">
+        Verifikasi &amp; Buat Undangan
+      </button>
+    </div>
+  </form>
+</AuthLayout>
 
 <script>
   const step1 = document.getElementById("register-step1") as HTMLFormElement | null;

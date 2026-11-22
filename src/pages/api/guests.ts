@@ -1,7 +1,12 @@
 import crypto from "node:crypto";
 import type { APIRoute } from "astro";
 import { getAuthSession } from "../../lib/auth";
-import db from "../../lib/db";
+import {
+  FREE_GUEST_QUOTA,
+  calculateGuestQuotaPrice,
+  formatIdr,
+} from "../../lib/billing";
+import db, { getWeddingById } from "../../lib/db";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json",
@@ -83,6 +88,45 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(
         JSON.stringify({ error: "Jumlah data tamu harus antara 1 sampai 500." }),
         { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    const validIncoming = items.filter(
+      (raw) => typeof raw?.name === "string" && raw.name.trim().length > 0
+    );
+    if (validIncoming.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Minimal satu nama tamu yang valid wajib diisi." }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    // Periksa batas kuota tamu (gratis 200 tamu, di atas itu wajib upgrade kuota)
+    const wedding = getWeddingById(session.weddingId);
+    const quotaLimit = Math.max(
+      FREE_GUEST_QUOTA,
+      Number(wedding?.guest_quota_limit || FREE_GUEST_QUOTA)
+    );
+    const usedGuests = (
+      db
+        .prepare("SELECT COUNT(*) as c FROM guests WHERE wedding_id = ?")
+        .get(session.weddingId) as { c: number }
+    ).c;
+    const projectedTotal = usedGuests + validIncoming.length;
+
+    if (projectedTotal > quotaLimit) {
+      const quote = calculateGuestQuotaPrice(projectedTotal, quotaLimit);
+      return new Response(
+        JSON.stringify({
+          code: "QUOTA_EXCEEDED",
+          error: `Batas kuota tamu (${quotaLimit} tamu) terlampaui. Anda sudah memiliki ${usedGuests} tamu dan mencoba menambah ${validIncoming.length} tamu (total ${projectedTotal}). Upgrade kuota di menu Kuota & Tagihan mulai ${formatIdr(quote.amount)} (+${quote.grantedAddedGuests} tamu, Rp200/tamu, min. Rp50.000).`,
+          quotaLimit,
+          usedGuests,
+          incomingCount: validIncoming.length,
+          projectedTotal,
+          quote,
+        }),
+        { status: 402, headers: JSON_HEADERS }
       );
     }
 

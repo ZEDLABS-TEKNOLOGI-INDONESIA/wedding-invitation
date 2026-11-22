@@ -1,0 +1,43 @@
+---
+import PublicLayout from "../layouts/PublicLayout.astro";
+---
+
+<PublicLayout title="Panduan Layanan Mandiri — Wedding Platform">
+  <div class="mx-auto max-w-3xl space-y-5 px-6 py-12">
+    <div>
+      <h1 class="text-2xl font-semibold text-(--adm-text-primary)">
+        Panduan Layanan Mandiri
+      </h1>
+      <p class="mt-1.5 text-sm text-(--adm-text-secondary)">
+        Langkah cepat mendaftar, mengelola pasangan, hingga menambah kuota tamu secara mandiri.
+      </p>
+    </div>
+
+    <ol class="space-y-3">
+      <li class="adm-card p-5 text-[13px]">
+        <strong class="text-(--adm-text-primary)">1. Pendaftaran &amp; Verifikasi OTP</strong>
+        <p class="mt-1 text-(--adm-text-secondary)">
+          Buka <a href="/daftar" class="text-(--adm-accent) underline">/daftar</a>,
+          isi nama mempelai, URL unik <code>/u/slug</code>, username, password,
+          dan nomor WhatsApp aktif. Masukkan 6 digit OTP dari WhatsApp.
+        </p>
+      </li>
+      <li class="adm-card p-5 text-[13px]">
+        <strong class="text-(--adm-text-primary)">2. Daftarkan 1 Akun Pasangan</strong>
+        <p class="mt-1 text-(--adm-text-secondary)">
+          Masuk ke <code>/admin</code> → <strong>Konfigurasi → Akun &amp; Pasangan</strong>,
+          lalu buat username &amp; password untuk pasangan Anda agar dapat
+          berkolaborasi menyusun acara.
+        </p>
+      </li>
+      <li class="adm-card p-5 text-[13px]">
+        <strong class="text-(--adm-text-primary)">3. Impor Tamu &amp; Upgrade Kuota (&gt; 200 Tamu)</strong>
+        <p class="mt-1 text-(--adm-text-secondary)">
+          Impor hingga 200 tamu secara gratis. Bila tamu Anda lebih dari 200,
+          buka menu <strong>Kuota &amp; Tagihan</strong> untuk menghitung biaya
+          (Rp200/tamu, min. Rp50.000), transfer, dan unggah bukti pembayaran.
+        </p>
+      </li>
+    </ol>
+  </div>
+</PublicLayout>

@@ -1,5 +1,6 @@
 import {
   CheckCircle2,
+  CreditCard,
   ExternalLink,
   Heart,
   KeyRound,
@@ -14,6 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
+import { formatIdr } from "../../lib/billing";
 
 interface MemberRow {
   id: number;
@@ -37,14 +39,34 @@ interface WeddingRow {
   members: MemberRow[];
 }
 
+interface BillingOrderAdminRow {
+  id: number;
+  wedding_id: number;
+  wedding_slug: string;
+  wedding_title: string;
+  invoice_code: string;
+  current_quota: number;
+  requested_total_quota: number;
+  added_guests: number;
+  amount: number;
+  status: "pending" | "paid" | "rejected";
+  payment_method: string;
+  payment_note: string;
+  proof_url: string;
+  admin_note: string;
+  created_at: string;
+}
+
 interface SuperadminData {
   stats: {
     totalWeddings: number;
     activeWeddings: number;
     totalUsers: number;
     totalRsvps: number;
+    pendingOrders?: number;
   };
   weddings: WeddingRow[];
+  orders?: BillingOrderAdminRow[];
   platformConfig: Record<string, string>;
   currentAdmin: {
     userId: number;
@@ -57,7 +79,7 @@ interface SuperadminData {
 const SuperadminDashboard: React.FC = () => {
   const [data, setData] = useState<SuperadminData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"weddings" | "platform_wa" | "account">(
+  const [tab, setTab] = useState<"weddings" | "billing" | "platform_wa" | "account">(
     "weddings"
   );
   const [toast, setToast] = useState<{
@@ -66,12 +88,16 @@ const SuperadminDashboard: React.FC = () => {
   } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
-  // Platform WA form
+  // Platform WA & Payment form
   const [waForm, setWaForm] = useState({
-    PLATFORM_NAME: "Wedding SaaS",
+    PLATFORM_NAME: "Wedding Platform",
     WA_BASE_URL: "https://whatsapp.zedlabs.id",
     WA_API_KEY: "",
     WA_API_SECRET: "",
+    PAYMENT_BANK_NAME: "Bank BCA",
+    PAYMENT_BANK_ACCOUNT: "",
+    PAYMENT_BANK_HOLDER: "ZEDLABS Teknologi Indonesia",
+    PAYMENT_WHATSAPP_CONFIRM: "",
   });
 
   // Superadmin account form
@@ -101,11 +127,18 @@ const SuperadminDashboard: React.FC = () => {
       const json = (await res.json()) as SuperadminData;
       setData(json);
       setWaForm({
-        PLATFORM_NAME: json.platformConfig.PLATFORM_NAME || "Wedding SaaS",
+        PLATFORM_NAME: json.platformConfig.PLATFORM_NAME || "Wedding Platform",
         WA_BASE_URL:
           json.platformConfig.WA_BASE_URL || "https://whatsapp.zedlabs.id",
         WA_API_KEY: json.platformConfig.WA_API_KEY || "",
         WA_API_SECRET: json.platformConfig.WA_API_SECRET || "",
+        PAYMENT_BANK_NAME: json.platformConfig.PAYMENT_BANK_NAME || "Bank BCA",
+        PAYMENT_BANK_ACCOUNT: json.platformConfig.PAYMENT_BANK_ACCOUNT || "",
+        PAYMENT_BANK_HOLDER:
+          json.platformConfig.PAYMENT_BANK_HOLDER ||
+          "ZEDLABS Teknologi Indonesia",
+        PAYMENT_WHATSAPP_CONFIRM:
+          json.platformConfig.PAYMENT_WHATSAPP_CONFIRM || "",
       });
       setAccForm((prev) => ({
         ...prev,
@@ -248,6 +281,19 @@ const SuperadminDashboard: React.FC = () => {
           >
             <Users className="h-3.5 w-3.5" />
             Daftar Pasangan &amp; Undangan
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("billing")}
+            className={`adm-btn adm-btn-sm ${tab === "billing" ? "adm-btn-primary" : "adm-btn-secondary"}`}
+          >
+            <CreditCard className="h-3.5 w-3.5" />
+            Tagihan &amp; Pembayaran
+            {Boolean(data?.stats.pendingOrders) && (
+              <span className="ml-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-slate-950">
+                {data?.stats.pendingOrders}
+              </span>
+            )}
           </button>
           <button
             type="button"
@@ -431,6 +477,211 @@ const SuperadminDashboard: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        ) : tab === "billing" && data ? (
+          <div className="space-y-4">
+            <div className="adm-card space-y-4 p-5">
+              <div>
+                <h2 className="text-sm font-semibold">
+                  Rekening &amp; Info Pembayaran Platform
+                </h2>
+                <p className="mt-0.5 text-xs text-(--adm-text-secondary)">
+                  Ditampilkan ke pasangan saat kuota tamu melebihi 200 kontak (Rp200/tamu, min. Rp50.000).
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="adm-label">Bank / Metode Pembayaran</label>
+                  <input
+                    type="text"
+                    value={waForm.PAYMENT_BANK_NAME}
+                    onChange={(e) =>
+                      setWaForm((p) => ({ ...p, PAYMENT_BANK_NAME: e.target.value }))
+                    }
+                    className="adm-input"
+                  />
+                </div>
+                <div>
+                  <label className="adm-label">Nomor Rekening</label>
+                  <input
+                    type="text"
+                    value={waForm.PAYMENT_BANK_ACCOUNT}
+                    onChange={(e) =>
+                      setWaForm((p) => ({
+                        ...p,
+                        PAYMENT_BANK_ACCOUNT: e.target.value,
+                      }))
+                    }
+                    placeholder="Contoh: 1234567890"
+                    className="adm-input font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="adm-label">Atas Nama</label>
+                  <input
+                    type="text"
+                    value={waForm.PAYMENT_BANK_HOLDER}
+                    onChange={(e) =>
+                      setWaForm((p) => ({
+                        ...p,
+                        PAYMENT_BANK_HOLDER: e.target.value,
+                      }))
+                    }
+                    className="adm-input"
+                  />
+                </div>
+                <div>
+                  <label className="adm-label">No. WhatsApp Konfirmasi</label>
+                  <input
+                    type="tel"
+                    value={waForm.PAYMENT_WHATSAPP_CONFIRM}
+                    onChange={(e) =>
+                      setWaForm((p) => ({
+                        ...p,
+                        PAYMENT_WHATSAPP_CONFIRM: e.target.value,
+                      }))
+                    }
+                    placeholder="081234567890"
+                    className="adm-input"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() =>
+                  void callAction(
+                    "save-pay",
+                    { action: "save_platform_wa", ...waForm },
+                    "Informasi pembayaran platform disimpan."
+                  )
+                }
+                className="adm-btn adm-btn-primary adm-btn-sm"
+              >
+                Simpan Info Pembayaran
+              </button>
+            </div>
+
+            <div className="adm-card overflow-hidden">
+              <div className="border-b border-(--adm-border) px-4 py-3">
+                <h2 className="text-sm font-semibold">
+                  Daftar Tagihan Penambahan Kuota Tamu
+                </h2>
+              </div>
+              {!data.orders || data.orders.length === 0 ? (
+                <p className="p-5 text-xs text-(--adm-text-secondary)">
+                  Belum ada tagihan pembayaran dari pasangan.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-(--adm-border) bg-(--adm-bg-primary) text-[11px] text-(--adm-text-secondary) uppercase">
+                      <tr>
+                        <th className="px-4 py-3">Invoice &amp; Pasangan</th>
+                        <th className="px-4 py-3">Kuota</th>
+                        <th className="px-4 py-3">Nominal</th>
+                        <th className="px-4 py-3">Bukti / Catatan</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-(--adm-border)">
+                      {data.orders.map((o) => (
+                        <tr key={o.id}>
+                          <td className="px-4 py-3">
+                            <div className="font-mono font-semibold">
+                              {o.invoice_code}
+                            </div>
+                            <div className="text-(--adm-text-secondary)">
+                              {o.wedding_title} (/u/{o.wedding_slug})
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            +{o.added_guests.toLocaleString("id-ID")} tamu →{" "}
+                            <strong>
+                              {o.requested_total_quota.toLocaleString("id-ID")}
+                            </strong>
+                          </td>
+                          <td className="px-4 py-3 font-mono font-semibold">
+                            {formatIdr(o.amount)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div>{o.payment_note || "—"}</div>
+                            {o.proof_url && (
+                              <a
+                                href={o.proof_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-(--adm-accent) underline"
+                              >
+                                Lihat bukti
+                              </a>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`adm-badge ${
+                                o.status === "paid"
+                                  ? "adm-badge-success"
+                                  : o.status === "rejected"
+                                    ? "adm-badge-danger"
+                                    : "adm-badge-warning"
+                              }`}
+                            >
+                              {o.status === "paid"
+                                ? "Lunas"
+                                : o.status === "rejected"
+                                  ? "Ditolak"
+                                  : "Menunggu"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right whitespace-nowrap">
+                            {o.status === "pending" ? (
+                              <div className="inline-flex gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={busy !== null}
+                                  onClick={async () => {
+                                    const res = await callAction(
+                                      `app-${o.id}`,
+                                      { action: "approve_order", orderId: o.id },
+                                      `Tagihan ${o.invoice_code} disetujui & kuota tamu otomatis diperbarui!`
+                                    );
+                                    if (res) await loadData();
+                                  }}
+                                  className="adm-btn adm-btn-edit adm-btn-sm"
+                                >
+                                  Setujui
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy !== null}
+                                  onClick={async () => {
+                                    const res = await callAction(
+                                      `rej-${o.id}`,
+                                      { action: "reject_order", orderId: o.id },
+                                      `Tagihan ${o.invoice_code} ditolak.`
+                                    );
+                                    if (res) await loadData();
+                                  }}
+                                  className="adm-btn adm-btn-danger adm-btn-sm"
+                                >
+                                  Tolak
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-(--adm-text-secondary)">
+                                Selesai
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         ) : tab === "platform_wa" ? (

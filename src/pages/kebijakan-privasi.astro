@@ -1,0 +1,34 @@
+---
+import PublicLayout from "../layouts/PublicLayout.astro";
+---
+
+<PublicLayout title="Kebijakan Privasi — Wedding Platform">
+  <div class="mx-auto max-w-3xl space-y-5 px-6 py-12">
+    <h1 class="text-2xl font-semibold text-(--adm-text-primary)">
+      Kebijakan Privasi
+    </h1>
+    <div class="adm-card space-y-4 p-6 text-[13px] leading-relaxed text-(--adm-text-secondary)">
+      <p>
+        Privasi data pasangan dan tamu undangan merupakan prioritas utama kami:
+      </p>
+      <ul class="list-disc space-y-2 pl-5">
+        <li>
+          <strong>Isolasi Data Antar Pasangan:</strong> Seluruh data konfigurasi
+          undangan, daftar tamu, RSVP, ucapan, anggaran, tabungan, dan jurnal
+          dipisahkan berdasarkan <code>wedding_id</code> sehingga tidak dapat
+          diakses oleh pasangan lain.
+        </li>
+        <li>
+          <strong>Keamanan Kata Sandi &amp; OTP:</strong> Password disimpan
+          menggunakan hash <code>scrypt</code> dengan salt acak; kode OTP
+          disimpan dalam bentuk hash SHA-256 dengan masa berlaku 10 menit.
+        </li>
+        <li>
+          <strong>Penggunaan Nomor WhatsApp:</strong> Nomor WhatsApp akun
+          digunakan semata-mata untuk pengiriman kode OTP pendaftaran, reset
+          password, dan notifikasi undangan sesuai pengaturan Anda.
+        </li>
+      </ul>
+    </div>
+  </div>
+</PublicLayout>

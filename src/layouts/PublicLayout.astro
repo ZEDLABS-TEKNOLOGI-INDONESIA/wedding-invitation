@@ -1,0 +1,195 @@
+---
+import { Heart, Menu, Moon, Sun, X } from "lucide-react";
+import { getAuthSession } from "../lib/auth";
+import { getPlatformConfig } from "../lib/db";
+import Layout from "./Layout.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = "Platform undangan pernikahan digital & manajemen persiapan nikah terisolasi per pasangan dari ZEDLABS Teknologi Indonesia.",
+  noindex = false,
+} = Astro.props;
+
+const session = getAuthSession(Astro.cookies);
+const platformCfg = getPlatformConfig();
+const platformName = platformCfg.PLATFORM_NAME || "Wedding Platform";
+const tahunSekarang = new Date().getFullYear();
+
+const nav = [
+  { href: "/#fitur", label: "Fitur" },
+  { href: "/#harga", label: "Harga" },
+  { href: "/demo", label: "Demo" },
+  { href: "/dokumentasi", label: "Dokumentasi" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/bantuan", label: "Bantuan" },
+];
+---
+
+<Layout title={title} description={description} noindex={noindex}>
+  <div class="admin-shell flex min-h-dvh flex-col bg-(--adm-bg-primary) text-(--adm-text-primary)">
+    {/* Header identik gaya whatsapp-service */}
+    <header class="sticky top-0 z-40 border-b border-(--adm-border) bg-(--adm-bg-primary)/85 backdrop-blur-md">
+      <div class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-5 sm:px-6">
+        <a href="/" class="flex shrink-0 items-center gap-2.5">
+          <span class="flex h-7 w-7 items-center justify-center rounded-md bg-(--adm-accent-soft) text-(--adm-accent)">
+            <Heart className="h-4 w-4" />
+          </span>
+          <span class="hidden text-sm font-semibold text-(--adm-text-primary) sm:inline">
+            {platformName}
+          </span>
+        </a>
+
+        <nav class="hidden items-center gap-1 text-sm md:flex">
+          {nav.map((item) => (
+            <a
+              href={item.href}
+              class="rounded-md px-3 py-1.5 text-[13px] text-(--adm-text-secondary) transition-colors hover:bg-(--adm-bg-tertiary) hover:text-(--adm-text-primary)"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <div class="flex shrink-0 items-center gap-2">
+          <button
+            id="pub-theme-toggle"
+            type="button"
+            aria-label="Ganti tema terang/gelap"
+            title="Ganti Tema"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-text-secondary) transition hover:text-(--adm-text-primary)"
+          >
+            <Moon className="h-4 w-4 dark:hidden" />
+            <Sun className="hidden h-4 w-4 dark:inline" />
+          </button>
+
+          {session ? (
+            <a
+              href={session.role === "superadmin" ? "/superadmin" : "/admin"}
+              class="adm-btn adm-btn-primary adm-btn-sm"
+            >
+              Dashboard
+            </a>
+          ) : (
+            <>
+              <a
+                href="/masuk"
+                class="adm-btn adm-btn-secondary adm-btn-sm hidden sm:inline-flex"
+              >
+                Masuk
+              </a>
+              <a
+                href="/daftar"
+                class="adm-btn adm-btn-primary adm-btn-sm hidden sm:inline-flex"
+              >
+                Daftar
+              </a>
+            </>
+          )}
+
+          <button
+            id="pub-mobile-toggle"
+            type="button"
+            aria-label="Buka menu navigasi"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-md text-(--adm-text-primary) hover:bg-(--adm-bg-tertiary) md:hidden"
+          >
+            <Menu className="h-5 w-5" id="pub-menu-open" />
+            <X className="hidden h-5 w-5" id="pub-menu-close" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      <nav
+        id="pub-mobile-menu"
+        class="hidden space-y-1 border-t border-(--adm-border) bg-(--adm-bg-secondary) px-4 py-3 md:hidden"
+      >
+        {nav.map((item) => (
+          <a
+            href={item.href}
+            class="block rounded-md px-3 py-2 text-sm text-(--adm-text-secondary) hover:bg-(--adm-bg-tertiary) hover:text-(--adm-text-primary)"
+          >
+            {item.label}
+          </a>
+        ))}
+        {!session && (
+          <div class="grid grid-cols-2 gap-2 pt-2 sm:hidden">
+            <a href="/masuk" class="adm-btn adm-btn-secondary justify-center">
+              Masuk
+            </a>
+            <a href="/daftar" class="adm-btn adm-btn-primary justify-center">
+              Daftar
+            </a>
+          </div>
+        )}
+      </nav>
+    </header>
+
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    {/* Footer identik dengan whatsapp-service */}
+    <footer class="flex min-h-[44px] shrink-0 flex-col flex-wrap items-center justify-center gap-x-6 gap-y-1.5 border-t border-(--adm-border) bg-(--adm-bg-secondary) px-4 py-2.5 text-center text-[11px] text-(--adm-text-secondary) md:flex-row md:px-6">
+      <span class="whitespace-nowrap">
+        &copy; 2018 - {tahunSekarang}{" "}
+        <a
+          href="https://zedlabs.id"
+          target="_blank"
+          rel="noreferrer"
+          class="font-bold tracking-wide text-(--adm-text-secondary) uppercase hover:text-(--adm-accent)"
+        >
+          ZEDLABS TEKNOLOGI INDONESIA
+        </a>
+      </span>
+      <nav class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+        <a href="/dokumentasi" class="hover:text-(--adm-accent)">Dokumentasi</a>
+        <span class="opacity-40">|</span>
+        <a href="/bantuan" class="hover:text-(--adm-accent)">Hubungi Kami</a>
+        <span class="opacity-40">|</span>
+        <a href="/faq" class="hover:text-(--adm-accent)">FAQ</a>
+        <span class="opacity-40">|</span>
+        <a href="/syarat-ketentuan" class="hover:text-(--adm-accent)">
+          Syarat dan Ketentuan
+        </a>
+        <span class="opacity-40">|</span>
+        <a href="/kebijakan-privasi" class="hover:text-(--adm-accent)">
+          Kebijakan Privasi
+        </a>
+        <span class="opacity-40">|</span>
+        <a href="/layanan-mandiri" class="hover:text-(--adm-accent)">
+          Layanan Mandiri
+        </a>
+      </nav>
+    </footer>
+  </div>
+</Layout>
+
+<script>
+  const themeBtn = document.getElementById("pub-theme-toggle");
+  themeBtn?.addEventListener("click", () => {
+    const isDark = document.documentElement.classList.toggle("dark");
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+    try {
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    } catch {
+      // ignore
+    }
+  });
+
+  const mobileToggle = document.getElementById("pub-mobile-toggle");
+  const mobileMenu = document.getElementById("pub-mobile-menu");
+  const iconOpen = document.getElementById("pub-menu-open");
+  const iconClose = document.getElementById("pub-menu-close");
+
+  mobileToggle?.addEventListener("click", () => {
+    const hidden = mobileMenu?.classList.toggle("hidden");
+    iconOpen?.classList.toggle("hidden", !hidden);
+    iconClose?.classList.toggle("hidden", hidden);
+  });
+</script>

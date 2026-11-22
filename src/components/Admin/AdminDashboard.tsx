@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  CreditCard,
   Download,
   Edit,
   ExternalLink,
@@ -67,6 +68,7 @@ const QRCodeManager = lazy(() => import("../QRCodeManager"));
 const WhatsAppManager = lazy(() => import("../WhatsAppManager"));
 const WeddingPlanner = lazy(() => import("./WeddingPlanner"));
 const PartnerAccountPanel = lazy(() => import("./PartnerAccountPanel"));
+const BillingPanel = lazy(() => import("./BillingPanel"));
 
 interface RSVP {
   id: number;
@@ -94,7 +96,8 @@ type AdminTabId =
   | "qr"
   | "pdf"
   | "settings"
-  | "account";
+  | "account"
+  | "billing";
 
 const TAB_META: Record<AdminTabId, { title: string; desc: string }> = {
   rsvp: {
@@ -132,6 +135,10 @@ const TAB_META: Record<AdminTabId, { title: string; desc: string }> = {
   account: {
     title: "Akun & Pasangan",
     desc: "Kelola profil login Anda, tautan undangan unik, dan daftarkan 1 akun untuk pasangan Anda.",
+  },
+  billing: {
+    title: "Kuota Tamu & Tagihan",
+    desc: "Pantau kuota gratis 200 tamu dan ajukan penambahan kuota (Rp200/tamu, min. Rp50.000).",
   },
 };
 
@@ -820,6 +827,12 @@ const AdminDashboard = ({
           label: "Akun & Pasangan",
           icon: UserPlus,
           keywords: "pasangan suami istri username password akun link undangan",
+        },
+        {
+          id: "billing",
+          label: "Kuota & Tagihan",
+          icon: CreditCard,
+          keywords: "bayar pembayaran kuota tamu 200 kontak invoice transfer",
         },
       ],
     },
@@ -1667,6 +1680,19 @@ const AdminDashboard = ({
                 }
               >
                 <PartnerAccountPanel onNotify={setToast} />
+              </Suspense>
+            )}
+
+            {activeTab === "billing" && (
+              <Suspense
+                fallback={
+                  <div className="adm-card flex items-center justify-center gap-2 p-8 text-xs text-(--adm-text-secondary)">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Memuat kuota &amp; tagihan...
+                  </div>
+                }
+              >
+                <BillingPanel onNotify={setToast} />
               </Suspense>
             )}
           </div>

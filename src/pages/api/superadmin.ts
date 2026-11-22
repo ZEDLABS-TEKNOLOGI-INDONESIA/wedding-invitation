@@ -72,6 +72,16 @@ export const GET: APIRoute = async ({ cookies }) => {
     members: users.filter((u) => u.wedding_id === w.id),
   }));
 
+  const orders = db
+    .prepare(
+      `SELECT b.*, w.slug AS wedding_slug, w.title AS wedding_title
+       FROM billing_orders b
+       JOIN weddings w ON w.id = b.wedding_id
+       ORDER BY CASE b.status WHEN 'pending' THEN 0 ELSE 1 END, b.id DESC
+       LIMIT 100`
+    )
+    .all();
+
   const platformConfig = getPlatformConfig();
 
   return new Response(
@@ -81,8 +91,12 @@ export const GET: APIRoute = async ({ cookies }) => {
         activeWeddings: weddings.filter((w) => w.status === "active").length,
         totalUsers: users.filter((u) => u.role !== "superadmin").length,
         totalRsvps: Object.values(rsvpCounts).reduce((a, b) => a + b, 0),
+        pendingOrders: (orders as Array<{ status: string }>).filter(
+          (o) => o.status === "pending"
+        ).length,
       },
       weddings: enrichedWeddings,
+      orders,
       platformConfig,
       currentAdmin: {
         userId: session.userId,
@@ -122,12 +136,66 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       "WA_API_KEY",
       "WA_API_SECRET",
       "PLATFORM_NAME",
+      "PAYMENT_BANK_NAME",
+      "PAYMENT_BANK_ACCOUNT",
+      "PAYMENT_BANK_HOLDER",
+      "PAYMENT_WHATSAPP_CONFIRM",
     ] as const;
     for (const k of keys) {
       if (typeof body[k] === "string") {
         setPlatformConfig(k, (body[k] as string).trim());
       }
     }
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: JSON_HEADERS,
+    });
+  }
+
+  if (action === "approve_order" || action === "reject_order") {
+    const orderId = Number(body.orderId || 0);
+    const adminNote = String(body.adminNote || "").trim().slice(0, 300);
+    const order = db
+      .prepare("SELECT * FROM billing_orders WHERE id = ? LIMIT 1")
+      .get(orderId) as
+      | {
+          id: number;
+          wedding_id: number;
+          requested_total_quota: number;
+          status: string;
+        }
+      | undefined;
+
+    if (!order) {
+      return new Response(JSON.stringify({ error: "Tagihan tidak ditemukan." }), {
+        status: 404,
+        headers: JSON_HEADERS,
+      });
+    }
+    if (order.status !== "pending") {
+      return new Response(
+        JSON.stringify({ error: "Tagihan ini sudah diproses sebelumnya." }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    const nowIso = new Date().toISOString();
+    if (action === "approve_order") {
+      const tx = db.transaction(() => {
+        db.prepare(
+          "UPDATE billing_orders SET status = 'paid', admin_note = ?, verified_at = ? WHERE id = ?"
+        ).run(adminNote || "Pembayaran terverifikasi", nowIso, order.id);
+        db.prepare(
+          "UPDATE weddings SET guest_quota_limit = MAX(guest_quota_limit, ?) WHERE id = ?"
+        ).run(order.requested_total_quota, order.wedding_id);
+      });
+      tx();
+    } else {
+      db.prepare(
+        "UPDATE billing_orders SET status = 'rejected', admin_note = ?, verified_at = ? WHERE id = ?"
+      ).run(adminNote || "Pembayaran ditolak", nowIso, order.id);
+    }
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: JSON_HEADERS,

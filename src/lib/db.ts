@@ -193,6 +193,24 @@ db.exec(`
     PRIMARY KEY (wedding_id, key),
     FOREIGN KEY (wedding_id) REFERENCES weddings(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS billing_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    wedding_id INTEGER NOT NULL,
+    invoice_code TEXT UNIQUE NOT NULL,
+    current_quota INTEGER NOT NULL DEFAULT 200,
+    requested_total_quota INTEGER NOT NULL,
+    added_guests INTEGER NOT NULL,
+    amount INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    payment_method TEXT NOT NULL DEFAULT 'Transfer Bank / QRIS',
+    payment_note TEXT NOT NULL DEFAULT '',
+    proof_url TEXT NOT NULL DEFAULT '',
+    admin_note TEXT NOT NULL DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    verified_at TEXT DEFAULT '',
+    FOREIGN KEY (wedding_id) REFERENCES weddings(id) ON DELETE CASCADE
+  );
 `);
 
 const DEFAULT_CONFIG: Record<string, string> = {
@@ -328,6 +346,11 @@ try {
 } catch {
   // Kolom impersonating_wedding_id sudah ada
 }
+try {
+  db.exec("ALTER TABLE weddings ADD COLUMN guest_quota_limit INTEGER NOT NULL DEFAULT 200");
+} catch {
+  // Kolom guest_quota_limit sudah ada
+}
 
 export const DEFAULT_WEDDING_ID = 1;
 
@@ -337,6 +360,7 @@ export interface WeddingRecord {
   title: string;
   status: "active" | "suspended";
   is_demo: number;
+  guest_quota_limit?: number;
   created_at: string;
 }
 
@@ -439,7 +463,11 @@ const DEFAULT_PLATFORM_CONFIG: Record<string, string> = {
     legacyConfigRows.find((r) => r.key === "WA_API_KEY")?.value || "",
   WA_API_SECRET:
     legacyConfigRows.find((r) => r.key === "WA_API_SECRET")?.value || "",
-  PLATFORM_NAME: "Wedding SaaS",
+  PLATFORM_NAME: "Wedding Platform",
+  PAYMENT_BANK_NAME: "Bank BCA",
+  PAYMENT_BANK_ACCOUNT: "",
+  PAYMENT_BANK_HOLDER: "ZEDLABS Teknologi Indonesia",
+  PAYMENT_WHATSAPP_CONFIRM: "",
 };
 const insertPlatformDefault = db.prepare(
   "INSERT OR IGNORE INTO platform_config (key, value) VALUES (?, ?)"

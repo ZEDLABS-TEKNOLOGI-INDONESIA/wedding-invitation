@@ -1,0 +1,52 @@
+---
+import PublicLayout from "../layouts/PublicLayout.astro";
+---
+
+<PublicLayout title="Dokumentasi — Wedding Platform">
+  <div class="mx-auto max-w-4xl space-y-6 px-6 py-12">
+    <div>
+      <h1 class="text-2xl font-semibold text-(--adm-text-primary)">Dokumentasi Fitur</h1>
+      <p class="mt-1.5 text-sm text-(--adm-text-secondary)">
+        Panduan ringkas seluruh fitur yang tersedia di dalam Wedding Platform.
+      </p>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="adm-card space-y-2 p-5">
+        <h2 class="text-sm font-semibold">1. Undangan Digital (/u/slug)</h2>
+        <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
+          Tersedia 6 tema warna (Ocean, Sage, Blush, Maroon, Gold, Lavender),
+          mode terang/gelap, animasi latar (merpati, kelopak bunga, kupu-kupu,
+          lentera, bintang), musik latar, galeri foto, kisah cinta, peta lokasi,
+          rekening tanda kasih, RSVP, dan buku ucapan.
+        </p>
+      </div>
+      <div class="adm-card space-y-2 p-5">
+        <h2 class="text-sm font-semibold">2. Akun Berdua (Pemilik &amp; Pasangan)</h2>
+        <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
+          Pendaftar utama dapat mendaftarkan 1 akun pasangan melalui menu
+          <strong>Konfigurasi → Akun &amp; Pasangan</strong>. Masing-masing
+          memiliki username, password, dan nomor WhatsApp sendiri untuk reset
+          password OTP.
+        </p>
+      </div>
+      <div class="adm-card space-y-2 p-5">
+        <h2 class="text-sm font-semibold">3. Manajemen Pernikahan (6 Modul)</h2>
+        <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
+          Kelola To-Do List bertahap (H-12 bulan s.d. Hari H), Anggaran &amp;
+          Vendor, Tabungan Menuju Halal, Mahar/Seserahan/Berkas KUA (mengacu PMA
+          No. 30 Tahun 2024, SIMKAH, &amp; Elsimil), Jurnal Menikah, serta
+          Tuntunan Fikih Munakahat.
+        </p>
+      </div>
+      <div class="adm-card space-y-2 p-5">
+        <h2 class="text-sm font-semibold">4. WhatsApp Gateway, PDF &amp; QR Check-In</h2>
+        <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
+          Tautkan nomor WhatsApp langsung lewat QR Code / Pairing Code, kirim
+          undangan otomatis beserta lampiran PDF 4 halaman &amp; kartu QR, aktifkan
+          pengingat H-1, dan gunakan scanner kamera QR di <code>/checkin</code>.
+        </p>
+      </div>
+    </div>
+  </div>
+</PublicLayout>

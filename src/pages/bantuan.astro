@@ -1,0 +1,50 @@
+---
+import PublicLayout from "../layouts/PublicLayout.astro";
+import { getPlatformConfig } from "../lib/db";
+
+const cfg = getPlatformConfig();
+const waConfirm = cfg.PAYMENT_WHATSAPP_CONFIRM || "";
+---
+
+<PublicLayout title="Hubungi Kami — Wedding Platform">
+  <div class="mx-auto max-w-3xl space-y-6 px-6 py-12">
+    <div>
+      <h1 class="text-2xl font-semibold text-(--adm-text-primary)">Hubungi Kami</h1>
+      <p class="mt-1.5 text-sm text-(--adm-text-secondary)">
+        Butuh bantuan pendaftaran, konfirmasi pembayaran kuota tamu, atau
+        kendala integrasi WhatsApp Gateway?
+      </p>
+    </div>
+
+    <div class="adm-card space-y-4 p-6 text-sm">
+      <div>
+        <div class="text-xs text-(--adm-text-secondary)">Pengelola Layanan</div>
+        <div class="mt-0.5 font-semibold">ZEDLABS Teknologi Indonesia</div>
+      </div>
+      <div>
+        <div class="text-xs text-(--adm-text-secondary)">Website Resmi</div>
+        <a
+          href="https://zedlabs.id"
+          target="_blank"
+          rel="noreferrer"
+          class="text-(--adm-accent) hover:underline"
+        >
+          https://zedlabs.id
+        </a>
+      </div>
+      {waConfirm && (
+        <div>
+          <div class="text-xs text-(--adm-text-secondary)">WhatsApp Bantuan &amp; Konfirmasi</div>
+          <a
+            href={`https://wa.me/${waConfirm.replace(/\D/g, "")}`}
+            target="_blank"
+            rel="noreferrer"
+            class="adm-btn adm-btn-primary adm-btn-sm mt-2"
+          >
+            Chat WhatsApp ({waConfirm})
+          </a>
+        </div>
+      )}
+    </div>
+  </div>
+</PublicLayout>
