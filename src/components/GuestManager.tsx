@@ -859,10 +859,11 @@ const GuestManager: React.FC<GuestManagerProps> = ({
             </form>
           </div>
 
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             {scanResult && (
               <div
-                className={`adm-alert ${
+                role="status"
+                className={`adm-alert flex-col items-stretch gap-2 ${
                   scanResult.type === "success"
                     ? "adm-alert-success"
                     : scanResult.type === "warning"
@@ -870,26 +871,32 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                       : "adm-alert-danger"
                 }`}
               >
-                <h4 className="text-[14px] font-semibold">
-                  {scanResult.title}
-                </h4>
-                <p className="mt-1 text-[13px]">{scanResult.detail}</p>
+                <div className="space-y-0.5">
+                  <h4 className="text-[14px] leading-snug font-semibold">
+                    {scanResult.title}
+                  </h4>
+                  <p className="text-[13px] leading-relaxed break-words">
+                    {scanResult.detail}
+                  </p>
+                </div>
                 {scanResult.type === "not_found" &&
                   scanResult.suggestedName && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void processCheckin(
-                          scanResult.suggestedName!,
-                          scanPax,
-                          true
-                        )
-                      }
-                      className="adm-btn adm-btn-sm adm-btn-primary mt-3"
-                    >
-                      + Check-In sebagai Tamu Walk-In (
-                      {scanResult.suggestedName})
-                    </button>
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void processCheckin(
+                            scanResult.suggestedName!,
+                            scanPax,
+                            true
+                          )
+                        }
+                        className="adm-btn adm-btn-sm adm-btn-primary h-auto min-h-[32px] w-full py-1.5 text-center leading-snug whitespace-normal sm:w-auto"
+                      >
+                        + Check-In sebagai Tamu Walk-In (
+                        {scanResult.suggestedName})
+                      </button>
+                    </div>
                   )}
               </div>
             )}

@@ -1079,14 +1079,20 @@ const AdminDashboard = ({
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="flex h-11 shrink-0 items-stretch border-t border-(--adm-border)">
+        <div
+          className={`flex shrink-0 items-stretch border-t border-(--adm-border) ${
+            sidebarCollapsed ? "h-11 md:h-auto md:flex-col-reverse" : "h-11"
+          }`}
+        >
           <button
             type="button"
             onClick={handleLogout}
             title="Keluar"
             aria-label="Keluar"
             className={`flex flex-1 items-center gap-2.5 text-[12.5px] font-medium text-(--adm-red) hover:bg-(--adm-red-soft) ${
-              sidebarCollapsed ? "px-4 md:justify-center md:px-0" : "px-4"
+              sidebarCollapsed
+                ? "px-4 md:h-10 md:w-full md:flex-none md:justify-center md:border-t md:border-(--adm-border) md:px-0"
+                : "px-4"
             }`}
           >
             <LogOut className="h-4 w-4 shrink-0" />
@@ -1099,7 +1105,11 @@ const AdminDashboard = ({
             aria-label={
               sidebarCollapsed ? "Perluas sidebar" : "Ciutkan sidebar"
             }
-            className="hidden w-10 items-center justify-center border-l border-(--adm-border) text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) md:flex"
+            className={`hidden items-center justify-center text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) md:flex ${
+              sidebarCollapsed
+                ? "h-10 w-full"
+                : "w-10 border-l border-(--adm-border)"
+            }`}
           >
             <ChevronLeft
               className={`h-4 w-4 transition-transform duration-200 ${

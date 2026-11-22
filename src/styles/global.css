@@ -1011,6 +1011,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  min-width: 0;
   padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid var(--adm-info-border);
@@ -1018,6 +1019,7 @@
   color: var(--adm-text-primary);
   font-size: 13px;
   line-height: 1.5;
+  overflow-wrap: break-word;
 }
 
 .adm-alert-danger {
@@ -1096,20 +1098,29 @@
 /* Segmented Tabs */
 .adm-seg {
   display: inline-flex;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
   padding: 3px;
   border-radius: 8px;
   border: 1px solid var(--adm-border);
   background: var(--adm-bg-primary);
 }
 
+.adm-seg::-webkit-scrollbar {
+  display: none;
+}
+
 .adm-seg-btn {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 12.5px;
   font-weight: 500;
+  white-space: nowrap;
   color: var(--adm-text-secondary);
   transition: background-color 150ms, color 150ms;
 }
