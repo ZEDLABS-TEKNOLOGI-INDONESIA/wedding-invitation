@@ -55,7 +55,7 @@ test("seluruh 5 template (15 varian) memenuhi aturan ValidasiFormatTerlarang gat
     waktu_acara: "08:00 - 10:00 WIB",
     tempat_acara: "The Royal Azure Ballroom, Pandeglang",
     link_undangan: "https://wedding.zedlabs.id/?to=Bapak%20Ahmad",
-    link_maps: "https://www.google.com/maps/search/?api=1&query=-6.3,106.1",
+    link_maps: "https://www.google.com/maps/search/?api=1&query=-6.3032707,106.1011039",
     aksi: "baru",
     status_kehadiran: "Hadir",
     jumlah_tamu: "2 orang",

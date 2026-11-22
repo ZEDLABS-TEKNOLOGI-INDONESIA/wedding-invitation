@@ -619,10 +619,14 @@ export const sendGuestH1ReminderWa = async (
   const summary = buildEventSummary(config);
   const lat = (config.VENUE_LAT || "").trim();
   const lng = (config.VENUE_LNG || "").trim();
-  const linkMaps =
-    lat && lng
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`
-      : "https://maps.google.com";
+  const hasValidCoords =
+    lat !== "" &&
+    lng !== "" &&
+    Number.isFinite(Number(lat)) &&
+    Number.isFinite(Number(lng));
+  const linkMaps = hasValidCoords
+    ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+    : "https://maps.google.com";
   const eventTag = (config.AKAD_ISO_START || "acara").slice(0, 10);
 
   const variables = {
