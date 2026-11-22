@@ -506,11 +506,10 @@ export const PortraitFloralFrame: React.FC<{
     aria-hidden="true"
     viewBox="0 0 320 400"
     fill="none"
-    className={`text-accentDark dark:text-accent pointer-events-none absolute -inset-5 h-[calc(100%+2.5rem)] w-[calc(100%+2.5rem)] select-none ${
-      mirror ? "-scale-x-100" : ""
-    } ${className}`}
+    className={`portrait-frame-float text-accentDark dark:text-accent pointer-events-none absolute -inset-5 h-[calc(100%+2.5rem)] w-[calc(100%+2.5rem)] select-none ${className}`}
   >
-    {/* Primary delicate oval ring */}
+    <g transform={mirror ? "translate(320 0) scale(-1 1)" : undefined}>
+      {/* Primary delicate oval ring */}
     <ellipse
       cx="160"
       cy="200"
@@ -647,5 +646,6 @@ export const PortraitFloralFrame: React.FC<{
     />
     <circle cx="160" cy="24" r="2.5" fill="currentColor" fillOpacity="0.5" />
     <circle cx="160" cy="376" r="2.5" fill="currentColor" fillOpacity="0.5" />
+    </g>
   </svg>
 );

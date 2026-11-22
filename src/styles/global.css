@@ -556,6 +556,20 @@
   animation: heartHaloPulse 8s ease-in-out infinite;
 }
 
+@keyframes portraitFrameFloat {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.028) rotate(1.2deg);
+  }
+}
+
+.portrait-frame-float {
+  animation: portraitFrameFloat 7s ease-in-out infinite;
+}
+
 @keyframes fireflyDrift {
   0%,
   100% {

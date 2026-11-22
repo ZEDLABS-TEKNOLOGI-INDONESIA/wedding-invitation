@@ -27,7 +27,7 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
         {/* Custom Romantic Floral Oval Frame */}
         <PortraitFloralFrame
           mirror={mirrorFrame}
-          className="z-10 transition-transform duration-700 group-hover:scale-[1.02]"
+          className="z-10 transition-transform duration-700 group-hover:scale-[1.04]"
         />
 
         {/* Oval Photo Mask */}
