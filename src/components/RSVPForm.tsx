@@ -113,7 +113,7 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
       id="rsvp"
       className="relative overflow-x-clip py-20 transition-colors duration-700 md:py-28"
     >
-      <BotanicalWatermark side="right" />
+      <BotanicalWatermark side="right" variant={config.appearance.ornament} />
       <div className="container mx-auto max-w-6xl px-5 md:px-6">
         <div className="mb-14 space-y-3 text-center md:mb-18">
           <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">

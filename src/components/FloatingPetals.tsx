@@ -39,11 +39,27 @@ const SparkleSvg: React.FC<{ size: number }> = ({ size }) => (
   </svg>
 );
 
-const PetalSvg: React.FC<{ size: number }> = ({ size }) => (
+const PetalSvg: React.FC<{ size: number; alt?: boolean }> = ({ size, alt }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="currentColor">
+    {alt ? (
+      <path
+        d="M16 2 C25 7, 28 18, 16 30 C11 24, 6 16, 8 9 C10 5, 13 3, 16 2 Z"
+        fillOpacity="0.65"
+      />
+    ) : (
+      <path
+        d="M16 3 C23 8, 27 17, 16 29 C5 17, 9 8, 16 3 Z"
+        fillOpacity="0.78"
+      />
+    )}
+  </svg>
+);
+
+const MiniHeartSvg: React.FC<{ size: number }> = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
     <path
-      d="M16 3 C23 8, 27 17, 16 29 C5 17, 9 8, 16 3 Z"
-      fillOpacity="0.72"
+      d="M12 21 C12 21, 3 14.5, 3 8.5 C3 5.5, 5.4 3.5, 8 3.5 C9.8 3.5, 11.2 4.5, 12 5.8 C12.8 4.5, 14.2 3.5, 16 3.5 C18.6 3.5, 21 5.5, 21 8.5 C21 14.5, 12 21, 12 21 Z"
+      fillOpacity="0.7"
     />
   </svg>
 );
@@ -159,14 +175,21 @@ export const AnimationPreviewMini: React.FC<{
   accent: string;
   accentDark: string;
   bg: string;
-}> = ({ variant, accent, accentDark, bg }) => {
+  className?: string;
+}> = ({ variant, accent, accentDark, bg, className }) => {
   return (
     <div
       aria-hidden="true"
-      className="relative h-16 w-full overflow-hidden rounded-md border border-black/10"
-      style={{
-        background: `radial-gradient(circle at 50% 45%, ${accent}33, ${bg})`,
-      }}
+      className={`relative w-full overflow-hidden ${
+        className ?? "h-16 rounded-md border border-black/10"
+      }`}
+      style={
+        bg === "transparent"
+          ? undefined
+          : {
+              background: `radial-gradient(circle at 50% 45%, ${accent}33, ${bg})`,
+            }
+      }
     >
       {variant === "none" && (
         <div className="flex h-full items-center justify-center text-[10px] font-medium opacity-55" style={{ color: accentDark }}>
@@ -315,8 +338,10 @@ const FloatingPetals: React.FC<FloatingPetalsProps> = ({
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-[15] overflow-hidden"
     >
-      {/* Sparkles layer (aktif di mode doves & sparkles) */}
-      {(variant === "doves" || variant === "sparkles") &&
+      {/* Sparkles layer (aktif di mode doves, butterflies & sparkles) */}
+      {(variant === "doves" ||
+        variant === "sparkles" ||
+        variant === "butterflies") &&
         AMBIENT_SPARKLES.map((sp) => (
           <div
             key={`sp-${sp.id}`}
@@ -328,6 +353,49 @@ const FloatingPetals: React.FC<FloatingPetalsProps> = ({
             }}
           >
             <SparkleSvg size={variant === "sparkles" ? sp.size + 3 : sp.size} />
+          </div>
+        ))}
+
+      {/* Soft bokeh light orbs (khusus sparkles & lanterns) */}
+      {(variant === "sparkles" || variant === "lanterns") &&
+        [
+          { left: "14%", top: "28%", size: 10, d: "0s" },
+          { left: "34%", top: "64%", size: 14, d: "1.5s" },
+          { left: "58%", top: "38%", size: 9, d: "2.8s" },
+          { left: "78%", top: "54%", size: 12, d: "0.9s" },
+          { left: "88%", top: "24%", size: 8, d: "2.1s" },
+        ].map((f, idx) => (
+          <div
+            key={`ff-${idx}`}
+            className="bg-accent/55 dark:bg-amber-300/60 absolute rounded-full blur-[2px]"
+            style={{
+              left: f.left,
+              top: f.top,
+              width: f.size,
+              height: f.size,
+              animation: `fireflyDrift ${6 + idx}s ease-in-out ${f.d} infinite`,
+            }}
+          />
+        ))}
+
+      {/* Tiny drifting hearts accent (khusus doves) */}
+      {variant === "doves" &&
+        [
+          { left: "18%", top: "34%", size: 11, d: "0.4s" },
+          { left: "48%", top: "22%", size: 9, d: "2.1s" },
+          { left: "76%", top: "40%", size: 12, d: "1.2s" },
+          { left: "62%", top: "74%", size: 10, d: "3.0s" },
+        ].map((h, idx) => (
+          <div
+            key={`mh-${idx}`}
+            className="text-accentDark/25 dark:text-accent/35 absolute"
+            style={{
+              left: h.left,
+              top: h.top,
+              animation: `fireflyDrift ${7 + idx}s ease-in-out ${h.d} infinite`,
+            }}
+          >
+            <MiniHeartSvg size={h.size} />
           </div>
         ))}
 
@@ -387,7 +455,7 @@ const FloatingPetals: React.FC<FloatingPetalsProps> = ({
               animation: `petalFall ${p.duration} linear ${p.delay} infinite`,
             }}
           >
-            <PetalSvg size={p.size} />
+            <PetalSvg size={p.size} alt={p.id % 2 === 0} />
           </div>
         ))}
 

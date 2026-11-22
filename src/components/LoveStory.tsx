@@ -11,7 +11,7 @@ const LoveStory: React.FC<{ config: AppConfig }> = ({ config }) => {
       id="story"
       className="wedding-section-glow relative overflow-x-clip py-20 transition-colors duration-700 md:py-28"
     >
-      <BotanicalWatermark side="right" />
+      <BotanicalWatermark side="right" variant={config.appearance.ornament} />
       <div className="relative z-10 container mx-auto max-w-5xl px-5 md:px-6">
         <div className="mb-14 space-y-3 text-center md:mb-20">
           <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">

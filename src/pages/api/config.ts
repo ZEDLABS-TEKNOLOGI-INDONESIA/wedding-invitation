@@ -90,6 +90,15 @@ const validateConfigEntry = (key: string, value: string): string | null => {
     return "PUBLIC_ANIMATION tidak dikenali.";
   }
 
+  if (
+    key === "PUBLIC_ORNAMENT" &&
+    !["botanical", "floral", "islamic", "baroque", "celestial", "none"].includes(
+      value.trim().toLowerCase()
+    )
+  ) {
+    return "PUBLIC_ORNAMENT tidak dikenali.";
+  }
+
   if (key === "BANK_ACCOUNTS") {
     try {
       const parsed = JSON.parse(value);

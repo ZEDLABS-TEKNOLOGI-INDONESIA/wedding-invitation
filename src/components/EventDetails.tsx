@@ -76,7 +76,7 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
       id="event"
       className="relative overflow-x-clip px-5 py-20 transition-colors duration-700 md:px-6 md:py-28"
     >
-      <BotanicalWatermark side="left" />
+      <BotanicalWatermark side="left" variant={config.appearance.ornament} />
       <div className="container mx-auto max-w-5xl">
         <div className="mb-14 space-y-3 text-center md:mb-18">
           <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">

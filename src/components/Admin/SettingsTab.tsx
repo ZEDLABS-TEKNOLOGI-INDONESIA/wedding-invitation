@@ -44,12 +44,19 @@ import {
 } from "../../utils/formHelpers";
 import {
   PUBLIC_ANIMATIONS,
+  PUBLIC_ORNAMENTS,
   PUBLIC_THEMES,
   normalizePublicAnimation,
   normalizePublicDefaultMode,
+  normalizePublicOrnament,
   normalizePublicTheme,
 } from "../../utils/publicThemes";
 import { AnimationPreviewMini } from "../FloatingPetals";
+import {
+  HeartFrameWatermark,
+  OrnamentArtwork,
+  OrnamentPreviewMini,
+} from "../WeddingOrnaments";
 import type { ToastState } from "./AdminFeedback";
 import CsvImportModal from "./CsvImportModal";
 
@@ -113,6 +120,7 @@ const EXPORTABLE_CONFIG_KEYS = [
   "PUBLIC_DEFAULT_MODE",
   "PUBLIC_ALLOW_THEME_SWITCH",
   "PUBLIC_ANIMATION",
+  "PUBLIC_ORNAMENT",
   "RSVP_MAX_GUESTS",
   "TEXT_SALAM_OPENING",
   "TEXT_QUOTE_AR_RUM",
@@ -1179,69 +1187,231 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
 
           {/* Pilihan Animasi Latar dengan Pratinjau Langsung */}
           <div className="border-t border-(--adm-border) pt-3.5">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="adm-label mb-0">
-                Animasi Latar Undangan (Pratinjau Langsung)
-              </span>
-              <span className="adm-hint">
-                Aktif:{" "}
-                <strong className="text-(--adm-text-primary)">
-                  {
-                    PUBLIC_ANIMATIONS.find(
-                      (a) =>
-                        a.id ===
-                        normalizePublicAnimation(rawConfig.PUBLIC_ANIMATION)
-                    )?.name
-                  }
-                </strong>
-              </span>
-            </div>
-            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-              {PUBLIC_ANIMATIONS.map((anim) => {
-                const isSelected =
-                  normalizePublicAnimation(rawConfig.PUBLIC_ANIMATION) ===
-                  anim.id;
-                const activeThemeObj =
-                  PUBLIC_THEMES.find(
-                    (t) =>
-                      t.id === normalizePublicTheme(rawConfig.PUBLIC_THEME)
-                  ) || PUBLIC_THEMES[0];
-                return (
-                  <button
-                    key={anim.id}
-                    type="button"
-                    onClick={() => handleChange("PUBLIC_ANIMATION", anim.id)}
-                    className={`flex flex-col gap-2 rounded-lg border p-2.5 text-left transition-all ${
-                      isSelected
-                        ? "border-(--adm-accent) bg-(--adm-accent-soft) ring-1 ring-(--adm-accent)"
-                        : "border-(--adm-border) bg-(--adm-bg-primary) hover:border-(--adm-accent)/60"
-                    }`}
-                  >
-                    <AnimationPreviewMini
-                      variant={anim.id}
-                      accent={activeThemeObj.colors.accent}
-                      accentDark={activeThemeObj.colors.accentDark}
-                      bg={activeThemeObj.colors.secondary}
-                    />
-                    <div className="flex items-start justify-between gap-2 px-0.5">
-                      <div className="min-w-0">
-                        <div className="text-[12.5px] font-semibold text-(--adm-text-primary)">
-                          {anim.name}
-                        </div>
-                        <p className="adm-hint mt-0.5 leading-snug">
-                          {anim.tagline}
-                        </p>
-                      </div>
-                      {isSelected && (
-                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-(--adm-accent) text-white">
-                          <Check className="h-3 w-3" />
-                        </span>
-                      )}
+            {(() => {
+              const activeThemeObj =
+                PUBLIC_THEMES.find(
+                  (t) => t.id === normalizePublicTheme(rawConfig.PUBLIC_THEME)
+                ) || PUBLIC_THEMES[0];
+              const activeAnim = normalizePublicAnimation(
+                rawConfig.PUBLIC_ANIMATION
+              );
+              const activeOrnament = normalizePublicOrnament(
+                rawConfig.PUBLIC_ORNAMENT
+              );
+              const isDarkPreview =
+                normalizePublicDefaultMode(rawConfig.PUBLIC_DEFAULT_MODE) ===
+                "dark";
+              const stageBg = isDarkPreview
+                ? activeThemeObj.colors.darkBg
+                : activeThemeObj.colors.secondary;
+              const stageInk = isDarkPreview
+                ? "#ffffff"
+                : activeThemeObj.colors.primary;
+              const stageAccent = isDarkPreview
+                ? activeThemeObj.colors.accent
+                : activeThemeObj.colors.accentDark;
+
+              return (
+                <div className="space-y-4">
+                  {/* Live Combined Stage Preview: Tema + Ornamen + Bingkai Love + Animasi */}
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <span className="adm-label mb-0">
+                        Pratinjau Gabungan (Tema + Ornamen + Bingkai Love +
+                        Animasi)
+                      </span>
+                      <span className="adm-hint">
+                        {activeThemeObj.name} ·{" "}
+                        {
+                          PUBLIC_ORNAMENTS.find((o) => o.id === activeOrnament)
+                            ?.name
+                        }{" "}
+                        ·{" "}
+                        {PUBLIC_ANIMATIONS.find((a) => a.id === activeAnim)?.name}
+                      </span>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
+                    <div
+                      className="relative flex h-44 w-full flex-col items-center justify-center overflow-hidden rounded-lg border border-(--adm-border)"
+                      style={{
+                        background: `radial-gradient(ellipse 75% 65% at 50% 50%, ${activeThemeObj.colors.accent}22, ${stageBg})`,
+                        color: stageAccent,
+                      }}
+                    >
+                      {/* Mini Heart Frame */}
+                      <HeartFrameWatermark className="!w-44 opacity-90" />
+
+                      {/* Mini Side Ornaments */}
+                      {activeOrnament !== "none" && (
+                        <>
+                          <svg
+                            viewBox="0 0 220 260"
+                            fill="none"
+                            className="ornament-sway-left pointer-events-none absolute top-1/2 -left-4 h-36 w-28 opacity-20"
+                          >
+                            <OrnamentArtwork variant={activeOrnament} />
+                          </svg>
+                          <svg
+                            viewBox="0 0 220 260"
+                            fill="none"
+                            className="ornament-sway-right pointer-events-none absolute top-1/2 -right-4 h-36 w-28 opacity-20"
+                          >
+                            <OrnamentArtwork variant={activeOrnament} />
+                          </svg>
+                        </>
+                      )}
+
+                      {/* Live Animation overlay inside stage */}
+                      <div className="pointer-events-none absolute inset-0 opacity-85">
+                        <AnimationPreviewMini
+                          variant={activeAnim}
+                          accent={activeThemeObj.colors.accent}
+                          accentDark={stageAccent}
+                          bg="transparent"
+                          className="h-full"
+                        />
+                      </div>
+
+                      {/* Sample Couple Title */}
+                      <div className="relative z-10 text-center">
+                        <span
+                          className="block text-[9px] font-semibold tracking-[0.28em] uppercase opacity-75"
+                          style={{ color: stageAccent }}
+                        >
+                          Kami Yang Berbahagia
+                        </span>
+                        <div
+                          className="font-script mt-1 text-3xl leading-tight"
+                          style={{ color: stageInk }}
+                        >
+                          {rawConfig.BRIDE_NICKNAME || "Bride"}{" "}
+                          <span style={{ color: stageAccent }}>&amp;</span>{" "}
+                          {rawConfig.GROOM_NICKNAME || "Groom"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pilihan Ornamen Samping */}
+                  <div>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="adm-label mb-0">
+                        Variasi Tanda Air / Ornamen Samping
+                      </span>
+                      <span className="adm-hint">
+                        Aktif:{" "}
+                        <strong className="text-(--adm-text-primary)">
+                          {
+                            PUBLIC_ORNAMENTS.find(
+                              (o) => o.id === activeOrnament
+                            )?.name
+                          }
+                        </strong>
+                      </span>
+                    </div>
+                    <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                      {PUBLIC_ORNAMENTS.map((orn) => {
+                        const isSelected = activeOrnament === orn.id;
+                        return (
+                          <button
+                            key={orn.id}
+                            type="button"
+                            onClick={() =>
+                              handleChange("PUBLIC_ORNAMENT", orn.id)
+                            }
+                            className={`flex flex-col gap-2 rounded-lg border p-2.5 text-left transition-all ${
+                              isSelected
+                                ? "border-(--adm-accent) bg-(--adm-accent-soft) ring-1 ring-(--adm-accent)"
+                                : "border-(--adm-border) bg-(--adm-bg-primary) hover:border-(--adm-accent)/60"
+                            }`}
+                          >
+                            <OrnamentPreviewMini
+                              variant={orn.id}
+                              accent={activeThemeObj.colors.accent}
+                              accentDark={activeThemeObj.colors.accentDark}
+                              bg={activeThemeObj.colors.secondary}
+                            />
+                            <div className="flex items-start justify-between gap-2 px-0.5">
+                              <div className="min-w-0">
+                                <div className="text-[12.5px] font-semibold text-(--adm-text-primary)">
+                                  {orn.name}
+                                </div>
+                                <p className="adm-hint mt-0.5 leading-snug">
+                                  {orn.tagline}
+                                </p>
+                              </div>
+                              {isSelected && (
+                                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-(--adm-accent) text-white">
+                                  <Check className="h-3 w-3" />
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Pilihan Animasi Latar */}
+                  <div className="border-t border-(--adm-border) pt-3.5">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="adm-label mb-0">
+                        Animasi Latar Undangan (Pratinjau Langsung)
+                      </span>
+                      <span className="adm-hint">
+                        Aktif:{" "}
+                        <strong className="text-(--adm-text-primary)">
+                          {
+                            PUBLIC_ANIMATIONS.find((a) => a.id === activeAnim)
+                              ?.name
+                          }
+                        </strong>
+                      </span>
+                    </div>
+                    <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                      {PUBLIC_ANIMATIONS.map((anim) => {
+                        const isSelected = activeAnim === anim.id;
+                        return (
+                          <button
+                            key={anim.id}
+                            type="button"
+                            onClick={() =>
+                              handleChange("PUBLIC_ANIMATION", anim.id)
+                            }
+                            className={`flex flex-col gap-2 rounded-lg border p-2.5 text-left transition-all ${
+                              isSelected
+                                ? "border-(--adm-accent) bg-(--adm-accent-soft) ring-1 ring-(--adm-accent)"
+                                : "border-(--adm-border) bg-(--adm-bg-primary) hover:border-(--adm-accent)/60"
+                            }`}
+                          >
+                            <AnimationPreviewMini
+                              variant={anim.id}
+                              accent={activeThemeObj.colors.accent}
+                              accentDark={activeThemeObj.colors.accentDark}
+                              bg={activeThemeObj.colors.secondary}
+                            />
+                            <div className="flex items-start justify-between gap-2 px-0.5">
+                              <div className="min-w-0">
+                                <div className="text-[12.5px] font-semibold text-(--adm-text-primary)">
+                                  {anim.name}
+                                </div>
+                                <p className="adm-hint mt-0.5 leading-snug">
+                                  {anim.tagline}
+                                </p>
+                              </div>
+                              {isSelected && (
+                                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-(--adm-accent) text-white">
+                                  <Check className="h-3 w-3" />
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

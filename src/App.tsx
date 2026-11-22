@@ -207,8 +207,8 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
 
       <footer className="wedding-section-glow relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-x-clip px-5 pt-20 pb-28 transition-colors duration-700 md:pt-24 md:pb-32">
         <HeartFrameWatermark />
-        <BotanicalWatermark side="left" />
-        <BotanicalWatermark side="right" />
+        <BotanicalWatermark side="left" variant={config.appearance.ornament} />
+        <BotanicalWatermark side="right" variant={config.appearance.ornament} />
         <div className="relative z-10 container mx-auto flex max-w-3xl flex-col items-center gap-10 text-center">
           <div className="space-y-4">
             <Heart className="text-accentDark/60 dark:text-accent/60 mx-auto h-6 w-6 animate-pulse" />

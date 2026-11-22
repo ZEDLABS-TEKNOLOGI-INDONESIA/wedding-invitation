@@ -67,6 +67,65 @@ export const normalizePublicAnimation = (value?: string): PublicAnimationId => {
   return "doves";
 };
 
+export type PublicOrnamentId =
+  | "botanical"
+  | "floral"
+  | "islamic"
+  | "baroque"
+  | "celestial"
+  | "none";
+
+export interface PublicOrnamentDefinition {
+  id: PublicOrnamentId;
+  name: string;
+  tagline: string;
+}
+
+export const PUBLIC_ORNAMENTS: PublicOrnamentDefinition[] = [
+  {
+    id: "botanical",
+    name: "Ranting & Mawar",
+    tagline: "Daun eucalyptus halus dengan kuncup mawar",
+  },
+  {
+    id: "floral",
+    name: "Buket Peony",
+    tagline: "Kelopak bunga mekar & sulur romantis",
+  },
+  {
+    id: "islamic",
+    name: "Arabesque Islami",
+    tagline: "Motif geometris & kubah halus nan anggun",
+  },
+  {
+    id: "baroque",
+    name: "Filigree Klasik",
+    tagline: "Ukiran kerajaan Eropa & aksen berlian",
+  },
+  {
+    id: "celestial",
+    name: "Bintang & Bulan",
+    tagline: "Bulan sabit halus & rasi bintang puitis",
+  },
+  {
+    id: "none",
+    name: "Tanpa Ornamen",
+    tagline: "Latar bersih tanpa tanda air samping",
+  },
+];
+
+export const PUBLIC_ORNAMENT_IDS = new Set<string>(
+  PUBLIC_ORNAMENTS.map((o) => o.id)
+);
+
+export const normalizePublicOrnament = (value?: string): PublicOrnamentId => {
+  const candidate = (value || "").trim().toLowerCase();
+  if (PUBLIC_ORNAMENT_IDS.has(candidate)) {
+    return candidate as PublicOrnamentId;
+  }
+  return "botanical";
+};
+
 export interface PublicThemeDefinition {
   id: PublicThemeId;
   name: string;

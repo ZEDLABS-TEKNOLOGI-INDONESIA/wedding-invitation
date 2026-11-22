@@ -18,7 +18,7 @@ const GiftInfo: React.FC<{ config: AppConfig }> = ({ config }) => {
       id="gift"
       className="relative overflow-x-clip py-20 transition-colors duration-700 md:py-28"
     >
-      <BotanicalWatermark side="left" />
+      <BotanicalWatermark side="left" variant={config.appearance.ornament} />
       <div className="container mx-auto max-w-5xl px-5 md:px-6">
         <div className="mb-14 space-y-3 text-center md:mb-18">
           <div className="bg-accentDark/10 text-accentDark dark:bg-accent/15 dark:text-accent mx-auto flex h-12 w-12 items-center justify-center rounded-2xl">

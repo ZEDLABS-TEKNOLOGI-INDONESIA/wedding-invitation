@@ -55,8 +55,8 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
       id="couple"
       className="relative overflow-x-clip py-20 transition-colors duration-700 md:py-28"
     >
-      <BotanicalWatermark side="left" />
-      <BotanicalWatermark side="right" />
+      <BotanicalWatermark side="left" variant={config.appearance.ornament} />
+      <BotanicalWatermark side="right" variant={config.appearance.ornament} />
       <div className="relative z-10 container mx-auto max-w-5xl px-5 md:px-6">
         <div className="mb-16 space-y-4 text-center md:mb-20">
           <span className="text-accentDark dark:text-accent font-serif text-lg italic sm:text-xl">

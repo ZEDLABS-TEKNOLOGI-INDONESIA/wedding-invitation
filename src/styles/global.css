@@ -512,6 +512,66 @@
   }
 }
 
+@keyframes ornamentSway {
+  0%,
+  100% {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  50% {
+    transform: translateY(calc(-50% - 6px)) rotate(1.8deg);
+  }
+}
+
+@keyframes ornamentSwayMirror {
+  0%,
+  100% {
+    transform: translateY(-50%) scaleX(-1) rotate(0deg);
+  }
+  50% {
+    transform: translateY(calc(-50% - 6px)) scaleX(-1) rotate(1.8deg);
+  }
+}
+
+.ornament-sway-right {
+  animation: ornamentSway 11s ease-in-out infinite;
+}
+
+.ornament-sway-left {
+  animation: ornamentSwayMirror 12s ease-in-out 1.2s infinite;
+}
+
+@keyframes heartHaloPulse {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.018);
+  }
+}
+
+.heart-frame-pulse {
+  animation: heartHaloPulse 8s ease-in-out infinite;
+}
+
+@keyframes fireflyDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.8);
+    opacity: 0.2;
+  }
+  40% {
+    transform: translate3d(18px, -24px, 0) scale(1.25);
+    opacity: 0.9;
+  }
+  75% {
+    transform: translate3d(-12px, -42px, 0) scale(0.95);
+    opacity: 0.55;
+  }
+}
+
 .reveal-active {
   animation: reveal 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }

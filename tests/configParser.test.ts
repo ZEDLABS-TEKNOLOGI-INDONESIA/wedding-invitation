@@ -15,6 +15,7 @@ test("parseConfig memparsing data valid termasuk field baru", () => {
     PUBLIC_DEFAULT_MODE: "dark",
     PUBLIC_ALLOW_THEME_SWITCH: "false",
     PUBLIC_ANIMATION: "lanterns",
+    PUBLIC_ORNAMENT: "islamic",
     RSVP_MAX_GUESTS: "15",
     BANK_ACCOUNTS: JSON.stringify([
       { bank: "BCA", number: "12345", name: "Fey" },
@@ -33,6 +34,7 @@ test("parseConfig memparsing data valid termasuk field baru", () => {
   assert.equal(cfg.appearance.defaultMode, "dark");
   assert.equal(cfg.appearance.allowGuestThemeSwitch, false);
   assert.equal(cfg.appearance.animation, "lanterns");
+  assert.equal(cfg.appearance.ornament, "islamic");
   assert.equal(cfg.rsvp.maxGuests, 15);
   assert.equal(cfg.bankAccounts.length, 1);
   assert.equal(cfg.loveStory.length, 1);
