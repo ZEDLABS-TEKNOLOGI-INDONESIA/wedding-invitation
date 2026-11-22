@@ -2,6 +2,7 @@ import {
   CheckCircle2,
   Clock,
   Eye,
+  FileText,
   Loader2,
   RefreshCcw,
   Send,
@@ -10,8 +11,26 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
+import {
+  PDF_PREFS_EVENT,
+  buildInvitationContentFromConfig,
+  generateInvitationPdfBase64,
+  loadPdfPrefs,
+  renderSharedMiddlePages,
+  resolvePdfPrefs,
+  savePdfPrefs,
+  type PdfStationeryPrefs,
+} from "../utils/pdfInvitation";
+import {
+  PAPER_SIZES,
+  STATIONERY_DESIGNS,
+  STATIONERY_THEMES,
+  ensureStationeryFonts,
+  type PaperSizeId,
+  type StationeryDesignId,
+} from "../utils/stationery";
 import { ConfirmModal, type ConfirmDialogState } from "./Admin/AdminFeedback";
 import CsvImportModal from "./Admin/CsvImportModal";
 
@@ -59,12 +78,17 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     phone: "",
     address: "Di Tempat",
   });
-  const [attachQr, setAttachQr] = useState(true);
+  const [attachPdf, setAttachPdf] = useState(true);
+  const [pdfPrefs, setPdfPrefs] = useState<PdfStationeryPrefs>(() =>
+    loadPdfPrefs()
+  );
+  const [cfg, setCfg] = useState<Record<string, string>>({});
   const [bulkGuests, setBulkGuests] = useState<GuestInviteRow[]>([]);
   const [savedGuests, setSavedGuests] = useState<SavedGuestItem[]>([]);
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>("all");
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [sendingLabel, setSendingLabel] = useState("");
   const [bulkProgress, setBulkProgress] = useState(0);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -80,6 +104,20 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   );
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
+
+  const resolvedPdf = useMemo(() => resolvePdfPrefs(pdfPrefs), [pdfPrefs]);
+  const invitationContent = useMemo(
+    () => buildInvitationContentFromConfig(cfg),
+    [cfg]
+  );
+
+  const updatePdfPref = (partial: Partial<PdfStationeryPrefs>) => {
+    setPdfPrefs((prev) => {
+      const next = { ...prev, ...partial };
+      savePdfPrefs(next);
+      return next;
+    });
+  };
 
   const loadHistory = useCallback(async () => {
     try {
@@ -112,6 +150,24 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   useEffect(() => {
     loadHistory();
     loadSavedGuests();
+    fetch("/api/config")
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data) => {
+        if (data && typeof data === "object") {
+          setCfg(data as Record<string, string>);
+        }
+      })
+      .catch(() => {});
+
+    const handlePrefsSync = () => {
+      setPdfPrefs(loadPdfPrefs());
+    };
+    window.addEventListener(PDF_PREFS_EVENT, handlePrefsSync);
+    window.addEventListener("storage", handlePrefsSync);
+    return () => {
+      window.removeEventListener(PDF_PREFS_EVENT, handlePrefsSync);
+      window.removeEventListener("storage", handlePrefsSync);
+    };
   }, [loadHistory, loadSavedGuests]);
 
   const savedGuestsWithPhone = savedGuests.filter((g) => g.phone.trim() !== "");
@@ -164,28 +220,50 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     });
   };
 
+  const buildGuestPdfPayload = async (
+    guest: GuestInviteRow,
+    sharedMiddlePages?: { page2: string; page3: string }
+  ) => {
+    if (!attachPdf) return guest;
+    const pdfBase64 = await generateInvitationPdfBase64(
+      invitationContent,
+      { name: guest.name, address: guest.address || "Di Tempat" },
+      baseUrl,
+      resolvedPdf.theme,
+      { design: resolvedPdf.designId, paper: resolvedPdf.paper },
+      sharedMiddlePages,
+      0.85
+    );
+    return { ...guest, pdfBase64 };
+  };
+
   const sendSingle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!singleForm.name.trim() || !singleForm.phone.trim()) return;
     setIsSending(true);
+    setSendingLabel(
+      attachPdf ? "Menyusun PDF undangan..." : "Mengirim ke Antrean..."
+    );
     setFeedback(null);
 
     try {
+      const guestPayload = await buildGuestPdfPayload(singleForm);
+      setSendingLabel("Mengirim ke Antrean...");
       const res = await fetch("/api/whatsapp/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          guests: [singleForm],
+          guests: [guestPayload],
           siteUrl: baseUrl,
-          attachQr,
+          attachPdf,
         }),
       });
       const payload = await res.json().catch(() => ({}));
       if (res.ok && payload.queued > 0) {
         setFeedback({
           type: "success",
-          message: `Undangan untuk ${singleForm.name.trim()} berhasil masuk antrean WhatsApp Gateway.`,
+          message: `Undangan${attachPdf ? " beserta berkas PDF" : ""} untuk ${singleForm.name.trim()} berhasil masuk antrean WhatsApp Gateway.`,
         });
         setSingleForm({ name: "", phone: "", address: "Di Tempat" });
         await loadHistory();
@@ -204,6 +282,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       });
     } finally {
       setIsSending(false);
+      setSendingLabel("");
     }
   };
 
@@ -211,23 +290,52 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     if (bulkGuests.length === 0) return;
     setIsSending(true);
     setBulkProgress(0);
+    setSendingLabel(
+      attachPdf ? "Menyiapkan templat surat PDF..." : "Mengirim undangan..."
+    );
     setFeedback(null);
 
     let totalQueued = 0;
     let totalFailed = 0;
-    const CHUNK_SIZE = 20;
+    const CHUNK_SIZE = attachPdf ? 3 : 20;
 
     try {
+      let sharedMiddlePages: { page2: string; page3: string } | undefined;
+      if (attachPdf) {
+        await ensureStationeryFonts();
+        sharedMiddlePages = renderSharedMiddlePages(
+          invitationContent,
+          resolvedPdf.theme,
+          { design: resolvedPdf.designId, paper: resolvedPdf.paper },
+          0.85
+        );
+      }
+
       for (let i = 0; i < bulkGuests.length; i += CHUNK_SIZE) {
         const chunk = bulkGuests.slice(i, i + CHUNK_SIZE);
+        const preparedGuests = [];
+        for (let idx = 0; idx < chunk.length; idx++) {
+          if (attachPdf) {
+            setSendingLabel(
+              `Menyusun PDF ${i + idx + 1}/${bulkGuests.length}...`
+            );
+          }
+          preparedGuests.push(
+            await buildGuestPdfPayload(chunk[idx], sharedMiddlePages)
+          );
+        }
+
+        setSendingLabel(
+          `Mengirim ${Math.min(i + chunk.length, bulkGuests.length)}/${bulkGuests.length}...`
+        );
         const res = await fetch("/api/whatsapp/invitations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            guests: chunk,
+            guests: preparedGuests,
             siteUrl: baseUrl,
-            attachQr,
+            attachPdf,
           }),
         });
         const payload = await res.json().catch(() => ({}));
@@ -264,6 +372,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       await loadHistory();
     } finally {
       setIsSending(false);
+      setSendingLabel("");
     }
   };
 
@@ -294,23 +403,26 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     setResendingId(row.id);
     setFeedback(null);
     try {
+      const guestPayload = await buildGuestPdfPayload({
+        name: row.guest_name,
+        phone: row.phone,
+        address: row.address || "Di Tempat",
+      });
       const res = await fetch("/api/whatsapp/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          guests: [
-            { name: row.guest_name, phone: row.phone, address: row.address },
-          ],
+          guests: [guestPayload],
           siteUrl: baseUrl,
-          attachQr,
+          attachPdf,
         }),
       });
       const payload = await res.json().catch(() => ({}));
       if (res.ok && payload.queued > 0) {
         setFeedback({
           type: "success",
-          message: `Undangan untuk ${row.guest_name} dikirim ulang ke antrean.`,
+          message: `Undangan${attachPdf ? " beserta PDF" : ""} untuk ${row.guest_name} dikirim ulang ke antrean.`,
         });
       } else {
         setFeedback({
@@ -434,13 +546,87 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-(--adm-text-secondary)">
           <input
             type="checkbox"
-            checked={attachQr}
-            onChange={(e) => setAttachQr(e.target.checked)}
+            checked={attachPdf}
+            onChange={(e) => setAttachPdf(e.target.checked)}
             className="h-4 w-4 accent-(--adm-accent)"
           />
-          Lampirkan gambar QR Code undangan
+          Lampirkan Surat Undangan PDF
         </label>
       </div>
+
+      {attachPdf && (
+        <div className="rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-3.5">
+          <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-(--adm-text-primary)">
+              <FileText className="h-3.5 w-3.5 text-(--adm-accent)" />
+              Format Surat Undangan PDF (4 Halaman)
+            </span>
+            <span className="text-[11px] text-(--adm-text-secondary)">
+              Tersinkron otomatis dengan pilihan pada tab{" "}
+              <strong className="text-(--adm-text-primary)">Design PDF</strong>
+            </span>
+          </div>
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            <div>
+              <label htmlFor="wa-pdf-design" className="adm-label">
+                Motif Desain
+              </label>
+              <select
+                id="wa-pdf-design"
+                value={resolvedPdf.designId}
+                onChange={(e) =>
+                  updatePdfPref({
+                    designId: e.target.value as StationeryDesignId,
+                  })
+                }
+                className="adm-input adm-input-sm bg-(--adm-bg-secondary)"
+              >
+                {STATIONERY_DESIGNS.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="wa-pdf-paper" className="adm-label">
+                Ukuran Kertas
+              </label>
+              <select
+                id="wa-pdf-paper"
+                value={resolvedPdf.paper.id}
+                onChange={(e) =>
+                  updatePdfPref({ paperId: e.target.value as PaperSizeId })
+                }
+                className="adm-input adm-input-sm bg-(--adm-bg-secondary)"
+              >
+                {PAPER_SIZES.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.dimensionsLabel}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="wa-pdf-theme" className="adm-label">
+                Nuansa Warna
+              </label>
+              <select
+                id="wa-pdf-theme"
+                value={resolvedPdf.theme.id}
+                onChange={(e) => updatePdfPref({ themeId: e.target.value })}
+                className="adm-input adm-input-sm bg-(--adm-bg-secondary)"
+              >
+                {STATIONERY_THEMES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeMode === "single" ? (
         <form
@@ -563,7 +749,11 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              {isSending ? "Mengirim ke Antrean..." : "Kirim Undangan WhatsApp"}
+              {isSending
+                ? sendingLabel || "Mengirim ke Antrean..."
+                : attachPdf
+                  ? "Kirim Undangan & PDF via WhatsApp"
+                  : "Kirim Undangan WhatsApp"}
             </button>
           </div>
         </form>
@@ -667,8 +857,10 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       <Send className="h-3.5 w-3.5" />
                     )}
                     {isSending
-                      ? `Mengirim (${bulkProgress}%)...`
-                      : "Kirim Semua"}
+                      ? sendingLabel || `Mengirim (${bulkProgress}%)...`
+                      : attachPdf
+                        ? "Kirim Semua + PDF"
+                        : "Kirim Semua"}
                   </button>
                 </div>
               </div>

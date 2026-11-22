@@ -1,5 +1,4 @@
 import FileSaver from "file-saver";
-import jsPDF from "jspdf";
 import JSZip from "jszip";
 import {
   Check,
@@ -17,6 +16,14 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
 import {
+  buildInvitationContentFromConfig,
+  generateInvitationPdfDoc,
+  loadPdfPrefs,
+  renderSharedMiddlePages,
+  resolvePdfPrefs,
+  savePdfPrefs,
+} from "../utils/pdfInvitation";
+import {
   PAPER_SIZES,
   STATIONERY_DESIGNS,
   STATIONERY_THEMES,
@@ -25,7 +32,6 @@ import {
   renderCouplePage,
   renderCoverPage,
   renderEventPage,
-  type InvitationContent,
   type PaperSizeOption,
   type StationeryDesignId,
   type StationeryTheme,
@@ -62,14 +68,23 @@ const PAGE_LABELS = [
 
 const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
   const [activeTab, setActiveTab] = useState<"single" | "bulk">("single");
-  const [currentTheme, setCurrentTheme] = useState<StationeryTheme>(
-    STATIONERY_THEMES[0]
-  );
-  const [currentDesign, setCurrentDesign] =
-    useState<StationeryDesignId>("floral");
-  const [currentPaper, setCurrentPaper] = useState<PaperSizeOption>(
-    PAPER_SIZES[0]
-  );
+  const [currentTheme, setCurrentTheme] = useState<StationeryTheme>(() => {
+    return resolvePdfPrefs(loadPdfPrefs()).theme;
+  });
+  const [currentDesign, setCurrentDesign] = useState<StationeryDesignId>(() => {
+    return resolvePdfPrefs(loadPdfPrefs()).designId;
+  });
+  const [currentPaper, setCurrentPaper] = useState<PaperSizeOption>(() => {
+    return resolvePdfPrefs(loadPdfPrefs()).paper;
+  });
+
+  useEffect(() => {
+    savePdfPrefs({
+      designId: currentDesign,
+      paperId: currentPaper.id,
+      themeId: currentTheme.id,
+    });
+  }, [currentDesign, currentPaper.id, currentTheme.id]);
   const [singleData, setSingleData] = useState<GuestData>({
     name: "",
     address: "Di Tempat",
@@ -122,47 +137,10 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     saveAsFunc(blob, name);
   };
 
-  const invitationContent = useMemo<InvitationContent>(() => {
-    const tz = cfg.EVENT_TIMEZONE || "WIB";
-    const formatTime = (start?: string, end?: string) => {
-      if (!start && !end) return "";
-      if (start && end) return `Pukul ${start} – ${end} ${tz}`;
-      return `Pukul ${start || end} ${tz}`;
-    };
-    const lat = cfg.VENUE_LAT || "0";
-    const lng = cfg.VENUE_LNG || "0";
-
-    return {
-      brideName: cfg.BRIDE_NICKNAME || "Mempelai Wanita",
-      groomName: cfg.GROOM_NICKNAME || "Mempelai Pria",
-      brideFullName:
-        cfg.BRIDE_FULLNAME || cfg.BRIDE_NICKNAME || "Mempelai Wanita",
-      groomFullName:
-        cfg.GROOM_FULLNAME || cfg.GROOM_NICKNAME || "Mempelai Pria",
-      brideParents: cfg.BRIDE_PARENTS || "",
-      groomParents: cfg.GROOM_PARENTS || "",
-      venueName: cfg.VENUE_NAME || "",
-      venueAddress: cfg.VENUE_ADDRESS || "",
-      mapsUrl: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
-      akadTitle: cfg.AKAD_TITLE || "Akad Nikah",
-      akadDay: cfg.AKAD_DAY || "",
-      akadDate: cfg.AKAD_DATE || "",
-      akadTime: formatTime(cfg.AKAD_START, cfg.AKAD_END),
-      resepsiTitle: cfg.RESEPSI_TITLE || "Resepsi Pernikahan",
-      resepsiDay: cfg.RESEPSI_DAY || "",
-      resepsiDate: cfg.RESEPSI_DATE || "",
-      resepsiTime: formatTime(cfg.RESEPSI_START, cfg.RESEPSI_END),
-      salamOpening:
-        cfg.TEXT_SALAM_OPENING || "Assalamu'alaikum Warahmatullahi Wabarakatuh",
-      quote: cfg.TEXT_QUOTE_AR_RUM || "",
-      closingText:
-        cfg.TEXT_CLOSING ||
-        "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir untuk memberikan doa restu.",
-      salamClosing:
-        cfg.TEXT_SALAM_CLOSING || "Wassalamu'alaikum Warahmatullahi Wabarakatuh",
-      signature: cfg.TEXT_SIGNATURE || "Kami yang berbahagia,",
-    };
-  }, [cfg]);
+  const invitationContent = useMemo(
+    () => buildInvitationContentFromConfig(cfg),
+    [cfg]
+  );
 
   const pageOpts = useMemo(
     () => ({ design: currentDesign, paper: currentPaper }),
@@ -201,54 +179,19 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     };
   }, [isConfigLoaded, fontsReady, singleData, buildPreviewImages]);
 
-  const generatePDFDoc = async (
+  const generatePDFDoc = (
     guest: GuestData,
     sharedMiddlePages?: { page2: string; page3: string }
-  ): Promise<jsPDF> => {
-    await ensureStationeryFonts();
-
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: [currentPaper.mmWidth, currentPaper.mmHeight],
-      compress: true,
-    });
-    const width = doc.internal.pageSize.getWidth();
-    const height = doc.internal.pageSize.getHeight();
-    const guestUrl = `${baseUrl}/?to=${encodeURIComponent(guest.name.trim())}`;
-
-    const page1 = renderCoverPage(
+  ) =>
+    generateInvitationPdfDoc(
       invitationContent,
       guest,
+      baseUrl,
       currentTheme,
-      pageOpts
-    ).toDataURL("image/jpeg", 0.92);
-    const page2 =
-      sharedMiddlePages?.page2 ||
-      renderCouplePage(invitationContent, currentTheme, pageOpts).toDataURL(
-        "image/jpeg",
-        0.92
-      );
-    const page3 =
-      sharedMiddlePages?.page3 ||
-      renderEventPage(invitationContent, currentTheme, pageOpts).toDataURL(
-        "image/jpeg",
-        0.92
-      );
-    const page4 = renderClosingPage(
-      invitationContent,
-      guestUrl,
-      currentTheme,
-      pageOpts
-    ).toDataURL("image/jpeg", 0.92);
-
-    [page1, page2, page3, page4].forEach((img, idx) => {
-      if (idx > 0) doc.addPage([currentPaper.mmWidth, currentPaper.mmHeight]);
-      doc.addImage(img, "JPEG", 0, 0, width, height, undefined, "FAST");
-    });
-
-    return doc;
-  };
+      pageOpts,
+      sharedMiddlePages,
+      0.92
+    );
 
   const handleOpenPdfPreview = async () => {
     if (!singleData.name.trim()) return;
@@ -305,18 +248,12 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     setStatusMsg("Menyiapkan huruf & halaman dasar...");
     try {
       await ensureStationeryFonts();
-      const sharedMiddlePages = {
-        page2: renderCouplePage(
-          invitationContent,
-          currentTheme,
-          pageOpts
-        ).toDataURL("image/jpeg", 0.92),
-        page3: renderEventPage(
-          invitationContent,
-          currentTheme,
-          pageOpts
-        ).toDataURL("image/jpeg", 0.92),
-      };
+      const sharedMiddlePages = renderSharedMiddlePages(
+        invitationContent,
+        currentTheme,
+        pageOpts,
+        0.92
+      );
 
       const zip = new JSZip();
       const folder = zip.folder(

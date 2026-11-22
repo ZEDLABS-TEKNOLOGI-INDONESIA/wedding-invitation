@@ -1,5 +1,4 @@
 import type { APIRoute } from "astro";
-import QRCode from "qrcode";
 import { isAdminAuthenticated } from "../../../lib/auth";
 import db, { getConfig } from "../../../lib/db";
 import {
@@ -18,10 +17,26 @@ const JSON_HEADERS = {
   "Cache-Control": "no-store",
 };
 
+const MAX_PDF_BASE64_LENGTH = 15 * 1024 * 1024;
+
 interface GuestInviteInput {
   name: string;
   phone: string;
   address?: string;
+  pdfBase64?: string;
+}
+
+function cleanBase64Payload(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const commaIdx = trimmed.indexOf(",");
+  const payload =
+    trimmed.startsWith("data:") && commaIdx >= 0
+      ? trimmed.slice(commaIdx + 1).trim()
+      : trimmed;
+  if (!payload || payload.length > MAX_PDF_BASE64_LENGTH) return "";
+  return payload;
 }
 
 export const GET: APIRoute = async ({ cookies }) => {
@@ -63,7 +78,7 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
     const body = (await request.json()) as {
       guests?: GuestInviteInput[];
       siteUrl?: string;
-      attachQr?: boolean;
+      attachPdf?: boolean;
     };
 
     const guests = Array.isArray(body.guests) ? body.guests : [];
@@ -95,7 +110,7 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
     ).replace(/\/+$/, "");
 
     const summary = buildEventSummary(config);
-    const client = new WaGatewayClient(creds, { timeoutMs: 20_000, maxRetries: 1 });
+    const client = new WaGatewayClient(creds, { timeoutMs: 30_000, maxRetries: 1 });
     const insertStmt = db.prepare(`
       INSERT INTO wa_invitations
         (guest_name, phone, address, invitation_url, job_id, reference_id, status, error_message, created_at, updated_at)
@@ -155,23 +170,14 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
       const referenceId = `WED-INV-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
 
       let media: WaMedia | null = null;
-      if (body.attachQr) {
-        try {
-          const qrDataUrl = await QRCode.toDataURL(invitationUrl, {
-            width: 360,
-            margin: 2,
-            errorCorrectionLevel: "M",
-          });
-          const base64Png = qrDataUrl.split(",")[1];
-          if (base64Png) {
-            media = {
-              jenis: "gambar",
-              url: base64Png,
-              caption: `QR Undangan Digital untuk ${sanitizeWaVariable(guestName, "Tamu")}`,
-            };
-          }
-        } catch (qrErr) {
-          console.error("Gagal membuat QR lampiran:", qrErr);
+      if (body.attachPdf) {
+        const pdfBase64 = cleanBase64Payload(item?.pdfBase64);
+        if (pdfBase64) {
+          media = {
+            jenis: "dokumen",
+            url: pdfBase64,
+            caption: `Surat Undangan Pernikahan untuk ${sanitizeWaVariable(guestName, "Bapak/Ibu")}`,
+          };
         }
       }
 
