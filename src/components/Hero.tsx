@@ -149,14 +149,16 @@ const Hero: React.FC<{ config: AppConfig }> = ({ config }) => {
           type="button"
           onClick={handleScrollToContent}
           aria-label="Gulir ke detail undangan"
-          className="group mt-9 flex flex-col items-center gap-2 text-white/75 transition-all duration-300 hover:text-white"
+          className="group mt-9 flex flex-col items-center gap-2.5 text-white/80 transition-all duration-500 hover:text-white focus:outline-none"
         >
-          <div className="group-hover:border-accent group-hover:bg-accent/20 flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-sm transition-all">
-            <ChevronDown className="h-4 w-4 animate-bounce" />
-          </div>
-          <span className="text-[10px] font-semibold tracking-[0.28em] uppercase opacity-85">
+          <span className="text-[10px] font-medium tracking-[0.32em] uppercase opacity-80 transition-opacity duration-500 group-hover:opacity-100">
             Gulir ke Bawah
           </span>
+          <span className="from-white/50 via-accent/60 to-transparent h-6 w-[1px] bg-gradient-to-b transition-all duration-500 group-hover:h-8" />
+          <div className="group-hover:border-accent/80 group-hover:bg-accent/20 relative flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-500 group-hover:scale-105">
+            <span className="pointer-events-none absolute -inset-1.5 rounded-full border border-white/15 transition-all duration-500 group-hover:scale-110 group-hover:border-accent/40" />
+            <ChevronDown className="h-4 w-4 transition-transform duration-500 group-hover:translate-y-0.5" />
+          </div>
         </button>
       </div>
     </section>

@@ -245,10 +245,18 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
             type="button"
             onClick={scrollToTop}
             aria-label="Kembali ke atas"
-            className="group border-accentDark/25 text-accentDark hover:bg-accentDark dark:border-accent/25 dark:text-accent dark:hover:bg-accent mt-2 inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[11px] font-bold tracking-[0.2em] uppercase transition-all hover:text-white dark:hover:text-slate-950"
+            className="group text-accentDark dark:text-accent mt-2 flex flex-col items-center gap-2.5 transition-all duration-500 focus:outline-none"
           >
-            <ChevronUp className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
-            Kembali ke Atas
+            <div className="border-accentDark/30 group-hover:border-accentDark group-hover:bg-accentDark dark:border-accent/35 dark:group-hover:border-accent dark:group-hover:bg-accent relative flex h-11 w-11 items-center justify-center rounded-full border bg-white/70 shadow-sm backdrop-blur-md transition-all duration-500 group-hover:-translate-y-0.5 group-hover:text-white dark:bg-white/5 dark:group-hover:text-slate-950">
+              <span className="border-accentDark/15 group-hover:border-accentDark/35 dark:border-accent/15 dark:group-hover:border-accent/40 pointer-events-none absolute -inset-1.5 rounded-full border transition-all duration-500 group-hover:scale-110" />
+              <ChevronUp className="h-4 w-4 transition-transform duration-500 group-hover:-translate-y-0.5" />
+            </div>
+            <span className="from-accentDark/50 dark:from-accent/50 h-5 w-[1px] bg-gradient-to-b to-transparent transition-all duration-500 group-hover:h-6" />
+            <span className="flex items-center gap-2.5 text-[10px] font-semibold tracking-[0.3em] uppercase opacity-80 transition-opacity duration-500 group-hover:opacity-100">
+              <span className="bg-accentDark/35 dark:bg-accent/35 h-[1px] w-4" />
+              Kembali ke Atas
+              <span className="bg-accentDark/35 dark:bg-accent/35 h-[1px] w-4" />
+            </span>
           </button>
         </div>
       </footer>
