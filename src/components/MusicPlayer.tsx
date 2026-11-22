@@ -6,7 +6,7 @@ interface MusicPlayerProps {
   visible?: boolean;
 }
 
-const IDLE_HIDE_MS = 3500;
+const IDLE_HIDE_MS = 3000;
 const RING_RADIUS = 25;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
@@ -15,22 +15,36 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ url, visible = true }) => {
   const userPausedRef = useRef(false);
   const hideTimerRef = useRef<number | null>(null);
   const isInteractingRef = useRef(false);
-  const lastActivityRef = useRef(0);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isShown, setIsShown] = useState(true);
-  const [isHovering, setIsHovering] = useState(false);
-  const [timerKey, setTimerKey] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+
+    const updateProgress = () => {
+      if (
+        !audio.duration ||
+        !Number.isFinite(audio.duration) ||
+        audio.duration <= 0
+      ) {
+        setProgress(0);
+        return;
+      }
+      setProgress(Math.min(1, Math.max(0, audio.currentTime / audio.duration)));
+    };
 
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
 
     audio.addEventListener("play", onPlay);
     audio.addEventListener("pause", onPause);
+    audio.addEventListener("timeupdate", updateProgress);
+    audio.addEventListener("loadedmetadata", updateProgress);
+    audio.addEventListener("durationchange", updateProgress);
+    audio.addEventListener("ended", updateProgress);
 
     const handlePlayEvent = () => {
       if (!audioRef.current || userPausedRef.current || !url) return;
@@ -41,6 +55,10 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ url, visible = true }) => {
     return () => {
       audio.removeEventListener("play", onPlay);
       audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("timeupdate", updateProgress);
+      audio.removeEventListener("loadedmetadata", updateProgress);
+      audio.removeEventListener("durationchange", updateProgress);
+      audio.removeEventListener("ended", updateProgress);
       window.removeEventListener("play-wedding-music", handlePlayEvent);
     };
   }, [url]);
@@ -59,12 +77,6 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ url, visible = true }) => {
     };
 
     const handleActivity = () => {
-      const now = Date.now();
-      // Throttle reset animasi garis agar tidak berkedip saat mouse bergerak cepat
-      if (now - lastActivityRef.current > 250 || !isShown) {
-        lastActivityRef.current = now;
-        setTimerKey((k) => k + 1);
-      }
       setIsShown(true);
       scheduleHide();
     };
@@ -85,19 +97,16 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ url, visible = true }) => {
       window.removeEventListener("touchstart", handleActivity);
       window.removeEventListener("keydown", handleActivity);
     };
-  }, [visible, isShown]);
+  }, [visible]);
 
   const handlePointerEnter = () => {
     isInteractingRef.current = true;
-    setIsHovering(true);
     setIsShown(true);
     if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
   };
 
   const handlePointerLeave = () => {
     isInteractingRef.current = false;
-    setIsHovering(false);
-    setTimerKey((k) => k + 1);
     if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
     hideTimerRef.current = window.setTimeout(() => {
       if (!isInteractingRef.current) setIsShown(false);
@@ -107,7 +116,6 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ url, visible = true }) => {
   const toggleMusic = () => {
     const audio = audioRef.current;
     if (!audio || !url) return;
-    setTimerKey((k) => k + 1);
     if (isPlaying) {
       userPausedRef.current = true;
       audio.pause();
@@ -118,6 +126,8 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ url, visible = true }) => {
   };
 
   if (!url) return null;
+
+  const dashOffset = RING_CIRCUMFERENCE * (1 - progress);
 
   return (
     <>
@@ -134,11 +144,11 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ url, visible = true }) => {
           title={isPlaying ? "Jeda Musik" : "Putar Musik"}
           className={`frosted-glass group fixed top-4 right-4 z-[120] flex h-12 w-12 items-center justify-center rounded-full border border-white/40 text-slate-700 shadow-xl transition-all duration-500 ease-out hover:scale-105 active:scale-95 md:top-6 md:right-6 md:h-14 md:w-14 dark:border-white/10 dark:text-white ${
             isShown
-              ? "translate-x-0 scale-100 opacity-100"
-              : "pointer-events-none translate-x-5 scale-90 opacity-0"
+              ? "translate-y-0 scale-100 opacity-100"
+              : "pointer-events-none -translate-y-4 scale-95 opacity-0"
           }`}
         >
-          {/* Garis melingkar hitung mundur sebelum tombol tersembunyi otomatis */}
+          {/* Garis melingkar progres durasi lagu */}
           <svg
             aria-hidden="true"
             viewBox="0 0 56 56"
@@ -153,26 +163,18 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ url, visible = true }) => {
               strokeWidth="2"
               className="opacity-15"
             />
-            {isShown && (
-              <circle
-                key={timerKey}
-                cx="28"
-                cy="28"
-                r={RING_RADIUS}
-                fill="none"
-                stroke="var(--color-accent)"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeDasharray={RING_CIRCUMFERENCE}
-                style={
-                  {
-                    "--ring-circumference": `${RING_CIRCUMFERENCE}`,
-                    animation: `music-ring-countdown ${IDLE_HIDE_MS}ms linear forwards`,
-                    animationPlayState: isHovering ? "paused" : "running",
-                  } as React.CSSProperties
-                }
-              />
-            )}
+            <circle
+              cx="28"
+              cy="28"
+              r={RING_RADIUS}
+              fill="none"
+              stroke="var(--color-accent)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray={RING_CIRCUMFERENCE}
+              strokeDashoffset={dashOffset}
+              className="transition-[stroke-dashoffset] duration-300 ease-linear"
+            />
           </svg>
 
           {isPlaying ? (
