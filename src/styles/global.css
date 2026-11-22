@@ -237,6 +237,7 @@
   transform: scale(0.98);
 }
 
+@layer components {
 .adm-auth-dotgrid {
   background-image: radial-gradient(var(--adm-border) 1px, transparent 1px);
   background-size: 24px 24px;
@@ -690,4 +691,5 @@
 
 .adm-sidebar-item.is-active svg {
   color: var(--adm-accent);
+}
 }
