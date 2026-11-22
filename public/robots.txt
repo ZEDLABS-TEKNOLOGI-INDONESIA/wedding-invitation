@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /qrcode
+Disallow: /checkin
 Disallow: /api/
 
 # Ganti domain sesuai domain asli Anda

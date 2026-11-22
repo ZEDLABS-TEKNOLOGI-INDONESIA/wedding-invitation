@@ -16,6 +16,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.ts",
     "format": "prettier --write ."
   },
   "dependencies": {

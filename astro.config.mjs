@@ -13,6 +13,7 @@ export default defineConfig({
       filter: (page) =>
         !page.includes("/admin") &&
         !page.includes("/qrcode") &&
+        !page.includes("/checkin") &&
         !page.includes("/api/"),
     }),
   ],

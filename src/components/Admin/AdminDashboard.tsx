@@ -19,6 +19,8 @@ import {
   Send,
   Settings,
   Trash2,
+  Upload,
+  UserCheck,
   Users,
   Wifi,
   X,
@@ -26,7 +28,14 @@ import {
 } from "lucide-react";
 import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { invalidateConfigCache } from "../../hooks/useConfig";
+import {
+  ConfirmModal,
+  ToastBanner,
+  type ConfirmDialogState,
+  type ToastState,
+} from "./AdminFeedback";
 
+const GuestManager = lazy(() => import("../GuestManager"));
 const InvitationManager = lazy(() => import("../InvitationManager"));
 const QRCodeManager = lazy(() => import("../QRCodeManager"));
 const WhatsAppManager = lazy(() => import("../WhatsAppManager"));
@@ -54,6 +63,7 @@ const DataTable = <T extends { id: number }>({
   onEdit,
   onDelete,
   onBulkDelete,
+  onRequestConfirm,
 }: {
   data: T[];
   columns: {
@@ -64,6 +74,7 @@ const DataTable = <T extends { id: number }>({
   onEdit?: (item: T) => void;
   onDelete?: (id: number) => void;
   onBulkDelete?: (ids: number[]) => void;
+  onRequestConfirm?: (dialog: ConfirmDialogState) => void;
 }) => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -107,9 +118,21 @@ const DataTable = <T extends { id: number }>({
 
   const executeBulkDelete = () => {
     if (onBulkDelete && selected.length > 0) {
-      if (confirm(`Yakin hapus ${selected.length} data terpilih?`)) {
-        onBulkDelete(selected);
+      const idsToDelete = [...selected];
+      const runDelete = () => {
+        onBulkDelete(idsToDelete);
         setSelected([]);
+      };
+      if (onRequestConfirm) {
+        onRequestConfirm({
+          title: "Hapus Data Terpilih",
+          message: `Yakin ingin menghapus ${idsToDelete.length} data yang dipilih?`,
+          confirmLabel: "Hapus Semua",
+          destructive: true,
+          onConfirm: runDelete,
+        });
+      } else {
+        runDelete();
       }
     }
   };
@@ -241,8 +264,17 @@ const DataTable = <T extends { id: number }>({
                               type="button"
                               aria-label="Hapus data"
                               onClick={() => {
-                                if (confirm("Yakin hapus data ini?"))
+                                if (onRequestConfirm) {
+                                  onRequestConfirm({
+                                    title: "Hapus Data",
+                                    message: "Yakin ingin menghapus data ini?",
+                                    confirmLabel: "Hapus",
+                                    destructive: true,
+                                    onConfirm: () => onDelete(item.id),
+                                  });
+                                } else {
                                   onDelete(item.id);
+                                }
                               }}
                               className="rounded p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                             >
@@ -512,7 +544,16 @@ const safeParseList = <T,>(rawValue: string | undefined): T[] => {
   }
 };
 
-const SettingsTab: React.FC = () => {
+const IMAGE_UPLOAD_KEYS = new Set([
+  "BRIDE_IMAGE",
+  "GROOM_IMAGE",
+  "HERO_IMAGE",
+  "ENVELOPE_IMAGE",
+]);
+
+const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
+  onNotify,
+}) => {
   const [rawConfig, setRawConfig] = useState<Record<string, string>>({});
   const [bankAccounts, setBankAccounts] = useState<BankAccountItem[]>([]);
   const [loveStory, setLoveStory] = useState<LoveStoryItem[]>([]);
@@ -522,6 +563,7 @@ const SettingsTab: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [showWaSecret, setShowWaSecret] = useState(false);
   const [waActionLoading, setWaActionLoading] = useState<
     "ping" | "sync" | "test" | null
@@ -568,6 +610,41 @@ const SettingsTab: React.FC = () => {
   const handleChange = (key: string, value: string) => {
     setRawConfig((prev) => ({ ...prev, [key]: value }));
     setSaveError(null);
+  };
+
+  const uploadImageFile = async (
+    file: File,
+    uploadId: string,
+    onSuccess: (url: string) => void
+  ) => {
+    setUploadingKey(uploadId);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (res.ok && payload.url) {
+        onSuccess(payload.url);
+        onNotify({
+          type: "success",
+          message:
+            "Gambar berhasil diunggah. Klik 'Simpan Semua' untuk menerapkan.",
+        });
+      } else {
+        onNotify({
+          type: "error",
+          message: payload?.error || "Gagal mengunggah gambar.",
+        });
+      }
+    } catch {
+      onNotify({ type: "error", message: "Gagal terhubung saat upload." });
+    } finally {
+      setUploadingKey(null);
+    }
   };
 
   const handleWaAction = async (mode: "ping" | "sync" | "test") => {
@@ -761,6 +838,49 @@ const SettingsTab: React.FC = () => {
                       rows={3}
                       className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                     />
+                  ) : IMAGE_UPLOAD_KEYS.has(field.key) ? (
+                    <div className="flex items-center gap-2">
+                      {rawConfig[field.key]?.trim() && (
+                        <img
+                          src={rawConfig[field.key]}
+                          alt={field.label}
+                          className="h-11 w-11 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-slate-700"
+                        />
+                      )}
+                      <input
+                        id={fieldId}
+                        type="url"
+                        value={rawConfig[field.key] ?? ""}
+                        onChange={(e) =>
+                          handleChange(field.key, e.target.value)
+                        }
+                        placeholder={field.placeholder}
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                      />
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                        {uploadingKey === field.key ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4" />
+                        )}
+                        <span className="hidden sm:inline">Upload</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          disabled={uploadingKey !== null}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            e.target.value = "";
+                            if (f) {
+                              void uploadImageFile(f, field.key, (url) =>
+                                handleChange(field.key, url)
+                              );
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
                   ) : (
                     <input
                       id={fieldId}
@@ -1206,17 +1326,42 @@ const SettingsTab: React.FC = () => {
 
       {/* Galeri Foto Editor */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-        <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
             Galeri Foto
           </h3>
-          <button
-            type="button"
-            onClick={() => setGalleryImages((prev) => [...prev, ""])}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
-          >
-            <Plus className="h-3.5 w-3.5" /> Tambah Foto
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700">
+              {uploadingKey === "gallery-new" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5" />
+              )}
+              Upload Foto
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                disabled={uploadingKey !== null}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) {
+                    void uploadImageFile(f, "gallery-new", (url) =>
+                      setGalleryImages((prev) => [...prev, url])
+                    );
+                  }
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setGalleryImages((prev) => [...prev, ""])}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+            >
+              <Plus className="h-3.5 w-3.5" /> Tambah URL
+            </button>
+          </div>
         </div>
         <div className="space-y-3">
           {galleryImages.length === 0 ? (
@@ -1302,7 +1447,7 @@ const AdminDashboard = ({
   siteUrl: string;
 }) => {
   const [activeTab, setActiveTab] = useState<
-    "rsvp" | "wishes" | "wa" | "qr" | "pdf" | "settings"
+    "rsvp" | "wishes" | "guests" | "wa" | "qr" | "pdf" | "settings"
   >("rsvp");
   const [rsvps, setRsvps] = useState(initialRsvps);
   const [wishes, setWishes] = useState(initialWishes);
@@ -1310,6 +1455,9 @@ const AdminDashboard = ({
   const [isSaving, setIsSaving] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [confirmDialog, setConfirmDialog] =
+    useState<ConfirmDialogState | null>(null);
 
   const stats = useMemo(() => {
     const hadirItems = rsvps.filter((r) => r.attendance === "hadir");
@@ -1350,11 +1498,18 @@ const AdminDashboard = ({
           setRsvps((prev) => prev.filter((i) => !ids.includes(i.id)));
         if (type === "wish")
           setWishes((prev) => prev.filter((i) => !ids.includes(i.id)));
+        setToast({
+          type: "success",
+          message: `${ids.length} data berhasil dihapus.`,
+        });
       } else {
-        alert("Gagal menghapus: " + (json.error || "Unknown Error"));
+        setToast({
+          type: "error",
+          message: "Gagal menghapus: " + (json.error || "Unknown Error"),
+        });
       }
     } catch {
-      alert("Error Network.");
+      setToast({ type: "error", message: "Gagal terhubung ke server." });
     } finally {
       setIsDeleting(false);
     }
@@ -1398,6 +1553,7 @@ const AdminDashboard = ({
           );
         }
         setIsModalOpen(false);
+        setToast({ type: "success", message: "Data berhasil diperbarui." });
       } else {
         let msg = "Gagal update data.";
         try {
@@ -1406,10 +1562,10 @@ const AdminDashboard = ({
         } catch {
           // ignore
         }
-        alert(msg);
+        setToast({ type: "error", message: msg });
       }
     } catch {
-      alert("Error Network.");
+      setToast({ type: "error", message: "Gagal terhubung ke server." });
     } finally {
       setIsSaving(false);
     }
@@ -1418,6 +1574,7 @@ const AdminDashboard = ({
   const tabs = [
     { id: "rsvp", label: "Data RSVP", icon: Users },
     { id: "wishes", label: "Ucapan & Doa", icon: MessageCircle },
+    { id: "guests", label: "Tamu & Check-In", icon: UserCheck },
     { id: "wa", label: "Kirim WhatsApp", icon: MessageSquare },
     { id: "qr", label: "QR Generator", icon: QrCode },
     { id: "pdf", label: "Design PDF", icon: Printer },
@@ -1426,6 +1583,11 @@ const AdminDashboard = ({
 
   return (
     <div>
+      <ToastBanner toast={toast} onClose={() => setToast(null)} />
+      <ConfirmModal
+        dialog={confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+      />
       <div className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
         <div className="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
           <div className="flex items-center gap-3 text-slate-400">
@@ -1561,6 +1723,7 @@ const AdminDashboard = ({
             }}
             onDelete={(id) => handleDelete("rsvp", [id])}
             onBulkDelete={(ids) => handleDelete("rsvp", ids)}
+            onRequestConfirm={setConfirmDialog}
           />
         </div>
       )}
@@ -1604,7 +1767,22 @@ const AdminDashboard = ({
             }}
             onDelete={(id) => handleDelete("wish", [id])}
             onBulkDelete={(ids) => handleDelete("wish", ids)}
+            onRequestConfirm={setConfirmDialog}
           />
+        </div>
+      )}
+
+      {activeTab === "guests" && (
+        <div className="animate-reveal rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8 dark:border-slate-700 dark:bg-slate-800">
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              </div>
+            }
+          >
+            <GuestManager siteUrl={siteUrl} />
+          </Suspense>
         </div>
       )}
 
@@ -1652,7 +1830,7 @@ const AdminDashboard = ({
 
       {activeTab === "settings" && (
         <div className="animate-reveal">
-          <SettingsTab />
+          <SettingsTab onNotify={setToast} />
         </div>
       )}
 

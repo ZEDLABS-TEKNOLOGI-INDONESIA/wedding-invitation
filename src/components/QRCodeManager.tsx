@@ -13,6 +13,12 @@ import Papa from "papaparse";
 import QRCode from "qrcode";
 import { QRCodeCanvas } from "qrcode.react";
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  ConfirmModal,
+  ToastBanner,
+  type ConfirmDialogState,
+  type ToastState,
+} from "./Admin/AdminFeedback";
 
 const loadImage = (src: string): Promise<HTMLImageElement | null> =>
   new Promise((resolve) => {
@@ -36,6 +42,9 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [statusMsg, setStatusMsg] = useState("");
   const [brideInitial, setBrideInitial] = useState("B");
   const [groomInitial, setGroomInitial] = useState("G");
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [confirmDialog, setConfirmDialog] =
+    useState<ConfirmDialogState | null>(null);
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
 
@@ -115,7 +124,10 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         },
         error: (err) => {
           console.error("Gagal membaca CSV:", err);
-          alert("Gagal membaca file CSV. Pastikan format file valid.");
+          setToast({
+            type: "error",
+            message: "Gagal membaca file CSV. Pastikan format file valid.",
+          });
           setIsReadingCsv(false);
         },
         header: false,
@@ -191,7 +203,10 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       );
       setStatusMsg("Selesai!");
     } catch {
-      alert("Terjadi kesalahan saat membuat ZIP.");
+      setToast({
+        type: "error",
+        message: "Terjadi kesalahan saat membuat ZIP.",
+      });
     } finally {
       setTimeout(() => {
         setIsProcessing(false);
@@ -213,11 +228,16 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
   const copySingleLink = () => {
     navigator.clipboard.writeText(generateUrl(singleName));
-    alert("Link berhasil disalin!");
+    setToast({ type: "success", message: "Link undangan berhasil disalin!" });
   };
 
   return (
     <div className="space-y-8">
+      <ToastBanner toast={toast} onClose={() => setToast(null)} />
+      <ConfirmModal
+        dialog={confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+      />
       <div className="flex justify-center">
         <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
           <button
@@ -361,10 +381,17 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                 </div>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => {
-                      if (confirm("Yakin ingin menghapus semua data?"))
-                        setBulkNames([]);
-                    }}
+                    type="button"
+                    onClick={() =>
+                      setConfirmDialog({
+                        title: "Reset Daftar Tamu",
+                        message:
+                          "Yakin ingin menghapus semua data CSV yang dimuat?",
+                        confirmLabel: "Reset",
+                        destructive: true,
+                        onConfirm: () => setBulkNames([]),
+                      })
+                    }
                     className="group flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-2.5 text-xs font-bold text-red-600 transition-all hover:bg-red-100 hover:shadow-sm active:scale-95 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
                   >
                     <RefreshCcw className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-180" />

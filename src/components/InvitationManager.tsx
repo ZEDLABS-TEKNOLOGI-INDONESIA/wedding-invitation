@@ -15,6 +15,12 @@ import {
 import Papa from "papaparse";
 import QRCode from "qrcode";
 import React, { useEffect, useState } from "react";
+import {
+  ConfirmModal,
+  ToastBanner,
+  type ConfirmDialogState,
+  type ToastState,
+} from "./Admin/AdminFeedback";
 
 interface GuestData {
   name: string;
@@ -92,6 +98,9 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [cfg, setCfg] = useState<Record<string, string>>({});
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [confirmDialog, setConfirmDialog] =
+    useState<ConfirmDialogState | null>(null);
 
   useEffect(() => {
     fetch("/api/config")
@@ -743,7 +752,10 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
         },
         error: (err) => {
           console.error("Gagal membaca CSV:", err);
-          alert("Gagal membaca file CSV. Pastikan format file valid.");
+          setToast({
+            type: "error",
+            message: "Gagal membaca file CSV. Pastikan format file valid.",
+          });
           setIsReadingCsv(false);
         },
         header: false,
@@ -791,7 +803,10 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       setStatusMsg("Selesai!");
     } catch (error) {
       console.error("Gagal generate bulk:", error);
-      alert("Terjadi kesalahan sistem saat memproses PDF.");
+      setToast({
+        type: "error",
+        message: "Terjadi kesalahan sistem saat memproses PDF.",
+      });
     } finally {
       setTimeout(() => {
         setIsProcessing(false);
@@ -803,6 +818,11 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
 
   return (
     <div className="animate-reveal space-y-8">
+      <ToastBanner toast={toast} onClose={() => setToast(null)} />
+      <ConfirmModal
+        dialog={confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+      />
       <div className="space-y-3 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-slate-100 to-slate-50 px-4 py-1.5 shadow-sm dark:from-slate-800 dark:to-slate-900">
           <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></div>
@@ -1025,10 +1045,17 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                 </div>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => {
-                      if (confirm("Yakin ingin menghapus semua data?"))
-                        setBulkData([]);
-                    }}
+                    type="button"
+                    onClick={() =>
+                      setConfirmDialog({
+                        title: "Reset Data Tamu",
+                        message:
+                          "Yakin ingin menghapus semua data CSV yang dimuat?",
+                        confirmLabel: "Reset",
+                        destructive: true,
+                        onConfirm: () => setBulkData([]),
+                      })
+                    }
                     className="group flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-2.5 text-xs font-bold text-red-600 transition-all hover:bg-red-100 hover:shadow-sm active:scale-95 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
                   >
                     <RefreshCcw className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-180" />

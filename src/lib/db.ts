@@ -63,6 +63,20 @@ db.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS guests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    phone TEXT DEFAULT '',
+    address TEXT DEFAULT 'Di Tempat',
+    group_name TEXT DEFAULT '',
+    quota INTEGER DEFAULT 2,
+    checked_in INTEGER DEFAULT 0,
+    checked_in_at TEXT DEFAULT '',
+    checked_in_pax INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 const DEFAULT_CONFIG: Record<string, string> = {

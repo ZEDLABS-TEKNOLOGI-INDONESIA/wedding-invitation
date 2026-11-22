@@ -6,6 +6,7 @@ const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [guestName, setGuestName] = useState("");
   const [brideInitial, setBrideInitial] = useState("B");
   const [groomInitial, setGroomInitial] = useState("G");
+  const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
@@ -68,7 +69,8 @@ const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
   const copyLink = () => {
     navigator.clipboard.writeText(generateUrl());
-    alert("Link berhasil disalin!");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -97,7 +99,8 @@ const QRCodeGenerator: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             onClick={copyLink}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-xs font-bold uppercase transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            <LinkIcon className="h-4 w-4" /> Copy Link
+            <LinkIcon className="h-4 w-4" />{" "}
+            {copied ? "Link Disalin!" : "Copy Link"}
           </button>
           <button
             onClick={downloadQR}

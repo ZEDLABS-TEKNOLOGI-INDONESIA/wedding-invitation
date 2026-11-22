@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import Papa from "papaparse";
 import React, { useCallback, useEffect, useState } from "react";
+import {
+  ConfirmModal,
+  type ConfirmDialogState,
+} from "./Admin/AdminFeedback";
 
 interface GuestInviteRow {
   name: string;
@@ -84,6 +88,8 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
   const [resendingId, setResendingId] = useState<number | null>(null);
+  const [confirmDialog, setConfirmDialog] =
+    useState<ConfirmDialogState | null>(null);
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
 
@@ -320,17 +326,24 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     }
   };
 
-  const deleteRow = async (id: number) => {
-    if (!confirm("Hapus catatan riwayat pengiriman ini?")) return;
-    const res = await fetch("/api/whatsapp/invitations", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ ids: [id] }),
+  const deleteRow = (id: number) => {
+    setConfirmDialog({
+      title: "Hapus Riwayat",
+      message: "Hapus catatan riwayat pengiriman WhatsApp ini?",
+      confirmLabel: "Hapus",
+      destructive: true,
+      onConfirm: async () => {
+        const res = await fetch("/api/whatsapp/invitations", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ ids: [id] }),
+        });
+        if (res.ok) {
+          setHistory((prev) => prev.filter((item) => item.id !== id));
+        }
+      },
     });
-    if (res.ok) {
-      setHistory((prev) => prev.filter((item) => item.id !== id));
-    }
   };
 
   const previewLink = singleForm.name.trim()
@@ -339,6 +352,10 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
   return (
     <div className="space-y-8">
+      <ConfirmModal
+        dialog={confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+      />
       <div className="space-y-2 text-center">
         <h3 className="font-serif text-3xl font-bold text-slate-900 italic dark:text-white">
           Kirim Undangan via WhatsApp
