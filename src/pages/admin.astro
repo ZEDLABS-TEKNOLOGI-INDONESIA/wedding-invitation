@@ -1,25 +1,8 @@
 ---
-import {
-  ArrowLeft,
-  Check,
-  Eye,
-  EyeOff,
-  Heart,
-  Lock,
-  Moon,
-  Sun,
-} from "lucide-react";
 import AdminDashboard from "../components/Admin/AdminDashboard";
 import Layout from "../layouts/Layout.astro";
-import {
-  createAdminSession,
-  destroyAdminSession,
-  getConfiguredAdminPassword,
-  isAdminAuthenticated,
-  verifyAdminPassword,
-} from "../lib/auth";
+import { destroyAdminSession, getAuthSession } from "../lib/auth";
 import db, { getPublicConfig } from "../lib/db";
-import { checkRateLimit, getClientIp } from "../lib/rateLimit";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json",
@@ -28,62 +11,12 @@ const JSON_HEADERS = {
 
 if (Astro.request.method === "POST") {
   const contentType = Astro.request.headers.get("content-type") || "";
-
   if (contentType.includes("application/json")) {
-    let body: Record<string, unknown> = {};
-    try {
-      body = (await Astro.request.json()) as Record<string, unknown>;
-    } catch {
-      return new Response(
-        JSON.stringify({ success: false, error: "Request tidak valid." }),
-        { status: 400, headers: JSON_HEADERS }
-      );
-    }
-
-    const action = body.action;
-
-    if (action === "login") {
-      const ip = getClientIp(Astro.request, Astro.clientAddress);
-      if (!checkRateLimit(`login:${ip}`, 5, 15 * 60 * 1000)) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Terlalu banyak percobaan login. Coba lagi dalam 15 menit.",
-          }),
-          { status: 429, headers: JSON_HEADERS }
-        );
-      }
-
-      if (!getConfiguredAdminPassword()) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "ADMIN_PASSWORD belum dikonfigurasi di server.",
-          }),
-          { status: 503, headers: JSON_HEADERS }
-        );
-      }
-
-      const credential =
-        typeof body.credential === "string" ? body.credential : "";
-      if (verifyAdminPassword(credential)) {
-        createAdminSession(Astro.cookies, Astro.request);
-        return new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: JSON_HEADERS,
-        });
-      } else {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Password admin tidak valid. Silakan coba lagi.",
-          }),
-          { status: 401, headers: JSON_HEADERS }
-        );
-      }
-    }
-
-    if (action === "logout") {
+    const body = (await Astro.request.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >;
+    if (body.action === "logout") {
       destroyAdminSession(Astro.cookies);
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
@@ -95,277 +28,47 @@ if (Astro.request.method === "POST") {
 
 Astro.response.headers.set("Cache-Control", "no-store");
 
-const isAuthenticated = isAdminAuthenticated(Astro.cookies);
-const publicCfg = getPublicConfig();
+const session = getAuthSession(Astro.cookies);
+if (!session) {
+  return Astro.redirect("/masuk");
+}
+
+const publicCfg = getPublicConfig(session.weddingId);
 const coupleLabel =
   publicCfg.BRIDE_NICKNAME && publicCfg.GROOM_NICKNAME
     ? `${publicCfg.BRIDE_NICKNAME} & ${publicCfg.GROOM_NICKNAME}`
-    : "Wedding Panel";
+    : session.weddingTitle || "Wedding Panel";
 
-let rsvps = [],
-  wishes = [];
+const rsvps = db
+  .prepare("SELECT * FROM rsvps WHERE wedding_id = ? ORDER BY created_at DESC")
+  .all(session.weddingId);
+const wishes = db
+  .prepare("SELECT * FROM wishes WHERE wedding_id = ? ORDER BY created_at DESC")
+  .all(session.weddingId);
 
-if (isAuthenticated) {
-  rsvps = db.prepare("SELECT * FROM rsvps ORDER BY created_at DESC").all();
-  wishes = db.prepare("SELECT * FROM wishes ORDER BY created_at DESC").all();
-}
-
-const currentYear = new Date().getFullYear();
-
-const loginFeatures = [
-  {
-    title: "Manajemen Tamu & Check-In Hari H",
-    desc: "Daftar tamu permanen, import CSV/Excel instan, dan scanner QR kamera untuk mencatat kehadiran.",
-  },
-  {
-    title: "Integrasi WhatsApp Gateway",
-    desc: "Kirim undangan personal otomatis beserta QR Code, notifikasi admin, dan konfirmasi RSVP tamu.",
-  },
-  {
-    title: "Pengaturan Konten & Audio Langsung",
-    desc: "Ubah profil mempelai, jadwal acara, peta Google Maps, galeri foto, dan musik backsound dari satu panel.",
-  },
-];
+const origin = (
+  Astro.site?.toString() ||
+  Astro.url.origin ||
+  "https://wedding.zedlabs.id"
+).replace(/\/+$/, "");
+const publicPath = session.isDemo ? "/demo" : `/u/${session.weddingSlug}`;
+const tenantSiteUrl = `${origin}${publicPath}`;
 ---
 
-<Layout title={isAuthenticated ? `Admin — ${coupleLabel}` : "Masuk Admin"} noindex={true}>
+<Layout title={`Admin — ${coupleLabel}`} noindex={true}>
   <div class="admin-shell min-h-dvh">
-    {
-      !isAuthenticated ? (
-        <div class="grid min-h-dvh grid-cols-1 bg-(--adm-bg-primary) text-(--adm-text-primary) lg:grid-cols-[500px_1fr]">
-          {/* Kolom Kiri: Kartu Login */}
-          <div class="flex flex-col border-(--adm-border) bg-(--adm-bg-secondary) lg:border-r">
-            <div class="flex items-center justify-between border-b border-(--adm-border) px-4 py-3">
-              <a
-                href="/"
-                class="inline-flex items-center gap-1.5 text-xs font-medium text-(--adm-text-secondary) hover:text-(--adm-accent)"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Lihat Undangan
-              </a>
-              <button
-                id="login-theme-toggle"
-                type="button"
-                aria-label="Ganti tema terang/gelap"
-                title="Ganti Tema"
-                class="inline-flex h-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
-              >
-                <Moon className="h-4 w-4 dark:hidden" />
-                <Sun className="hidden h-4 w-4 dark:inline" />
-              </button>
-            </div>
-
-            <div class="flex flex-1 p-4 sm:p-6">
-              <div class="m-auto w-full max-w-[400px] overflow-hidden rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary) shadow-xs">
-                <div class="flex flex-col items-center gap-2 border-b border-(--adm-border) px-5 pt-6 pb-5 text-center">
-                  <div class="flex items-center gap-2 text-(--adm-text-primary)">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-accent-soft) text-(--adm-accent)">
-                      <Heart className="h-4 w-4" />
-                    </span>
-                    <span class="text-sm font-semibold">{coupleLabel}</span>
-                  </div>
-                  <h1 class="text-xl font-semibold text-(--adm-text-primary)">
-                    Masuk Panel Admin
-                  </h1>
-                  <p class="text-[12.5px] text-(--adm-text-secondary)">
-                    Masukkan password admin untuk mengelola undangan dan data tamu.
-                  </p>
-                </div>
-
-                <div class="p-6">
-                  <div
-                    id="login-error"
-                    role="alert"
-                    class="mb-4 hidden rounded-md border border-red-300 bg-red-50 px-3 py-2.5 text-xs font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
-                  >
-                    Password admin tidak valid. Silakan coba lagi.
-                  </div>
-
-                  <form id="login-form" class="space-y-4">
-                    <div class="flex flex-col gap-1.5">
-                      <label
-                        for="admin-credential"
-                        class="text-xs font-semibold text-(--adm-text-secondary)"
-                      >
-                        Password Admin
-                      </label>
-                      <div class="relative">
-                        <Lock className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-(--adm-text-muted)" />
-                        <input
-                          id="admin-credential"
-                          name="password"
-                          type="password"
-                          required
-                          autofocus
-                          autocomplete="current-password"
-                          class="adm-input h-10 pr-10 pl-9"
-                          placeholder="Masukkan password admin..."
-                        />
-                        <button
-                          id="toggle-password-btn"
-                          type="button"
-                          aria-label="Tampilkan atau sembunyikan password"
-                          class="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-(--adm-text-muted) hover:text-(--adm-text-primary)"
-                        >
-                          <Eye id="pw-icon-show" className="h-4 w-4" />
-                          <EyeOff id="pw-icon-hide" className="hidden h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      id="login-btn"
-                      type="submit"
-                      class="adm-btn adm-btn-primary h-10 w-full text-[13px] font-semibold"
-                    >
-                      Masuk
-                    </button>
-                  </form>
-
-                  <p class="mt-5 text-center text-[11.5px] text-(--adm-text-muted)">
-                    Sesi admin dilindungi cookie HttpOnly &amp; enkripsi server 24 jam.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <footer class="flex min-h-[44px] items-center justify-center border-t border-(--adm-border) px-4 text-center text-[11px] text-(--adm-text-secondary)">
-              <span>
-                &copy; 2018 - {currentYear}{" "}
-                <strong class="font-semibold tracking-wide uppercase">
-                  ZEDLABS Teknologi Indonesia
-                </strong>
-              </span>
-            </footer>
-          </div>
-
-          {/* Kolom Kanan: Panel Fitur Dot-Grid (Desktop) */}
-          <div
-            class="adm-auth-dotgrid relative hidden flex-col justify-center overflow-hidden bg-(--adm-bg-primary) px-16 xl:px-24 lg:flex"
-            aria-hidden="true"
-          >
-            <div class="pointer-events-none absolute inset-x-0 -bottom-10 text-center text-[180px] leading-none font-bold tracking-[-4px] whitespace-nowrap uppercase opacity-[0.04] select-none">
-              Wedding
-            </div>
-
-            <div class="relative max-w-[540px]">
-              <div class="flex items-center gap-2.5 text-xs font-semibold tracking-[1.2px] text-(--adm-accent) uppercase">
-                <span class="h-px w-5 bg-(--adm-accent)"></span>
-                Wedding Invitation Panel
-              </div>
-              <h2 class="mt-3 text-3xl leading-tight font-semibold text-(--adm-text-primary) xl:text-4xl">
-                Kelola undangan digital, tamu, dan notifikasi WhatsApp dari satu tempat.
-              </h2>
-              <p class="mt-3 text-sm text-(--adm-text-secondary)">
-                Seluruh konten undangan, daftar tamu permanen, check-in QR, hingga
-                pengiriman WhatsApp otomatis terpusat di satu dashboard ringkas.
-              </p>
-
-              <div class="mt-7 flex flex-col gap-4">
-                {loginFeatures.map((item) => (
-                  <div class="flex gap-3">
-                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-accent)">
-                      <Check className="h-3.5 w-3.5" />
-                    </span>
-                    <div>
-                      <div class="text-[13px] font-semibold text-(--adm-text-primary)">
-                        {item.title}
-                      </div>
-                      <div class="mt-0.5 text-xs text-(--adm-text-secondary)">
-                        {item.desc}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <AdminDashboard
-          client:load
-          initialRsvps={rsvps}
-          initialWishes={wishes}
-          siteUrl={Astro.site?.toString() || "https://wedding.zedlabs.id"}
-          coupleLabel={coupleLabel}
-        />
-      )
-    }
+    <AdminDashboard
+      client:load
+      initialRsvps={rsvps as any}
+      initialWishes={wishes as any}
+      siteUrl={tenantSiteUrl}
+      coupleLabel={coupleLabel}
+      publicInvitationPath={publicPath}
+      currentUser={{
+        username: session.username,
+        fullName: session.fullName,
+        role: session.role,
+      }}
+    />
   </div>
-
-  <script>
-    const loginForm = document.getElementById("login-form");
-    const loginBtn = document.getElementById("login-btn");
-    const credentialInput = document.getElementById(
-      "admin-credential"
-    ) as HTMLInputElement | null;
-    const loginError = document.getElementById("login-error");
-
-    if (loginForm && loginBtn && credentialInput) {
-      loginForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const val = credentialInput.value;
-        if (!val) return;
-
-        if (loginError) loginError.classList.add("hidden");
-        loginBtn.textContent = "Memverifikasi...";
-        loginBtn.setAttribute("disabled", "true");
-
-        try {
-          const res = await fetch("/admin", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "login", credential: val }),
-          });
-
-          if (res.ok) {
-            window.location.reload();
-          } else {
-            let msg = "Password admin tidak valid. Silakan coba lagi.";
-            try {
-              const payload = await res.json();
-              if (payload?.error) msg = payload.error;
-            } catch {
-              // ignore JSON parse errors
-            }
-            if (loginError) {
-              loginError.textContent = msg;
-              loginError.classList.remove("hidden");
-            }
-            loginBtn.textContent = "Masuk";
-            loginBtn.removeAttribute("disabled");
-          }
-        } catch {
-          if (loginError) {
-            loginError.textContent = "Gagal terhubung ke server.";
-            loginError.classList.remove("hidden");
-          }
-          loginBtn.textContent = "Masuk";
-          loginBtn.removeAttribute("disabled");
-        }
-      });
-    }
-
-    const togglePasswordBtn = document.getElementById("toggle-password-btn");
-    const pwIconShow = document.getElementById("pw-icon-show");
-    const pwIconHide = document.getElementById("pw-icon-hide");
-    if (togglePasswordBtn && credentialInput) {
-      togglePasswordBtn.addEventListener("click", () => {
-        const isHidden = credentialInput.type === "password";
-        credentialInput.type = isHidden ? "text" : "password";
-        pwIconShow?.classList.toggle("hidden", isHidden);
-        pwIconHide?.classList.toggle("hidden", !isHidden);
-      });
-    }
-
-    const loginThemeBtn = document.getElementById("login-theme-toggle");
-    if (loginThemeBtn) {
-      loginThemeBtn.addEventListener("click", () => {
-        const isDark = document.documentElement.classList.toggle("dark");
-        const next = isDark ? "dark" : "light";
-        document.documentElement.setAttribute("data-theme", next);
-        localStorage.setItem("theme", next);
-      });
-    }
-  </script>
 </Layout>

@@ -26,10 +26,11 @@ import {
 
 interface AppProps {
   initialRawConfig?: Record<string, string>;
+  weddingSlug?: string;
 }
 
-const App: React.FC<AppProps> = ({ initialRawConfig }) => {
-  const { config, loading } = useConfig(initialRawConfig);
+const App: React.FC<AppProps> = ({ initialRawConfig, weddingSlug = "demo" }) => {
+  const { config, loading } = useConfig(initialRawConfig, weddingSlug);
 
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [themeInitialized, setThemeInitialized] = useState(false);
@@ -189,8 +190,8 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
         <LoveStory config={config} />
         <EventDetails config={config} />
         <Gallery config={config} />
-        <RSVPForm config={config} />
-        <Wishes config={config} />
+        <RSVPForm config={config} weddingSlug={weddingSlug} />
+        <Wishes config={config} weddingSlug={weddingSlug} />
         <GiftInfo config={config} />
       </main>
 

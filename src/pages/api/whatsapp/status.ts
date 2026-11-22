@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../../lib/auth";
+import { getAuthSession } from "../../../lib/auth";
 import db, { getConfig } from "../../../lib/db";
 import {
   WaGatewayClient,
@@ -13,7 +13,8 @@ const JSON_HEADERS = {
 };
 
 export const POST: APIRoute = async ({ request, cookies, url }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -21,7 +22,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
   }
 
   try {
-    const config = getConfig();
+    const config = getConfig(session.weddingId);
     const creds = getWaCredentials(config);
     if (!creds) {
       return new Response(
@@ -33,10 +34,10 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     const pending = db
       .prepare(
         `SELECT id, job_id FROM wa_invitations
-         WHERE job_id != '' AND status IN ('queued', 'processing', 'sent', 'delivered')
+         WHERE wedding_id = ? AND job_id != '' AND status IN ('queued', 'processing', 'sent', 'delivered')
          ORDER BY id DESC LIMIT 50`
       )
-      .all() as Array<{ id: number; job_id: string }>;
+      .all(session.weddingId) as Array<{ id: number; job_id: string }>;
 
     const client = new WaGatewayClient(creds, {
       timeoutMs: 10_000,
@@ -44,7 +45,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       originDomain: resolveOriginDomain(request, url),
     });
     const updateStmt = db.prepare(
-      "UPDATE wa_invitations SET status = ?, error_message = ?, updated_at = ? WHERE id = ?"
+      "UPDATE wa_invitations SET status = ?, error_message = ?, updated_at = ? WHERE id = ? AND wedding_id = ?"
     );
 
     let updated = 0;
@@ -55,7 +56,8 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
           res.status,
           res.keterangan_gagal || "",
           new Date().toISOString(),
-          row.id
+          row.id,
+          session.weddingId
         );
         updated++;
       })
@@ -63,9 +65,9 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
 
     const rows = db
       .prepare(
-        "SELECT * FROM wa_invitations ORDER BY created_at DESC, id DESC LIMIT 300"
+        "SELECT * FROM wa_invitations WHERE wedding_id = ? ORDER BY created_at DESC, id DESC LIMIT 300"
       )
-      .all();
+      .all(session.weddingId);
 
     return new Response(
       JSON.stringify({ success: true, updated, invitations: rows }),

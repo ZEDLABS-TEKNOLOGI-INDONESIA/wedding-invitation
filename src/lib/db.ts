@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
+import { hashPassword, normalizeUsername } from "./password";
 
 const DB_DIR = path.resolve(process.cwd(), "database");
 const rawDbName = process.env.DB_NAME?.trim() || "wedding.db";
@@ -144,6 +145,54 @@ db.exec(`
     response_json TEXT NOT NULL,
     created_at TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS weddings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    is_demo INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'couple_owner',
+    wedding_id INTEGER,
+    full_name TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    phone_verified INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (wedding_id) REFERENCES weddings(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS otp_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone TEXT NOT NULL,
+    purpose TEXT NOT NULL,
+    code_hash TEXT NOT NULL,
+    payload_json TEXT DEFAULT '',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    expires_at INTEGER NOT NULL,
+    used_at INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS platform_config (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS wedding_config (
+    wedding_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    PRIMARY KEY (wedding_id, key),
+    FOREIGN KEY (wedding_id) REFERENCES weddings(id) ON DELETE CASCADE
+  );
 `);
 
 const DEFAULT_CONFIG: Record<string, string> = {
@@ -247,32 +296,223 @@ try {
   // Kolom reminder_sent_at sudah ada
 }
 
-const insertDefault = db.prepare(
-  "INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)"
-);
-const insertMany = db.transaction(() => {
-  for (const [key, value] of Object.entries(DEFAULT_CONFIG)) {
-    insertDefault.run(key, value);
-  }
-});
-insertMany();
-db.prepare(
-  "DELETE FROM config WHERE key IN ('TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID')"
-).run();
+// Migrasi kolom multi-tenant (idempoten untuk database eksisting)
+const TENANT_TABLES = [
+  "rsvps",
+  "wishes",
+  "wa_invitations",
+  "guests",
+  "planner_todos",
+  "planner_budget",
+  "planner_savings",
+  "planner_essentials",
+  "planner_journal",
+  "planner_idempotency",
+];
 
-export const getConfig = (): Record<string, string> => {
-  const rows = db.prepare("SELECT key, value FROM config").all() as {
-    key: string;
-    value: string;
-  }[];
+for (const tbl of TENANT_TABLES) {
+  try {
+    db.exec(`ALTER TABLE ${tbl} ADD COLUMN wedding_id INTEGER NOT NULL DEFAULT 1`);
+  } catch {
+    // Kolom wedding_id sudah ada
+  }
+}
+
+try {
+  db.exec("ALTER TABLE admin_sessions ADD COLUMN user_id INTEGER");
+} catch {
+  // Kolom user_id sudah ada
+}
+try {
+  db.exec("ALTER TABLE admin_sessions ADD COLUMN impersonating_wedding_id INTEGER");
+} catch {
+  // Kolom impersonating_wedding_id sudah ada
+}
+
+export const DEFAULT_WEDDING_ID = 1;
+
+export interface WeddingRecord {
+  id: number;
+  slug: string;
+  title: string;
+  status: "active" | "suspended";
+  is_demo: number;
+  created_at: string;
+}
+
+export interface UserRecord {
+  id: number;
+  username: string;
+  password_hash: string;
+  role: "superadmin" | "couple_owner" | "couple_partner";
+  wedding_id: number | null;
+  full_name: string;
+  phone: string;
+  phone_verified: number;
+  status: "active" | "suspended";
+  created_at: string;
+}
+
+export const seedWeddingDefaults = (
+  weddingId: number,
+  overrides: Record<string, string> = {}
+): void => {
+  const stmt = db.prepare(
+    "INSERT OR IGNORE INTO wedding_config (wedding_id, key, value) VALUES (?, ?, ?)"
+  );
+  const upsert = db.prepare(
+    "INSERT OR REPLACE INTO wedding_config (wedding_id, key, value) VALUES (?, ?, ?)"
+  );
+  const run = db.transaction(() => {
+    for (const [key, value] of Object.entries(DEFAULT_CONFIG)) {
+      stmt.run(weddingId, key, value);
+    }
+    for (const [key, value] of Object.entries(overrides)) {
+      if (key in DEFAULT_CONFIG) {
+        upsert.run(weddingId, key, value);
+      }
+    }
+  });
+  run();
+};
+
+// 1. Seed tenant demo (id = 1) dan migrasikan config lama ke wedding_config(1)
+const demoExists = db
+  .prepare("SELECT id FROM weddings WHERE id = 1")
+  .get() as { id: number } | undefined;
+
+if (!demoExists) {
+  db.prepare(
+    "INSERT INTO weddings (id, slug, title, status, is_demo) VALUES (1, 'demo', 'Undangan Demo (Fey & Yaya)', 'active', 1)"
+  ).run();
+}
+
+const legacyConfigRows = db
+  .prepare("SELECT key, value FROM config")
+  .all() as Array<{ key: string; value: string }>;
+
+const demoConfigCount = (
+  db
+    .prepare("SELECT COUNT(*) as c FROM wedding_config WHERE wedding_id = 1")
+    .get() as { c: number }
+).c;
+
+if (demoConfigCount === 0 && legacyConfigRows.length > 0) {
+  const copyStmt = db.prepare(
+    "INSERT OR IGNORE INTO wedding_config (wedding_id, key, value) VALUES (1, ?, ?)"
+  );
+  const copyTx = db.transaction(() => {
+    for (const row of legacyConfigRows) {
+      if (row.key === "TELEGRAM_BOT_TOKEN" || row.key === "TELEGRAM_CHAT_ID") {
+        continue;
+      }
+      copyStmt.run(row.key, row.value);
+    }
+  });
+  copyTx();
+}
+seedWeddingDefaults(DEFAULT_WEDDING_ID);
+
+// Perbarui judul tenant demo sesuai nama mempelai yang tersimpan
+const demoBride = (
+  db
+    .prepare("SELECT value FROM wedding_config WHERE wedding_id = 1 AND key = 'BRIDE_NICKNAME'")
+    .get() as { value: string } | undefined
+)?.value;
+const demoGroom = (
+  db
+    .prepare("SELECT value FROM wedding_config WHERE wedding_id = 1 AND key = 'GROOM_NICKNAME'")
+    .get() as { value: string } | undefined
+)?.value;
+if (demoBride && demoGroom) {
+  db.prepare("UPDATE weddings SET title = ? WHERE id = 1 AND is_demo = 1").run(
+    `Demo — ${demoBride} & ${demoGroom}`
+  );
+}
+
+// 2. Seed platform_config (untuk WhatsApp Gateway OTP & Reset Password Superadmin)
+const DEFAULT_PLATFORM_CONFIG: Record<string, string> = {
+  WA_BASE_URL:
+    legacyConfigRows.find((r) => r.key === "WA_BASE_URL")?.value ||
+    "https://whatsapp.zedlabs.id",
+  WA_API_KEY:
+    legacyConfigRows.find((r) => r.key === "WA_API_KEY")?.value || "",
+  WA_API_SECRET:
+    legacyConfigRows.find((r) => r.key === "WA_API_SECRET")?.value || "",
+  PLATFORM_NAME: "Wedding SaaS",
+};
+const insertPlatformDefault = db.prepare(
+  "INSERT OR IGNORE INTO platform_config (key, value) VALUES (?, ?)"
+);
+for (const [k, v] of Object.entries(DEFAULT_PLATFORM_CONFIG)) {
+  insertPlatformDefault.run(k, v);
+}
+
+// 3. Seed Superadmin awal jika belum ada di tabel users
+const existingSuperadmin = db
+  .prepare("SELECT id FROM users WHERE role = 'superadmin' LIMIT 1")
+  .get() as { id: number } | undefined;
+
+if (!existingSuperadmin) {
+  const initialUsername = normalizeUsername(
+    process.env.SUPERADMIN_USERNAME?.trim() || "superadmin"
+  );
+  const initialPassword =
+    process.env.SUPERADMIN_PASSWORD?.trim() ||
+    process.env.ADMIN_PASSWORD?.trim() ||
+    "admin123";
+  const initialPhone = process.env.SUPERADMIN_PHONE?.trim() || "";
+  db.prepare(
+    `INSERT OR IGNORE INTO users
+      (username, password_hash, role, wedding_id, full_name, phone, phone_verified, status)
+     VALUES (?, ?, 'superadmin', NULL, 'Superadmin Platform', ?, 1, 'active')`
+  ).run(initialUsername, hashPassword(initialPassword), initialPhone);
+}
+
+export const getWeddingBySlug = (slug: string): WeddingRecord | undefined => {
+  const clean = String(slug || "").trim().toLowerCase();
+  if (!clean) return undefined;
+  return db
+    .prepare("SELECT * FROM weddings WHERE slug = ? LIMIT 1")
+    .get(clean) as WeddingRecord | undefined;
+};
+
+export const getWeddingById = (id: number): WeddingRecord | undefined => {
+  return db
+    .prepare("SELECT * FROM weddings WHERE id = ? LIMIT 1")
+    .get(id) as WeddingRecord | undefined;
+};
+
+export const getConfig = (
+  weddingId: number = DEFAULT_WEDDING_ID
+): Record<string, string> => {
+  const rows = db
+    .prepare("SELECT key, value FROM wedding_config WHERE wedding_id = ?")
+    .all(weddingId) as { key: string; value: string }[];
+  return { ...DEFAULT_CONFIG, ...Object.fromEntries(rows.map((r) => [r.key, r.value])) };
+};
+
+export const setConfig = (
+  key: string,
+  value: string,
+  weddingId: number = DEFAULT_WEDDING_ID
+): void => {
+  db.prepare(
+    "INSERT OR REPLACE INTO wedding_config (wedding_id, key, value) VALUES (?, ?, ?)"
+  ).run(weddingId, key, value);
+};
+
+export const getPlatformConfig = (): Record<string, string> => {
+  const rows = db
+    .prepare("SELECT key, value FROM platform_config")
+    .all() as { key: string; value: string }[];
   return Object.fromEntries(rows.map((r) => [r.key, r.value]));
 };
 
-export const setConfig = (key: string, value: string): void => {
-  db.prepare("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)").run(
-    key,
-    value
-  );
+export const setPlatformConfig = (key: string, value: string): void => {
+  db.prepare(
+    "INSERT OR REPLACE INTO platform_config (key, value) VALUES (?, ?)"
+  ).run(key, value);
 };
 
 export const PRIVATE_CONFIG_KEYS = new Set([
@@ -287,8 +527,10 @@ export const PRIVATE_CONFIG_KEYS = new Set([
   "PLANNER_SAVINGS_TARGET",
 ]);
 
-export const getPublicConfig = (): Record<string, string> => {
-  const full = getConfig();
+export const getPublicConfig = (
+  weddingId: number = DEFAULT_WEDDING_ID
+): Record<string, string> => {
+  const full = getConfig(weddingId);
   const safe: Record<string, string> = {};
   for (const [key, value] of Object.entries(full)) {
     if (!PRIVATE_CONFIG_KEYS.has(key)) {

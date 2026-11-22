@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../../lib/auth";
+import { getAuthSession } from "../../../lib/auth";
 import {
   ensureReminderSchedulerStarted,
   getH1ReminderSummary,
@@ -12,7 +12,8 @@ const JSON_HEADERS = {
 };
 
 export const GET: APIRoute = async ({ cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -22,7 +23,7 @@ export const GET: APIRoute = async ({ cookies }) => {
   ensureReminderSchedulerStarted();
 
   try {
-    const summary = getH1ReminderSummary();
+    const summary = getH1ReminderSummary(session.weddingId);
     return new Response(JSON.stringify(summary), {
       status: 200,
       headers: JSON_HEADERS,
@@ -37,7 +38,8 @@ export const GET: APIRoute = async ({ cookies }) => {
 };
 
 export const POST: APIRoute = async ({ cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -47,8 +49,11 @@ export const POST: APIRoute = async ({ cookies }) => {
   ensureReminderSchedulerStarted();
 
   try {
-    const result = await runH1ReminderBatch({ force: true });
-    const summary = getH1ReminderSummary();
+    const result = await runH1ReminderBatch({
+      force: true,
+      weddingId: session.weddingId,
+    });
+    const summary = getH1ReminderSummary(session.weddingId);
     return new Response(JSON.stringify({ ...result, summary }), {
       status: 200,
       headers: JSON_HEADERS,

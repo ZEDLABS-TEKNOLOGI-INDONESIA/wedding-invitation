@@ -12,7 +12,10 @@ import { dbService } from "../services/dbService";
 import { AttendanceStatus, type RSVP, type AppConfig } from "../types";
 import { BotanicalWatermark, SectionDivider } from "./WeddingOrnaments";
 
-const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
+const RSVPForm: React.FC<{ config: AppConfig; weddingSlug?: string }> = ({
+  config,
+  weddingSlug = "demo",
+}) => {
   const [formData, setFormData] = useState({
     guest_name: "",
     phone: "",
@@ -29,7 +32,7 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
   const maxGuests = config.rsvp.maxGuests;
 
   const loadRSVPs = async () => {
-    const data = await dbService.getRSVPs();
+    const data = await dbService.getRSVPs(weddingSlug);
     setRsvps(data);
   };
 
@@ -53,14 +56,17 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await dbService.saveRSVP({
-        ...formData,
-        guest_name: trimmedName,
-        guest_count:
-          formData.attendance === AttendanceStatus.HADIR
-            ? formData.guest_count
-            : 0,
-      });
+      await dbService.saveRSVP(
+        {
+          ...formData,
+          guest_name: trimmedName,
+          guest_count:
+            formData.attendance === AttendanceStatus.HADIR
+              ? formData.guest_count
+              : 0,
+        },
+        weddingSlug
+      );
       setSubmitted(true);
       await loadRSVPs();
     } catch (err) {

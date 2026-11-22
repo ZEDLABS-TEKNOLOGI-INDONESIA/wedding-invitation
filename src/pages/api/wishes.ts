@@ -1,17 +1,38 @@
 import type { APIRoute } from "astro";
 import { addOwnedGuestId, getOwnedGuestIds } from "../../lib/auth";
-import db, { getConfig } from "../../lib/db";
+import db, {
+  DEFAULT_WEDDING_ID,
+  getConfig,
+  getWeddingBySlug,
+} from "../../lib/db";
 import { checkRateLimit, getClientIp } from "../../lib/rateLimit";
 import { notifyAdminWishWa } from "../../lib/whatsapp";
 
 const WISH_OWNED_COOKIE = "wedding_wish_owned";
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
-export const GET: APIRoute = async () => {
+function resolvePublicWeddingId(slug?: string | null): number | null {
+  const clean = String(slug || "").trim().toLowerCase();
+  if (!clean) return DEFAULT_WEDDING_ID;
+  const w = getWeddingBySlug(clean);
+  if (!w || w.status !== "active") return null;
+  return w.id;
+}
+
+export const GET: APIRoute = async ({ url }) => {
   try {
+    const weddingId = resolvePublicWeddingId(url.searchParams.get("wedding"));
+    if (weddingId === null) {
+      return new Response(JSON.stringify({ error: "Undangan tidak ditemukan." }), {
+        status: 404,
+        headers: JSON_HEADERS,
+      });
+    }
     const wishes = db
-      .prepare("SELECT id, name, message, created_at FROM wishes ORDER BY created_at DESC")
-      .all();
+      .prepare(
+        "SELECT id, name, message, created_at FROM wishes WHERE wedding_id = ? ORDER BY created_at DESC"
+      )
+      .all(weddingId);
     return new Response(JSON.stringify(wishes), {
       status: 200,
       headers: JSON_HEADERS,
@@ -24,7 +45,7 @@ export const GET: APIRoute = async () => {
   }
 };
 
-export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
+export const POST: APIRoute = async ({ request, clientAddress, cookies, url }) => {
   const ip = getClientIp(request, clientAddress);
 
   if (!checkRateLimit(`wishes:${ip}`, 5, 60000)) {
@@ -41,6 +62,18 @@ export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
     if (!rawData || typeof rawData !== "object") {
       return new Response(JSON.stringify({ error: "Data tidak valid." }), {
         status: 400,
+        headers: JSON_HEADERS,
+      });
+    }
+
+    const weddingId = resolvePublicWeddingId(
+      typeof rawData.wedding_slug === "string"
+        ? rawData.wedding_slug
+        : url.searchParams.get("wedding")
+    );
+    if (weddingId === null) {
+      return new Response(JSON.stringify({ error: "Undangan tidak ditemukan." }), {
+        status: 404,
         headers: JSON_HEADERS,
       });
     }
@@ -67,34 +100,32 @@ export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
       ownedIds.length > 0
         ? (db
             .prepare(
-              `SELECT id FROM wishes WHERE name = ? AND id IN (${ownedIds.map(() => "?").join(",")}) LIMIT 1`
+              `SELECT id FROM wishes WHERE wedding_id = ? AND name = ? AND id IN (${ownedIds.map(() => "?").join(",")}) LIMIT 1`
             )
-            .get(name, ...ownedIds) as { id: number } | undefined)
+            .get(weddingId, name, ...ownedIds) as { id: number } | undefined)
         : undefined;
 
     let actionType = "";
     let resultId = 0;
 
     if (existing) {
-      db.prepare("UPDATE wishes SET message=?, created_at=? WHERE id=?").run(
-        message,
-        new Date().toISOString(),
-        existing.id
-      );
+      db.prepare(
+        "UPDATE wishes SET message=?, created_at=? WHERE id=? AND wedding_id=?"
+      ).run(message, new Date().toISOString(), existing.id, weddingId);
       actionType = "updated";
       resultId = existing.id;
     } else {
       const result = db
         .prepare(
-          "INSERT INTO wishes (name, message, created_at) VALUES (?, ?, ?)"
+          "INSERT INTO wishes (wedding_id, name, message, created_at) VALUES (?, ?, ?, ?)"
         )
-        .run(name, message, new Date().toISOString());
+        .run(weddingId, name, message, new Date().toISOString());
       actionType = "created";
       resultId = Number(result.lastInsertRowid);
       addOwnedGuestId(cookies, request, WISH_OWNED_COOKIE, resultId);
     }
 
-    const config = getConfig();
+    const config = getConfig(weddingId);
 
     void notifyAdminWishWa(config, {
       id: resultId,

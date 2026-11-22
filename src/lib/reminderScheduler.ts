@@ -1,4 +1,4 @@
-import db, { getConfig } from "./db";
+import db, { DEFAULT_WEDDING_ID, getConfig } from "./db";
 import {
   getWaCredentials,
   isEligibleForH1Reminder,
@@ -37,13 +37,15 @@ export interface H1ReminderBatchResult {
   errors: string[];
 }
 
-export const getH1ReminderSummary = (): H1ReminderSummary => {
-  const config = getConfig();
+export const getH1ReminderSummary = (
+  weddingId: number = DEFAULT_WEDDING_ID
+): H1ReminderSummary => {
+  const config = getConfig(weddingId);
   const rows = db
     .prepare(
-      "SELECT id, guest_name, phone, attendance, guest_count, reminder_sent_at FROM rsvps"
+      "SELECT id, guest_name, phone, attendance, guest_count, reminder_sent_at FROM rsvps WHERE wedding_id = ?"
     )
-    .all() as RsvpReminderRow[];
+    .all(weddingId) as RsvpReminderRow[];
 
   let eligibleTotal = 0;
   let pendingCount = 0;
@@ -91,7 +93,9 @@ let batchInFlight = false;
 
 export const runH1ReminderBatch = async (options?: {
   force?: boolean;
+  weddingId?: number;
 }): Promise<H1ReminderBatchResult> => {
+  const weddingId = options?.weddingId ?? DEFAULT_WEDDING_ID;
   if (batchInFlight) {
     return {
       totalPending: 0,
@@ -102,7 +106,7 @@ export const runH1ReminderBatch = async (options?: {
     };
   }
 
-  const config = getConfig();
+  const config = getConfig(weddingId);
   if (!getWaCredentials(config)) {
     return {
       totalPending: 0,
@@ -136,9 +140,9 @@ export const runH1ReminderBatch = async (options?: {
 
   const rows = db
     .prepare(
-      "SELECT id, guest_name, phone, attendance, guest_count, reminder_sent_at FROM rsvps WHERE attendance IN ('hadir', 'ragu') AND TRIM(COALESCE(phone, '')) != '' AND TRIM(COALESCE(reminder_sent_at, '')) = ''"
+      "SELECT id, guest_name, phone, attendance, guest_count, reminder_sent_at FROM rsvps WHERE wedding_id = ? AND attendance IN ('hadir', 'ragu') AND TRIM(COALESCE(phone, '')) != '' AND TRIM(COALESCE(reminder_sent_at, '')) = ''"
     )
-    .all() as RsvpReminderRow[];
+    .all(weddingId) as RsvpReminderRow[];
 
   const targets = rows.filter((row) => isEligibleForH1Reminder(row));
   if (targets.length === 0) {
@@ -196,7 +200,14 @@ export const ensureReminderSchedulerStarted = (): void => {
 
   const FIFTEEN_MINUTES = 15 * 60 * 1000;
   const timer = setInterval(() => {
-    void runH1ReminderBatch().catch((err) => {
+    void (async () => {
+      const activeWeddings = db
+        .prepare("SELECT id FROM weddings WHERE status = 'active'")
+        .all() as Array<{ id: number }>;
+      for (const w of activeWeddings) {
+        await runH1ReminderBatch({ weddingId: w.id });
+      }
+    })().catch((err) => {
       console.error("H-1 reminder scheduler error:", err);
     });
   }, FIFTEEN_MINUTES);

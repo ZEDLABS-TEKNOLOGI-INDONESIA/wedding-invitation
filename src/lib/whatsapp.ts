@@ -323,6 +323,21 @@ export const WA_TEMPLATE_CODES = {
   GUEST_REMINDER_H1: "wedding_pengingat_h1",
 } as const;
 
+export const PLATFORM_OTP_TEMPLATE_CODE = "wedding_auth_otp";
+
+export const PLATFORM_WA_TEMPLATES: Record<string, WaTemplateDef> = {
+  [PLATFORM_OTP_TEMPLATE_CODE]: {
+    kategori: "Keamanan",
+    prioritas: "High",
+    variabel_wajib: ["kode_otp", "keperluan", "berlaku_menit"],
+    varian: [
+      "Kode verifikasi ({{keperluan}}) Anda adalah {{kode_otp}}. Kode ini berlaku selama {{berlaku_menit}} menit. Mohon jaga kerahasiaan kode ini dan jangan bagikan kepada siapa pun.",
+      "Halo, berikut kode verifikasi akun untuk {{keperluan}}: {{kode_otp}}. Masa berlaku kode adalah {{berlaku_menit}} menit. Abaikan pesan ini jika Anda tidak merasa memintanya.",
+      "Gunakan kode {{kode_otp}} untuk menyelesaikan proses {{keperluan}}. Kode berlaku {{berlaku_menit}} menit dan bersifat rahasia.",
+    ],
+  },
+};
+
 // Seluruh template memenuhi aturan validator whatsapp-service:
 // - 2-10 varian per template
 // - tidak ada tanda seru berurutan (!!)

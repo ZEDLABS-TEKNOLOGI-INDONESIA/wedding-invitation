@@ -1,13 +1,21 @@
 ---
 import QRCodeGenerator from "../components/QRCodeGenerator";
 import Layout from "../layouts/Layout.astro";
-import { isAdminAuthenticated } from "../lib/auth";
+import { getAuthSession } from "../lib/auth";
 
 Astro.response.headers.set("Cache-Control", "no-store");
 
-if (!isAdminAuthenticated(Astro.cookies)) {
-  return Astro.redirect("/admin");
+const session = getAuthSession(Astro.cookies);
+if (!session) {
+  return Astro.redirect("/masuk");
 }
+
+const origin = (
+  Astro.site?.toString() ||
+  Astro.url.origin ||
+  "https://wedding.zedlabs.id"
+).replace(/\/+$/, "");
+const tenantSiteUrl = `${origin}${session.isDemo ? "/demo" : `/u/${session.weddingSlug}`}`;
 ---
 
 <Layout title="QR Code Generator" noindex={true}>
@@ -27,7 +35,7 @@ if (!isAdminAuthenticated(Astro.cookies)) {
       >
         <QRCodeGenerator
           client:load
-          siteUrl={Astro.site?.toString() || "https://wedding.zedlabs.id"}
+          siteUrl={tenantSiteUrl}
         />
       </div>
 

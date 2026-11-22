@@ -21,10 +21,12 @@ import {
   Save,
   Search,
   Settings,
+  Shield,
   Sun,
   Trash2,
   Upload,
   UserCheck,
+  UserPlus,
   Users,
   X,
 } from "lucide-react";
@@ -64,6 +66,7 @@ const InvitationManager = lazy(() => import("../InvitationManager"));
 const QRCodeManager = lazy(() => import("../QRCodeManager"));
 const WhatsAppManager = lazy(() => import("../WhatsAppManager"));
 const WeddingPlanner = lazy(() => import("./WeddingPlanner"));
+const PartnerAccountPanel = lazy(() => import("./PartnerAccountPanel"));
 
 interface RSVP {
   id: number;
@@ -90,7 +93,8 @@ type AdminTabId =
   | "wa"
   | "qr"
   | "pdf"
-  | "settings";
+  | "settings"
+  | "account";
 
 const TAB_META: Record<AdminTabId, { title: string; desc: string }> = {
   rsvp: {
@@ -124,6 +128,10 @@ const TAB_META: Record<AdminTabId, { title: string; desc: string }> = {
   settings: {
     title: "Pengaturan Undangan",
     desc: "Ubah data mempelai, jadwal, lokasi peta, musik latar, galeri, dan WhatsApp Gateway.",
+  },
+  account: {
+    title: "Akun & Pasangan",
+    desc: "Kelola profil login Anda, tautan undangan unik, dan daftarkan 1 akun untuk pasangan Anda.",
   },
 };
 
@@ -410,11 +418,15 @@ const AdminDashboard = ({
   initialWishes,
   siteUrl,
   coupleLabel = "Wedding Panel",
+  publicInvitationPath = "/demo",
+  currentUser,
 }: {
   initialRsvps: RSVP[];
   initialWishes: Wish[];
   siteUrl: string;
   coupleLabel?: string;
+  publicInvitationPath?: string;
+  currentUser?: { username: string; fullName: string; role: string };
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTabId>("rsvp");
   const [plannerSubTab, setPlannerSubTab] = useState<PlannerSectionId>("todo");
@@ -511,12 +523,11 @@ const AdminDashboard = ({
       confirmLabel: "Keluar",
       destructive: true,
       onConfirm: async () => {
-        await fetch("/admin", {
+        await fetch("/api/auth/logout", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "logout" }),
+          credentials: "include",
         });
-        window.location.reload();
+        window.location.href = "/masuk";
       },
     });
   };
@@ -803,6 +814,12 @@ const AdminDashboard = ({
           icon: Settings,
           keywords:
             "tema warna ornamen animasi merpati mempelai jadwal akad resepsi peta lokasi musik audio backsound galeri bank rekening kisah story teks whatsapp gateway",
+        },
+        {
+          id: "account",
+          label: "Akun & Pasangan",
+          icon: UserPlus,
+          keywords: "pasangan suami istri username password akun link undangan",
         },
       ],
     },
@@ -1125,7 +1142,7 @@ const AdminDashboard = ({
               </li>
               <li>
                 <a
-                  href="/"
+                  href={publicInvitationPath}
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Lihat Halaman Undangan"
@@ -1143,6 +1160,26 @@ const AdminDashboard = ({
                   </span>
                 </a>
               </li>
+              {currentUser?.role === "superadmin" && (
+                <li>
+                  <a
+                    href="/superadmin"
+                    title="Kembali ke Panel Superadmin"
+                    className={`adm-sidebar-item ${
+                      sidebarCollapsed ? "md:justify-center md:px-0" : ""
+                    }`}
+                  >
+                    <Shield className="h-[17px] w-[17px] shrink-0 text-(--adm-accent)" />
+                    <span
+                      className={`truncate ${
+                        sidebarCollapsed ? "md:hidden" : ""
+                      }`}
+                    >
+                      Panel Superadmin
+                    </span>
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </nav>
@@ -1615,6 +1652,19 @@ const AdminDashboard = ({
                 activeSection={settingsSubTab}
                 onSectionChange={setSettingsSubTab}
               />
+            )}
+
+            {activeTab === "account" && (
+              <Suspense
+                fallback={
+                  <div className="adm-card flex items-center justify-center gap-2 p-8 text-xs text-(--adm-text-secondary)">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Memuat pengaturan akun pasangan...
+                  </div>
+                }
+              >
+                <PartnerAccountPanel onNotify={setToast} />
+              </Suspense>
             )}
           </div>
         </main>

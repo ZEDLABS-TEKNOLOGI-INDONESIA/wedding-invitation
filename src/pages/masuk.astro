@@ -1,0 +1,153 @@
+---
+import { ArrowLeft, Heart, Lock, User } from "lucide-react";
+import Layout from "../layouts/Layout.astro";
+import { getAuthSession } from "../lib/auth";
+
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const session = getAuthSession(Astro.cookies);
+if (session) {
+  return Astro.redirect(session.role === "superadmin" ? "/superadmin" : "/admin");
+}
+---
+
+<Layout title="Masuk — Wedding SaaS" noindex={true}>
+  <div class="flex min-h-dvh flex-col items-center justify-center bg-slate-950 px-4 py-10 text-slate-100">
+    <div class="w-full max-w-md space-y-6">
+      <div class="text-center">
+        <a
+          href="/"
+          class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30"
+        >
+          <Heart className="h-5 w-5" />
+        </a>
+        <h1 class="mt-4 font-serif text-2xl font-semibold text-white">
+          Masuk ke Panel Undangan
+        </h1>
+        <p class="mt-1 text-xs text-slate-400">
+          Gunakan username &amp; password akun Anda (Pemilik, Pasangan, atau Superadmin).
+        </p>
+      </div>
+
+      <form
+        id="login-form"
+        class="space-y-4 rounded-2xl border border-white/10 bg-slate-900/90 p-6 shadow-xl"
+      >
+        <div class="space-y-1.5">
+          <label for="username" class="block text-xs font-medium text-slate-300">
+            Username
+          </label>
+          <div class="relative">
+            <User className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <input
+              id="username"
+              name="username"
+              type="text"
+              required
+              autocomplete="username"
+              placeholder="contoh: danik atau superadmin"
+              class="w-full rounded-xl border border-white/10 bg-slate-950 py-2.5 pr-3 pl-9 text-sm text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label for="password" class="block text-xs font-medium text-slate-300">
+              Password
+            </label>
+            <a
+              href="/lupa-password"
+              class="text-xs font-medium text-sky-400 hover:text-sky-300"
+            >
+              Lupa password?
+            </a>
+          </div>
+          <div class="relative">
+            <Lock className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autocomplete="current-password"
+              placeholder="Masukkan password"
+              class="w-full rounded-xl border border-white/10 bg-slate-950 py-2.5 pr-3 pl-9 text-sm text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div
+          id="login-error"
+          class="hidden rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-200"
+        >
+        </div>
+
+        <button
+          id="login-submit"
+          type="submit"
+          class="w-full rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:opacity-50"
+        >
+          Masuk
+        </button>
+
+        <div class="border-t border-white/10 pt-4 text-center text-xs text-slate-400">
+          Belum punya akun undangan?{" "}
+          <a href="/daftar" class="font-semibold text-sky-400 hover:text-sky-300">
+            Daftar Gratis Sekarang
+          </a>
+        </div>
+      </form>
+
+      <div class="text-center">
+        <a
+          href="/"
+          class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Kembali ke Beranda
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const form = document.getElementById("login-form") as HTMLFormElement | null;
+  const errBox = document.getElementById("login-error");
+  const submitBtn = document.getElementById("login-submit") as HTMLButtonElement | null;
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!errBox || !submitBtn) return;
+    errBox.classList.add("hidden");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Memeriksa...";
+
+    const fd = new FormData(form);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          username: fd.get("username"),
+          password: fd.get("password"),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        window.location.href = data.redirectTo || "/admin";
+        return;
+      }
+      errBox.textContent = data.error || "Gagal masuk. Periksa username & password.";
+      errBox.classList.remove("hidden");
+    } catch {
+      errBox.textContent = "Gagal terhubung ke server.";
+      errBox.classList.remove("hidden");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Masuk";
+    }
+  });
+</script>

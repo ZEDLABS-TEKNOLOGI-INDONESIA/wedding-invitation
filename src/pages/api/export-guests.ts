@@ -1,11 +1,12 @@
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../lib/auth";
+import { getAuthSession } from "../../lib/auth";
 import db from "../../lib/db";
 import { escapeCsvCell } from "../../utils/csv";
 import type { GuestRow } from "./guests";
 
 export const GET: APIRoute = async ({ cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: {
@@ -17,8 +18,10 @@ export const GET: APIRoute = async ({ cookies }) => {
 
   try {
     const rows = db
-      .prepare("SELECT * FROM guests ORDER BY checked_in DESC, id DESC")
-      .all() as GuestRow[];
+      .prepare(
+        "SELECT * FROM guests WHERE wedding_id = ? ORDER BY checked_in DESC, id DESC"
+      )
+      .all(session.weddingId) as GuestRow[];
 
     const headers = [
       "Kode",

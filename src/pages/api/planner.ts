@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../lib/auth";
+import { getAuthSession } from "../../lib/auth";
 import db, { getConfig, setConfig } from "../../lib/db";
 import {
   BUDGET_STARTER_TEMPLATE,
@@ -65,17 +65,18 @@ function getIdempotencyKey(
   return raw;
 }
 
-function findIdempotentResponse(key: string): string | null {
+function findIdempotentResponse(weddingId: number, key: string): string | null {
   if (!key) return null;
   const row = db
     .prepare(
-      "SELECT response_json FROM planner_idempotency WHERE idempotency_key = ? LIMIT 1"
+      "SELECT response_json FROM planner_idempotency WHERE wedding_id = ? AND idempotency_key = ? LIMIT 1"
     )
-    .get(key) as { response_json: string } | undefined;
+    .get(weddingId, key) as { response_json: string } | undefined;
   return row ? row.response_json : null;
 }
 
 function saveIdempotentResponse(
+  weddingId: number,
   key: string,
   resource: string,
   payload: Record<string, unknown>,
@@ -84,9 +85,15 @@ function saveIdempotentResponse(
   if (!key) return;
   try {
     db.prepare(
-      `INSERT OR IGNORE INTO planner_idempotency (idempotency_key, resource, response_json, created_at)
-       VALUES (?, ?, ?, ?)`
-    ).run(key, resource, JSON.stringify({ ...payload, deduplicated: true }), nowIso);
+      `INSERT OR IGNORE INTO planner_idempotency (wedding_id, idempotency_key, resource, response_json, created_at)
+       VALUES (?, ?, ?, ?, ?)`
+    ).run(
+      weddingId,
+      key,
+      resource,
+      JSON.stringify({ ...payload, deduplicated: true }),
+      nowIso
+    );
     // Bersihkan kunci idempotency lebih dari 24 jam agar tabel tetap ringan
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     db.prepare("DELETE FROM planner_idempotency WHERE created_at < ?").run(
@@ -97,35 +104,42 @@ function saveIdempotentResponse(
   }
 }
 
-function fetchAllPlannerData() {
-  const cfg = getConfig();
+function fetchAllPlannerData(weddingId: number) {
+  const cfg = getConfig(weddingId);
   return {
     todos: db
-      .prepare("SELECT * FROM planner_todos ORDER BY done ASC, id ASC")
-      .all(),
+      .prepare(
+        "SELECT * FROM planner_todos WHERE wedding_id = ? ORDER BY done ASC, id ASC"
+      )
+      .all(weddingId),
     budget: db
-      .prepare("SELECT * FROM planner_budget ORDER BY id ASC")
-      .all(),
+      .prepare(
+        "SELECT * FROM planner_budget WHERE wedding_id = ? ORDER BY id ASC"
+      )
+      .all(weddingId),
     savings: db
       .prepare(
-        "SELECT * FROM planner_savings ORDER BY entry_date DESC, id DESC"
+        "SELECT * FROM planner_savings WHERE wedding_id = ? ORDER BY entry_date DESC, id DESC"
       )
-      .all(),
+      .all(weddingId),
     essentials: db
-      .prepare("SELECT * FROM planner_essentials ORDER BY kind ASC, id ASC")
-      .all(),
+      .prepare(
+        "SELECT * FROM planner_essentials WHERE wedding_id = ? ORDER BY kind ASC, id ASC"
+      )
+      .all(weddingId),
     journal: db
       .prepare(
-        "SELECT * FROM planner_journal ORDER BY entry_date DESC, id DESC"
+        "SELECT * FROM planner_journal WHERE wedding_id = ? ORDER BY entry_date DESC, id DESC"
       )
-      .all(),
+      .all(weddingId),
     savingsTarget: cleanInt(cfg.PLANNER_SAVINGS_TARGET || 50_000_000, 0),
     weddingDateIso: cfg.AKAD_ISO_START || cfg.RESEPSI_ISO_START || "",
   };
 }
 
 export const GET: APIRoute = async ({ cookies, url }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -141,7 +155,7 @@ export const GET: APIRoute = async ({ cookies, url }) => {
       );
     }
 
-    const all = fetchAllPlannerData();
+    const all = fetchAllPlannerData(session.weddingId);
     if (resource === "all") {
       return new Response(JSON.stringify(all), {
         status: 200,
@@ -162,12 +176,14 @@ export const GET: APIRoute = async ({ cookies, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
     });
   }
+  const weddingId = session.weddingId;
 
   try {
     const body = (await request.json()) as Record<string, unknown>;
@@ -177,7 +193,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const idempotencyKey = getIdempotencyKey(request, body);
 
     if (idempotencyKey) {
-      const cached = findIdempotentResponse(idempotencyKey);
+      const cached = findIdempotentResponse(weddingId, idempotencyKey);
       if (cached) {
         return new Response(cached, { status: 200, headers: JSON_HEADERS });
       }
@@ -185,7 +201,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (action === "set_target") {
       const target = cleanInt(body.target, 0);
-      setConfig("PLANNER_SAVINGS_TARGET", String(target));
+      setConfig("PLANNER_SAVINGS_TARGET", String(target), weddingId);
       return new Response(JSON.stringify({ success: true, target }), {
         status: 200,
         headers: JSON_HEADERS,
@@ -197,12 +213,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       let skippedCount = 0;
       if (resource === "todos") {
         const existingRows = db
-          .prepare("SELECT LOWER(title) AS key FROM planner_todos")
-          .all() as Array<{ key: string }>;
+          .prepare("SELECT LOWER(title) AS key FROM planner_todos WHERE wedding_id = ?")
+          .all(weddingId) as Array<{ key: string }>;
         const existing = new Set(existingRows.map((r) => r.key));
         const stmt = db.prepare(
-          `INSERT INTO planner_todos (title, phase, category, due_date, pic, done, notes, created_at)
-           VALUES (?, ?, ?, '', ?, 0, ?, ?)`
+          `INSERT INTO planner_todos (wedding_id, title, phase, category, due_date, pic, done, notes, created_at)
+           VALUES (?, ?, ?, ?, '', ?, 0, ?, ?)`
         );
         const tx = db.transaction(() => {
           for (const item of TODO_STARTER_TEMPLATE) {
@@ -211,6 +227,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
               continue;
             }
             stmt.run(
+              weddingId,
               item.title,
               item.phase,
               item.category,
@@ -224,12 +241,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         tx();
       } else if (resource === "budget") {
         const existingRows = db
-          .prepare("SELECT LOWER(name) AS key FROM planner_budget")
-          .all() as Array<{ key: string }>;
+          .prepare("SELECT LOWER(name) AS key FROM planner_budget WHERE wedding_id = ?")
+          .all(weddingId) as Array<{ key: string }>;
         const existing = new Set(existingRows.map((r) => r.key));
         const stmt = db.prepare(
-          `INSERT INTO planner_budget (name, category, estimated_cost, actual_cost, paid_amount, payment_status, vendor_phone, due_date, notes, created_at)
-           VALUES (?, ?, ?, 0, 0, 'belum', '', '', ?, ?)`
+          `INSERT INTO planner_budget (wedding_id, name, category, estimated_cost, actual_cost, paid_amount, payment_status, vendor_phone, due_date, notes, created_at)
+           VALUES (?, ?, ?, ?, 0, 0, 'belum', '', '', ?, ?)`
         );
         const tx = db.transaction(() => {
           for (const item of BUDGET_STARTER_TEMPLATE) {
@@ -238,6 +255,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
               continue;
             }
             stmt.run(
+              weddingId,
               item.name,
               item.category,
               item.estimated_cost,
@@ -250,12 +268,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         tx();
       } else if (resource === "essentials") {
         const existingRows = db
-          .prepare("SELECT LOWER(title) AS key FROM planner_essentials")
-          .all() as Array<{ key: string }>;
+          .prepare("SELECT LOWER(title) AS key FROM planner_essentials WHERE wedding_id = ?")
+          .all(weddingId) as Array<{ key: string }>;
         const existing = new Set(existingRows.map((r) => r.key));
         const stmt = db.prepare(
-          `INSERT INTO planner_essentials (kind, title, price, status, owner, done_groom, done_bride, notes, created_at)
-           VALUES (?, ?, ?, 'rencana', ?, 0, 0, ?, ?)`
+          `INSERT INTO planner_essentials (wedding_id, kind, title, price, status, owner, done_groom, done_bride, notes, created_at)
+           VALUES (?, ?, ?, ?, 'rencana', ?, 0, 0, ?, ?)`
         );
         const tx = db.transaction(() => {
           for (const item of ESSENTIALS_STARTER_TEMPLATE) {
@@ -264,6 +282,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
               continue;
             }
             stmt.run(
+              weddingId,
               item.kind,
               item.title,
               item.price,
@@ -303,9 +322,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const phase = cleanText(body.phase, 40, "H-3 Bulan");
       const dupTodo = db
         .prepare(
-          "SELECT id FROM planner_todos WHERE LOWER(title) = LOWER(?) AND LOWER(phase) = LOWER(?) LIMIT 1"
+          "SELECT id FROM planner_todos WHERE wedding_id = ? AND LOWER(title) = LOWER(?) AND LOWER(phase) = LOWER(?) LIMIT 1"
         )
-        .get(title, phase);
+        .get(weddingId, title, phase);
       if (dupTodo) {
         return new Response(
           JSON.stringify({
@@ -316,10 +335,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
       const res = db
         .prepare(
-          `INSERT INTO planner_todos (title, phase, category, due_date, pic, done, notes, created_at)
-           VALUES (?, ?, ?, ?, ?, 0, ?, ?)`
+          `INSERT INTO planner_todos (wedding_id, title, phase, category, due_date, pic, done, notes, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)`
         )
         .run(
+          weddingId,
           title,
           phase,
           cleanText(body.category, 60, "Umum"),
@@ -329,10 +349,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           nowIso
         );
       const item = db
-        .prepare("SELECT * FROM planner_todos WHERE id = ?")
-        .get(Number(res.lastInsertRowid));
+        .prepare("SELECT * FROM planner_todos WHERE id = ? AND wedding_id = ?")
+        .get(Number(res.lastInsertRowid), weddingId);
       const payload = { success: true, item };
-      saveIdempotentResponse(idempotencyKey, "todos", payload, nowIso);
+      saveIdempotentResponse(weddingId, idempotencyKey, "todos", payload, nowIso);
       return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
@@ -362,9 +382,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const category = cleanText(body.category, 60, "Lainnya");
       const dupBudget = db
         .prepare(
-          "SELECT id FROM planner_budget WHERE LOWER(name) = LOWER(?) AND LOWER(category) = LOWER(?) LIMIT 1"
+          "SELECT id FROM planner_budget WHERE wedding_id = ? AND LOWER(name) = LOWER(?) AND LOWER(category) = LOWER(?) LIMIT 1"
         )
-        .get(name, category);
+        .get(weddingId, name, category);
       if (dupBudget) {
         return new Response(
           JSON.stringify({
@@ -380,10 +400,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         : "belum";
       const res = db
         .prepare(
-          `INSERT INTO planner_budget (name, category, estimated_cost, actual_cost, paid_amount, payment_status, vendor_phone, due_date, notes, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO planner_budget (wedding_id, name, category, estimated_cost, actual_cost, paid_amount, payment_status, vendor_phone, due_date, notes, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
+          weddingId,
           name,
           category,
           cleanInt(body.estimated_cost, 0),
@@ -396,10 +417,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           nowIso
         );
       const item = db
-        .prepare("SELECT * FROM planner_budget WHERE id = ?")
-        .get(Number(res.lastInsertRowid));
+        .prepare("SELECT * FROM planner_budget WHERE id = ? AND wedding_id = ?")
+        .get(Number(res.lastInsertRowid), weddingId);
       const payload = { success: true, item };
-      saveIdempotentResponse(idempotencyKey, "budget", payload, nowIso);
+      saveIdempotentResponse(weddingId, idempotencyKey, "budget", payload, nowIso);
       return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
@@ -422,10 +443,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const recentDup = db
         .prepare(
           `SELECT * FROM planner_savings
-           WHERE entry_date = ? AND contributor = ? AND entry_type = ? AND amount = ? AND LOWER(note) = LOWER(?) AND created_at >= ?
+           WHERE wedding_id = ? AND entry_date = ? AND contributor = ? AND entry_type = ? AND amount = ? AND LOWER(note) = LOWER(?) AND created_at >= ?
            LIMIT 1`
         )
-        .get(entryDate, contributor, entryType, amount, note, recentCutoff);
+        .get(weddingId, entryDate, contributor, entryType, amount, note, recentCutoff);
       if (recentDup) {
         return new Response(
           JSON.stringify({ success: true, item: recentDup, deduplicated: true }),
@@ -434,15 +455,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
       const res = db
         .prepare(
-          `INSERT INTO planner_savings (entry_date, contributor, entry_type, amount, note, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)`
+          `INSERT INTO planner_savings (wedding_id, entry_date, contributor, entry_type, amount, note, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
         )
-        .run(entryDate, contributor, entryType, amount, note, nowIso);
+        .run(weddingId, entryDate, contributor, entryType, amount, note, nowIso);
       const item = db
-        .prepare("SELECT * FROM planner_savings WHERE id = ?")
-        .get(Number(res.lastInsertRowid));
+        .prepare("SELECT * FROM planner_savings WHERE id = ? AND wedding_id = ?")
+        .get(Number(res.lastInsertRowid), weddingId);
       const payload = { success: true, item };
-      saveIdempotentResponse(idempotencyKey, "savings", payload, nowIso);
+      saveIdempotentResponse(weddingId, idempotencyKey, "savings", payload, nowIso);
       return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
@@ -468,9 +489,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         : "seserahan";
       const dupEssential = db
         .prepare(
-          "SELECT id FROM planner_essentials WHERE kind = ? AND LOWER(title) = LOWER(?) LIMIT 1"
+          "SELECT id FROM planner_essentials WHERE wedding_id = ? AND kind = ? AND LOWER(title) = LOWER(?) LIMIT 1"
         )
-        .get(kind, title);
+        .get(weddingId, kind, title);
       if (dupEssential) {
         return new Response(
           JSON.stringify({
@@ -484,10 +505,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         : "rencana";
       const res = db
         .prepare(
-          `INSERT INTO planner_essentials (kind, title, price, status, owner, done_groom, done_bride, notes, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO planner_essentials (wedding_id, kind, title, price, status, owner, done_groom, done_bride, notes, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
+          weddingId,
           kind,
           title,
           cleanInt(body.price, 0),
@@ -499,10 +521,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           nowIso
         );
       const item = db
-        .prepare("SELECT * FROM planner_essentials WHERE id = ?")
-        .get(Number(res.lastInsertRowid));
+        .prepare("SELECT * FROM planner_essentials WHERE id = ? AND wedding_id = ?")
+        .get(Number(res.lastInsertRowid), weddingId);
       const payload = { success: true, item };
-      saveIdempotentResponse(idempotencyKey, "essentials", payload, nowIso);
+      saveIdempotentResponse(weddingId, idempotencyKey, "essentials", payload, nowIso);
       return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
@@ -530,9 +552,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const entryDate = cleanDate(body.entry_date, nowIso.slice(0, 10));
       const dupJournal = db
         .prepare(
-          "SELECT id FROM planner_journal WHERE entry_date = ? AND LOWER(title) = LOWER(?) LIMIT 1"
+          "SELECT id FROM planner_journal WHERE wedding_id = ? AND entry_date = ? AND LOWER(title) = LOWER(?) LIMIT 1"
         )
-        .get(entryDate, title);
+        .get(weddingId, entryDate, title);
       if (dupJournal) {
         return new Response(
           JSON.stringify({
@@ -543,10 +565,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
       const res = db
         .prepare(
-          `INSERT INTO planner_journal (entry_date, author, mood, title, content, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)`
+          `INSERT INTO planner_journal (wedding_id, entry_date, author, mood, title, content, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
+          weddingId,
           entryDate,
           cleanText(body.author, 60, "Bersama"),
           mood,
@@ -555,10 +578,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           nowIso
         );
       const item = db
-        .prepare("SELECT * FROM planner_journal WHERE id = ?")
-        .get(Number(res.lastInsertRowid));
+        .prepare("SELECT * FROM planner_journal WHERE id = ? AND wedding_id = ?")
+        .get(Number(res.lastInsertRowid), weddingId);
       const payload = { success: true, item };
-      saveIdempotentResponse(idempotencyKey, "journal", payload, nowIso);
+      saveIdempotentResponse(weddingId, idempotencyKey, "journal", payload, nowIso);
       return new Response(JSON.stringify(payload), {
         status: 201,
         headers: JSON_HEADERS,
@@ -579,12 +602,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 };
 
 export const PUT: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
     });
   }
+  const weddingId = session.weddingId;
 
   try {
     const body = (await request.json()) as Record<string, unknown>;
@@ -599,10 +624,9 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
 
     if (resource === "todos") {
       if (body.toggleDone !== undefined) {
-        db.prepare("UPDATE planner_todos SET done = ? WHERE id = ?").run(
-          body.toggleDone ? 1 : 0,
-          id
-        );
+        db.prepare(
+          "UPDATE planner_todos SET done = ? WHERE id = ? AND wedding_id = ?"
+        ).run(body.toggleDone ? 1 : 0, id, weddingId);
       } else {
         const title = cleanText(body.title, 200);
         if (!title) {
@@ -614,7 +638,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         db.prepare(
           `UPDATE planner_todos
            SET title = ?, phase = ?, category = ?, due_date = ?, pic = ?, done = ?, notes = ?
-           WHERE id = ?`
+           WHERE id = ? AND wedding_id = ?`
         ).run(
           title,
           cleanText(body.phase, 40, "H-3 Bulan"),
@@ -623,12 +647,13 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           cleanText(body.pic, 60, "Bersama"),
           body.done ? 1 : 0,
           cleanText(body.notes, 500, ""),
-          id
+          id,
+          weddingId
         );
       }
       const item = db
-        .prepare("SELECT * FROM planner_todos WHERE id = ?")
-        .get(id);
+        .prepare("SELECT * FROM planner_todos WHERE id = ? AND wedding_id = ?")
+        .get(id, weddingId);
       return new Response(JSON.stringify({ success: true, item }), {
         status: 200,
         headers: JSON_HEADERS,
@@ -651,7 +676,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       db.prepare(
         `UPDATE planner_budget
          SET name = ?, category = ?, estimated_cost = ?, actual_cost = ?, paid_amount = ?, payment_status = ?, vendor_phone = ?, due_date = ?, notes = ?
-         WHERE id = ?`
+         WHERE id = ? AND wedding_id = ?`
       ).run(
         name,
         cleanText(body.category, 60, "Lainnya"),
@@ -662,11 +687,12 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         cleanText(body.vendor_phone, 30, ""),
         cleanText(body.due_date, 30, ""),
         cleanText(body.notes, 500, ""),
-        id
+        id,
+        weddingId
       );
       const item = db
-        .prepare("SELECT * FROM planner_budget WHERE id = ?")
-        .get(id);
+        .prepare("SELECT * FROM planner_budget WHERE id = ? AND wedding_id = ?")
+        .get(id, weddingId);
       return new Response(JSON.stringify({ success: true, item }), {
         status: 200,
         headers: JSON_HEADERS,
@@ -676,22 +702,21 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     if (resource === "essentials") {
       if (body.patchToggle === "groom") {
         db.prepare(
-          "UPDATE planner_essentials SET done_groom = ? WHERE id = ?"
-        ).run(body.value ? 1 : 0, id);
+          "UPDATE planner_essentials SET done_groom = ? WHERE id = ? AND wedding_id = ?"
+        ).run(body.value ? 1 : 0, id, weddingId);
       } else if (body.patchToggle === "bride") {
         db.prepare(
-          "UPDATE planner_essentials SET done_bride = ? WHERE id = ?"
-        ).run(body.value ? 1 : 0, id);
+          "UPDATE planner_essentials SET done_bride = ? WHERE id = ? AND wedding_id = ?"
+        ).run(body.value ? 1 : 0, id, weddingId);
       } else if (body.patchStatus) {
         const status = ["rencana", "dibeli", "siap"].includes(
           String(body.patchStatus)
         )
           ? String(body.patchStatus)
           : "rencana";
-        db.prepare("UPDATE planner_essentials SET status = ? WHERE id = ?").run(
-          status,
-          id
-        );
+        db.prepare(
+          "UPDATE planner_essentials SET status = ? WHERE id = ? AND wedding_id = ?"
+        ).run(status, id, weddingId);
       } else {
         const title = cleanText(body.title, 200);
         if (!title) {
@@ -708,7 +733,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         db.prepare(
           `UPDATE planner_essentials
            SET title = ?, price = ?, status = ?, owner = ?, done_groom = ?, done_bride = ?, notes = ?
-           WHERE id = ?`
+           WHERE id = ? AND wedding_id = ?`
         ).run(
           title,
           cleanInt(body.price, 0),
@@ -717,12 +742,13 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           body.done_groom ? 1 : 0,
           body.done_bride ? 1 : 0,
           cleanText(body.notes, 500, ""),
-          id
+          id,
+          weddingId
         );
       }
       const item = db
-        .prepare("SELECT * FROM planner_essentials WHERE id = ?")
-        .get(id);
+        .prepare("SELECT * FROM planner_essentials WHERE id = ? AND wedding_id = ?")
+        .get(id, weddingId);
       return new Response(JSON.stringify({ success: true, item }), {
         status: 200,
         headers: JSON_HEADERS,
@@ -746,7 +772,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         .prepare(
           `UPDATE planner_savings
            SET entry_date = ?, contributor = ?, entry_type = ?, amount = ?, note = ?
-           WHERE id = ?`
+           WHERE id = ? AND wedding_id = ?`
         )
         .run(
           entryDate,
@@ -754,7 +780,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           entryType,
           amount,
           cleanText(body.note, 300, ""),
-          id
+          id,
+          weddingId
         );
       if (result.changes === 0) {
         return new Response(
@@ -763,8 +790,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         );
       }
       const item = db
-        .prepare("SELECT * FROM planner_savings WHERE id = ?")
-        .get(id);
+        .prepare("SELECT * FROM planner_savings WHERE id = ? AND wedding_id = ?")
+        .get(id, weddingId);
       return new Response(JSON.stringify({ success: true, item }), {
         status: 200,
         headers: JSON_HEADERS,
@@ -792,18 +819,19 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       db.prepare(
         `UPDATE planner_journal
          SET entry_date = ?, author = ?, mood = ?, title = ?, content = ?
-         WHERE id = ?`
+         WHERE id = ? AND wedding_id = ?`
       ).run(
         cleanText(body.entry_date, 20, new Date().toISOString().slice(0, 10)),
         cleanText(body.author, 60, "Bersama"),
         mood,
         title,
         content,
-        id
+        id,
+        weddingId
       );
       const item = db
-        .prepare("SELECT * FROM planner_journal WHERE id = ?")
-        .get(id);
+        .prepare("SELECT * FROM planner_journal WHERE id = ? AND wedding_id = ?")
+        .get(id, weddingId);
       return new Response(JSON.stringify({ success: true, item }), {
         status: 200,
         headers: JSON_HEADERS,
@@ -832,7 +860,8 @@ const TABLE_BY_RESOURCE: Record<string, string> = {
 };
 
 export const DELETE: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -853,7 +882,10 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(id);
+    db.prepare(`DELETE FROM ${table} WHERE id = ? AND wedding_id = ?`).run(
+      id,
+      session.weddingId
+    );
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: JSON_HEADERS,

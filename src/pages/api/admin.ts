@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../lib/auth";
+import { getAuthSession } from "../../lib/auth";
 import db from "../../lib/db";
 
 const VALID_ATTENDANCE = new Set(["hadir", "tidak_hadir", "ragu"]);
@@ -15,12 +15,14 @@ const toPositiveInt = (val: unknown): number | null => {
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
     });
   }
+  const weddingId = session.weddingId;
 
   try {
     const body = await request.json();
@@ -54,9 +56,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       const placeholders = targetIds.map(() => "?").join(",");
       const table = action === "delete_rsvp" ? "rsvps" : "wishes";
-      db.prepare(`DELETE FROM ${table} WHERE id IN (${placeholders})`).run(
-        ...targetIds
-      );
+      db.prepare(
+        `DELETE FROM ${table} WHERE wedding_id = ? AND id IN (${placeholders})`
+      ).run(weddingId, ...targetIds);
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: JSON_HEADERS,
@@ -109,12 +111,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       if (hasPhone) {
         db.prepare(
-          "UPDATE rsvps SET guest_name=?, phone=?, attendance=?, guest_count=?, message=? WHERE id=?"
-        ).run(guest_name, phone, attendance, guest_count, message, targetId);
+          "UPDATE rsvps SET guest_name=?, phone=?, attendance=?, guest_count=?, message=? WHERE id=? AND wedding_id=?"
+        ).run(guest_name, phone, attendance, guest_count, message, targetId, weddingId);
       } else {
         db.prepare(
-          "UPDATE rsvps SET guest_name=?, attendance=?, guest_count=?, message=? WHERE id=?"
-        ).run(guest_name, attendance, guest_count, message, targetId);
+          "UPDATE rsvps SET guest_name=?, attendance=?, guest_count=?, message=? WHERE id=? AND wedding_id=?"
+        ).run(guest_name, attendance, guest_count, message, targetId, weddingId);
       }
 
       return new Response(JSON.stringify({ success: true }), {
@@ -145,11 +147,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         );
       }
 
-      db.prepare("UPDATE wishes SET name=?, message=? WHERE id=?").run(
-        name,
-        message,
-        targetId
-      );
+      db.prepare(
+        "UPDATE wishes SET name=?, message=? WHERE id=? AND wedding_id=?"
+      ).run(name, message, targetId, weddingId);
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: JSON_HEADERS,
@@ -176,8 +176,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
 
       const insertStmt = db.prepare(`
-        INSERT INTO rsvps (guest_name, phone, attendance, guest_count, message, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO rsvps (wedding_id, guest_name, phone, attendance, guest_count, message, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
       const nowIso = new Date().toISOString();
       const created: Array<{
@@ -220,6 +220,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
               : "";
 
           const res = insertStmt.run(
+            weddingId,
             guest_name,
             phone,
             attendance,
@@ -281,8 +282,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
 
       const insertStmt = db.prepare(`
-        INSERT INTO wishes (name, message, created_at)
-        VALUES (?, ?, ?)
+        INSERT INTO wishes (wedding_id, name, message, created_at)
+        VALUES (?, ?, ?, ?)
       `);
       const nowIso = new Date().toISOString();
       const created: Array<{
@@ -304,7 +305,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
               : "";
           if (!name || !message) continue;
 
-          const res = insertStmt.run(name, message, nowIso);
+          const res = insertStmt.run(weddingId, name, message, nowIso);
           created.push({
             id: Number(res.lastInsertRowid),
             name,

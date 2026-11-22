@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import QRCode from "qrcode";
-import { isAdminAuthenticated } from "../../../lib/auth";
+import { getAuthSession } from "../../../lib/auth";
 import { getConfig, setConfig } from "../../../lib/db";
 import {
   WEDDING_WA_TEMPLATES,
@@ -50,6 +50,7 @@ function resolveDomainAsal(request: Request, url: URL): string {
 }
 
 async function ensureCredentialsOrAutoRegister(
+  weddingId: number,
   config: Record<string, string>,
   overrides?: {
     baseUrl?: string;
@@ -85,9 +86,9 @@ async function ensureCredentialsOrAutoRegister(
     domainAsal: overrides?.domainAsal,
   });
 
-  setConfig("WA_BASE_URL", baseUrl);
-  setConfig("WA_API_KEY", created.key_id);
-  setConfig("WA_API_SECRET", created.secret);
+  setConfig("WA_BASE_URL", baseUrl, weddingId);
+  setConfig("WA_API_KEY", created.key_id, weddingId);
+  setConfig("WA_API_SECRET", created.secret, weddingId);
 
   const creds = {
     baseUrl,
@@ -111,7 +112,8 @@ async function ensureCredentialsOrAutoRegister(
 }
 
 export const GET: APIRoute = async ({ request, cookies, url }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -120,7 +122,7 @@ export const GET: APIRoute = async ({ request, cookies, url }) => {
 
   try {
     const originDomain = resolveOriginDomain(request, url);
-    const config = getConfig();
+    const config = getConfig(session.weddingId);
     const creds = getWaCredentials(config);
     if (!creds) {
       return new Response(
@@ -169,7 +171,7 @@ export const GET: APIRoute = async ({ request, cookies, url }) => {
       { status: 200, headers: JSON_HEADERS }
     );
   } catch (err) {
-    const config = getConfig();
+    const config = getConfig(session.weddingId);
     const formatted = formatWaGatewayError(err, {
       baseUrl: config.WA_BASE_URL,
       context: "session",
@@ -182,7 +184,8 @@ export const GET: APIRoute = async ({ request, cookies, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, cookies, url }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -203,7 +206,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       sesiId?: string;
     };
 
-    const config = getConfig();
+    const config = getConfig(session.weddingId);
     const action = body.action || "";
     activeAction = action;
     activeBaseUrl = resolveBaseUrl(config, body.baseUrl);
@@ -232,9 +235,9 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
         domainAsal,
       });
 
-      setConfig("WA_BASE_URL", baseUrl);
-      setConfig("WA_API_KEY", created.key_id);
-      setConfig("WA_API_SECRET", created.secret);
+      setConfig("WA_BASE_URL", baseUrl, session.weddingId);
+      setConfig("WA_API_KEY", created.key_id, session.weddingId);
+      setConfig("WA_API_SECRET", created.secret, session.weddingId);
 
       let synced = false;
       try {
@@ -263,6 +266,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
 
     if (action === "start_qr") {
       const { creds, autoRegistered } = await ensureCredentialsOrAutoRegister(
+        session.weddingId,
         config,
         {
           baseUrl: body.baseUrl,
@@ -303,6 +307,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
         );
       }
       const { creds, autoRegistered } = await ensureCredentialsOrAutoRegister(
+        session.weddingId,
         config,
         {
           baseUrl: body.baseUrl,
@@ -374,7 +379,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     });
   } catch (err) {
     const formatted = formatWaGatewayError(err, {
-      baseUrl: activeBaseUrl || getConfig().WA_BASE_URL,
+      baseUrl: activeBaseUrl || getConfig(session.weddingId).WA_BASE_URL,
       context: activeAction === "auto_register" ? "register" : "session",
     });
     return new Response(JSON.stringify({ error: formatted.message }), {

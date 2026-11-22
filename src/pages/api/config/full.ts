@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../../lib/auth";
+import { getAuthSession } from "../../../lib/auth";
 import { getConfig } from "../../../lib/db";
 
 const JSON_HEADERS = {
@@ -8,14 +8,15 @@ const JSON_HEADERS = {
 };
 
 export const GET: APIRoute = async ({ cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
     });
   }
   try {
-    const config = getConfig();
+    const config = getConfig(session.weddingId);
     return new Response(JSON.stringify(config), {
       status: 200,
       headers: JSON_HEADERS,

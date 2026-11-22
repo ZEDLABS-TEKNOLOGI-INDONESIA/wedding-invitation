@@ -1,8 +1,10 @@
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../lib/auth";
+import { getAuthSession } from "../../lib/auth";
 import db, {
   ALLOWED_CONFIG_KEYS,
+  DEFAULT_WEDDING_ID,
   getPublicConfig,
+  getWeddingBySlug,
   setConfig,
 } from "../../lib/db";
 
@@ -158,9 +160,21 @@ const validateConfigEntry = (key: string, value: string): string | null => {
   return null;
 };
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
   try {
-    const safeConfig = getPublicConfig();
+    const slug = (url.searchParams.get("wedding") || "").trim().toLowerCase();
+    let weddingId = DEFAULT_WEDDING_ID;
+    if (slug) {
+      const w = getWeddingBySlug(slug);
+      if (!w || w.status !== "active") {
+        return new Response(JSON.stringify({ error: "Undangan tidak ditemukan." }), {
+          status: 404,
+          headers: JSON_HEADERS,
+        });
+      }
+      weddingId = w.id;
+    }
+    const safeConfig = getPublicConfig(weddingId);
     return new Response(JSON.stringify(safeConfig), {
       status: 200,
       headers: JSON_HEADERS,
@@ -174,7 +188,8 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...JSON_HEADERS, "Cache-Control": "no-store" },
@@ -208,10 +223,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const saveAll = db.transaction((items: [string, string][]) => {
       for (const [key, val] of items) {
-        setConfig(key, val);
+        setConfig(key, val, session.weddingId);
       }
     });
     saveAll(entriesToSave);
+
+    const nextCfg = getPublicConfig(session.weddingId);
+    if (nextCfg.BRIDE_NICKNAME && nextCfg.GROOM_NICKNAME) {
+      const prefix = session.isDemo ? "Demo — " : "Undangan ";
+      db.prepare("UPDATE weddings SET title = ? WHERE id = ?").run(
+        `${prefix}${nextCfg.BRIDE_NICKNAME} & ${nextCfg.GROOM_NICKNAME}`,
+        session.weddingId
+      );
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

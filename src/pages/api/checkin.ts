@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../lib/auth";
+import { getAuthSession } from "../../lib/auth";
 import db from "../../lib/db";
 import type { GuestRow } from "./guests";
 
@@ -34,12 +34,14 @@ const extractLookupFromInput = (
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
     });
   }
+  const weddingId = session.weddingId;
 
   try {
     const body = (await request.json()) as {
@@ -61,20 +63,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (code) {
       guest = db
-        .prepare("SELECT * FROM guests WHERE UPPER(code) = ? LIMIT 1")
-        .get(code) as GuestRow | undefined;
+        .prepare("SELECT * FROM guests WHERE wedding_id = ? AND UPPER(code) = ? LIMIT 1")
+        .get(weddingId, code) as GuestRow | undefined;
     }
 
     if (!guest && name) {
       guest = db
-        .prepare("SELECT * FROM guests WHERE LOWER(name) = LOWER(?) LIMIT 1")
-        .get(name) as GuestRow | undefined;
+        .prepare("SELECT * FROM guests WHERE wedding_id = ? AND LOWER(name) = LOWER(?) LIMIT 1")
+        .get(weddingId, name) as GuestRow | undefined;
 
       // Jika belum cocok persis, coba pencarian parsial bila hanya 1 kandidat unik
       if (!guest) {
         const partialMatches = db
-          .prepare("SELECT * FROM guests WHERE LOWER(name) LIKE LOWER(?) LIMIT 2")
-          .all(`%${name}%`) as GuestRow[];
+          .prepare("SELECT * FROM guests WHERE wedding_id = ? AND LOWER(name) LIKE LOWER(?) LIMIT 2")
+          .all(weddingId, `%${name}%`) as GuestRow[];
         if (partialMatches.length === 1) {
           guest = partialMatches[0];
         }
@@ -84,15 +86,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       if (!guest) {
         const rsvpMatch = (db
           .prepare(
-            "SELECT guest_name, phone, guest_count FROM rsvps WHERE LOWER(guest_name) = LOWER(?) LIMIT 1"
+            "SELECT guest_name, phone, guest_count FROM rsvps WHERE wedding_id = ? AND LOWER(guest_name) = LOWER(?) LIMIT 1"
           )
-          .get(name) ||
+          .get(weddingId, name) ||
           (() => {
             const partial = db
               .prepare(
-                "SELECT guest_name, phone, guest_count FROM rsvps WHERE LOWER(guest_name) LIKE LOWER(?) LIMIT 2"
+                "SELECT guest_name, phone, guest_count FROM rsvps WHERE wedding_id = ? AND LOWER(guest_name) LIKE LOWER(?) LIMIT 2"
               )
-              .all(`%${name}%`) as Array<{
+              .all(weddingId, `%${name}%`) as Array<{
               guest_name: string;
               phone: string;
               guest_count: number;
@@ -111,10 +113,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
               : 2;
           const inserted = db
             .prepare(
-              `INSERT INTO guests (code, name, phone, address, group_name, quota, checked_in, checked_in_at, checked_in_pax, created_at)
-               VALUES (?, ?, ?, 'Di Tempat', 'RSVP', ?, 0, '', 0, ?)`
+              `INSERT INTO guests (wedding_id, code, name, phone, address, group_name, quota, checked_in, checked_in_at, checked_in_pax, created_at)
+               VALUES (?, ?, ?, ?, 'Di Tempat', 'RSVP', ?, 0, '', 0, ?)`
             )
             .run(
+              weddingId,
               newCode,
               rsvpMatch.guest_name,
               rsvpMatch.phone || "",
@@ -139,10 +142,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
         const res = db
           .prepare(
-            `INSERT INTO guests (code, name, phone, address, group_name, quota, checked_in, checked_in_at, checked_in_pax, created_at)
-             VALUES (?, ?, '', 'Di Tempat', 'Walk-In', ?, 1, ?, ?, ?)`
+            `INSERT INTO guests (wedding_id, code, name, phone, address, group_name, quota, checked_in, checked_in_at, checked_in_pax, created_at)
+             VALUES (?, ?, ?, '', 'Di Tempat', 'Walk-In', ?, 1, ?, ?, ?)`
           )
-          .run(newCode, displayName, pax, nowIso, pax, nowIso);
+          .run(weddingId, newCode, displayName, pax, nowIso, pax, nowIso);
 
         const created = db
           .prepare("SELECT * FROM guests WHERE id = ?")

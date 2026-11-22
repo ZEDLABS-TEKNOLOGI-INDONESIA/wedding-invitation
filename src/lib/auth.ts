@@ -1,10 +1,28 @@
 import crypto from "node:crypto";
 import type { AstroCookies } from "astro";
-import db from "./db";
+import db, {
+  DEFAULT_WEDDING_ID,
+  getWeddingById,
+  type UserRecord,
+} from "./db";
+import { normalizeUsername, verifyPasswordHash } from "./password";
 
 export const SESSION_COOKIE_NAME = "wedding_admin_session";
 const LEGACY_COOKIE_NAME = "wedding_admin_auth";
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+
+export interface AuthSession {
+  userId: number;
+  username: string;
+  role: "superadmin" | "couple_owner" | "couple_partner";
+  fullName: string;
+  phone: string;
+  weddingId: number;
+  weddingSlug: string;
+  weddingTitle: string;
+  isDemo: boolean;
+  impersonating: boolean;
+}
 
 const sha256 = (value: string): Buffer =>
   crypto.createHash("sha256").update(value).digest();
@@ -53,9 +71,25 @@ export const verifyAdminPassword = (input: string): boolean => {
   return crypto.timingSafeEqual(inputDigest, configuredDigest);
 };
 
-export const createAdminSession = (
+export const authenticateUser = (
+  rawUsername: string,
+  password: string
+): UserRecord | null => {
+  const username = normalizeUsername(rawUsername);
+  if (!username || !password) return null;
+  const user = db
+    .prepare("SELECT * FROM users WHERE username = ? LIMIT 1")
+    .get(username) as UserRecord | undefined;
+  if (!user || user.status !== "active") return null;
+  if (!verifyPasswordHash(password, user.password_hash)) return null;
+  return user;
+};
+
+export const createUserSession = (
   cookies: AstroCookies,
-  request: Request
+  request: Request,
+  userId: number,
+  impersonatingWeddingId?: number | null
 ): void => {
   const now = Date.now();
   const expiresAt = now + SESSION_TTL_MS;
@@ -64,8 +98,9 @@ export const createAdminSession = (
 
   db.prepare("DELETE FROM admin_sessions WHERE expires_at <= ?").run(now);
   db.prepare(
-    "INSERT INTO admin_sessions (token_hash, expires_at, created_at) VALUES (?, ?, ?)"
-  ).run(tokenHash, expiresAt, now);
+    `INSERT INTO admin_sessions (token_hash, expires_at, created_at, user_id, impersonating_wedding_id)
+     VALUES (?, ?, ?, ?, ?)`
+  ).run(tokenHash, expiresAt, now, userId, impersonatingWeddingId ?? null);
 
   cookies.set(SESSION_COOKIE_NAME, rawToken, {
     path: "/",
@@ -80,19 +115,106 @@ export const createAdminSession = (
   }
 };
 
-export const isAdminAuthenticated = (cookies: AstroCookies): boolean => {
+export const setSessionImpersonation = (
+  cookies: AstroCookies,
+  weddingId: number | null
+): boolean => {
   const rawToken = cookies.get(SESSION_COOKIE_NAME)?.value;
   if (!rawToken || rawToken.length < 32) return false;
+  const tokenHash = sha256Hex(rawToken);
+  const res = db
+    .prepare(
+      "UPDATE admin_sessions SET impersonating_wedding_id = ? WHERE token_hash = ?"
+    )
+    .run(weddingId, tokenHash);
+  return res.changes > 0;
+};
+
+export const createAdminSession = (
+  cookies: AstroCookies,
+  request: Request
+): void => {
+  const superadmin = db
+    .prepare("SELECT id FROM users WHERE role = 'superadmin' ORDER BY id ASC LIMIT 1")
+    .get() as { id: number } | undefined;
+  if (superadmin) {
+    createUserSession(cookies, request, superadmin.id, DEFAULT_WEDDING_ID);
+    return;
+  }
+  createUserSession(cookies, request, 0, DEFAULT_WEDDING_ID);
+};
+
+export const getAuthSession = (cookies: AstroCookies): AuthSession | null => {
+  const rawToken = cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (!rawToken || rawToken.length < 32) return null;
 
   const tokenHash = sha256Hex(rawToken);
   const now = Date.now();
-  const session = db
+  const row = db
     .prepare(
-      "SELECT token_hash FROM admin_sessions WHERE token_hash = ? AND expires_at > ?"
+      `SELECT token_hash, user_id, impersonating_wedding_id
+       FROM admin_sessions
+       WHERE token_hash = ? AND expires_at > ?`
     )
-    .get(tokenHash, now) as { token_hash: string } | undefined;
+    .get(tokenHash, now) as
+    | {
+        token_hash: string;
+        user_id: number | null;
+        impersonating_wedding_id: number | null;
+      }
+    | undefined;
 
-  return Boolean(session);
+  if (!row) return null;
+
+  // Kompatibilitas sesi lama sebelum migrasi SaaS
+  let user: UserRecord | undefined;
+  if (row.user_id) {
+    user = db
+      .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
+      .get(row.user_id) as UserRecord | undefined;
+  } else {
+    user = db
+      .prepare("SELECT * FROM users WHERE role = 'superadmin' ORDER BY id ASC LIMIT 1")
+      .get() as UserRecord | undefined;
+  }
+
+  if (!user || user.status !== "active") return null;
+
+  const isSuper = user.role === "superadmin";
+  const targetWeddingId = isSuper
+    ? row.impersonating_wedding_id || DEFAULT_WEDDING_ID
+    : user.wedding_id || 0;
+
+  const wedding = targetWeddingId ? getWeddingById(targetWeddingId) : undefined;
+  if (!isSuper && (!wedding || wedding.status !== "active")) {
+    return null;
+  }
+
+  const effectiveWedding = wedding || getWeddingById(DEFAULT_WEDDING_ID);
+
+  return {
+    userId: user.id,
+    username: user.username,
+    role: user.role,
+    fullName: user.full_name || user.username,
+    phone: user.phone || "",
+    weddingId: effectiveWedding?.id || DEFAULT_WEDDING_ID,
+    weddingSlug: effectiveWedding?.slug || "demo",
+    weddingTitle: effectiveWedding?.title || "Undangan Pernikahan",
+    isDemo: Boolean(effectiveWedding?.is_demo),
+    impersonating: Boolean(isSuper && row.impersonating_wedding_id),
+  };
+};
+
+export const isAdminAuthenticated = (cookies: AstroCookies): boolean =>
+  Boolean(getAuthSession(cookies));
+
+export const requireSuperadminSession = (
+  cookies: AstroCookies
+): AuthSession | null => {
+  const session = getAuthSession(cookies);
+  if (!session || session.role !== "superadmin") return null;
+  return session;
 };
 
 export const destroyAdminSession = (cookies: AstroCookies): void => {

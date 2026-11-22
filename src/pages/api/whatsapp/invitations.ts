@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../../lib/auth";
+import { getAuthSession } from "../../../lib/auth";
 import db, { getConfig } from "../../../lib/db";
 import {
   WA_TEMPLATE_CODES,
@@ -48,6 +48,7 @@ function cleanBase64Payload(raw: unknown): string {
  * 2) Tabel `rsvps` dengan status `ragu` (belum konfirmasi) bila belum pernah mengisi RSVP.
  */
 function syncBroadcastedGuestRecords(
+  weddingId: number,
   guestName: string,
   phone: string,
   address: string,
@@ -57,10 +58,10 @@ function syncBroadcastedGuestRecords(
   const existingGuest = db
     .prepare(
       `SELECT id, code, phone FROM guests
-       WHERE LOWER(name) = LOWER(?) OR (? != '' AND phone = ?)
+       WHERE wedding_id = ? AND (LOWER(name) = LOWER(?) OR (? != '' AND phone = ?))
        LIMIT 1`
     )
-    .get(guestName, phone, phone) as
+    .get(weddingId, guestName, phone, phone) as
     | { id: number; code: string; phone: string }
     | undefined;
 
@@ -68,13 +69,14 @@ function syncBroadcastedGuestRecords(
   if (!existingGuest) {
     guestCode = `G-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
     db.prepare(
-      `INSERT INTO guests (code, name, phone, address, group_name, quota, checked_in, checked_in_at, checked_in_pax, created_at)
-       VALUES (?, ?, ?, ?, 'Undangan WA', 2, 0, '', 0, ?)`
-    ).run(guestCode, guestName, phone, address, nowIso);
+      `INSERT INTO guests (wedding_id, code, name, phone, address, group_name, quota, checked_in, checked_in_at, checked_in_pax, created_at)
+       VALUES (?, ?, ?, ?, ?, 'Undangan WA', 2, 0, '', 0, ?)`
+    ).run(weddingId, guestCode, guestName, phone, address, nowIso);
   } else if (!existingGuest.phone && phone) {
-    db.prepare("UPDATE guests SET phone = ? WHERE id = ?").run(
+    db.prepare("UPDATE guests SET phone = ? WHERE id = ? AND wedding_id = ?").run(
       phone,
-      existingGuest.id
+      existingGuest.id,
+      weddingId
     );
   }
 
@@ -82,20 +84,21 @@ function syncBroadcastedGuestRecords(
   const existingRsvp = db
     .prepare(
       `SELECT id, phone FROM rsvps
-       WHERE LOWER(guest_name) = LOWER(?) OR (? != '' AND phone = ?)
+       WHERE wedding_id = ? AND (LOWER(guest_name) = LOWER(?) OR (? != '' AND phone = ?))
        LIMIT 1`
     )
-    .get(guestName, phone, phone) as { id: number; phone: string } | undefined;
+    .get(weddingId, guestName, phone, phone) as { id: number; phone: string } | undefined;
 
   if (!existingRsvp) {
     db.prepare(
-      `INSERT INTO rsvps (guest_name, phone, attendance, guest_count, message, created_at)
-       VALUES (?, ?, 'ragu', 1, 'Diundang via WhatsApp (belum konfirmasi)', ?)`
-    ).run(guestName, phone, nowIso);
+      `INSERT INTO rsvps (wedding_id, guest_name, phone, attendance, guest_count, message, created_at)
+       VALUES (?, ?, ?, 'ragu', 1, 'Diundang via WhatsApp (belum konfirmasi)', ?)`
+    ).run(weddingId, guestName, phone, nowIso);
   } else if (!existingRsvp.phone && phone) {
-    db.prepare("UPDATE rsvps SET phone = ? WHERE id = ?").run(
+    db.prepare("UPDATE rsvps SET phone = ? WHERE id = ? AND wedding_id = ?").run(
       phone,
-      existingRsvp.id
+      existingRsvp.id,
+      weddingId
     );
   }
 
@@ -103,7 +106,8 @@ function syncBroadcastedGuestRecords(
 }
 
 export const GET: APIRoute = async ({ cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -113,9 +117,9 @@ export const GET: APIRoute = async ({ cookies }) => {
   try {
     const rows = db
       .prepare(
-        "SELECT * FROM wa_invitations ORDER BY created_at DESC, id DESC LIMIT 300"
+        "SELECT * FROM wa_invitations WHERE wedding_id = ? ORDER BY created_at DESC, id DESC LIMIT 300"
       )
-      .all();
+      .all(session.weddingId);
     return new Response(JSON.stringify(rows), {
       status: 200,
       headers: JSON_HEADERS,
@@ -130,7 +134,8 @@ export const GET: APIRoute = async ({ cookies }) => {
 };
 
 export const POST: APIRoute = async ({ request, cookies, site, url }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -155,7 +160,7 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
       );
     }
 
-    const config = getConfig();
+    const config = getConfig(session.weddingId);
     const creds = getWaCredentials(config);
     if (!creds) {
       return new Response(
@@ -170,8 +175,13 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
     const rawBaseUrl = (
       body.siteUrl ||
       site?.toString() ||
+      url.origin ||
       "https://wedding.zedlabs.id"
     ).replace(/\/+$/, "");
+    const tenantPath = session.isDemo ? "/demo" : `/u/${session.weddingSlug}`;
+    const invitationBase = rawBaseUrl.endsWith(tenantPath)
+      ? rawBaseUrl
+      : `${rawBaseUrl}${tenantPath}`;
 
     const summary = buildEventSummary(config);
     const client = new WaGatewayClient(creds, {
@@ -181,8 +191,8 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
     });
     const insertStmt = db.prepare(`
       INSERT INTO wa_invitations
-        (guest_name, phone, address, invitation_url, job_id, reference_id, status, error_message, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (wedding_id, guest_name, phone, address, invitation_url, job_id, reference_id, status, error_message, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const results: Array<{
@@ -212,10 +222,11 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
           ? "Nama tamu kosong"
           : "Format nomor WhatsApp tidak valid";
         const inserted = insertStmt.run(
+          session.weddingId,
           guestName || "(Tanpa Nama)",
           item?.phone || "-",
           address,
-          rawBaseUrl,
+          invitationBase,
           "",
           "",
           "failed",
@@ -235,12 +246,13 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
       }
 
       const guestCode = syncBroadcastedGuestRecords(
+        session.weddingId,
         guestName,
         phone,
         address,
         nowIso
       );
-      const invitationUrl = `${rawBaseUrl}/?to=${encodeURIComponent(guestName)}${guestCode ? `&code=${encodeURIComponent(guestCode)}` : ""}`;
+      const invitationUrl = `${invitationBase}?to=${encodeURIComponent(guestName)}${guestCode ? `&code=${encodeURIComponent(guestCode)}` : ""}`;
       const referenceId = `WED-INV-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
       const pdfBase64 = body.attachPdf
         ? cleanBase64Payload(item?.pdfBase64)
@@ -336,6 +348,7 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
             : "";
 
         const inserted = insertStmt.run(
+          session.weddingId,
           guestName,
           phone,
           address,
@@ -366,6 +379,7 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
               : "Gagal mengirim ke Gateway";
 
         const inserted = insertStmt.run(
+          session.weddingId,
           guestName,
           phone,
           address,
@@ -410,7 +424,8 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -435,9 +450,9 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
     }
 
     const placeholders = ids.map(() => "?").join(",");
-    db.prepare(`DELETE FROM wa_invitations WHERE id IN (${placeholders})`).run(
-      ...ids
-    );
+    db.prepare(
+      `DELETE FROM wa_invitations WHERE wedding_id = ? AND id IN (${placeholders})`
+    ).run(session.weddingId, ...ids);
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: JSON_HEADERS,

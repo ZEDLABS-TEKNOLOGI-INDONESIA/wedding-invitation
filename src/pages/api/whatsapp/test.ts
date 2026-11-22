@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../../lib/auth";
+import { getAuthSession } from "../../../lib/auth";
 import { getConfig } from "../../../lib/db";
 import {
   WA_TEMPLATE_CODES,
@@ -17,7 +17,8 @@ const JSON_HEADERS = {
 };
 
 export const POST: APIRoute = async ({ request, cookies, url }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -32,7 +33,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       secret?: string;
       recipient?: string;
     };
-    const stored = getConfig();
+    const stored = getConfig(session.weddingId);
     targetBaseUrl = (body.baseUrl || stored.WA_BASE_URL || "").trim();
     const creds = getWaCredentials(stored, {
       baseUrl: body.baseUrl,

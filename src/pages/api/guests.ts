@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import type { APIRoute } from "astro";
-import { isAdminAuthenticated } from "../../lib/auth";
+import { getAuthSession } from "../../lib/auth";
 import db from "../../lib/db";
 
 const JSON_HEADERS = {
@@ -26,7 +26,8 @@ export interface GuestRow {
 }
 
 export const GET: APIRoute = async ({ cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -35,8 +36,10 @@ export const GET: APIRoute = async ({ cookies }) => {
 
   try {
     const guests = db
-      .prepare("SELECT * FROM guests ORDER BY checked_in DESC, id DESC")
-      .all() as GuestRow[];
+      .prepare(
+        "SELECT * FROM guests WHERE wedding_id = ? ORDER BY checked_in DESC, id DESC"
+      )
+      .all(session.weddingId) as GuestRow[];
     return new Response(JSON.stringify(guests), {
       status: 200,
       headers: JSON_HEADERS,
@@ -51,7 +54,8 @@ export const GET: APIRoute = async ({ cookies }) => {
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -83,8 +87,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const insertStmt = db.prepare(`
-      INSERT INTO guests (code, name, phone, address, group_name, quota, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO guests (wedding_id, code, name, phone, address, group_name, quota, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const created: GuestRow[] = [];
@@ -113,6 +117,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
         const code = generateGuestCode();
         const res = insertStmt.run(
+          session.weddingId,
           code,
           name,
           phone,
@@ -160,7 +165,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 };
 
 export const PUT: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -188,8 +194,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     }
 
     const existing = db
-      .prepare("SELECT * FROM guests WHERE id = ?")
-      .get(id) as GuestRow | undefined;
+      .prepare("SELECT * FROM guests WHERE id = ? AND wedding_id = ?")
+      .get(id, session.weddingId) as GuestRow | undefined;
     if (!existing) {
       return new Response(JSON.stringify({ error: "Tamu tidak ditemukan." }), {
         status: 404,
@@ -256,7 +262,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, cookies }) => {
-  if (!isAdminAuthenticated(cookies)) {
+  const session = getAuthSession(cookies);
+  if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: JSON_HEADERS,
@@ -281,7 +288,9 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
     }
 
     const placeholders = ids.map(() => "?").join(",");
-    db.prepare(`DELETE FROM guests WHERE id IN (${placeholders})`).run(...ids);
+    db.prepare(
+      `DELETE FROM guests WHERE wedding_id = ? AND id IN (${placeholders})`
+    ).run(session.weddingId, ...ids);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

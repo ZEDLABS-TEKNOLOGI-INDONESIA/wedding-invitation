@@ -1,0 +1,16 @@
+---
+import SuperadminDashboard from "../components/Admin/SuperadminDashboard";
+import Layout from "../layouts/Layout.astro";
+import { requireSuperadminSession } from "../lib/auth";
+
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const session = requireSuperadminSession(Astro.cookies);
+if (!session) {
+  return Astro.redirect("/masuk");
+}
+---
+
+<Layout title="Superadmin — Wedding SaaS" noindex={true}>
+  <SuperadminDashboard client:load />
+</Layout>

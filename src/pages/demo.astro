@@ -1,0 +1,48 @@
+---
+import App from "../App";
+import Layout from "../layouts/Layout.astro";
+import { DEFAULT_WEDDING_ID, getPublicConfig } from "../lib/db";
+import { ensureReminderSchedulerStarted } from "../lib/reminderScheduler";
+import {
+  normalizePublicDefaultMode,
+  normalizePublicTheme,
+} from "../utils/publicThemes";
+
+ensureReminderSchedulerStarted();
+const safeConfig = getPublicConfig(DEFAULT_WEDDING_ID);
+
+const brideName = safeConfig.BRIDE_NICKNAME || "Mempelai Wanita";
+const groomName = safeConfig.GROOM_NICKNAME || "Mempelai Pria";
+const eventDate = safeConfig.AKAD_DATE || "";
+const venueName = safeConfig.VENUE_NAME || "";
+const weddingTheme = normalizePublicTheme(safeConfig.PUBLIC_THEME);
+const defaultColorMode = normalizePublicDefaultMode(
+  safeConfig.PUBLIC_DEFAULT_MODE
+);
+const allowGuestThemeSwitch = safeConfig.PUBLIC_ALLOW_THEME_SWITCH !== "false";
+
+const pageTitle = `Demo Undangan — ${brideName} & ${groomName}`;
+const pageDescription = eventDate
+  ? `Demo Undangan Pernikahan Digital ${brideName} & ${groomName} — ${eventDate}${venueName ? ` di ${venueName}` : ""}.`
+  : `Demo Undangan Pernikahan Digital ${brideName} & ${groomName}.`;
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  weddingTheme={weddingTheme}
+  defaultColorMode={defaultColorMode}
+  allowGuestThemeSwitch={allowGuestThemeSwitch}
+>
+  <div class="fixed top-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/20 bg-slate-950/80 px-3.5 py-1.5 text-[11px] font-medium text-white shadow-lg backdrop-blur-md">
+    <span class="inline-block h-2 w-2 rounded-full bg-emerald-400"></span>
+    <span>Halaman Demo Publik</span>
+    <a
+      href="/daftar"
+      class="ml-1 rounded-full bg-sky-500 px-2.5 py-0.5 text-[11px] font-semibold text-white transition hover:bg-sky-400"
+    >
+      Buat Undangan Anda &rarr;
+    </a>
+  </div>
+  <App client:load initialRawConfig={safeConfig} weddingSlug="demo" />
+</Layout>

@@ -12,7 +12,10 @@ import {
 } from "lucide-react";
 import { SectionDivider } from "./WeddingOrnaments";
 
-const Wishes: React.FC<{ config: AppConfig }> = ({ config: _config }) => {
+const Wishes: React.FC<{ config: AppConfig; weddingSlug?: string }> = ({
+  config: _config,
+  weddingSlug = "demo",
+}) => {
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const wishesPerPage = 6;
@@ -49,7 +52,7 @@ const Wishes: React.FC<{ config: AppConfig }> = ({ config: _config }) => {
   }, []);
 
   const loadWishes = async () => {
-    const data = await dbService.getWishes();
+    const data = await dbService.getWishes(weddingSlug);
     setWishes(data);
   };
 
@@ -64,7 +67,10 @@ const Wishes: React.FC<{ config: AppConfig }> = ({ config: _config }) => {
     setIsSending(true);
     setErrorMsg(null);
     try {
-      await dbService.saveWish({ name: trimmedName, message: trimmedMessage });
+      await dbService.saveWish(
+        { name: trimmedName, message: trimmedMessage },
+        weddingSlug
+      );
       setMessage("");
       if (!isNameLocked) setName("");
       await loadWishes();

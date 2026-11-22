@@ -53,33 +53,38 @@ const DEFAULT_RAW: Record<string, string> = {
   TEXT_GIFT_DESC: "",
 };
 
-let cache: { data: AppConfig; raw: Record<string, string> } | null = null;
+let cache: { slug: string; data: AppConfig; raw: Record<string, string> } | null = null;
 
-export function useConfig(initialRaw?: Record<string, string>) {
+export function useConfig(
+  initialRaw?: Record<string, string>,
+  weddingSlug = "demo"
+) {
   const [config, setConfig] = useState<AppConfig | null>(() => {
     if (initialRaw) return parseConfig(initialRaw);
-    if (cache) return cache.data;
+    if (cache && cache.slug === weddingSlug) return cache.data;
     return null;
   });
   const [raw, setRaw] = useState<Record<string, string>>(() => {
     if (initialRaw) return initialRaw;
-    if (cache) return cache.raw;
+    if (cache && cache.slug === weddingSlug) return cache.raw;
     return DEFAULT_RAW;
   });
-  const [loading, setLoading] = useState(!initialRaw && !cache);
+  const [loading, setLoading] = useState(
+    !initialRaw && !(cache && cache.slug === weddingSlug)
+  );
 
   useEffect(() => {
     if (initialRaw) {
       const parsed = parseConfig(initialRaw);
-      cache = { data: parsed, raw: initialRaw };
+      cache = { slug: weddingSlug, data: parsed, raw: initialRaw };
       return;
     }
-    if (cache) return;
-    fetch("/api/config")
+    if (cache && cache.slug === weddingSlug) return;
+    fetch(`/api/config?wedding=${encodeURIComponent(weddingSlug)}`)
       .then((r) => r.json())
       .then((data: Record<string, string>) => {
         const parsed = parseConfig(data);
-        cache = { data: parsed, raw: data };
+        cache = { slug: weddingSlug, data: parsed, raw: data };
         setConfig(parsed);
         setRaw(data);
         setLoading(false);
@@ -89,7 +94,7 @@ export function useConfig(initialRaw?: Record<string, string>) {
         setConfig(fallback);
         setLoading(false);
       });
-  }, [initialRaw]);
+  }, [initialRaw, weddingSlug]);
 
   return { config, raw, loading };
 }

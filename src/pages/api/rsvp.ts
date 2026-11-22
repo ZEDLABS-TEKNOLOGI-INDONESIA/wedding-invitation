@@ -1,6 +1,10 @@
 import type { APIRoute } from "astro";
 import { addOwnedGuestId, getOwnedGuestIds } from "../../lib/auth";
-import db, { getConfig } from "../../lib/db";
+import db, {
+  DEFAULT_WEDDING_ID,
+  getConfig,
+  getWeddingBySlug,
+} from "../../lib/db";
 import { checkRateLimit, getClientIp } from "../../lib/rateLimit";
 import {
   notifyAdminRsvpWa,
@@ -11,13 +15,28 @@ const RSVP_OWNED_COOKIE = "wedding_rsvp_owned";
 const VALID_ATTENDANCE = new Set(["hadir", "tidak_hadir", "ragu"]);
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
-export const GET: APIRoute = async () => {
+function resolvePublicWeddingId(slug?: string | null): number | null {
+  const clean = String(slug || "").trim().toLowerCase();
+  if (!clean) return DEFAULT_WEDDING_ID;
+  const w = getWeddingBySlug(clean);
+  if (!w || w.status !== "active") return null;
+  return w.id;
+}
+
+export const GET: APIRoute = async ({ url }) => {
   try {
+    const weddingId = resolvePublicWeddingId(url.searchParams.get("wedding"));
+    if (weddingId === null) {
+      return new Response(JSON.stringify({ error: "Undangan tidak ditemukan." }), {
+        status: 404,
+        headers: JSON_HEADERS,
+      });
+    }
     const rsvps = db
       .prepare(
-        "SELECT id, guest_name, attendance, guest_count, created_at FROM rsvps ORDER BY created_at DESC"
+        "SELECT id, guest_name, attendance, guest_count, created_at FROM rsvps WHERE wedding_id = ? ORDER BY created_at DESC"
       )
-      .all();
+      .all(weddingId);
     return new Response(JSON.stringify(rsvps), {
       status: 200,
       headers: JSON_HEADERS,
@@ -30,7 +49,7 @@ export const GET: APIRoute = async () => {
   }
 };
 
-export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
+export const POST: APIRoute = async ({ request, clientAddress, cookies, url }) => {
   const ip = getClientIp(request, clientAddress);
 
   if (!checkRateLimit(`rsvp:${ip}`, 5, 60000)) {
@@ -51,7 +70,19 @@ export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
       });
     }
 
-    const config = getConfig();
+    const weddingId = resolvePublicWeddingId(
+      typeof rawData.wedding_slug === "string"
+        ? rawData.wedding_slug
+        : url.searchParams.get("wedding")
+    );
+    if (weddingId === null) {
+      return new Response(JSON.stringify({ error: "Undangan tidak ditemukan." }), {
+        status: 404,
+        headers: JSON_HEADERS,
+      });
+    }
+
+    const config = getConfig(weddingId);
     const parsedMax = parseInt(config.RSVP_MAX_GUESTS || "20", 10);
     const maxGuests = Number.isInteger(parsedMax) && parsedMax > 0 ? parsedMax : 20;
 
@@ -111,9 +142,9 @@ export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
       ownedIds.length > 0
         ? (db
             .prepare(
-              `SELECT id FROM rsvps WHERE guest_name = ? AND id IN (${ownedIds.map(() => "?").join(",")}) LIMIT 1`
+              `SELECT id FROM rsvps WHERE wedding_id = ? AND guest_name = ? AND id IN (${ownedIds.map(() => "?").join(",")}) LIMIT 1`
             )
-            .get(guest_name, ...ownedIds) as { id: number } | undefined)
+            .get(weddingId, guest_name, ...ownedIds) as { id: number } | undefined)
         : undefined;
 
     let actionType = "";
@@ -121,23 +152,25 @@ export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
 
     if (existing) {
       db.prepare(
-        "UPDATE rsvps SET phone=?, attendance=?, guest_count=?, message=?, created_at=? WHERE id=?"
+        "UPDATE rsvps SET phone=?, attendance=?, guest_count=?, message=?, created_at=? WHERE id=? AND wedding_id=?"
       ).run(
         phone,
         attendance,
         guest_count,
         message,
         new Date().toISOString(),
-        existing.id
+        existing.id,
+        weddingId
       );
       actionType = "updated";
       resultId = existing.id;
     } else {
       const result = db
         .prepare(
-          "INSERT INTO rsvps (guest_name, phone, attendance, guest_count, message, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+          "INSERT INTO rsvps (wedding_id, guest_name, phone, attendance, guest_count, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
         )
         .run(
+          weddingId,
           guest_name,
           phone,
           attendance,
