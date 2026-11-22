@@ -115,7 +115,7 @@ const Wishes: React.FC<{ config: AppConfig }> = ({ config: _config }) => {
   };
 
   const fieldClass =
-    "w-full rounded-xl border border-accentDark/15 bg-white/80 px-4 py-3 text-sm text-slate-900 transition-all outline-none placeholder:text-slate-400 focus:border-accentDark focus:bg-white focus:ring-2 focus:ring-accent/30 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-accent";
+    "w-full rounded-xl border border-accentDark/15 bg-white/80 px-4 py-3 text-sm text-slate-900 transition-all outline-none placeholder:text-slate-400 focus:border-accentDark focus:bg-white focus:ring-2 focus:ring-accent/30 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-400 dark:focus:border-accent dark:focus:bg-white/10";
 
   return (
     <section
