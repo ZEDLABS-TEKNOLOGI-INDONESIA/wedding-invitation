@@ -715,6 +715,15 @@
 }
 
 /* Cards */
+@keyframes music-ring-countdown {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: var(--ring-circumference, 157.08);
+  }
+}
+
 .adm-card {
   min-width: 0;
   background: var(--adm-bg-secondary);
