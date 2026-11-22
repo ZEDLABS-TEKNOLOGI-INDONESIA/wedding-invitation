@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Send,
   CheckCircle2,
-  Heart,
   Users,
   Clock,
   RefreshCcw,
@@ -11,6 +10,7 @@ import {
 } from "lucide-react";
 import { dbService } from "../services/dbService";
 import { AttendanceStatus, type RSVP, type AppConfig } from "../types";
+import { SectionDivider } from "./WeddingOrnaments";
 
 const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
   const [formData, setFormData] = useState({
@@ -94,383 +94,384 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
       .length,
   };
 
-  const getStatusColor = (status: AttendanceStatus) => {
+  const getStatusBadge = (status: AttendanceStatus) => {
     switch (status) {
       case AttendanceStatus.HADIR:
-        return "text-green-600 dark:text-green-400";
+        return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
       case AttendanceStatus.TIDAK_HADIR:
-        return "text-red-500 dark:text-red-400";
+        return "bg-rose-500/10 text-rose-700 dark:text-rose-300";
       default:
-        return "text-slate-500 dark:text-slate-400";
+        return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
     }
   };
+
+  const fieldClass =
+    "w-full rounded-xl border border-accentDark/15 bg-white/80 px-4 py-3 text-sm text-slate-900 transition-all outline-none placeholder:text-slate-400 focus:border-accentDark focus:bg-white focus:ring-2 focus:ring-accent/30 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-accent";
 
   return (
     <section
       id="rsvp"
-      className="dark:bg-darkBg bg-white py-16 transition-colors duration-1000 md:py-40"
+      className="wedding-section-tinted py-20 transition-colors duration-700 md:py-28"
     >
-      <div className="container mx-auto max-w-7xl px-4 md:px-6">
-        <div className="mb-12 space-y-3 text-center md:mb-24">
-          <Heart className="text-accentDark dark:text-accent/30 mx-auto mb-2 h-5 w-5 animate-pulse" />
-          <h2 className="font-serif text-4xl tracking-tight text-slate-900 italic md:text-8xl dark:text-white">
-            Reservasi
+      <div className="container mx-auto max-w-6xl px-5 md:px-6">
+        <div className="mb-14 space-y-3 text-center md:mb-18">
+          <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">
+            Konfirmasi Kehadiran
+          </span>
+          <h2 className="font-serif text-4xl font-medium tracking-tight text-primary italic sm:text-5xl md:text-6xl dark:text-white">
+            Reservasi Tamu
           </h2>
-          <p className="tracking-luxury text-xs font-bold text-slate-500 uppercase dark:text-slate-400">
-            Mohon konfirmasi kehadiran Anda
+          <SectionDivider className="py-1" />
+          <p className="mx-auto max-w-lg text-sm font-light text-slate-600 italic sm:text-base dark:text-slate-300">
+            Kehadiran Anda adalah kebahagiaan tersendiri bagi kami
           </p>
         </div>
 
-        <div className="grid items-stretch gap-8 md:gap-14 lg:grid-cols-12">
-          <div className="space-y-6 lg:col-span-5">
-            <div className="editorial-card group relative flex h-full flex-col justify-center overflow-hidden rounded-[1.5rem] p-6 shadow-lg md:rounded-[3.5rem] md:p-14">
+        <div className="grid items-stretch gap-6 md:gap-8 lg:grid-cols-12">
+          {/* Form Card */}
+          <div className="lg:col-span-5">
+            <div className="editorial-card flex h-full flex-col justify-center rounded-3xl p-6 sm:p-8">
               {submitted ? (
-                <div className="animate-reveal space-y-6 text-center">
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400">
-                    <CheckCircle2 className="h-10 w-10" />
+                <div className="animate-reveal space-y-5 py-6 text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="h-8 w-8" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="font-serif text-2xl text-slate-900 italic md:text-4xl dark:text-white">
+                    <h3 className="font-script text-4xl text-primary dark:text-white">
                       Terima Kasih!
                     </h3>
-                    <p className="text-sm leading-relaxed text-slate-500 md:text-base dark:text-slate-400">
+                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                       Konfirmasi kehadiran Anda telah berhasil kami simpan.
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => setSubmitted(false)}
-                    className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-[10px] font-bold tracking-widest uppercase transition-colors hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10"
+                    className="border-accentDark/20 inline-flex items-center gap-2 rounded-full border bg-white/80 px-5 py-2.5 text-xs font-semibold tracking-wider uppercase transition-colors hover:bg-white dark:border-white/15 dark:bg-white/5 dark:hover:bg-white/10"
                   >
-                    <RefreshCcw className="h-3 w-3" />
-                    Edit Kembali
+                    <RefreshCcw className="h-3.5 w-3.5" />
+                    Ubah Konfirmasi
                   </button>
                 </div>
               ) : (
-                <>
-                  <div className="bg-accentDark/5 dark:bg-accent/5 pointer-events-none absolute top-0 right-0 -mt-16 -mr-16 h-32 w-32 rounded-full transition-transform duration-1000 group-hover:scale-110"></div>
-                  <div className="relative z-10 space-y-8 md:space-y-12">
-                    <div className="flex items-center gap-4 border-b border-slate-50 pb-4 md:pb-10 dark:border-white/5">
-                      <div className="text-accentDark dark:text-accent flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 md:h-16 md:w-16 md:rounded-2xl dark:border-white/10 dark:bg-white/5">
-                        <Users className="h-5 w-5 md:h-8 md:w-8" />
+                <div className="space-y-6">
+                  <div className="border-accentDark/12 flex items-center gap-3.5 border-b pb-4 dark:border-white/10">
+                    <div className="bg-accentDark/10 text-accentDark dark:bg-accent/15 dark:text-accent flex h-11 w-11 items-center justify-center rounded-2xl">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-2xl font-medium text-primary italic dark:text-white">
+                        Formulir RSVP
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Lengkapi data kehadiran Anda
+                      </p>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label
+                          htmlFor="rsvp-guest-name"
+                          className="text-[11px] font-bold tracking-[0.16em] text-slate-600 uppercase dark:text-slate-300"
+                        >
+                          Nama Tamu <span className="text-rose-500">*</span>
+                        </label>
+                        {isNameLocked && (
+                          <button
+                            type="button"
+                            onClick={() => setIsNameLocked(false)}
+                            className="text-accentDark dark:text-accent text-[11px] font-semibold underline underline-offset-2"
+                          >
+                            Ubah Nama
+                          </button>
+                        )}
                       </div>
-                      <div>
-                        <h3 className="font-serif text-lg leading-none text-slate-900 italic md:text-2xl dark:text-white">
-                          Konfirmasi
-                        </h3>
-                        <p className="tracking-editorial mt-1.5 text-[11px] font-bold text-slate-500 uppercase dark:text-slate-400">
-                          Lengkapi data Anda
-                        </p>
+                      <input
+                        id="rsvp-guest-name"
+                        required
+                        type="text"
+                        autoComplete="name"
+                        maxLength={100}
+                        disabled={isNameLocked}
+                        className={`${fieldClass} ${
+                          isNameLocked ? "cursor-not-allowed opacity-65" : ""
+                        }`}
+                        placeholder="Ketik nama lengkap Anda"
+                        value={formData.guest_name}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            guest_name: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="rsvp-phone"
+                        className="block text-[11px] font-bold tracking-[0.16em] text-slate-600 uppercase dark:text-slate-300"
+                      >
+                        No. WhatsApp / HP (Opsional)
+                      </label>
+                      <input
+                        id="rsvp-phone"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        maxLength={30}
+                        className={fieldClass}
+                        placeholder="Contoh: 081234567890"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            phone: e.target.value,
+                          })
+                        }
+                      />
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Isi jika ingin menerima konfirmasi &amp; pengingat via
+                        WhatsApp.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label
+                          htmlFor="rsvp-message"
+                          className="block text-[11px] font-bold tracking-[0.16em] text-slate-600 uppercase dark:text-slate-300"
+                        >
+                          Pesan Singkat (Opsional)
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          {formData.message.length}/500
+                        </span>
+                      </div>
+                      <textarea
+                        id="rsvp-message"
+                        maxLength={500}
+                        className={`${fieldClass} resize-none`}
+                        placeholder="Tulis catatan singkat untuk mempelai..."
+                        rows={2}
+                        value={formData.message}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            message: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-bold tracking-[0.16em] text-slate-600 uppercase dark:text-slate-300">
+                        Status Kehadiran
+                      </p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[
+                          {
+                            status: AttendanceStatus.HADIR,
+                            label: "Ya, InsyaAllah Hadir",
+                          },
+                          {
+                            status: AttendanceStatus.TIDAK_HADIR,
+                            label: "Maaf, Belum Bisa Hadir",
+                          },
+                          {
+                            status: AttendanceStatus.RAGU,
+                            label: "Masih Ragu / Belum Pasti",
+                          },
+                        ].map(({ status, label }) => (
+                          <button
+                            key={status}
+                            type="button"
+                            onClick={() =>
+                              setFormData({ ...formData, attendance: status })
+                            }
+                            className={`flex items-center justify-between rounded-xl border px-4 py-3 text-xs font-semibold tracking-wider uppercase transition-all ${
+                              formData.attendance === status
+                                ? "bg-primary border-primary dark:bg-accentDark dark:border-accentDark text-white shadow-sm"
+                                : "border-accentDark/15 text-slate-600 hover:bg-white/80 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+                            }`}
+                          >
+                            {label}
+                            {formData.attendance === status && (
+                              <CheckCircle2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        ))}
                       </div>
                     </div>
-                    <form
-                      onSubmit={handleSubmit}
-                      className="space-y-6 md:space-y-8"
-                    >
-                      <div className="space-y-5">
-                        <div className="group/input space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <label
-                              htmlFor="rsvp-guest-name"
-                              className="tracking-editorial group-focus-within/input:text-accentDark text-[11px] font-bold text-slate-500 uppercase transition-colors dark:text-slate-400"
-                            >
-                              Nama Tamu <span className="text-red-500">*</span>
-                            </label>
-                            {isNameLocked && (
-                              <button
-                                type="button"
-                                onClick={() => setIsNameLocked(false)}
-                                className="text-accentDark dark:text-accent text-[11px] font-bold underline underline-offset-2 hover:opacity-80"
-                              >
-                                Ubah Nama
-                              </button>
-                            )}
-                          </div>
-                          <input
-                            id="rsvp-guest-name"
-                            required
-                            type="text"
-                            autoComplete="name"
-                            maxLength={100}
-                            disabled={isNameLocked}
-                            className={`focus:border-accentDark dark:focus:border-accent w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200 md:py-3.5 md:text-lg dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10 ${
-                              isNameLocked
-                                ? "cursor-not-allowed text-slate-500 opacity-60"
-                                : ""
-                            }`}
-                            placeholder="Ketik nama lengkap Anda"
-                            value={formData.guest_name}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                guest_name: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="group/input space-y-1.5">
-                          <label
-                            htmlFor="rsvp-phone"
-                            className="tracking-editorial group-focus-within/input:text-accentDark block text-[11px] font-bold text-slate-500 uppercase transition-colors dark:text-slate-400"
-                          >
-                            No. WhatsApp / HP (Opsional)
-                          </label>
-                          <input
-                            id="rsvp-phone"
-                            type="tel"
-                            inputMode="tel"
-                            autoComplete="tel"
-                            maxLength={30}
-                            className="focus:border-accentDark dark:focus:border-accent w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200 md:py-3.5 md:text-lg dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                            placeholder="Contoh: 081234567890"
-                            value={formData.phone}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                phone: e.target.value,
-                              })
-                            }
-                          />
-                          <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                            Isi jika ingin menerima pesan konfirmasi & pengingat
-                            acara via WhatsApp.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="group/input space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <label
-                            htmlFor="rsvp-message"
-                            className="tracking-editorial group-focus-within/input:text-accentDark block text-[11px] font-bold text-slate-500 uppercase transition-colors dark:text-slate-400"
-                          >
-                            Pesan Singkat (Opsional)
-                          </label>
-                          <span className="text-[10px] text-slate-400">
-                            {formData.message.length}/500
-                          </span>
-                        </div>
-                        <textarea
-                          id="rsvp-message"
-                          maxLength={500}
-                          className="focus:border-accentDark dark:focus:border-accent w-full resize-none rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 font-serif text-base text-slate-900 italic transition-all outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200 md:text-lg dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                          placeholder="Tulis pesan atau catatan kehadiran untuk mempelai..."
-                          rows={2}
-                          value={formData.message}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              message: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="space-y-3">
-                        <p className="tracking-editorial mb-1 text-[11px] font-bold text-slate-500 uppercase dark:text-slate-400">
-                          Status Kehadiran
+
+                    {formData.attendance === AttendanceStatus.HADIR && (
+                      <div className="animate-reveal space-y-2.5 pt-1">
+                        <p className="text-[11px] font-bold tracking-[0.16em] text-slate-600 uppercase dark:text-slate-300">
+                          Jumlah Tamu (Maks. {maxGuests} Orang)
                         </p>
-                        <div className="grid grid-cols-1 gap-2">
-                          {[
-                            {
-                              status: AttendanceStatus.HADIR,
-                              label: "Ya, InsyaAllah Hadir",
-                            },
-                            {
-                              status: AttendanceStatus.TIDAK_HADIR,
-                              label: "Maaf, Belum Bisa Hadir",
-                            },
-                            {
-                              status: AttendanceStatus.RAGU,
-                              label: "Masih Ragu / Belum Pasti",
-                            },
-                          ].map(({ status, label }) => (
-                            <button
-                              key={status}
-                              type="button"
-                              onClick={() =>
-                                setFormData({ ...formData, attendance: status })
-                              }
-                              className={`tracking-editorial group flex items-center justify-between rounded-xl border px-5 py-3.5 text-xs font-bold uppercase transition-all md:py-4 ${
-                                formData.attendance === status
-                                  ? "bg-primary dark:text-primary border-primary text-white shadow-md dark:border-white dark:bg-white"
-                                  : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
-                              }`}
-                            >
-                              {label}
-                              {formData.attendance === status && (
-                                <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
-                              )}
-                            </button>
-                          ))}
+                        <div className="flex flex-wrap gap-1.5">
+                          {[1, 2, 3, 4]
+                            .filter((n) => n <= maxGuests)
+                            .map((preset) => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    guest_count: preset,
+                                  }))
+                                }
+                                className={`rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                                  formData.guest_count === preset
+                                    ? "bg-primary border-primary dark:bg-accentDark dark:border-accentDark text-white"
+                                    : "border-accentDark/20 text-slate-600 hover:bg-white/80 dark:border-white/15 dark:text-slate-300"
+                                }`}
+                              >
+                                {preset} Orang
+                              </button>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            aria-label="Kurangi jumlah tamu"
+                            onClick={() => handleGuestCount("dec")}
+                            className="border-accentDark/20 flex h-9 w-9 items-center justify-center rounded-full border transition-colors hover:bg-white disabled:opacity-30 dark:border-white/15 dark:hover:bg-white/10"
+                            disabled={formData.guest_count <= 1}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <div className="border-accentDark/15 flex-1 rounded-xl border bg-white/70 py-2 text-center font-serif text-lg font-medium italic dark:border-white/10 dark:bg-white/5">
+                            {formData.guest_count} Orang
+                          </div>
+                          <button
+                            type="button"
+                            aria-label="Tambah jumlah tamu"
+                            onClick={() => handleGuestCount("inc")}
+                            className="border-accentDark/20 flex h-9 w-9 items-center justify-center rounded-full border transition-colors hover:bg-white disabled:opacity-30 dark:border-white/15 dark:hover:bg-white/10"
+                            disabled={formData.guest_count >= maxGuests}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
+                    )}
 
-                      {formData.attendance === AttendanceStatus.HADIR && (
-                        <div className="animate-reveal space-y-3">
-                          <p className="tracking-editorial mb-1 text-[11px] font-bold text-slate-500 uppercase dark:text-slate-400">
-                            Jumlah Tamu (Maks. {maxGuests} Orang)
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {[1, 2, 3, 4]
-                              .filter((n) => n <= maxGuests)
-                              .map((preset) => (
-                                <button
-                                  key={preset}
-                                  type="button"
-                                  onClick={() =>
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      guest_count: preset,
-                                    }))
-                                  }
-                                  className={`rounded-lg border px-3.5 py-1.5 text-xs font-bold transition-all ${
-                                    formData.guest_count === preset
-                                      ? "bg-primary border-primary text-white dark:border-white dark:bg-white dark:text-slate-900"
-                                      : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300"
-                                  }`}
-                                >
-                                  {preset} Orang
-                                </button>
-                              ))}
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <button
-                              type="button"
-                              aria-label="Kurangi jumlah tamu"
-                              onClick={() => handleGuestCount("dec")}
-                              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 transition-colors hover:bg-slate-50 disabled:opacity-30 dark:border-white/10 dark:hover:bg-white/5"
-                              disabled={formData.guest_count <= 1}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <div className="flex-1 rounded-xl border border-slate-100 bg-slate-50/70 py-2 text-center font-serif text-xl italic md:text-2xl dark:border-white/5 dark:bg-white/5">
-                              {formData.guest_count} Orang
-                            </div>
-                            <button
-                              type="button"
-                              aria-label="Tambah jumlah tamu"
-                              onClick={() => handleGuestCount("inc")}
-                              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 transition-colors hover:bg-slate-50 disabled:opacity-30 dark:border-white/10 dark:hover:bg-white/5"
-                              disabled={formData.guest_count >= maxGuests}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {errorMsg && (
-                        <div
-                          role="alert"
-                          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400"
-                        >
-                          {errorMsg}
-                        </div>
-                      )}
-
-                      <button
-                        disabled={isSubmitting}
-                        type="submit"
-                        className="bg-primary dark:bg-accentDark tracking-luxury group flex w-full items-center justify-center gap-3 rounded-xl py-4 text-xs font-bold text-white uppercase shadow-sm transition-all duration-700 hover:shadow-xl active:scale-95 disabled:opacity-50 md:rounded-3xl md:py-6"
+                    {errorMsg && (
+                      <div
+                        role="alert"
+                        className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-medium text-rose-600 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-300"
                       >
-                        {isSubmitting ? "Mengirim..." : "Kirim Konfirmasi"}
-                        <Send className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1 md:h-5 md:w-5" />
-                      </button>
-                    </form>
-                  </div>
-                </>
+                        {errorMsg}
+                      </div>
+                    )}
+
+                    <button
+                      disabled={isSubmitting}
+                      type="submit"
+                      className="bg-primary dark:bg-accentDark group mt-2 flex w-full items-center justify-center gap-2.5 rounded-full py-3.5 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-sm transition-all hover:opacity-95 active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Mengirim..." : "Kirim Konfirmasi"}
+                      <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </button>
+                  </form>
+                </div>
               )}
             </div>
           </div>
 
-          <div className="space-y-6 lg:col-span-7">
-            <div className="grid grid-cols-3 gap-3 md:gap-6">
+          {/* Stats & Guest List */}
+          <div className="flex flex-col gap-5 lg:col-span-7">
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
               {[
                 {
                   label: "Hadir",
                   count: stats.hadir,
-                  color: "text-green-600 dark:text-green-400",
+                  color: "text-emerald-600 dark:text-emerald-400",
                 },
                 {
                   label: "Ragu",
                   count: stats.ragu,
-                  color: "text-slate-500 dark:text-slate-400",
+                  color: "text-amber-600 dark:text-amber-400",
                 },
                 {
                   label: "Tidak Hadir",
                   count: stats.tidak,
-                  color: "text-red-500 dark:text-red-400",
+                  color: "text-rose-600 dark:text-rose-400",
                 },
               ].map((item, idx) => (
                 <div
                   key={idx}
-                  className="editorial-card flex flex-col items-center justify-center space-y-2 rounded-[1.5rem] border border-slate-100 p-4 text-center md:rounded-[2.5rem] md:p-8 dark:border-white/5"
+                  className="editorial-card flex flex-col items-center justify-center rounded-2xl p-4 text-center sm:rounded-3xl sm:p-6"
                 >
                   <span
-                    className={`font-serif text-2xl font-bold md:text-5xl ${item.color}`}
+                    className={`font-serif text-3xl font-bold tabular-nums sm:text-4xl ${item.color}`}
                   >
                     {item.count}
                   </span>
-                  <span className="text-[11px] font-bold tracking-widest uppercase opacity-75 md:text-xs">
+                  <span className="mt-1 text-[10px] font-bold tracking-[0.18em] text-slate-500 uppercase sm:text-[11px] dark:text-slate-400">
                     {item.label}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="editorial-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-100 p-6 shadow-lg md:rounded-[4rem] md:p-14 dark:border-white/5">
-              <div className="from-accent/5 absolute inset-0 bg-gradient-to-br via-transparent to-transparent opacity-50"></div>
-              <div className="relative z-10 flex h-full flex-col">
-                <div className="mb-8 flex flex-shrink-0 items-center justify-between">
-                  <h3 className="font-serif text-xl text-slate-900 italic md:text-3xl dark:text-white">
-                    Daftar Tamu
-                  </h3>
-                  <div className="flex items-center gap-2 text-[10px] tracking-widest uppercase opacity-50">
-                    <Clock className="h-3 w-3" />
-                    <span>Terbaru</span>
-                  </div>
+            <div className="editorial-card flex flex-1 flex-col rounded-3xl p-6 sm:p-8">
+              <div className="border-accentDark/12 mb-5 flex items-center justify-between border-b pb-4 dark:border-white/10">
+                <h3 className="font-serif text-2xl font-medium text-primary italic dark:text-white">
+                  Daftar Konfirmasi
+                </h3>
+                <div className="flex items-center gap-1.5 text-[11px] font-medium tracking-wider text-slate-400 uppercase">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Terbaru</span>
                 </div>
-                <div className="custom-scrollbar -mr-2 h-96 flex-grow overflow-y-auto pr-2 md:h-[450px]">
-                  {rsvps.length === 0 ? (
-                    <div className="flex h-full flex-col items-center justify-center opacity-40">
-                      <Users className="mb-2 h-8 w-8" />
-                      <span className="text-xs tracking-widest uppercase">
-                        Belum ada data
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      {rsvps.map((rsvp) => (
-                        <div
-                          key={rsvp.id}
-                          className="editorial-card animate-reveal space-y-4 rounded-2xl p-5"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex min-w-0 items-center gap-3">
-                              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                                {rsvp.guest_name.charAt(0).toUpperCase()}
-                              </div>
-                              <span className="truncate font-serif text-base text-slate-800 italic dark:text-slate-200">
-                                {rsvp.guest_name}
-                              </span>
+              </div>
+
+              <div className="custom-scrollbar -mr-2 h-96 flex-grow overflow-y-auto pr-2 md:h-[420px]">
+                {rsvps.length === 0 ? (
+                  <div className="flex h-full flex-col items-center justify-center text-slate-400">
+                    <Users className="mb-2 h-8 w-8 opacity-40" />
+                    <span className="text-xs tracking-widest uppercase">
+                      Belum ada konfirmasi
+                    </span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {rsvps.map((rsvp) => (
+                      <div
+                        key={rsvp.id}
+                        className="border-accentDark/10 rounded-2xl border bg-white/75 p-4 transition-colors dark:border-white/10 dark:bg-white/5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <div className="bg-accentDark/12 text-accentDark dark:bg-accent/15 dark:text-accent flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+                              {rsvp.guest_name.charAt(0).toUpperCase()}
                             </div>
-                            <span
-                              className={`text-xs font-bold uppercase ${getStatusColor(
-                                rsvp.attendance
-                              )}`}
-                            >
-                              {rsvp.attendance.replace("_", " ")}
+                            <span className="truncate font-serif text-base font-medium text-slate-800 italic dark:text-slate-100">
+                              {rsvp.guest_name}
                             </span>
                           </div>
-                          {rsvp.attendance === AttendanceStatus.HADIR && (
-                            <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 text-xs text-slate-400 dark:border-white/5 dark:text-slate-500">
-                              <Users className="h-4 w-4" />
-                              <span>Datang ber-{rsvp.guest_count}</span>
-                            </div>
-                          )}
+                          <span
+                            className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase ${getStatusBadge(
+                              rsvp.attendance
+                            )}`}
+                          >
+                            {rsvp.attendance.replace("_", " ")}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                        {rsvp.attendance === AttendanceStatus.HADIR && (
+                          <div className="mt-2.5 flex items-center gap-1.5 border-t border-slate-100 pt-2 text-[11px] text-slate-500 dark:border-white/5 dark:text-slate-400">
+                            <Users className="h-3.5 w-3.5" />
+                            <span>Datang ber-{rsvp.guest_count}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

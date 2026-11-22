@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Maximize2,
-  Sparkles,
-  Image as ImageIcon,
-} from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import type { AppConfig } from "../types";
+import { SectionDivider } from "./WeddingOrnaments";
 
 const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
   const images = config.galleryImages;
@@ -35,7 +29,7 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
       setIsClosing(false);
       document.body.style.overflow = "";
       closeTimerRef.current = null;
-    }, 400);
+    }, 300);
   }, []);
 
   const navigate = useCallback(
@@ -77,116 +71,102 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="gallery"
-      className="dark:bg-darkBg bg-white py-24 transition-colors duration-1000 md:py-48"
+      className="dark:bg-darkSurface bg-white py-20 transition-colors duration-700 md:py-28"
     >
-      <div className="container mx-auto max-w-7xl px-6">
-        <div className="mb-20 space-y-4 text-center md:mb-32 md:space-y-8">
-          <div className="flex items-center justify-center gap-4 opacity-30">
-            <div className="bg-accentDark dark:bg-accent h-[1px] w-8 md:w-16"></div>
-            <ImageIcon className="h-5 w-5 md:h-8 md:w-8" />
-            <div className="bg-accentDark dark:bg-accent h-[1px] w-8 md:w-16"></div>
-          </div>
-          <h2 className="font-serif text-5xl tracking-tight text-slate-900 italic md:text-9xl dark:text-white">
+      <div className="container mx-auto max-w-6xl px-5 md:px-6">
+        <div className="mb-14 space-y-3 text-center md:mb-18">
+          <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">
+            Potret Bahagia
+          </span>
+          <h2 className="font-serif text-4xl font-medium tracking-tight text-primary italic sm:text-5xl md:text-6xl dark:text-white">
             Galeri Momen
           </h2>
-          <p className="tracking-luxury text-xs font-black text-balance text-slate-500 uppercase italic md:text-sm dark:text-slate-400">
+          <SectionDivider className="py-1" />
+          <p className="mx-auto max-w-lg text-sm font-light text-slate-500 italic sm:text-base dark:text-slate-400">
             Momen-momen indah yang terpatri abadi dalam perjalanan cinta kami
           </p>
         </div>
-        <div className="columns-1 gap-6 space-y-6 sm:columns-2 md:gap-10 md:space-y-10 lg:columns-3">
+
+        <div className="columns-1 gap-4 space-y-4 sm:columns-2 md:gap-6 md:space-y-6 lg:columns-3">
           {images.map((src, index) => (
             <button
               key={index}
               type="button"
               aria-label={`Lihat foto momen ${index + 1}`}
-              className="group hover:shadow-accent/20 dark:bg-darkSurface focus:ring-accent relative block w-full cursor-pointer overflow-hidden rounded-[2rem] border border-slate-100 bg-slate-50 text-left shadow-xl transition-all duration-700 hover:-translate-y-3 focus:ring-2 focus:outline-none md:rounded-[3.5rem] dark:border-white/5"
+              className="group border-accentDark/10 dark:bg-darkBg focus:ring-accent relative block w-full break-inside-avoid cursor-pointer overflow-hidden rounded-2xl border bg-slate-50 text-left shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl focus:ring-2 focus:outline-none md:rounded-3xl dark:border-white/10"
               onClick={() => openLightbox(index)}
             >
               <img
                 src={src}
                 alt={`Momen Pernikahan ${index + 1}`}
-                className="h-auto w-full transform object-cover grayscale-[0.2] transition-transform duration-[1.5s] ease-out group-hover:scale-105 group-hover:grayscale-0"
+                className="h-auto w-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
                 loading="lazy"
               />
-              <div className="bg-primary/10 dark:bg-darkBg/40 absolute inset-0 flex items-center justify-center opacity-0 backdrop-blur-[1px] transition-opacity duration-500 group-hover:opacity-100">
-                <div className="flex h-14 w-14 scale-75 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-2xl transition-transform duration-500 group-hover:scale-100 md:h-20 md:w-20">
-                  <Maximize2 className="h-6 w-6 text-white md:h-8 md:w-8" />
+              <div className="bg-darkBg/35 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <div className="flex h-12 w-12 scale-90 items-center justify-center rounded-full border border-white/40 bg-white/15 backdrop-blur-md transition-transform duration-300 group-hover:scale-100">
+                  <Maximize2 className="h-5 w-5 text-white" />
                 </div>
               </div>
             </button>
           ))}
         </div>
       </div>
+
+      {/* Lightbox */}
       {selectedImg !== null && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Pratinjau foto galeri"
-          className={`fixed inset-0 z-[1000] flex items-center justify-center overflow-hidden transition-all duration-500 ${
+          className={`fixed inset-0 z-[1000] flex items-center justify-center overflow-hidden p-4 transition-opacity duration-300 ${
             isClosing ? "opacity-0" : "opacity-100"
           }`}
         >
           <div
-            className="bg-darkBg/95 absolute inset-0 backdrop-blur-3xl transition-opacity duration-700"
+            className="bg-darkBg/92 absolute inset-0 backdrop-blur-xl"
             onClick={closeLightbox}
-          ></div>
-          <div className="pointer-events-none relative z-[1010] flex h-full w-full items-center justify-center">
-            <div className="relative flex max-h-[75vh] max-w-[95vw] items-center justify-center md:max-h-[85vh]">
-              <img
-                src={images[selectedImg]}
-                alt={`Momen Pernikahan ${selectedImg + 1}`}
-                className={`pointer-events-auto max-h-full max-w-full rounded-[1.5rem] border border-white/10 object-contain shadow-[0_60px_120px_rgba(0,0,0,0.9)] transition-all duration-700 md:rounded-[4rem] ${
-                  isClosing
-                    ? "translate-y-20 scale-90 blur-xl"
-                    : "blur-0 animate-reveal scale-100"
-                }`}
-              />
-              <div className="pointer-events-auto fixed top-1/2 left-4 z-[1020] -translate-y-1/2 md:left-12">
-                <button
-                  type="button"
-                  aria-label="Foto sebelumnya"
-                  onClick={(e) => navigate("prev", e)}
-                  className="group flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 backdrop-blur-2xl transition-all hover:scale-110 hover:bg-white/15 hover:text-white active:scale-90 md:h-24 md:w-24"
-                >
-                  <ChevronLeft className="h-6 w-6 transition-transform group-hover:-translate-x-1 md:h-12 md:w-12" />
-                </button>
-              </div>
-              <div className="pointer-events-auto fixed top-1/2 right-4 z-[1020] -translate-y-1/2 md:right-12">
-                <button
-                  type="button"
-                  aria-label="Foto berikutnya"
-                  onClick={(e) => navigate("next", e)}
-                  className="group flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 backdrop-blur-2xl transition-all hover:scale-110 hover:bg-white/15 hover:text-white active:scale-90 md:h-24 md:w-24"
-                >
-                  <ChevronRight className="h-6 w-6 transition-transform group-hover:translate-x-1 md:h-12 md:w-12" />
-                </button>
-              </div>
-            </div>
+          />
+
+          <button
+            type="button"
+            aria-label="Tutup pratinjau galeri"
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 z-[1030] flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white md:top-8 md:right-8"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          <button
+            type="button"
+            aria-label="Foto sebelumnya"
+            onClick={(e) => navigate("prev", e)}
+            className="fixed top-1/2 left-3 z-[1020] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white md:left-8 md:h-12 md:w-12"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+
+          <div className="relative z-[1010] flex max-h-[82vh] max-w-[90vw] items-center justify-center">
+            <img
+              src={images[selectedImg]}
+              alt={`Momen Pernikahan ${selectedImg + 1}`}
+              className="max-h-[82vh] max-w-full rounded-2xl border border-white/15 object-contain shadow-2xl"
+            />
           </div>
-          <div className="absolute top-6 right-6 z-[1030] md:top-12 md:right-12">
-            <button
-              type="button"
-              aria-label="Tutup pratinjau galeri"
-              onClick={closeLightbox}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition-all hover:rotate-90 hover:bg-white/20 hover:text-white active:scale-95 md:h-20 md:w-20"
-            >
-              <X className="h-6 w-6 md:h-10 md:w-10" />
-            </button>
-          </div>
-          <div className="pointer-events-none absolute right-0 bottom-8 left-0 z-[1030] flex flex-col items-center md:bottom-16">
-            <div className="frosted-glass animate-reveal flex items-center gap-6 rounded-full border border-white/10 px-8 py-4 shadow-2xl [animation-delay:400ms] md:gap-10 md:px-14 md:py-6">
-              <div className="flex items-center gap-4">
-                <div className="h-[1px] w-6 bg-white/20 md:w-12"></div>
-                <p className="font-serif text-base tracking-[0.2em] text-white uppercase italic md:text-4xl md:tracking-[0.4em]">
-                  Momen{" "}
-                  <span className="text-accent font-sans font-black">
-                    {selectedImg + 1}
-                  </span>{" "}
-                  / {images.length}
-                </p>
-                <div className="h-[1px] w-6 bg-white/20 md:w-12"></div>
-              </div>
-              <Sparkles className="text-accent/50 hidden h-4 w-4 animate-pulse md:block md:h-6 md:w-6" />
+
+          <button
+            type="button"
+            aria-label="Foto berikutnya"
+            onClick={(e) => navigate("next", e)}
+            className="fixed top-1/2 right-3 z-[1020] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white md:right-8 md:h-12 md:w-12"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+
+          <div className="pointer-events-none absolute right-0 bottom-6 left-0 z-[1030] flex justify-center">
+            <div className="rounded-full border border-white/15 bg-black/50 px-5 py-2 text-xs font-medium tracking-[0.2em] text-white/90 uppercase backdrop-blur-md">
+              Momen{" "}
+              <span className="text-accent font-bold">{selectedImg + 1}</span> /{" "}
+              {images.length}
             </div>
           </div>
         </div>

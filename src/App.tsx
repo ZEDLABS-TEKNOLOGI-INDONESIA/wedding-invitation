@@ -13,7 +13,8 @@ import FloatingPetals from "./components/FloatingPetals";
 import Envelope from "./components/Envelope";
 import InstallPrompt from "./components/InstallPrompt";
 import { useConfig } from "./hooks/useConfig";
-import { Heart, Quote, ChevronUp } from "lucide-react";
+import { Heart, ChevronUp } from "lucide-react";
+import { SectionDivider } from "./components/WeddingOrnaments";
 import {
   normalizePublicTheme,
   type PublicThemeId,
@@ -200,67 +201,48 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
         onResetColorTheme={handleResetColorTheme}
       />
 
-      <footer className="dark:bg-darkSurface relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-white px-6 py-24 pb-32 transition-colors duration-1000 md:py-32">
-        <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-10 dark:opacity-[0.05]">
-          <Heart className="animate-pulse-soft h-[85vw] w-[85vw] stroke-[0.3]" />
-        </div>
+      <footer className="dark:bg-darkSurface relative w-full overflow-hidden bg-white px-5 py-20 pb-32 transition-colors duration-700 md:py-28 md:pb-36">
+        <div className="relative z-10 container mx-auto flex max-w-3xl flex-col items-center gap-10 text-center">
+          <div className="space-y-4">
+            <Heart className="text-accentDark/60 dark:text-accent/60 mx-auto h-6 w-6 animate-pulse" />
+            <p className="mx-auto max-w-xl font-serif text-lg leading-relaxed text-balance text-slate-600 italic sm:text-xl dark:text-slate-300">
+              &ldquo;{config.text.closing.text}&rdquo;
+            </p>
+            <p className="font-serif text-lg font-semibold text-primary sm:text-xl dark:text-white">
+              {config.text.closing.salam}
+            </p>
+          </div>
 
-        <div className="relative z-10 container mx-auto flex max-w-4xl flex-col items-center gap-12 md:gap-24">
+          <SectionDivider />
+
+          <div className="space-y-3">
+            <p className="text-[11px] font-semibold tracking-[0.26em] text-slate-500 uppercase dark:text-slate-400">
+              {config.text.closing.signature}
+            </p>
+            <h2 className="font-script text-5xl leading-tight text-primary sm:text-6xl md:text-7xl dark:text-white">
+              {config.couple.bride.name}{" "}
+              <span className="text-accentDark dark:text-accent">&amp;</span>{" "}
+              {config.couple.groom.name}
+            </h2>
+            <p className="text-accentDark dark:text-accent text-xs font-bold tracking-[0.3em] uppercase">
+              {footerDate}
+            </p>
+            {config.text.closing.family && (
+              <p className="pt-2 text-xs text-slate-500 dark:text-slate-400">
+                {config.text.closing.family}
+              </p>
+            )}
+          </div>
+
           <button
             type="button"
             onClick={scrollToTop}
             aria-label="Kembali ke atas"
-            className="group flex flex-col items-center gap-4 transition-transform duration-500 hover:scale-105"
+            className="group border-accentDark/25 text-accentDark hover:bg-accentDark dark:border-accent/25 dark:text-accent dark:hover:bg-accent mt-2 inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[11px] font-bold tracking-[0.2em] uppercase transition-all hover:text-white dark:hover:text-slate-950"
           >
-            <div className="border-accent/40 text-accentDark dark:text-accent group-hover:bg-accent/10 flex h-12 w-12 items-center justify-center rounded-full border shadow-2xl transition-colors md:h-16 md:w-16">
-              <ChevronUp className="h-6 w-6 animate-bounce md:h-8 md:w-8" />
-            </div>
-            <span className="tracking-luxury text-xs font-bold uppercase opacity-60 transition-opacity group-hover:opacity-100">
-              Sampai Jumpa di Hari Bahagia Kami
-            </span>
+            <ChevronUp className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
+            Kembali ke Atas
           </button>
-
-          <div className="space-y-8 text-center md:space-y-12">
-            <Heart className="text-accent/60 mx-auto h-8 w-8 animate-pulse fill-current md:h-12 md:w-12" />
-            <h2 className="font-serif text-6xl leading-[0.85] tracking-tighter text-slate-900 italic drop-shadow-xl sm:text-8xl md:text-[12rem] dark:text-white">
-              {config.couple.bride.name}{" "}
-              <span className="text-accent/30">&</span>{" "}
-              {config.couple.groom.name}
-            </h2>
-            <div className="flex items-center justify-center gap-4 md:gap-6">
-              <div className="bg-accent/30 h-[1px] w-10 md:w-20"></div>
-              <p className="text-accentDark dark:text-accent text-[12px] font-black tracking-[0.4em] uppercase italic md:text-[20px]">
-                {footerDate}
-              </p>
-              <div className="bg-accent/30 h-[1px] w-10 md:w-20"></div>
-            </div>
-          </div>
-
-          <div className="space-y-12 text-center md:space-y-16">
-            <div className="group relative inline-block px-4">
-              <Quote className="text-accentDark absolute -top-10 -left-2 h-12 w-12 rotate-180 opacity-[0.06] transition-transform duration-1000 md:-top-16 md:-left-12 md:h-24 md:w-24 dark:opacity-[0.12]" />
-              <div className="space-y-6">
-                <p className="mx-auto max-w-2xl font-serif text-lg leading-relaxed text-balance text-slate-500 italic md:text-3xl dark:text-slate-400">
-                  "{config.text.closing.text}"
-                </p>
-                <p className="font-serif text-xl font-bold text-slate-800 dark:text-white">
-                  {config.text.closing.salam}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center gap-6 border-t border-slate-100 pt-16 md:gap-10 md:pt-28 dark:border-white/5">
-              <p className="tracking-luxury text-xs font-black uppercase md:text-[13px]">
-                {config.text.closing.signature}
-              </p>
-              <p className="font-serif text-lg italic">
-                {config.couple.bride.name} & {config.couple.groom.name}
-              </p>
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                {config.text.closing.family}
-              </p>
-            </div>
-          </div>
         </div>
       </footer>
     </div>

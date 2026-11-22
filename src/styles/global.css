@@ -12,6 +12,7 @@
   /* Fonts */
   --font-serif: "Cormorant Garamond", serif;
   --font-sans: "Outfit", sans-serif;
+  --font-script: "Great Vibes", cursive;
 
   /* Animations */
   --animate-subtle-zoom: subtleZoom 20s infinite alternate;
@@ -68,14 +69,17 @@
 }
 
 @layer utilities {
+  .font-script {
+    font-family: "Great Vibes", cursive;
+  }
   .text-balance {
     text-wrap: balance;
   }
   .tracking-luxury {
-    letter-spacing: 0.4em;
+    letter-spacing: 0.3em;
   }
   .tracking-editorial {
-    letter-spacing: 0.15em;
+    letter-spacing: 0.14em;
   }
 }
 
@@ -151,20 +155,47 @@
 
 /* Custom Classes */
 .editorial-card {
-  @apply border border-slate-900/5 bg-white shadow-sm transition-all duration-700;
+  @apply border border-accentDark/12 bg-white/90 shadow-[0_14px_40px_-18px_rgba(15,23,42,0.12)] backdrop-blur-sm transition-all duration-500;
 }
 .dark .editorial-card {
-  @apply bg-darkSurface border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.2)];
+  @apply bg-darkSurface/90 border-accent/15 shadow-[0_18px_48px_-16px_rgba(0,0,0,0.45)];
 }
 
 .frosted-glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.45);
 }
 .dark .frosted-glass {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.wedding-section-tinted {
+  background: radial-gradient(
+      circle at 12% 10%,
+      color-mix(in srgb, var(--color-accent) 12%, transparent),
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at 88% 90%,
+      color-mix(in srgb, var(--color-accent) 10%, transparent),
+      transparent 50%
+    ),
+    var(--color-secondary);
+}
+.dark .wedding-section-tinted {
+  background: radial-gradient(
+      circle at 12% 10%,
+      color-mix(in srgb, var(--color-accent) 9%, transparent),
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at 88% 90%,
+      color-mix(in srgb, var(--color-accentDark) 14%, transparent),
+      transparent 50%
+    ),
+    var(--color-darkBg);
 }
 
 .reveal-active {

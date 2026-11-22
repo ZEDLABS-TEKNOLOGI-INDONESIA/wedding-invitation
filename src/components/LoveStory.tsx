@@ -1,66 +1,79 @@
 import React from "react";
-import { Heart, Sparkles } from "lucide-react";
+import { Heart } from "lucide-react";
 import type { AppConfig } from "../types";
+import { SectionDivider } from "./WeddingOrnaments";
 
 const LoveStory: React.FC<{ config: AppConfig }> = ({ config }) => {
+  if (!config.loveStory || config.loveStory.length === 0) return null;
+
   return (
     <section
       id="story"
-      className="dark:bg-darkBg relative overflow-hidden bg-slate-50 py-24 transition-colors duration-1000 md:py-40"
+      className="dark:bg-darkSurface relative overflow-hidden bg-white py-20 transition-colors duration-700 md:py-28"
     >
-      <div className="relative z-10 container mx-auto max-w-5xl px-6">
-        <div className="mb-24 space-y-6 text-center md:mb-32">
-          <Sparkles className="text-accentDark dark:text-accent/30 mx-auto mb-4 h-6 w-6 animate-pulse" />
-          <h2 className="font-serif text-5xl tracking-tight text-slate-900 italic md:text-8xl dark:text-white">
+      <div className="relative z-10 container mx-auto max-w-5xl px-5 md:px-6">
+        <div className="mb-14 space-y-3 text-center md:mb-20">
+          <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">
+            Perjalanan Cinta
+          </span>
+          <h2 className="font-serif text-4xl font-medium tracking-tight text-primary italic sm:text-5xl md:text-6xl dark:text-white">
             Kisah Kami
           </h2>
-          <div className="bg-accent/20 mx-auto h-[1px] w-20"></div>
-          <p className="text-[11px] font-bold tracking-[0.5em] text-slate-500 uppercase dark:text-slate-400">
-            Perjalanan dua hati menjadi satu tujuan
+          <SectionDivider className="py-1" />
+          <p className="mx-auto max-w-lg text-sm font-light text-slate-500 italic sm:text-base dark:text-slate-400">
+            Setiap langkah kecil yang mempertemukan dua hati menuju satu tujuan
           </p>
         </div>
+
         <div className="relative">
-          <div className="absolute left-1/2 hidden h-full w-[1px] -translate-x-1/2 bg-slate-200 md:block dark:bg-white/10"></div>
-          <div className="space-y-16 md:space-y-24">
-            {config.loveStory.map((story, index) => (
-              <div
-                key={index}
-                className={`relative flex flex-col items-center gap-12 md:flex-row ${
-                  index % 2 === 0 ? "md:flex-row-reverse" : ""
-                }`}
-              >
-                <div className="dark:bg-darkSurface border-accent/20 dark:border-accent absolute left-1/2 z-10 hidden h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full border-2 bg-white shadow-sm transition-colors duration-1000 md:flex">
-                  <div className="bg-accentDark dark:bg-accent h-1.5 w-1.5 animate-pulse rounded-full"></div>
-                </div>
+          {/* Vertical timeline rail (left on mobile, center on md+) */}
+          <div className="from-transparent via-accentDark/30 to-transparent dark:via-accent/30 absolute top-0 bottom-0 left-4 w-[1px] bg-gradient-to-b md:left-1/2 md:-translate-x-1/2" />
+
+          <div className="space-y-8 md:space-y-12">
+            {config.loveStory.map((story, index) => {
+              const isEven = index % 2 === 0;
+              return (
                 <div
-                  className={`editorial-card w-full rounded-[3rem] p-10 shadow-2xl md:w-[42%] md:p-14 ${
-                    index % 2 === 0 ? "md:text-right" : "md:text-left"
+                  key={index}
+                  className={`relative flex flex-col pl-11 md:flex-row md:items-center md:pl-0 ${
+                    isEven ? "md:flex-row-reverse" : ""
                   }`}
                 >
-                  <span className="text-accentDark dark:text-accent mb-6 block text-[11px] font-bold tracking-[0.4em] uppercase">
-                    {story.date}
-                  </span>
-                  <h3 className="mb-5 font-serif text-3xl font-bold tracking-tight text-slate-800 italic md:text-4xl dark:text-slate-100">
-                    {story.title}
-                  </h3>
-                  <p className="text-base leading-relaxed font-light text-slate-500 italic md:text-lg dark:text-slate-400">
-                    {story.desc}
-                  </p>
-                  <div
-                    className={`mt-8 flex ${
-                      index % 2 === 0 ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <Heart className="text-accent/20 h-4 w-4" />
+                  {/* Node dot */}
+                  <div className="border-accentDark/50 dark:border-accent/60 absolute top-7 left-4 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full border-2 bg-white shadow-xs md:top-1/2 md:left-1/2 md:-translate-y-1/2 dark:bg-darkBg">
+                    <div className="bg-accentDark dark:bg-accent h-2 w-2 rounded-full" />
+                  </div>
+
+                  {/* Card */}
+                  <div className="w-full md:w-[46%]">
+                    <div
+                      className={`editorial-card rounded-3xl p-6 sm:p-8 ${
+                        isEven ? "md:text-right" : "md:text-left"
+                      }`}
+                    >
+                      <div
+                        className={`mb-3 flex items-center gap-2 ${
+                          isEven ? "md:justify-end" : "justify-start"
+                        }`}
+                      >
+                        <span className="bg-accentDark/10 text-accentDark dark:bg-accent/15 dark:text-accent inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold tracking-[0.2em] uppercase">
+                          <Heart className="h-3 w-3" />
+                          {story.date}
+                        </span>
+                      </div>
+                      <h3 className="mb-2.5 font-serif text-2xl font-semibold tracking-tight text-primary italic sm:text-3xl dark:text-white">
+                        {story.title}
+                      </h3>
+                      <p className="text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-300">
+                        {story.desc}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
-      </div>
-      <div className="text-primary/5 pointer-events-none absolute top-1/2 left-0 -z-0 translate-x-[-20%] -translate-y-1/2 -rotate-12 font-serif text-[20rem] whitespace-nowrap italic dark:text-white/5">
-        Our Story Our Story Our Story
       </div>
     </section>
   );
