@@ -201,7 +201,7 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
         onResetColorTheme={handleResetColorTheme}
       />
 
-      <footer className="wedding-section-glow relative w-full overflow-x-clip px-5 py-20 pb-32 transition-colors duration-700 md:py-28 md:pb-36">
+      <footer className="wedding-section-glow relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-x-clip px-5 pt-20 pb-28 transition-colors duration-700 md:pt-24 md:pb-32">
         <BotanicalWatermark side="left" />
         <BotanicalWatermark side="right" />
         <div className="relative z-10 container mx-auto flex max-w-3xl flex-col items-center gap-10 text-center">
