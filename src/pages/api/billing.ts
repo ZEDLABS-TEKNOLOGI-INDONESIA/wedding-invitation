@@ -123,14 +123,24 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
   // 1. Unggah / Kirim Bukti Transfer (WAJIB upload bukti/nota bayar)
   if (action === "submit_proof") {
     const orderId = Number(body.orderId || 0);
-    const senderName = String(body.senderName || "").trim().slice(0, 100);
-    const senderBank = String(body.senderBank || "").trim().slice(0, 60);
-    const proofUrl = String(body.proofUrl || "").trim().slice(0, 500);
-    const paymentNote = String(body.paymentNote || "").trim().slice(0, 400);
+    const senderName = String(body.senderName || "")
+      .trim()
+      .slice(0, 100);
+    const senderBank = String(body.senderBank || "")
+      .trim()
+      .slice(0, 60);
+    const proofUrl = String(body.proofUrl || "")
+      .trim()
+      .slice(0, 500);
+    const paymentNote = String(body.paymentNote || "")
+      .trim()
+      .slice(0, 400);
 
     if (!senderName) {
       return new Response(
-        JSON.stringify({ error: "Nama pemilik rekening pengirim wajib diisi." }),
+        JSON.stringify({
+          error: "Nama pemilik rekening pengirim wajib diisi.",
+        }),
         { status: 400, headers: JSON_HEADERS }
       );
     }
@@ -180,8 +190,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     }
 
     const nowIso = new Date().toISOString();
-    const combinedNote =
-      paymentNote || `${senderName} (${senderBank})`;
+    const combinedNote = paymentNote || `${senderName} (${senderBank})`;
 
     db.prepare(
       `UPDATE billing_orders
@@ -240,16 +249,16 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       );
     }
 
-    db.prepare("UPDATE billing_orders SET status = 'cancelled' WHERE id = ?").run(
-      order.id
-    );
+    db.prepare(
+      "UPDATE billing_orders SET status = 'cancelled' WHERE id = ?"
+    ).run(order.id);
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: JSON_HEADERS,
     });
   }
 
-  // 3. Buat tagihan baru (create_order) — mengikuti alur invoicing whatsapp-service
+  // 3. Buat tagihan baru (create_order) | mengikuti alur invoicing whatsapp-service
   const openOrders = db
     .prepare(
       "SELECT * FROM billing_orders WHERE wedding_id = ? AND status IN ('unpaid', 'review', 'pending', 'rejected') ORDER BY id DESC LIMIT 1"

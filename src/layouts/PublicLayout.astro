@@ -1,5 +1,5 @@
 ---
-import { Heart, Menu, Moon, Sun, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
 import { getAuthSession } from "../lib/auth";
 import { getPlatformConfig } from "../lib/db";
 import Layout from "./Layout.astro";
@@ -18,7 +18,7 @@ const {
 
 const session = getAuthSession(Astro.cookies);
 const platformCfg = getPlatformConfig();
-const platformName = platformCfg.PLATFORM_NAME || "Wedding Platform";
+const platformName = platformCfg.PLATFORM_NAME || "Wedding Management";
 const tahunSekarang = new Date().getFullYear();
 
 const nav = [
@@ -37,9 +37,11 @@ const nav = [
     <header class="sticky top-0 z-40 border-b border-(--adm-border) bg-(--adm-bg-primary)/85 backdrop-blur-md">
       <div class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-5 sm:px-6">
         <a href="/" class="flex shrink-0 items-center gap-2.5">
-          <span class="flex h-7 w-7 items-center justify-center rounded-md bg-(--adm-accent-soft) text-(--adm-accent)">
-            <Heart className="h-4 w-4" />
-          </span>
+          <img
+            src="/logo.png"
+            alt={platformName}
+            class="h-7 w-7 rounded-md object-contain"
+          />
           <span class="hidden text-sm font-semibold text-(--adm-text-primary) sm:inline">
             {platformName}
           </span>

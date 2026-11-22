@@ -31,30 +31,17 @@ export default defineConfig({
         },
         workbox: {
           navigateFallback: null,
-          globPatterns: ["**/*.{css,js,html,svg,png,ico,txt}"],
+          globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
           runtimeCaching: [
             {
-              urlPattern:
-                /^https:\/\/(images\.unsplash\.com|placehold\.co|fonts\.googleapis\.com|fonts\.gstatic\.com)\/.*/i,
+              urlPattern: ({ url }) =>
+                url.pathname.startsWith("/api/media/") ||
+                url.pathname.endsWith(".mp3"),
               handler: "CacheFirst",
               options: {
-                cacheName: "external-images-fonts",
+                cacheName: "local-media-cache",
                 expiration: {
                   maxEntries: 50,
-                  maxAgeSeconds: 60 * 60 * 24 * 30,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
-            {
-              urlPattern: ({ url }) => url.pathname.endsWith(".mp3"),
-              handler: "CacheFirst",
-              options: {
-                cacheName: "audio-cache",
-                expiration: {
-                  maxEntries: 5,
                   maxAgeSeconds: 60 * 60 * 24 * 30,
                 },
               },
@@ -62,11 +49,12 @@ export default defineConfig({
           ],
         },
         manifest: {
-          name: "The Wedding of Fera & Yahya",
-          short_name: "Fera & Yahya",
-          description: "Undangan Pernikahan Digital Fera & Yahya",
-          theme_color: "#020617",
-          background_color: "#020617",
+          name: "Wedding Management",
+          short_name: "Wedding Management",
+          description:
+            "Platform Undangan Pernikahan Digital, RSVP, Check-In QR & Manajemen Persiapan Nikah",
+          theme_color: "#0d1117",
+          background_color: "#0d1117",
           display: "standalone",
           orientation: "portrait",
           start_url: "/",

@@ -82,7 +82,7 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
           <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">
             Rangkaian Acara
           </span>
-          <h2 className="font-serif text-4xl font-medium tracking-tight text-primary italic sm:text-5xl md:text-6xl dark:text-white">
+          <h2 className="text-primary font-serif text-4xl font-medium tracking-tight italic sm:text-5xl md:text-6xl dark:text-white">
             Waktu &amp; Tempat
           </h2>
           <SectionDivider className="py-1" />
@@ -102,11 +102,10 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
             return (
               <div
                 key={type}
-                className={`editorial-card relative flex flex-col items-center justify-between space-y-6 rounded-3xl p-7 text-center ring-1 ring-accentDark/8 ring-inset sm:p-9 dark:ring-accent/10 ${
+                className={`editorial-card ring-accentDark/8 dark:ring-accent/10 relative flex flex-col items-center justify-between space-y-6 rounded-3xl p-7 text-center ring-1 ring-inset sm:p-9 ${
                   isOpen ? "z-30" : "z-10"
                 }`}
               >
-
                 <div className="space-y-3 pt-1">
                   <div className="bg-accentDark/10 text-accentDark dark:bg-accent/15 dark:text-accent mx-auto flex h-12 w-12 items-center justify-center rounded-full">
                     {type === "akad" ? (
@@ -115,13 +114,13 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
                       <Sparkles className="h-5 w-5" />
                     )}
                   </div>
-                  <h3 className="font-script text-4xl text-primary sm:text-5xl dark:text-white">
+                  <h3 className="font-script text-primary text-4xl sm:text-5xl dark:text-white">
                     {ev.title}
                   </h3>
                 </div>
 
                 <div className="border-accentDark/12 dark:border-accent/15 w-full space-y-3 border-y py-5">
-                  <div className="flex items-center justify-center gap-2.5 font-serif text-xl font-medium text-primary italic sm:text-2xl dark:text-white">
+                  <div className="text-primary flex items-center justify-center gap-2.5 font-serif text-xl font-medium italic sm:text-2xl dark:text-white">
                     <Calendar className="text-accentDark dark:text-accent h-4 w-4 shrink-0" />
                     <span>
                       {ev.day}, {ev.date}
@@ -130,7 +129,7 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
                   <div className="flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.16em] text-slate-600 uppercase dark:text-slate-300">
                     <Clock className="text-accentDark dark:text-accent h-4 w-4 shrink-0" />
                     <span>
-                      {ev.startTime} — {ev.endTime} {config.events.timezone}
+                      {ev.startTime} | {ev.endTime} {config.events.timezone}
                     </span>
                   </div>
                 </div>
@@ -190,7 +189,7 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
                 <span className="text-accentDark dark:text-accent text-[10px] font-bold tracking-[0.24em] uppercase">
                   Lokasi Acara
                 </span>
-                <h4 className="font-serif text-2xl font-semibold text-primary italic sm:text-3xl dark:text-white">
+                <h4 className="text-primary font-serif text-2xl font-semibold italic sm:text-3xl dark:text-white">
                   {config.venue.name}
                 </h4>
                 <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">

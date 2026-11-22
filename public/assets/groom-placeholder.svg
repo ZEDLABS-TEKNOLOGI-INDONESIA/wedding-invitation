@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800">
+  <defs>
+    <linearGradient id="p" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#p)"/>
+  <rect x="28" y="28" width="544" height="744" rx="20" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="2"/>
+  <circle cx="300" cy="310" r="82" fill="#38bdf8" fill-opacity="0.18" stroke="#38bdf8" stroke-opacity="0.45" stroke-width="2"/>
+  <path d="M170 590 C170 490 225 445 300 445 C375 445 430 490 430 590" fill="#38bdf8" fill-opacity="0.14" stroke="#38bdf8" stroke-opacity="0.4" stroke-width="2"/>
+  <text x="300" y="685" text-anchor="middle" fill="#e2e8f0" font-family="Georgia, serif" font-size="28" opacity="0.85">Mempelai Pria</text>
+</svg>

@@ -1,0 +1,30 @@
+services:
+  app:
+    build: .
+    container_name: wedding-management
+    ports:
+      - "${APP_PORT:-4321}:4321"
+    volumes:
+      - ./database:/app/database
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=4321
+      - TZ=Asia/Jakarta
+    env_file:
+      - .env
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:4321/api/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

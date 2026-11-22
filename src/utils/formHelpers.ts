@@ -5,9 +5,21 @@ export interface TimezoneOption {
 }
 
 export const TIMEZONE_OPTIONS: TimezoneOption[] = [
-  { value: "WIB", label: "WIB — Waktu Indonesia Barat (UTC+7)", offset: "+07:00" },
-  { value: "WITA", label: "WITA — Waktu Indonesia Tengah (UTC+8)", offset: "+08:00" },
-  { value: "WIT", label: "WIT — Waktu Indonesia Timur (UTC+9)", offset: "+09:00" },
+  {
+    value: "WIB",
+    label: "WIB | Waktu Indonesia Barat (UTC+7)",
+    offset: "+07:00",
+  },
+  {
+    value: "WITA",
+    label: "WITA | Waktu Indonesia Tengah (UTC+8)",
+    offset: "+08:00",
+  },
+  {
+    value: "WIT",
+    label: "WIT | Waktu Indonesia Timur (UTC+9)",
+    offset: "+09:00",
+  },
 ];
 
 export const BANK_PRESETS = [
@@ -156,7 +168,8 @@ export const buildEventScheduleFields = (
   }
 
   if (formatted && cleanStart) {
-    result[`${prefix}_ISO_START`] = `${dateYmd.trim()}T${cleanStart}:00${offset}`;
+    result[`${prefix}_ISO_START`] =
+      `${dateYmd.trim()}T${cleanStart}:00${offset}`;
   }
   if (formatted && cleanEnd) {
     result[`${prefix}_ISO_END`] = `${dateYmd.trim()}T${cleanEnd}:00${offset}`;

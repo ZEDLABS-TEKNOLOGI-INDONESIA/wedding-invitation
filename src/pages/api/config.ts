@@ -45,7 +45,10 @@ const validateConfigEntry = (key: string, value: string): string | null => {
 
   if (key === "VENUE_LAT") {
     const num = Number(value);
-    if (value.trim() !== "" && (!Number.isFinite(num) || num < -90 || num > 90)) {
+    if (
+      value.trim() !== "" &&
+      (!Number.isFinite(num) || num < -90 || num > 90)
+    ) {
       return "VENUE_LAT harus berupa angka antara -90 dan 90.";
     }
   }
@@ -85,18 +88,28 @@ const validateConfigEntry = (key: string, value: string): string | null => {
 
   if (
     key === "PUBLIC_ANIMATION" &&
-    !["doves", "petals", "butterflies", "lanterns", "sparkles", "none"].includes(
-      value.trim().toLowerCase()
-    )
+    ![
+      "doves",
+      "petals",
+      "butterflies",
+      "lanterns",
+      "sparkles",
+      "none",
+    ].includes(value.trim().toLowerCase())
   ) {
     return "PUBLIC_ANIMATION tidak dikenali.";
   }
 
   if (
     key === "PUBLIC_ORNAMENT" &&
-    !["botanical", "floral", "islamic", "baroque", "celestial", "none"].includes(
-      value.trim().toLowerCase()
-    )
+    ![
+      "botanical",
+      "floral",
+      "islamic",
+      "baroque",
+      "celestial",
+      "none",
+    ].includes(value.trim().toLowerCase())
   ) {
     return "PUBLIC_ORNAMENT tidak dikenali.";
   }
@@ -167,10 +180,13 @@ export const GET: APIRoute = async ({ url }) => {
     if (slug) {
       const w = getWeddingBySlug(slug);
       if (!w || w.status !== "active") {
-        return new Response(JSON.stringify({ error: "Undangan tidak ditemukan." }), {
-          status: 404,
-          headers: JSON_HEADERS,
-        });
+        return new Response(
+          JSON.stringify({ error: "Undangan tidak ditemukan." }),
+          {
+            status: 404,
+            headers: JSON_HEADERS,
+          }
+        );
       }
       weddingId = w.id;
     }
@@ -230,7 +246,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const nextCfg = getPublicConfig(session.weddingId);
     if (nextCfg.BRIDE_NICKNAME && nextCfg.GROOM_NICKNAME) {
-      const prefix = session.isDemo ? "Demo — " : "Undangan ";
+      const prefix = session.isDemo ? "Demo | " : "Undangan ";
       db.prepare("UPDATE weddings SET title = ? WHERE id = ?").run(
         `${prefix}${nextCfg.BRIDE_NICKNAME} & ${nextCfg.GROOM_NICKNAME}`,
         session.weddingId

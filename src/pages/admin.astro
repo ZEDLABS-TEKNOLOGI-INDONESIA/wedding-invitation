@@ -37,7 +37,7 @@ const publicCfg = getPublicConfig(session.weddingId);
 const coupleLabel =
   publicCfg.BRIDE_NICKNAME && publicCfg.GROOM_NICKNAME
     ? `${publicCfg.BRIDE_NICKNAME} & ${publicCfg.GROOM_NICKNAME}`
-    : session.weddingTitle || "Wedding Panel";
+    : session.weddingTitle || "Wedding Management";
 
 const rsvps = db
   .prepare("SELECT * FROM rsvps WHERE wedding_id = ? ORDER BY created_at DESC")
@@ -55,7 +55,7 @@ const publicPath = session.isDemo ? "/demo" : `/u/${session.weddingSlug}`;
 const tenantSiteUrl = `${origin}${publicPath}`;
 ---
 
-<Layout title={`Admin — ${coupleLabel}`} noindex={true}>
+<Layout title={`Admin | ${coupleLabel}`} noindex={true}>
   <div class="admin-shell min-h-dvh">
     <AdminDashboard
       client:load

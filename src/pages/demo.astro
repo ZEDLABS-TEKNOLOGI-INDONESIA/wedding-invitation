@@ -4,8 +4,8 @@ import Layout from "../layouts/Layout.astro";
 import { DEFAULT_WEDDING_ID, getPublicConfig } from "../lib/db";
 import { ensureReminderSchedulerStarted } from "../lib/reminderScheduler";
 import {
-  normalizePublicDefaultMode,
-  normalizePublicTheme,
+normalizePublicDefaultMode,
+normalizePublicTheme,
 } from "../utils/publicThemes";
 
 ensureReminderSchedulerStarted();
@@ -21,9 +21,9 @@ const defaultColorMode = normalizePublicDefaultMode(
 );
 const allowGuestThemeSwitch = safeConfig.PUBLIC_ALLOW_THEME_SWITCH !== "false";
 
-const pageTitle = `Demo Undangan — ${brideName} & ${groomName}`;
+const pageTitle = `Demo Undangan | ${brideName} & ${groomName}`;
 const pageDescription = eventDate
-  ? `Demo Undangan Pernikahan Digital ${brideName} & ${groomName} — ${eventDate}${venueName ? ` di ${venueName}` : ""}.`
+  ? `Demo Undangan Pernikahan Digital ${brideName} & ${groomName} | ${eventDate}${venueName ? ` di ${venueName}` : ""}.`
   : `Demo Undangan Pernikahan Digital ${brideName} & ${groomName}.`;
 ---
 

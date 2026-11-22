@@ -443,7 +443,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               >
                 {QR_FORMATS.map((fmt) => (
                   <option key={fmt.id} value={fmt.id}>
-                    {fmt.name} — {fmt.sizeLabel}
+                    {fmt.name} | {fmt.sizeLabel}
                   </option>
                 ))}
               </select>
@@ -749,9 +749,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       aria-label={`Hapus ${name}`}
                       title="Hapus"
                       onClick={() =>
-                        setBulkNames((prev) =>
-                          prev.filter((_, i) => i !== idx)
-                        )
+                        setBulkNames((prev) => prev.filter((_, i) => i !== idx))
                       }
                       className="adm-btn-aksi aksi-hapus absolute top-2 right-2 z-10 opacity-0 transition-opacity group-hover:opacity-100"
                     >

@@ -297,7 +297,10 @@ export function formatWaGatewayError(
     };
   }
 
-  if (msgLower.includes("fetch failed") || msgLower.includes("failed to fetch")) {
+  if (
+    msgLower.includes("fetch failed") ||
+    msgLower.includes("failed to fetch")
+  ) {
     const extra = code ? ` (${code})` : "";
     return {
       status: 502,
@@ -503,9 +506,7 @@ export const signRequestV2 = (
 
 export function resolveOriginDomain(request?: Request, url?: URL): string {
   const fromHeaders = request
-    ? (request.headers.get("x-forwarded-host") || "")
-        .split(",")[0]
-        .trim() ||
+    ? (request.headers.get("x-forwarded-host") || "").split(",")[0].trim() ||
       (request.headers.get("host") || "").trim()
     : "";
   const raw = (
@@ -587,7 +588,9 @@ export class WaGatewayClient {
             "Content-Type": "application/json",
             Accept: "application/json",
             "User-Agent": "wedding-invitation/1.0.0",
-            ...(this.originDomain ? { "X-Origin-Domain": this.originDomain } : {}),
+            ...(this.originDomain
+              ? { "X-Origin-Domain": this.originDomain }
+              : {}),
             "X-API-Key": this.keyId,
             "X-Signature-Version": "2",
             "X-Timestamp": ts,
@@ -741,9 +744,9 @@ export class WaGatewayClient {
             : {}),
         },
         body: JSON.stringify({
-          nama_aplikasi: params.namaAplikasi || "Wedding Invitation",
+          nama_aplikasi: params.namaAplikasi || "Wedding Management",
           nama_akun: params.namaAkun || "Undangan Pernikahan",
-          nama_api_key: params.namaApiKey || "Wedding Invitation",
+          nama_api_key: params.namaApiKey || "Wedding Management",
           ...(params.domainAsal ? { domain_asal: params.domainAsal } : {}),
         }),
         signal: controller.signal,
@@ -780,7 +783,8 @@ export const getWaCredentials = (
   if (!baseUrl || !keyId || !secret) return null;
   try {
     const parsed = new URL(baseUrl);
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:")
+      return null;
   } catch {
     return null;
   }
@@ -848,7 +852,9 @@ export const sanitizeWaVariable = (
 
   cleaned = cleaned
     .split(/([.!?]+\s*)/)
-    .map((segment, idx) => (idx % 2 === 0 ? lowerExcessiveCaps(segment) : segment))
+    .map((segment, idx) =>
+      idx % 2 === 0 ? lowerExcessiveCaps(segment) : segment
+    )
     .join("");
 
   const maxLen = options?.maxLength ?? 400;
@@ -909,10 +915,15 @@ export const notifyAdminRsvpWa = async (
   const recipients = parseAdminWaNumbers(config.WA_ADMIN_NUMBERS);
   if (!creds || recipients.length === 0) return;
 
-  const client = new WaGatewayClient(creds, { timeoutMs: 10_000, maxRetries: 1 });
+  const client = new WaGatewayClient(creds, {
+    timeoutMs: 10_000,
+    maxRetries: 1,
+  });
   const variables = {
     aksi: payload.actionType === "created" ? "baru" : "diperbarui",
-    nama_tamu: sanitizeWaVariable(payload.guest_name, "Tamu", { maxLength: 100 }),
+    nama_tamu: sanitizeWaVariable(payload.guest_name, "Tamu", {
+      maxLength: 100,
+    }),
     status_kehadiran: formatAttendanceLabel(payload.attendance),
     jumlah_tamu:
       payload.attendance === "hadir" ? `${payload.guest_count} orang` : "-",
@@ -952,7 +963,10 @@ export const sendGuestRsvpConfirmationWa = async (
   const recipient = normalizeWaPhone(payload.phone);
   if (!creds || !recipient) return;
 
-  const client = new WaGatewayClient(creds, { timeoutMs: 10_000, maxRetries: 1 });
+  const client = new WaGatewayClient(creds, {
+    timeoutMs: 10_000,
+    maxRetries: 1,
+  });
   const summary = buildEventSummary(config);
   const variables = {
     nama_tamu: sanitizeWaVariable(payload.guest_name, "Bapak/Ibu", {
@@ -998,7 +1012,10 @@ export const notifyAdminWishWa = async (
   const recipients = parseAdminWaNumbers(config.WA_ADMIN_NUMBERS);
   if (!creds || recipients.length === 0) return;
 
-  const client = new WaGatewayClient(creds, { timeoutMs: 10_000, maxRetries: 1 });
+  const client = new WaGatewayClient(creds, {
+    timeoutMs: 10_000,
+    maxRetries: 1,
+  });
   const variables = {
     aksi: payload.actionType === "created" ? "baru" : "diperbarui",
     nama_pengirim: sanitizeWaVariable(payload.name, "Tamu", { maxLength: 100 }),
@@ -1073,7 +1090,10 @@ export const sendGuestH1ReminderWa = async (
     return { sent: false, error: "Nomor WhatsApp tamu tidak valid." };
   }
 
-  const client = new WaGatewayClient(creds, { timeoutMs: 12_000, maxRetries: 1 });
+  const client = new WaGatewayClient(creds, {
+    timeoutMs: 12_000,
+    maxRetries: 1,
+  });
   const summary = buildEventSummary(config);
   const lat = (config.VENUE_LAT || "").trim();
   const lng = (config.VENUE_LNG || "").trim();
@@ -1115,7 +1135,8 @@ export const sendGuestH1ReminderWa = async (
     });
     return { sent: true };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Gagal mengirim pengingat.";
+    const msg =
+      err instanceof Error ? err.message : "Gagal mengirim pengingat.";
     console.error(`Gagal kirim pengingat H-1 ke ${recipient}:`, err);
     return { sent: false, error: msg };
   }

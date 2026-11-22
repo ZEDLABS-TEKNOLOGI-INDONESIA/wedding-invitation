@@ -44,7 +44,7 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
         <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.26em] uppercase">
           {roleLabel}
         </span>
-        <h3 className="font-script text-4xl leading-snug text-primary sm:text-5xl dark:text-white">
+        <h3 className="font-script text-primary text-4xl leading-snug sm:text-5xl dark:text-white">
           {person.fullName}
         </h3>
         <p className="text-xs leading-relaxed font-medium text-balance text-slate-600 sm:text-sm dark:text-slate-300">
@@ -79,7 +79,7 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
           <span className="text-accentDark dark:text-accent font-serif text-lg italic sm:text-xl">
             {config.text.opening.salam}
           </span>
-          <h2 className="font-serif text-4xl font-medium tracking-tight text-primary italic sm:text-5xl md:text-6xl dark:text-white">
+          <h2 className="text-primary font-serif text-4xl font-medium tracking-tight italic sm:text-5xl md:text-6xl dark:text-white">
             Mempelai Berbahagia
           </h2>
           <SectionDivider className="py-1" />
@@ -87,7 +87,7 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
             {config.text.quote.ar_rum}
           </p>
           <p className="text-accentDark dark:text-accent text-[11px] font-bold tracking-[0.25em] uppercase">
-            — {config.text.quote.source} —
+            | {config.text.quote.source} |
           </p>
         </div>
 
@@ -96,7 +96,7 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
 
           {/* Romantic Double-Ring Ampersand Medallion */}
           <div className="flex items-center justify-center py-2">
-            <div className="border-accentDark/30 dark:border-accent/35 relative flex h-16 w-16 items-center justify-center rounded-full border bg-white/80 shadow-sm backdrop-blur-md md:h-20 md:w-20 dark:bg-darkSurface/80">
+            <div className="border-accentDark/30 dark:border-accent/35 dark:bg-darkSurface/80 relative flex h-16 w-16 items-center justify-center rounded-full border bg-white/80 shadow-sm backdrop-blur-md md:h-20 md:w-20">
               <span className="border-accentDark/15 dark:border-accent/20 pointer-events-none absolute -inset-2 rounded-full border border-dashed" />
               <span className="font-script text-accentDark dark:text-accent text-4xl md:text-5xl">
                 &amp;

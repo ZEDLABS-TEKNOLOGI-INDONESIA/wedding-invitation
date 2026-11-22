@@ -1,0 +1,16 @@
+node_modules
+dist
+.astro
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+database
+backups
+*.log
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+README.md

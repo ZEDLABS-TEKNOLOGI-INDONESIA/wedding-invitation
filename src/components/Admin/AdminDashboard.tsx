@@ -7,7 +7,6 @@ import {
   Download,
   Edit,
   ExternalLink,
-  Heart,
   HelpCircle,
   Loader2,
   LogOut,
@@ -424,7 +423,7 @@ const AdminDashboard = ({
   initialRsvps,
   initialWishes,
   siteUrl,
-  coupleLabel = "Wedding Panel",
+  coupleLabel = "Wedding Management",
   publicInvitationPath = "/demo",
   currentUser,
 }: {
@@ -457,7 +456,7 @@ const AdminDashboard = ({
     }
     setBillingQuotaNotice(
       message ||
-        "Jumlah tamu/kontak melebihi kuota aktif Anda. Seluruh impor ditolak — silakan selesaikan pembayaran penambahan kuota di bawah ini."
+        "Jumlah tamu/kontak melebihi kuota aktif Anda. Seluruh impor ditolak | silakan selesaikan pembayaran penambahan kuota di bawah ini."
     );
     setToast({
       type: "error",
@@ -906,7 +905,7 @@ const AdminDashboard = ({
       ? (() => {
           const sub = SETTINGS_SUBMENUS.find((s) => s.id === settingsSubTab);
           return {
-            title: sub ? `Pengaturan — ${sub.label}` : TAB_META.settings.title,
+            title: sub ? `Pengaturan | ${sub.label}` : TAB_META.settings.title,
             desc: sub ? sub.desc : TAB_META.settings.desc,
           };
         })()
@@ -915,7 +914,7 @@ const AdminDashboard = ({
             const sub = PLANNER_SUBMENUS.find((s) => s.id === plannerSubTab);
             return {
               title: sub
-                ? `Manajemen Nikah — ${sub.label}`
+                ? `Manajemen Nikah | ${sub.label}`
                 : TAB_META.planner.title,
               desc: sub ? sub.desc : TAB_META.planner.desc,
             };
@@ -965,9 +964,11 @@ const AdminDashboard = ({
             className="flex min-w-0 items-center gap-2.5 text-left"
             title={coupleLabel}
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-accent-soft) text-(--adm-accent)">
-              <Heart className="h-3.5 w-3.5" />
-            </span>
+            <img
+              src="/logo.png"
+              alt={coupleLabel}
+              className="h-7 w-7 shrink-0 rounded-md object-contain"
+            />
             <span className={`min-w-0 ${sidebarCollapsed ? "md:hidden" : ""}`}>
               <span className="block truncate text-[13px] font-bold text-(--adm-text-primary)">
                 {coupleLabel}
@@ -1075,14 +1076,20 @@ const AdminDashboard = ({
                           title={item.label}
                           onClick={() => {
                             if (isSettingsItem) {
-                              if (activeTab === "settings" && !sidebarCollapsed) {
+                              if (
+                                activeTab === "settings" &&
+                                !sidebarCollapsed
+                              ) {
                                 setSettingsMenuOpen((prev) => !prev);
                               } else {
                                 setActiveTab("settings");
                                 setSettingsMenuOpen(true);
                               }
                             } else if (isPlannerItem) {
-                              if (activeTab === "planner" && !sidebarCollapsed) {
+                              if (
+                                activeTab === "planner" &&
+                                !sidebarCollapsed
+                              ) {
                                 setPlannerMenuOpen((prev) => !prev);
                               } else {
                                 setActiveTab("planner");
@@ -1157,7 +1164,9 @@ const AdminDashboard = ({
                                         : "font-medium text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)"
                                     }`}
                                   >
-                                    <span className="truncate">{sub.label}</span>
+                                    <span className="truncate">
+                                      {sub.label}
+                                    </span>
                                   </button>
                                 </li>
                               );
@@ -1304,7 +1313,7 @@ const AdminDashboard = ({
             <nav aria-label="Breadcrumb" className="min-w-0">
               <ol className="flex items-center gap-1.5 text-[13px]">
                 <li className="hidden whitespace-nowrap text-(--adm-text-secondary) sm:block">
-                  Wedding Panel
+                  Wedding Management
                 </li>
                 <li className="hidden text-(--adm-text-muted) sm:block">/</li>
                 <li className="truncate font-semibold text-(--adm-text-primary)">
@@ -1776,7 +1785,7 @@ const AdminDashboard = ({
               ZEDLABS Teknologi Indonesia
             </strong>
           </span>
-          <span>Wedding Invitation Admin Panel</span>
+          <span>Wedding Management Admin Panel</span>
         </footer>
       </div>
 

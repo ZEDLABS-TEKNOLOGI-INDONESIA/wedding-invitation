@@ -50,7 +50,9 @@ export function normalizeOrderStatus(
   status: string,
   proofUrl?: string
 ): BillingOrderStatus {
-  const s = String(status || "").trim().toLowerCase();
+  const s = String(status || "")
+    .trim()
+    .toLowerCase();
   if (s === "paid" || s === "lunas") return "paid";
   if (s === "rejected" || s === "ditolak") return "rejected";
   if (s === "cancelled" || s === "dibatalkan") return "cancelled";
@@ -158,7 +160,10 @@ async function sendTemplateWithAutoSync(
     return true;
   } catch (err) {
     // Jika template belum tersinkron (403/404), coba sinkronkan sekali lalu kirim ulang
-    if (err instanceof WaGatewayError && (err.status === 403 || err.status === 404)) {
+    if (
+      err instanceof WaGatewayError &&
+      (err.status === 403 || err.status === 404)
+    ) {
       try {
         await client.syncTemplates(PLATFORM_WA_TEMPLATES, {
           pratinjau: false,
@@ -208,7 +213,9 @@ export async function notifyInvoiceEvent(
   const bankSummary =
     bankAccounts.length > 0
       ? bankAccounts
-          .map((b) => `${b.bank} ${b.number}${b.holder ? ` a.n. ${b.holder}` : ""}`)
+          .map(
+            (b) => `${b.bank} ${b.number}${b.holder ? ` a.n. ${b.holder}` : ""}`
+          )
           .join(" / ")
       : "Hubungi admin untuk nomor rekening tujuan";
 
@@ -402,10 +409,9 @@ export async function notifyInvoiceEvent(
   }
 
   if (userSent > 0 || adminSent > 0) {
-    db.prepare("UPDATE billing_orders SET invoice_sent_at = ? WHERE id = ?").run(
-      new Date().toISOString(),
-      order.id
-    );
+    db.prepare(
+      "UPDATE billing_orders SET invoice_sent_at = ? WHERE id = ?"
+    ).run(new Date().toISOString(), order.id);
   }
 
   return { userSent, adminSent };
@@ -439,7 +445,7 @@ export function renderInvoiceHtml(
     cancelled: { label: "DIBATALKAN", color: "#475569", bg: "#f1f5f9" },
   };
   const badge = statusMap[status];
-  const platformName = platformCfg.PLATFORM_NAME || "Wedding Platform";
+  const platformName = platformCfg.PLATFORM_NAME || "Wedding Management";
   const banks = parsePlatformBankAccounts(platformCfg);
 
   return `<!DOCTYPE html>
@@ -447,7 +453,7 @@ export function renderInvoiceHtml(
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Invoice ${escapeHtml(order.invoice_code)} — ${escapeHtml(platformName)}</title>
+  <title>Invoice ${escapeHtml(order.invoice_code)} | ${escapeHtml(platformName)}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px; background: #f8fafc; color: #0f172a; }
@@ -529,7 +535,7 @@ export function renderInvoiceHtml(
             ${banks
               .map(
                 (b) =>
-                  `<div style="margin-top:4px;"><strong>${escapeHtml(b.bank)}</strong> — <span class="mono">${escapeHtml(b.number)}</span>${b.holder ? ` a.n. ${escapeHtml(b.holder)}` : ""}</div>`
+                  `<div style="margin-top:4px;"><strong>${escapeHtml(b.bank)}</strong> | <span class="mono">${escapeHtml(b.number)}</span>${b.holder ? ` a.n. ${escapeHtml(b.holder)}` : ""}</div>`
               )
               .join("")}
           </div>`

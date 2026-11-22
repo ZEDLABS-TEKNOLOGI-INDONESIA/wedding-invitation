@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <rect width="1200" height="800" fill="#172554"/>
+  <rect x="28" y="28" width="1144" height="744" rx="20" fill="none" stroke="#60a5fa" stroke-opacity="0.3" stroke-width="2"/>
+  <circle cx="600" cy="380" r="72" fill="#60a5fa" fill-opacity="0.15" stroke="#60a5fa" stroke-opacity="0.4" stroke-width="2"/>
+  <text x="600" y="495" text-anchor="middle" fill="#e2e8f0" font-family="Georgia, serif" font-size="34" opacity="0.8">Moment 2</text>
+</svg>

@@ -69,10 +69,7 @@ interface BillingPanelProps {
   quotaNotice?: string | null;
 }
 
-const STATUS_BADGE: Record<
-  OrderStatus,
-  { label: string; cls: string }
-> = {
+const STATUS_BADGE: Record<OrderStatus, { label: string; cls: string }> = {
   unpaid: { label: "Belum Dibayar", cls: "adm-badge-warning" },
   review: { label: "Menunggu Verifikasi", cls: "adm-badge-accent" },
   paid: { label: "Lunas", cls: "adm-badge-success" },
@@ -197,7 +194,8 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
       setProofUrl(json.url);
       onNotify({
         type: "success",
-        message: "Bukti transfer berhasil diunggah. Klik Kirim Bukti untuk verifikasi.",
+        message:
+          "Bukti transfer berhasil diunggah. Klik Kirim Bukti untuk verifikasi.",
       });
     } finally {
       setUploadingProof(false);
@@ -256,7 +254,8 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
     if (!proofUrl) {
       onNotify({
         type: "error",
-        message: "Wajib mengunggah foto bukti transfer / nota bayar terlebih dahulu.",
+        message:
+          "Wajib mengunggah foto bukti transfer / nota bayar terlebih dahulu.",
       });
       return;
     }
@@ -352,7 +351,7 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
           <div>
             <div className="font-semibold">
-              Impor / Input Tamu Ditolak — Kuota Terlampaui
+              Impor / Input Tamu Ditolak | Kuota Terlampaui
             </div>
             <p className="mt-0.5 opacity-90">{quotaNotice}</p>
           </div>
@@ -417,12 +416,16 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
               <div className="flex items-center gap-2">
                 <Receipt className="h-4 w-4 text-(--adm-accent)" />
                 <h3 className="text-sm font-semibold">
-                  Tagihan <span className="font-mono">{openOrder.invoice_code}</span>
+                  Tagihan{" "}
+                  <span className="font-mono">{openOrder.invoice_code}</span>
                 </h3>
               </div>
               <p className="mt-0.5 text-xs text-(--adm-text-secondary)">
-                Penambahan +{openOrder.added_guests.toLocaleString("id-ID")} tamu → Total kuota{" "}
-                <strong>{openOrder.requested_total_quota.toLocaleString("id-ID")} tamu</strong>
+                Penambahan +{openOrder.added_guests.toLocaleString("id-ID")}{" "}
+                tamu → Total kuota{" "}
+                <strong>
+                  {openOrder.requested_total_quota.toLocaleString("id-ID")} tamu
+                </strong>
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -435,7 +438,9 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
                 <FileText className="h-3.5 w-3.5" />
                 Cetak Invoice
               </a>
-              <span className={`adm-badge ${STATUS_BADGE[openOrder.status].cls}`}>
+              <span
+                className={`adm-badge ${STATUS_BADGE[openOrder.status].cls}`}
+              >
                 {STATUS_BADGE[openOrder.status].label}
               </span>
             </div>
@@ -535,11 +540,19 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
                       Bukti Pembayaran Sedang Diperiksa Superadmin
                     </div>
                     <p className="mt-1.5 leading-relaxed">
-                      Dikirim {formatDateId(openOrder.submitted_at || openOrder.created_at)}{" "}
+                      Dikirim{" "}
+                      {formatDateId(
+                        openOrder.submitted_at || openOrder.created_at
+                      )}{" "}
                       atas nama{" "}
-                      <strong>{openOrder.sender_name || openOrder.payment_note || "-"}</strong>
-                      {openOrder.sender_bank ? ` (${openOrder.sender_bank})` : ""}. Anda akan
-                      langsung mendapat notifikasi WhatsApp setelah pembayaran diverifikasi.
+                      <strong>
+                        {openOrder.sender_name || openOrder.payment_note || "-"}
+                      </strong>
+                      {openOrder.sender_bank
+                        ? ` (${openOrder.sender_bank})`
+                        : ""}
+                      . Anda akan langsung mendapat notifikasi WhatsApp setelah
+                      pembayaran diverifikasi.
                     </p>
                   </div>
                   {openOrder.proof_url && (
@@ -562,7 +575,8 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <label className="adm-label">
-                        Nama Pemilik Rekening <span className="text-red-400">*</span>
+                        Nama Pemilik Rekening{" "}
+                        <span className="text-red-400">*</span>
                       </label>
                       <input
                         type="text"
@@ -576,7 +590,8 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
                     </div>
                     <div>
                       <label className="adm-label">
-                        Bank / E-Wallet Pengirim <span className="text-red-400">*</span>
+                        Bank / E-Wallet Pengirim{" "}
+                        <span className="text-red-400">*</span>
                       </label>
                       <input
                         type="text"
@@ -592,7 +607,8 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
 
                   <div>
                     <label className="adm-label">
-                      Bukti Transfer / Nota Bayar <span className="text-red-400">*</span>
+                      Bukti Transfer / Nota Bayar{" "}
+                      <span className="text-red-400">*</span>
                     </label>
                     <div className="flex flex-wrap items-center gap-2.5">
                       <label className="adm-btn adm-btn-secondary adm-btn-sm cursor-pointer">
@@ -774,20 +790,32 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
           <div className="adm-card space-y-3 p-5 lg:col-span-5">
             <div className="flex items-center gap-2">
               <Receipt className="h-4 w-4 text-(--adm-accent)" />
-              <h3 className="text-sm font-semibold">Alur Pembayaran &amp; Verifikasi</h3>
+              <h3 className="text-sm font-semibold">
+                Alur Pembayaran &amp; Verifikasi
+              </h3>
             </div>
             <ol className="list-decimal space-y-2 pl-4 text-xs text-(--adm-text-secondary)">
               <li>
-                Pilih target kuota tamu lalu klik <strong className="text-(--adm-text-primary)">Buat Tagihan</strong>. Invoice otomatis dikirim ke WhatsApp Anda.
+                Pilih target kuota tamu lalu klik{" "}
+                <strong className="text-(--adm-text-primary)">
+                  Buat Tagihan
+                </strong>
+                . Invoice otomatis dikirim ke WhatsApp Anda.
               </li>
               <li>
-                Transfer sesuai nominal tagihan ke salah satu rekening resmi yang tertera.
+                Transfer sesuai nominal tagihan ke salah satu rekening resmi
+                yang tertera.
               </li>
               <li>
-                <strong className="text-(--adm-text-primary)">Wajib unggah bukti transfer / nota bayar</strong> beserta nama &amp; bank pengirim.
+                <strong className="text-(--adm-text-primary)">
+                  Wajib unggah bukti transfer / nota bayar
+                </strong>{" "}
+                beserta nama &amp; bank pengirim.
               </li>
               <li>
-                Superadmin menerima notifikasi WhatsApp, mereview bukti bayar, dan menyetujui tagihan. Kuota langsung aktif &amp; invoice lunas dikirim via WhatsApp.
+                Superadmin menerima notifikasi WhatsApp, mereview bukti bayar,
+                dan menyetujui tagihan. Kuota langsung aktif &amp; invoice lunas
+                dikirim via WhatsApp.
               </li>
             </ol>
           </div>
@@ -797,7 +825,9 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
       {/* Riwayat Tagihan */}
       <div className="adm-card overflow-hidden">
         <div className="border-b border-(--adm-border) px-4 py-3">
-          <h3 className="text-sm font-semibold">Riwayat Tagihan &amp; Invoice</h3>
+          <h3 className="text-sm font-semibold">
+            Riwayat Tagihan &amp; Invoice
+          </h3>
         </div>
         {historyOrders.length === 0 ? (
           <div className="p-6 text-center text-xs text-(--adm-text-secondary)">
@@ -832,7 +862,9 @@ const BillingPanel: React.FC<BillingPanelProps> = ({
                         {formatIdr(o.amount)}
                       </td>
                       <td className="px-4 py-2.5">
-                        <span className={`adm-badge ${st.cls}`}>{st.label}</span>
+                        <span className={`adm-badge ${st.cls}`}>
+                          {st.label}
+                        </span>
                         {o.admin_note && (
                           <div className="mt-0.5 text-[11px] text-(--adm-text-secondary)">
                             {o.admin_note}

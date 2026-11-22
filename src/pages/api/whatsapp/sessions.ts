@@ -36,7 +36,12 @@ function resolveDomainAsal(request: Request, url: URL): string {
   const forwardedHost = (request.headers.get("x-forwarded-host") || "")
     .split(",")[0]
     .trim();
-  const host = (forwardedHost || request.headers.get("host") || url.hostname || "")
+  const host = (
+    forwardedHost ||
+    request.headers.get("host") ||
+    url.hostname ||
+    ""
+  )
     .trim()
     .toLowerCase();
   if (!host) return "";
@@ -80,9 +85,9 @@ async function ensureCredentialsOrAutoRegister(
   const namaAkun = `Undangan ${bride} & ${groom}`.slice(0, 80);
 
   const created = await WaGatewayClient.registerPersonalAccount(baseUrl, {
-    namaAplikasi: "Wedding Invitation",
+    namaAplikasi: "Wedding Management",
     namaAkun,
-    namaApiKey: "Wedding Invitation",
+    namaApiKey: "Wedding Management",
     domainAsal: overrides?.domainAsal,
   });
 
@@ -229,9 +234,9 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
         `Undangan ${bride} & ${groom}`.slice(0, 80);
 
       const created = await WaGatewayClient.registerPersonalAccount(baseUrl, {
-        namaAplikasi: "Wedding Invitation",
+        namaAplikasi: "Wedding Management",
         namaAkun,
-        namaApiKey: "Wedding Invitation",
+        namaApiKey: "Wedding Management",
         domainAsal,
       });
 
@@ -341,10 +346,10 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     if (action === "logout" || action === "delete") {
       const sesiId = (body.sesiId || "").trim();
       if (!sesiId) {
-        return new Response(
-          JSON.stringify({ error: "ID sesi wajib diisi." }),
-          { status: 400, headers: JSON_HEADERS }
-        );
+        return new Response(JSON.stringify({ error: "ID sesi wajib diisi." }), {
+          status: 400,
+          headers: JSON_HEADERS,
+        });
       }
       const creds = getWaCredentials(config, {
         baseUrl: body.baseUrl,
@@ -353,7 +358,9 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       });
       if (!creds) {
         return new Response(
-          JSON.stringify({ error: "Kredensial WhatsApp Gateway belum diatur." }),
+          JSON.stringify({
+            error: "Kredensial WhatsApp Gateway belum diatur.",
+          }),
           { status: 400, headers: JSON_HEADERS }
         );
       }

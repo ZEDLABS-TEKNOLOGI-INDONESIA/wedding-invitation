@@ -92,7 +92,9 @@ const GuestManager: React.FC<GuestManagerProps> = ({
       onQuotaExceeded(projectedTotal, message);
       return;
     }
-    const qs = projectedTotal ? `&target=${encodeURIComponent(String(projectedTotal))}` : "";
+    const qs = projectedTotal
+      ? `&target=${encodeURIComponent(String(projectedTotal))}`
+      : "";
     window.location.href = `/admin?tab=billing${qs}`;
   };
   const [subTab, setSubTab] = useState<"list" | "scanner">(initialSubTab);
@@ -927,8 +929,8 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                   <div className="rounded-md border border-(--adm-border) bg-(--adm-bg-secondary) p-1 shadow-(--adm-shadow-pop)">
                     <p className="adm-hint px-2 py-1">
                       {scanInput.trim()
-                        ? `Hasil pencarian (${scannerSuggestions.length} tamu) — klik untuk langsung check-in:`
-                        : "Tamu diundang yang belum check-in — klik untuk langsung check-in:"}
+                        ? `Hasil pencarian (${scannerSuggestions.length} tamu) | klik untuk langsung check-in:`
+                        : "Tamu diundang yang belum check-in | klik untuk langsung check-in:"}
                     </p>
                     <div className="max-h-56 divide-y divide-(--adm-border) overflow-y-auto">
                       {scannerSuggestions.map((g) => (

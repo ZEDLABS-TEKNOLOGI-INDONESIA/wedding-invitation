@@ -53,14 +53,14 @@ export function parseConfig(raw: Record<string, string>): AppConfig {
         fullName: raw.BRIDE_FULLNAME ?? "Bride",
         parents: raw.BRIDE_PARENTS ?? "",
         instagram: raw.BRIDE_INSTAGRAM ?? "",
-        image: raw.BRIDE_IMAGE || "https://placehold.co/600x800",
+        image: raw.BRIDE_IMAGE || "/assets/bride-placeholder.svg",
       },
       groom: {
         name: raw.GROOM_NICKNAME ?? "Groom",
         fullName: raw.GROOM_FULLNAME ?? "Groom",
         parents: raw.GROOM_PARENTS ?? "",
         instagram: raw.GROOM_INSTAGRAM ?? "",
-        image: raw.GROOM_IMAGE || "https://placehold.co/600x800",
+        image: raw.GROOM_IMAGE || "/assets/groom-placeholder.svg",
       },
     },
     venue: {

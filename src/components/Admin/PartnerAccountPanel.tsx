@@ -158,7 +158,10 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
         return;
       }
       setEditPartner((p) => ({ ...p, newPassword: "" }));
-      onNotify({ type: "success", message: "Akun pasangan berhasil diperbarui." });
+      onNotify({
+        type: "success",
+        message: "Akun pasangan berhasil diperbarui.",
+      });
       await loadInfo();
     } finally {
       setBusy(null);
@@ -224,7 +227,10 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
       if (saveRes.ok) {
         setMyForm((p) => ({ ...p, avatarUrl: json.url }));
         onAvatarUpdated?.(json.url);
-        onNotify({ type: "success", message: "Foto profil berhasil diperbarui." });
+        onNotify({
+          type: "success",
+          message: "Foto profil berhasil diperbarui.",
+        });
         await loadInfo();
       }
     } finally {
@@ -274,7 +280,10 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
         return;
       }
       setMyForm((p) => ({ ...p, currentPassword: "", newPassword: "" }));
-      onNotify({ type: "success", message: "Profil & password Anda diperbarui." });
+      onNotify({
+        type: "success",
+        message: "Profil & password Anda diperbarui.",
+      });
       await loadInfo();
     } finally {
       setBusy(null);
@@ -307,7 +316,8 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
             {fullPublicUrl}
           </div>
           <p className="mt-0.5 text-[11px] text-(--adm-text-secondary)">
-            Tautan ini khusus untuk undangan Anda — data tamu, RSVP, dan ucapan terpisah sepenuhnya dari pasangan lain.
+            Tautan ini khusus untuk undangan Anda | data tamu, RSVP, dan ucapan
+            terpisah sepenuhnya dari pasangan lain.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -346,7 +356,8 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
               Akun Pasangan (Maksimal 1 Akun Pendamping)
             </h3>
             <p className="text-xs text-(--adm-text-secondary)">
-              Daftarkan 1 akun untuk calon suami/istri Anda agar dapat login terpisah dengan username &amp; password masing-masing.
+              Daftarkan 1 akun untuk calon suami/istri Anda agar dapat login
+              terpisah dengan username &amp; password masing-masing.
             </p>
           </div>
         </div>
@@ -391,7 +402,10 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
                     required
                     value={editPartner.fullName}
                     onChange={(e) =>
-                      setEditPartner((p) => ({ ...p, fullName: e.target.value }))
+                      setEditPartner((p) => ({
+                        ...p,
+                        fullName: e.target.value,
+                      }))
                     }
                     className="adm-input bg-(--adm-bg-secondary)"
                   />
@@ -482,7 +496,9 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
               />
             </div>
             <div>
-              <label className="adm-label">Nomor WhatsApp Pasangan (untuk Reset Password)</label>
+              <label className="adm-label">
+                Nomor WhatsApp Pasangan (untuk Reset Password)
+              </label>
               <input
                 type="tel"
                 value={newPartner.phone}
@@ -506,7 +522,8 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
           </form>
         ) : (
           <p className="text-xs text-(--adm-text-secondary)">
-            Anda masuk sebagai akun pasangan. Pengelolaan pendaftaran pasangan hanya tersedia untuk pemilik akun utama.
+            Anda masuk sebagai akun pasangan. Pengelolaan pendaftaran pasangan
+            hanya tersedia untuk pemilik akun utama.
           </p>
         )}
       </div>
@@ -520,7 +537,8 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
               Akun Saya (@{info.currentUser.username})
             </h3>
             <p className="text-xs text-(--adm-text-secondary)">
-              Perbarui nama, nomor WhatsApp (untuk fitur Lupa Password OTP), atau ganti password login Anda.
+              Perbarui nama, nomor WhatsApp (untuk fitur Lupa Password OTP),
+              atau ganti password login Anda.
             </p>
           </div>
         </div>
@@ -534,7 +552,9 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
             />
           ) : (
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-(--adm-accent-soft) text-lg font-bold text-(--adm-accent) uppercase">
-              {(info.currentUser.fullName || info.currentUser.username).charAt(0)}
+              {(info.currentUser.fullName || info.currentUser.username).charAt(
+                0
+              )}
             </div>
           )}
           <div className="space-y-1.5">
@@ -596,7 +616,9 @@ const PartnerAccountPanel: React.FC<PartnerAccountPanelProps> = ({
             />
           </div>
           <div>
-            <label className="adm-label">Password Saat Ini (jika ganti password)</label>
+            <label className="adm-label">
+              Password Saat Ini (jika ganti password)
+            </label>
             <input
               type="password"
               value={myForm.currentPassword}

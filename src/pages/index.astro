@@ -3,9 +3,9 @@ import { Check, ExternalLink } from "lucide-react";
 import PublicLayout from "../layouts/PublicLayout.astro";
 import { getAuthSession } from "../lib/auth";
 import {
-  FREE_GUEST_QUOTA,
-  MIN_PAYMENT_AMOUNT,
-  PRICE_PER_GUEST,
+FREE_GUEST_QUOTA,
+MIN_PAYMENT_AMOUNT,
+PRICE_PER_GUEST,
 } from "../lib/billing";
 import db, { getPlatformConfig } from "../lib/db";
 import { ensureReminderSchedulerStarted } from "../lib/reminderScheduler";
@@ -13,7 +13,7 @@ import { ensureReminderSchedulerStarted } from "../lib/reminderScheduler";
 ensureReminderSchedulerStarted();
 const session = getAuthSession(Astro.cookies);
 const platformCfg = getPlatformConfig();
-const platformName = platformCfg.PLATFORM_NAME || "Wedding Platform";
+const platformName = platformCfg.PLATFORM_NAME || "Wedding Management";
 
 // Data akurat langsung dari database & spesifikasi project
 const totalActiveWeddings = (
@@ -65,7 +65,7 @@ const spesifikasi = [
 ---
 
 <PublicLayout title={platformName}>
-  {/* Hero — gaya whatsapp-service */}
+  {/* Hero | gaya whatsapp-service */}
   <section class="mx-auto max-w-5xl px-6 pt-16 pb-12 text-center">
     <span class="adm-badge adm-badge-accent">
       Platform Undangan Digital &amp; Manajemen Pernikahan
@@ -114,7 +114,7 @@ const spesifikasi = [
     </div>
   </section>
 
-  {/* 4 Kartu Fitur Utama — 2x2 gaya whatsapp-service */}
+  {/* 4 Kartu Fitur Utama | 2x2 gaya whatsapp-service */}
   <section id="fitur" class="mx-auto max-w-5xl scroll-mt-14 px-6 py-16">
     <div class="mb-8 text-center">
       <h2 class="text-2xl font-semibold text-(--adm-text-primary)">
@@ -138,7 +138,7 @@ const spesifikasi = [
     </div>
   </section>
 
-  {/* Harga & Kalkulator Kuota Tamu — gaya whatsapp-service */}
+  {/* Harga & Kalkulator Kuota Tamu | gaya whatsapp-service */}
   <section
     id="harga"
     class="scroll-mt-14 border-y border-(--adm-border) bg-(--adm-bg-secondary)"
@@ -257,7 +257,7 @@ const spesifikasi = [
     </div>
   </section>
 
-  {/* Mulai dalam tiga langkah — gaya whatsapp-service */}
+  {/* Mulai dalam tiga langkah | gaya whatsapp-service */}
   <section class="mx-auto max-w-5xl px-6 py-16">
     <h2 class="mb-8 text-center text-xl font-semibold text-(--adm-text-primary)">
       Mulai dalam tiga langkah

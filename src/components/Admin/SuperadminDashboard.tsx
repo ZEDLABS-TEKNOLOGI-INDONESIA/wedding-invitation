@@ -26,7 +26,13 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { formatIdr } from "../../lib/billing";
 import Coachmark from "./Coachmark";
 
@@ -166,7 +172,7 @@ const SuperadminDashboard: React.FC = () => {
 
   // Platform WA & Payment form
   const [waForm, setWaForm] = useState({
-    PLATFORM_NAME: "Wedding Platform",
+    PLATFORM_NAME: "Wedding Management",
     WA_BASE_URL: "https://whatsapp.zedlabs.id",
     WA_API_KEY: "",
     WA_API_SECRET: "",
@@ -274,7 +280,7 @@ const SuperadminDashboard: React.FC = () => {
       const json = (await res.json()) as SuperadminData;
       setData(json);
       setWaForm({
-        PLATFORM_NAME: json.platformConfig.PLATFORM_NAME || "Wedding Platform",
+        PLATFORM_NAME: json.platformConfig.PLATFORM_NAME || "Wedding Management",
         WA_BASE_URL:
           json.platformConfig.WA_BASE_URL || "https://whatsapp.zedlabs.id",
         WA_API_KEY: json.platformConfig.WA_API_KEY || "",
@@ -466,7 +472,8 @@ const SuperadminDashboard: React.FC = () => {
             icon: CreditCard,
             badge: data?.stats.pendingOrders || undefined,
             badgeTone: "amber" as const,
-            keywords: "invoice tagihan pembayaran bukti transfer rekening kuota",
+            keywords:
+              "invoice tagihan pembayaran bukti transfer rekening kuota",
           },
         ],
       },
@@ -561,15 +568,17 @@ const SuperadminDashboard: React.FC = () => {
             className="flex min-w-0 items-center gap-2.5 text-left"
             title="Superadmin Platform"
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-accent-soft) text-(--adm-accent)">
-              <Shield className="h-3.5 w-3.5" />
-            </span>
+            <img
+              src="/logo.png"
+              alt="Wedding Management"
+              className="h-7 w-7 shrink-0 rounded-md object-contain"
+            />
             <span className={`min-w-0 ${sidebarCollapsed ? "md:hidden" : ""}`}>
               <span className="block truncate text-[13px] font-bold text-(--adm-text-primary)">
-                Superadmin
+                Wedding Management
               </span>
               <span className="block truncate text-[11px] text-(--adm-text-secondary)">
-                Panel Pengelola SaaS
+                Superadmin Panel
               </span>
             </span>
           </button>
@@ -973,7 +982,8 @@ const SuperadminDashboard: React.FC = () => {
                       Tenant Undangan Pasangan
                     </h2>
                     <p className="text-xs text-(--adm-text-secondary)">
-                      Setiap pasangan memiliki ruang data &amp; URL publik terisolasi penuh.
+                      Setiap pasangan memiliki ruang data &amp; URL publik
+                      terisolasi penuh.
                     </p>
                   </div>
                   <button
@@ -1026,7 +1036,7 @@ const SuperadminDashboard: React.FC = () => {
                           <td className="px-4 py-3">
                             {w.members.length === 0 ? (
                               <span className="text-(--adm-text-secondary)">
-                                —
+                                |
                               </span>
                             ) : (
                               <div className="space-y-1">
@@ -1262,7 +1272,7 @@ const SuperadminDashboard: React.FC = () => {
                                     </>
                                   ) : (
                                     <span className="text-(--adm-text-secondary)">
-                                      —
+                                      |
                                     </span>
                                   )}
                                 </td>
@@ -1359,10 +1369,13 @@ const SuperadminDashboard: React.FC = () => {
                 >
                   <div>
                     <h2 className="text-sm font-semibold">
-                      Pengaturan Rekening Tujuan &amp; WhatsApp Notifikasi Pembayaran
+                      Pengaturan Rekening Tujuan &amp; WhatsApp Notifikasi
+                      Pembayaran
                     </h2>
                     <p className="mt-1 text-xs text-(--adm-text-secondary)">
-                      Disimpan permanen di database (maksimal 3 rekening). Nomor WhatsApp di bawah juga menerima notifikasi otomatis setiap kali pengguna membuat tagihan atau mengunggah bukti bayar.
+                      Disimpan permanen di database (maksimal 3 rekening). Nomor
+                      WhatsApp di bawah juga menerima notifikasi otomatis setiap
+                      kali pengguna membuat tagihan atau mengunggah bukti bayar.
                     </p>
                   </div>
 
@@ -1432,7 +1445,8 @@ const SuperadminDashboard: React.FC = () => {
 
                   <div className="max-w-md">
                     <label className="adm-label">
-                      Nomor WhatsApp Admin Penerima Notifikasi &amp; Konfirmasi Pembayaran
+                      Nomor WhatsApp Admin Penerima Notifikasi &amp; Konfirmasi
+                      Pembayaran
                     </label>
                     <input
                       type="text"
@@ -1482,16 +1496,15 @@ const SuperadminDashboard: React.FC = () => {
                 </div>
               </div>
             ) : tab === "platform_wa" ? (
-              <div
-                data-tour="sa-wa-card"
-                className="adm-card space-y-4 p-5"
-              >
+              <div data-tour="sa-wa-card" className="adm-card space-y-4 p-5">
                 <div>
                   <h2 className="text-sm font-semibold">
                     WhatsApp Gateway Platform (OTP &amp; Invoicing Pembayaran)
                   </h2>
                   <p className="mt-1 text-xs text-(--adm-text-secondary)">
-                    Digunakan platform untuk mengirim kode OTP pendaftaran/reset password serta notifikasi invoicing pembayaran ke pengguna dan Superadmin.
+                    Digunakan platform untuk mengirim kode OTP pendaftaran/reset
+                    password serta notifikasi invoicing pembayaran ke pengguna
+                    dan Superadmin.
                   </p>
                 </div>
 
@@ -1628,7 +1641,8 @@ const SuperadminDashboard: React.FC = () => {
                     Kredensial &amp; Profil Superadmin
                   </h2>
                   <p className="mt-1 text-xs text-(--adm-text-secondary)">
-                    Atur foto profil, username, nomor WhatsApp (untuk OTP &amp; notifikasi pembayaran), dan password Superadmin.
+                    Atur foto profil, username, nomor WhatsApp (untuk OTP &amp;
+                    notifikasi pembayaran), dan password Superadmin.
                   </p>
                 </div>
 
@@ -1741,7 +1755,9 @@ const SuperadminDashboard: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="adm-label">Password Baru (opsional)</label>
+                    <label className="adm-label">
+                      Password Baru (opsional)
+                    </label>
                     <input
                       type="password"
                       minLength={6}
@@ -1777,7 +1793,7 @@ const SuperadminDashboard: React.FC = () => {
               ZEDLABS Teknologi Indonesia
             </strong>
           </span>
-          <span>Superadmin Panel SaaS Undangan</span>
+          <span>Wedding Management — Superadmin Panel</span>
         </footer>
       </div>
 
@@ -1816,7 +1832,9 @@ const SuperadminDashboard: React.FC = () => {
             <div className="adm-modal-body space-y-4">
               <div className="flex flex-wrap justify-between gap-2 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-3 text-xs">
                 <div>
-                  <span className="text-(--adm-text-secondary)">Pengirim: </span>
+                  <span className="text-(--adm-text-secondary)">
+                    Pengirim:{" "}
+                  </span>
                   <strong>
                     {reviewOrder.sender_name || reviewOrder.payment_note || "-"}
                   </strong>
@@ -1848,7 +1866,8 @@ const SuperadminDashboard: React.FC = () => {
                 reviewOrder.status === "unpaid") && (
                 <div>
                   <label htmlFor="reject-reason" className="adm-label">
-                    Alasan Penolakan (wajib diisi jika menolak, dikirim via WhatsApp ke pengguna)
+                    Alasan Penolakan (wajib diisi jika menolak, dikirim via
+                    WhatsApp ke pengguna)
                   </label>
                   <textarea
                     id="reject-reason"
@@ -1877,10 +1896,7 @@ const SuperadminDashboard: React.FC = () => {
                   disabled={busy !== null}
                   onClick={async () => {
                     if (!rejectReason.trim()) {
-                      notify(
-                        "error",
-                        "Isi alasan penolakan terlebih dahulu."
-                      );
+                      notify("error", "Isi alasan penolakan terlebih dahulu.");
                       return;
                     }
                     const res = await callAction(

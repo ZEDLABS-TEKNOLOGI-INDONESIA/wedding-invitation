@@ -305,7 +305,10 @@ const WhatsAppManager: React.FC<{
           onQuotaExceeded(payload?.projectedTotal, payload?.error);
           return;
         }
-        setFeedback({ type: "error", message: payload?.error || "Kuota tamu terlampaui." });
+        setFeedback({
+          type: "error",
+          message: payload?.error || "Kuota tamu terlampaui.",
+        });
       } else {
         const detail =
           payload?.results?.[0]?.error_message ||
@@ -479,7 +482,10 @@ const WhatsAppManager: React.FC<{
           onQuotaExceeded(payload?.projectedTotal, payload?.error);
           return;
         }
-        setFeedback({ type: "error", message: payload?.error || "Kuota tamu terlampaui." });
+        setFeedback({
+          type: "error",
+          message: payload?.error || "Kuota tamu terlampaui.",
+        });
       } else {
         setFeedback({
           type: "error",
@@ -631,7 +637,13 @@ const WhatsAppManager: React.FC<{
           <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-(--adm-text-primary)">
               <FileText className="h-3.5 w-3.5 text-(--adm-accent)" />
-              Format Lampiran ({attachPdf && attachQr ? "PDF 4 Halaman + Gambar QR Tamu" : attachPdf ? "PDF 4 Halaman" : "Gambar QR Tamu"})
+              Format Lampiran (
+              {attachPdf && attachQr
+                ? "PDF 4 Halaman + Gambar QR Tamu"
+                : attachPdf
+                  ? "PDF 4 Halaman"
+                  : "Gambar QR Tamu"}
+              )
             </span>
             <span className="text-[11px] text-(--adm-text-secondary)">
               Tersinkron otomatis dengan pilihan pada tab{" "}
@@ -674,7 +686,7 @@ const WhatsAppManager: React.FC<{
               >
                 {PAPER_SIZES.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} — {p.dimensionsLabel}
+                    {p.name} | {p.dimensionsLabel}
                   </option>
                 ))}
               </select>
@@ -797,7 +809,8 @@ const WhatsAppManager: React.FC<{
           <div className="flex min-w-0 flex-col justify-between space-y-4">
             <div className="min-w-0 space-y-2 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary) p-3.5 sm:p-4">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-(--adm-text-secondary)">
-                <Eye className="h-3.5 w-3.5 shrink-0" /> Pratinjau Tautan Personal
+                <Eye className="h-3.5 w-3.5 shrink-0" /> Pratinjau Tautan
+                Personal
               </div>
               <p className="font-mono text-xs break-all text-(--adm-text-primary)">
                 {previewLink}

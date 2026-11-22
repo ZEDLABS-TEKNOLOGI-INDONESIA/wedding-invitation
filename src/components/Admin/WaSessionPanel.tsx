@@ -35,12 +35,24 @@ interface WaSessionPanelProps {
 
 const SESSION_BADGE: Record<string, { label: string; className: string }> = {
   ready: { label: "Terhubung", className: "adm-badge adm-badge-success" },
-  connecting: { label: "Menghubungkan", className: "adm-badge adm-badge-accent" },
-  qr_pending: { label: "Menunggu Pindai QR", className: "adm-badge adm-badge-warning" },
-  pairing_pending: { label: "Menunggu Pairing", className: "adm-badge adm-badge-warning" },
+  connecting: {
+    label: "Menghubungkan",
+    className: "adm-badge adm-badge-accent",
+  },
+  qr_pending: {
+    label: "Menunggu Pindai QR",
+    className: "adm-badge adm-badge-warning",
+  },
+  pairing_pending: {
+    label: "Menunggu Pairing",
+    className: "adm-badge adm-badge-warning",
+  },
   logged_out: { label: "Terputus", className: "adm-badge adm-badge-danger" },
   disconnected: { label: "Terputus", className: "adm-badge adm-badge-danger" },
-  failed: { label: "Kedaluwarsa / Gagal", className: "adm-badge adm-badge-danger" },
+  failed: {
+    label: "Kedaluwarsa / Gagal",
+    className: "adm-badge adm-badge-danger",
+  },
 };
 
 const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
@@ -74,12 +86,18 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
   } | null>(null);
   const pollTimerRef = useRef<number | null>(null);
 
-  const isConfigured = Boolean(baseUrl.trim() && apiKey.trim() && apiSecret.trim());
+  const isConfigured = Boolean(
+    baseUrl.trim() && apiKey.trim() && apiSecret.trim()
+  );
 
   const formatBrowserFetchError = (err: unknown, fallback: string): string => {
     if (err instanceof Error) {
       const m = err.message.toLowerCase();
-      if (m.includes("failed to fetch") || m.includes("networkerror") || m.includes("load failed")) {
+      if (
+        m.includes("failed to fetch") ||
+        m.includes("networkerror") ||
+        m.includes("load failed")
+      ) {
         return "Gagal menjangkau server aplikasi atau permintaan diblokir jaringan/CORS. Periksa koneksi internet dan pastikan server aktif.";
       }
       if (err.message.trim()) return err.message.trim();
@@ -168,7 +186,8 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
             stopPolling();
             onNotify({
               type: "success",
-              message: "Nomor WhatsApp berhasil ditautkan dan siap mengirim pesan!",
+              message:
+                "Nomor WhatsApp berhasil ditautkan dan siap mengirim pesan!",
             });
             await loadSessions();
           } else if (data.proses_berjalan === false) {
@@ -438,7 +457,7 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
             Tautkan Nomor WhatsApp Langsung (QR / Pairing Code)
           </h4>
           <p className="adm-hint mt-0.5">
-            Tautkan nomor pengirim undangan langsung dari sini — akun &amp; API
+            Tautkan nomor pengirim undangan langsung dari sini | akun &amp; API
             Key otomatis didaftarkan ke WhatsApp Service tanpa perlu membuat
             instansi manual.
           </p>
@@ -548,7 +567,9 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
                           type="button"
                           title="Putuskan sesi"
                           disabled={busy !== null}
-                          onClick={() => void handleSessionAction(s.id, "logout")}
+                          onClick={() =>
+                            void handleSessionAction(s.id, "logout")
+                          }
                           className="adm-btn-aksi aksi-netral"
                         >
                           <LogOut className="h-3.5 w-3.5" />
@@ -592,7 +613,11 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-12">
-          <div className={linkMode === "pairing" ? "sm:col-span-4" : "sm:col-span-7"}>
+          <div
+            className={
+              linkMode === "pairing" ? "sm:col-span-4" : "sm:col-span-7"
+            }
+          >
             <label htmlFor="wa-sesi-name" className="adm-label">
               Label Perangkat / Sesi
             </label>
@@ -643,7 +668,9 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
             ) : (
               <button
                 type="button"
-                disabled={busy !== null || !baseUrl.trim() || !pairingPhone.trim()}
+                disabled={
+                  busy !== null || !baseUrl.trim() || !pairingPhone.trim()
+                }
                 onClick={() => void handleStartPairing()}
                 className="adm-btn adm-btn-edit w-full"
               >

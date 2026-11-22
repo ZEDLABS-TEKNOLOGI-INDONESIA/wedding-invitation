@@ -198,7 +198,9 @@ export function computeBudgetSummary(
 
   const remaining = Math.max(0, totalActual - totalPaid);
   const paidPercent =
-    totalActual > 0 ? Math.min(100, Math.round((totalPaid / totalActual) * 100)) : 0;
+    totalActual > 0
+      ? Math.min(100, Math.round((totalPaid / totalActual) * 100))
+      : 0;
 
   return {
     totalEstimated,
@@ -235,7 +237,9 @@ export function computeSavingsSummary(
   const safeTarget = Math.max(0, Number(targetAmount) || 0);
   const remaining = Math.max(0, safeTarget - balance);
   const percent =
-    safeTarget > 0 ? Math.min(100, Math.round((balance / safeTarget) * 100)) : 0;
+    safeTarget > 0
+      ? Math.min(100, Math.round((balance / safeTarget) * 100))
+      : 0;
 
   let monthsLeft = 0;
   let monthlyNeeded = remaining;
@@ -273,7 +277,8 @@ export const TODO_STARTER_TEMPLATE: Array<{
     phase: "H-6 Bulan",
     category: "Keluarga & Adat",
     pic: "Bersama",
-    notes: "Sepakati konsep acara, lokasi, dan estimasi jumlah tamu kedua keluarga.",
+    notes:
+      "Sepakati konsep acara, lokasi, dan estimasi jumlah tamu kedua keluarga.",
   },
   {
     title: "Menetapkan anggaran induk & mulai setoran tabungan nikah",
@@ -287,14 +292,16 @@ export const TODO_STARTER_TEMPLATE: Array<{
     phase: "H-6 Bulan",
     category: "Venue & Katering",
     pic: "Bersama",
-    notes: "Pastikan kapasitas parkir, ruang rias, dan fasilitas ibadah memadai.",
+    notes:
+      "Pastikan kapasitas parkir, ruang rias, dan fasilitas ibadah memadai.",
   },
   {
     title: "Memilih vendor dokumentasi (foto & video) serta dekorasi",
     phase: "H-3 Bulan",
     category: "Dokumentasi",
     pic: "Bersama",
-    notes: "Cek portofolio, jam kerja, serta tenggat pelunasan masing-masing vendor.",
+    notes:
+      "Cek portofolio, jam kerja, serta tenggat pelunasan masing-masing vendor.",
   },
   {
     title: "Menyiapkan mahar (maskawin) & daftar hantaran seserahan",
@@ -308,28 +315,32 @@ export const TODO_STARTER_TEMPLATE: Array<{
     phase: "H-1 Bulan",
     category: "KUA & Berkas",
     pic: "Bersama",
-    notes: "Lengkapi KTP, KK, akta lahir, ijazah, serta pas foto latar biru 2×3 & 4×6.",
+    notes:
+      "Lengkapi KTP, KK, akta lahir, ijazah, serta pas foto latar biru 2×3 & 4×6.",
   },
   {
     title: "Pendaftaran nikah online di SIMKAH Web & skrining Elsimil BKKBN",
     phase: "H-1 Bulan",
     category: "KUA & Berkas",
     pic: "Bersama",
-    notes: "Daftar di simkah4.kemenag.go.id min. 10 hari kerja sebelum akad; ikuti Bimwin & setor PNBP Rp600.000 via kode billing bila akad di luar KUA.",
+    notes:
+      "Daftar di simkah4.kemenag.go.id min. 10 hari kerja sebelum akad; ikuti Bimwin & setor PNBP Rp600.000 via kode billing bila akad di luar KUA.",
   },
   {
     title: "Konfirmasi wali nikah, dua saksi adil & pembacaan doa",
     phase: "H-1 Bulan",
     category: "KUA & Berkas",
     pic: "Keluarga",
-    notes: "Pastikan urutan wali nasab sesuai syariat dan saksi siap hadir tepat waktu.",
+    notes:
+      "Pastikan urutan wali nasab sesuai syariat dan saksi siap hadir tepat waktu.",
   },
   {
     title: "Finalisasi daftar tamu & sebar undangan WhatsApp + cetak PDF",
     phase: "H-1 Bulan",
     category: "Tamu & Undangan",
     pic: "Bersama",
-    notes: "Gunakan menu Kirim WhatsApp agar tamu menerima PDF undangan & QR Check-In.",
+    notes:
+      "Gunakan menu Kirim WhatsApp agar tamu menerima PDF undangan & QR Check-In.",
   },
   {
     title: "Fitting akhir busana akad & resepsi kedua mempelai serta orang tua",
@@ -350,7 +361,8 @@ export const TODO_STARTER_TEMPLATE: Array<{
     phase: "Hari H",
     category: "KUA & Berkas",
     pic: "Calon Suami",
-    notes: "Istirahat cukup di malam sebelumnya dan perbanyak doa ketenangan hati.",
+    notes:
+      "Istirahat cukup di malam sebelumnya dan perbanyak doa ketenangan hati.",
   },
 ];
 
@@ -364,7 +376,8 @@ export const BUDGET_STARTER_TEMPLATE: Array<{
     name: "Administrasi KUA / Penghulu (Luar Kantor)",
     category: "KUA & Administrasi",
     estimated_cost: 600000,
-    notes: "Rp0 jika di kantor KUA jam kerja; Rp600.000 PNBP resmi jika di luar KUA.",
+    notes:
+      "Rp0 jika di kantor KUA jam kerja; Rp600.000 PNBP resmi jika di luar KUA.",
   },
   {
     name: "Mahar (Maskawin) Pernikahan",
@@ -376,7 +389,8 @@ export const BUDGET_STARTER_TEMPLATE: Array<{
     name: "Paket Seserahan & Jasa Hias Kotak",
     category: "Mahar & Seserahan",
     estimated_cost: 4000000,
-    notes: "Perlengkapan ibadah, busana, perawatan diri, dan bingkisan keluarga.",
+    notes:
+      "Perlengkapan ibadah, busana, perawatan diri, dan bingkisan keluarga.",
   },
   {
     name: "Sewa Gedung / Lokasi Acara",
@@ -400,7 +414,8 @@ export const BUDGET_STARTER_TEMPLATE: Array<{
     name: "MUA, Busana Pengantin & Orang Tua",
     category: "Busana & MUA",
     estimated_cost: 9000000,
-    notes: "Rias akad + resepsi, busana mempelai, orang tua, dan pager ayu/bagus.",
+    notes:
+      "Rias akad + resepsi, busana mempelai, orang tua, dan pager ayu/bagus.",
   },
   {
     name: "Dokumentasi Foto, Video & Album",
@@ -412,13 +427,15 @@ export const BUDGET_STARTER_TEMPLATE: Array<{
     name: "Souvenir & Undangan Cetak/Digital",
     category: "Undangan & Souvenir",
     estimated_cost: 2500000,
-    notes: "Souvenir tamu yang bermanfaat + cetak undangan khusus kerabat sepuh.",
+    notes:
+      "Souvenir tamu yang bermanfaat + cetak undangan khusus kerabat sepuh.",
   },
   {
     name: "MC, WO / Panitia & Dana Cadangan",
     category: "MC, Hiburan & WO",
     estimated_cost: 5000000,
-    notes: "Koordinasi hari H, konsumsi panitia, dan cadangan keperluan mendadak.",
+    notes:
+      "Koordinasi hari H, konsumsi panitia, dan cadangan keperluan mendadak.",
   },
 ];
 
@@ -521,21 +538,24 @@ export const ESSENTIALS_STARTER_TEMPLATE: Array<{
     title: "Pendaftaran Online SIMKAH Web (simkah4.kemenag.go.id)",
     price: 0,
     owner: "Bersama",
-    notes: "Daftar kehendak nikah min. 10 hari kerja sebelum akad untuk jadwal penghulu & Kartu Nikah Digital.",
+    notes:
+      "Daftar kehendak nikah min. 10 hari kerja sebelum akad untuk jadwal penghulu & Kartu Nikah Digital.",
   },
   {
     kind: "kua",
     title: "Surat Keterangan Sehat Faskes & Sertifikat Elsimil (BKKBN)",
     price: 50000,
     owner: "Keduanya",
-    notes: "Pemeriksaan kesehatan pranikah di Puskesmas/Klinik/RS & skrining siap nikah Elsimil.",
+    notes:
+      "Pemeriksaan kesehatan pranikah di Puskesmas/Klinik/RS & skrining siap nikah Elsimil.",
   },
   {
     kind: "kua",
     title: "Bukti Setor PNBP Nikah di Luar KUA / Luar Jam Kerja (Rp600.000)",
     price: 600000,
     owner: "Bersama",
-    notes: "Bayar via kode billing resmi ke kas negara (PP 59/2018); Rp0 jika akad di kantor KUA hari & jam kerja.",
+    notes:
+      "Bayar via kode billing resmi ke kas negara (PP 59/2018); Rp0 jika akad di kantor KUA hari & jam kerja.",
   },
 ];
 
@@ -608,7 +628,7 @@ export const FIQH_GUIDES: FiqhGuideItem[] = [
       "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang.",
     points: [
       "Luruskan niat menikah semata-mata mengharap ridha Allah SWT, menjaga kehormatan diri, dan membangun generasi shalih.",
-      "Khitbah (lamaran) merupakan janji menuju akad — belum menghalalkan khalwat (berduaan tanpa mahram) hingga ijab kabul sah terucap.",
+      "Khitbah (lamaran) merupakan janji menuju akad | belum menghalalkan khalwat (berduaan tanpa mahram) hingga ijab kabul sah terucap.",
       "Dianjurkan melakukan ta'aruf secara terbuka dan jujur terkait kesehatan, kesiapan tanggung jawab, serta visi keluarga dengan pendampingan keluarga/wali.",
     ],
     reference: "QS. Ar-Rum: 21; QS. An-Nisa: 21",
@@ -690,7 +710,7 @@ export const FIQH_GUIDES: FiqhGuideItem[] = [
     points: [
       "Selenggarakan sesuai kemampuan tanpa memaksakan diri atau berutang demi gengsi (hindari israf/pemborosan).",
       "Menerapkan adab menjamu tamu dengan ramah, menyediakan hidangan halal, serta memastikan tidak ada makanan yang terbuang percuma.",
-      "Undang kerabat, tetangga, dan kaum dhuafa — bukan hanya kalangan berada saja — agar keberkahan semakin luas.",
+      "Undang kerabat, tetangga, dan kaum dhuafa | bukan hanya kalangan berada saja | agar keberkahan semakin luas.",
       "Jaga waktu salat wajib bagi kedua mempelai, keluarga, panitia, maupun tamu undangan selama rangkaian acara.",
     ],
     reference: "HR. Bukhari No. 5167 & Muslim No. 1427",

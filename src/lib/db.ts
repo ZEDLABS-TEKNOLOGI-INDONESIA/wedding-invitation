@@ -218,12 +218,12 @@ const DEFAULT_CONFIG: Record<string, string> = {
   BRIDE_FULLNAME: "Fera Oktapia",
   BRIDE_PARENTS: "Putri tercinta dari Bpk. [Nama Ayah] & Ibu [Nama Ibu]",
   BRIDE_INSTAGRAM: "feraoktapia___",
-  BRIDE_IMAGE: "https://placehold.co/600x800?text=Fey+Portrait",
+  BRIDE_IMAGE: "/assets/bride-placeholder.svg",
   GROOM_NICKNAME: "Yaya",
   GROOM_FULLNAME: "Yahya Zulfikri",
   GROOM_PARENTS: "Putra tercinta dari Bpk. [Nama Ayah] & Ibu [Nama Ibu]",
   GROOM_INSTAGRAM: "zulfikriyahya_",
-  GROOM_IMAGE: "https://placehold.co/600x800?text=Yaya+Portrait",
+  GROOM_IMAGE: "/assets/groom-placeholder.svg",
   VENUE_NAME: "The Royal Azure Ballroom",
   VENUE_ADDRESS: "Jl. Taman Makam Pahlawan No.48, Kab. Pandeglang, Banten",
   VENUE_LAT: "-6.3032707",
@@ -242,13 +242,12 @@ const DEFAULT_CONFIG: Record<string, string> = {
   RESEPSI_END: "14:00",
   RESEPSI_ISO_START: "2025-10-11T11:00:00+07:00",
   RESEPSI_ISO_END: "2025-10-11T14:00:00+07:00",
-  HERO_IMAGE:
-    "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop",
+  HERO_IMAGE: "/assets/hero-default.svg",
   ENVELOPE_IMAGE: "",
   HERO_CITY: "Kab. Pandeglang, Banten",
   EVENT_TIMEZONE: "WIB",
   GIFT_ADDRESS: "",
-  MUSIC_URL: "https://www.bensound.com/bensound-music/bensound-forever.mp3",
+  MUSIC_URL: "",
   PUBLIC_THEME: "ocean",
   PUBLIC_DEFAULT_MODE: "system",
   PUBLIC_ALLOW_THEME_SWITCH: "true",
@@ -277,12 +276,12 @@ const DEFAULT_CONFIG: Record<string, string> = {
     },
   ]),
   GALLERY_IMAGES: JSON.stringify([
-    "https://placehold.co/800x1200?text=Moment+1",
-    "https://placehold.co/1200x800?text=Moment+2",
-    "https://placehold.co/800x800?text=Moment+3",
-    "https://placehold.co/800x1200?text=Moment+4",
-    "https://placehold.co/1200x800?text=Moment+5",
-    "https://placehold.co/800x1200?text=Moment+6",
+    "/assets/gallery-1.svg",
+    "/assets/gallery-2.svg",
+    "/assets/gallery-3.svg",
+    "/assets/gallery-4.svg",
+    "/assets/gallery-5.svg",
+    "/assets/gallery-6.svg",
   ]),
   TEXT_SALAM_OPENING: "Assalamu'alaikum Warahmatullahi Wabarakatuh",
   TEXT_QUOTE_AR_RUM: `"Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang. Sesungguhnya pada yang demikian itu benar-benar terdapat tanda-tanda (kebesaran Allah) bagi kaum yang berpikir."`,
@@ -330,7 +329,9 @@ const TENANT_TABLES = [
 
 for (const tbl of TENANT_TABLES) {
   try {
-    db.exec(`ALTER TABLE ${tbl} ADD COLUMN wedding_id INTEGER NOT NULL DEFAULT 1`);
+    db.exec(
+      `ALTER TABLE ${tbl} ADD COLUMN wedding_id INTEGER NOT NULL DEFAULT 1`
+    );
   } catch {
     // Kolom wedding_id sudah ada
   }
@@ -342,12 +343,16 @@ try {
   // Kolom user_id sudah ada
 }
 try {
-  db.exec("ALTER TABLE admin_sessions ADD COLUMN impersonating_wedding_id INTEGER");
+  db.exec(
+    "ALTER TABLE admin_sessions ADD COLUMN impersonating_wedding_id INTEGER"
+  );
 } catch {
   // Kolom impersonating_wedding_id sudah ada
 }
 try {
-  db.exec("ALTER TABLE weddings ADD COLUMN guest_quota_limit INTEGER NOT NULL DEFAULT 200");
+  db.exec(
+    "ALTER TABLE weddings ADD COLUMN guest_quota_limit INTEGER NOT NULL DEFAULT 200"
+  );
 } catch {
   // Kolom guest_quota_limit sudah ada
 }
@@ -420,9 +425,9 @@ export const seedWeddingDefaults = (
 };
 
 // 1. Seed tenant demo (id = 1) dan migrasikan config lama ke wedding_config(1)
-const demoExists = db
-  .prepare("SELECT id FROM weddings WHERE id = 1")
-  .get() as { id: number } | undefined;
+const demoExists = db.prepare("SELECT id FROM weddings WHERE id = 1").get() as
+  | { id: number }
+  | undefined;
 
 if (!demoExists) {
   db.prepare(
@@ -459,17 +464,21 @@ seedWeddingDefaults(DEFAULT_WEDDING_ID);
 // Perbarui judul tenant demo sesuai nama mempelai yang tersimpan
 const demoBride = (
   db
-    .prepare("SELECT value FROM wedding_config WHERE wedding_id = 1 AND key = 'BRIDE_NICKNAME'")
+    .prepare(
+      "SELECT value FROM wedding_config WHERE wedding_id = 1 AND key = 'BRIDE_NICKNAME'"
+    )
     .get() as { value: string } | undefined
 )?.value;
 const demoGroom = (
   db
-    .prepare("SELECT value FROM wedding_config WHERE wedding_id = 1 AND key = 'GROOM_NICKNAME'")
+    .prepare(
+      "SELECT value FROM wedding_config WHERE wedding_id = 1 AND key = 'GROOM_NICKNAME'"
+    )
     .get() as { value: string } | undefined
 )?.value;
 if (demoBride && demoGroom) {
   db.prepare("UPDATE weddings SET title = ? WHERE id = 1 AND is_demo = 1").run(
-    `Demo — ${demoBride} & ${demoGroom}`
+    `Demo | ${demoBride} & ${demoGroom}`
   );
 }
 
@@ -478,11 +487,10 @@ const DEFAULT_PLATFORM_CONFIG: Record<string, string> = {
   WA_BASE_URL:
     legacyConfigRows.find((r) => r.key === "WA_BASE_URL")?.value ||
     "https://whatsapp.zedlabs.id",
-  WA_API_KEY:
-    legacyConfigRows.find((r) => r.key === "WA_API_KEY")?.value || "",
+  WA_API_KEY: legacyConfigRows.find((r) => r.key === "WA_API_KEY")?.value || "",
   WA_API_SECRET:
     legacyConfigRows.find((r) => r.key === "WA_API_SECRET")?.value || "",
-  PLATFORM_NAME: "Wedding Platform",
+  PLATFORM_NAME: "Wedding Management",
   PAYMENT_BANK_NAME: "Bank BCA",
   PAYMENT_BANK_ACCOUNT: "",
   PAYMENT_BANK_HOLDER: "ZEDLABS Teknologi Indonesia",
@@ -494,6 +502,25 @@ const insertPlatformDefault = db.prepare(
 for (const [k, v] of Object.entries(DEFAULT_PLATFORM_CONFIG)) {
   insertPlatformDefault.run(k, v);
 }
+// Migrasikan nama platform default lama & URL CDN bawaan ke aset lokal native
+db.prepare(
+  "UPDATE platform_config SET value = 'Wedding Management' WHERE key = 'PLATFORM_NAME' AND value = 'Wedding Platform'"
+).run();
+db.prepare(
+  "UPDATE wedding_config SET value = '/assets/bride-placeholder.svg' WHERE key = 'BRIDE_IMAGE' AND value LIKE 'https://placehold.co/%'"
+).run();
+db.prepare(
+  "UPDATE wedding_config SET value = '/assets/groom-placeholder.svg' WHERE key = 'GROOM_IMAGE' AND value LIKE 'https://placehold.co/%'"
+).run();
+db.prepare(
+  "UPDATE wedding_config SET value = '/assets/hero-default.svg' WHERE key = 'HERO_IMAGE' AND value LIKE 'https://images.unsplash.com/%'"
+).run();
+db.prepare(
+  "UPDATE wedding_config SET value = '' WHERE key = 'MUSIC_URL' AND value LIKE 'https://www.bensound.com/%'"
+).run();
+db.prepare(
+  "UPDATE wedding_config SET value = ? WHERE key = 'GALLERY_IMAGES' AND value LIKE '%https://placehold.co/%'"
+).run(DEFAULT_CONFIG.GALLERY_IMAGES);
 
 // 3. Seed Superadmin awal jika belum ada di tabel users
 const existingSuperadmin = db
@@ -517,7 +544,9 @@ if (!existingSuperadmin) {
 }
 
 export const getWeddingBySlug = (slug: string): WeddingRecord | undefined => {
-  const clean = String(slug || "").trim().toLowerCase();
+  const clean = String(slug || "")
+    .trim()
+    .toLowerCase();
   if (!clean) return undefined;
   return db
     .prepare("SELECT * FROM weddings WHERE slug = ? LIMIT 1")
@@ -525,9 +554,9 @@ export const getWeddingBySlug = (slug: string): WeddingRecord | undefined => {
 };
 
 export const getWeddingById = (id: number): WeddingRecord | undefined => {
-  return db
-    .prepare("SELECT * FROM weddings WHERE id = ? LIMIT 1")
-    .get(id) as WeddingRecord | undefined;
+  return db.prepare("SELECT * FROM weddings WHERE id = ? LIMIT 1").get(id) as
+    | WeddingRecord
+    | undefined;
 };
 
 export const getConfig = (
@@ -536,7 +565,10 @@ export const getConfig = (
   const rows = db
     .prepare("SELECT key, value FROM wedding_config WHERE wedding_id = ?")
     .all(weddingId) as { key: string; value: string }[];
-  return { ...DEFAULT_CONFIG, ...Object.fromEntries(rows.map((r) => [r.key, r.value])) };
+  return {
+    ...DEFAULT_CONFIG,
+    ...Object.fromEntries(rows.map((r) => [r.key, r.value])),
+  };
 };
 
 export const setConfig = (
@@ -550,9 +582,10 @@ export const setConfig = (
 };
 
 export const getPlatformConfig = (): Record<string, string> => {
-  const rows = db
-    .prepare("SELECT key, value FROM platform_config")
-    .all() as { key: string; value: string }[];
+  const rows = db.prepare("SELECT key, value FROM platform_config").all() as {
+    key: string;
+    value: string;
+  }[];
   return Object.fromEntries(rows.map((r) => [r.key, r.value]));
 };
 

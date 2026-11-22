@@ -31,7 +31,7 @@ const Envelope: React.FC<EnvelopeProps> = ({ onOpen, config }) => {
   const backdropImage =
     config.hero.envelopeImage ||
     config.hero.image ||
-    "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070&auto=format&fit=crop";
+    "/assets/envelope-bg.svg";
 
   return (
     <div

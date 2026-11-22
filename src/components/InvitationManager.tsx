@@ -13,7 +13,13 @@ import {
   Upload,
   Users,
 } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
 import {
   buildInvitationContentFromConfig,
@@ -419,7 +425,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
               >
                 {PAPER_SIZES.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} — {p.dimensionsLabel}
+                    {p.name} | {p.dimensionsLabel}
                   </option>
                 ))}
               </select>

@@ -43,7 +43,7 @@ export const downloadICS = (event: {
   const icsContent = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Digital Wedding Invitation//ID",
+    "PRODID:-//Digital Wedding Management//ID",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

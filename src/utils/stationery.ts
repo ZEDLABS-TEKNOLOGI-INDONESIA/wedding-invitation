@@ -1,5 +1,5 @@
 /**
- * Stationery renderer — kartu QR & surat undangan bergaya Nusantara elegan.
+ * Stationery renderer | kartu QR & surat undangan bergaya Nusantara elegan.
  * Mendukung 4 variasi desain (Taman Bunga, Keraton & Emas, Kubah Arabesque, Minimalis),
  * 5 palet warna, serta pilihan ukuran kertas (A5, A4, A6, B5, Persegi) & format QR.
  */
@@ -257,21 +257,6 @@ export const ensureStationeryFonts = (): Promise<void> => {
   if (typeof document === "undefined") return Promise.resolve();
   if (fontsPromise) return fontsPromise;
   fontsPromise = (async () => {
-    const id = "stationery-fonts";
-    if (!document.getElementById(id)) {
-      const link = document.createElement("link");
-      link.id = id;
-      link.rel = "stylesheet";
-      link.href =
-        "https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap";
-      const loaded = new Promise<void>((resolve) => {
-        link.onload = () => resolve();
-        link.onerror = () => resolve();
-        setTimeout(resolve, 4000);
-      });
-      document.head.appendChild(link);
-      await loaded;
-    }
     try {
       await Promise.all([
         document.fonts.load(`64px "Great Vibes"`),
@@ -387,7 +372,12 @@ const roundRect = (
 /* Paper, frames & decorative motifs                                   */
 /* ------------------------------------------------------------------ */
 
-export const drawPaper = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
+export const drawPaper = (
+  ctx: Ctx,
+  w: number,
+  h: number,
+  t: StationeryTheme
+) => {
   const g = ctx.createLinearGradient(0, 0, w * 0.3, h);
   g.addColorStop(0, t.paper[0]);
   g.addColorStop(1, t.paper[1]);
@@ -459,7 +449,12 @@ export const drawDivider = (
   ctx.restore();
 };
 
-export const drawFrame = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
+export const drawFrame = (
+  ctx: Ctx,
+  w: number,
+  h: number,
+  t: StationeryTheme
+) => {
   const s = w / 1240;
   const m = 46 * s;
   const gap = 14 * s;
@@ -490,7 +485,14 @@ export const drawFrame = (ctx: Ctx, w: number, h: number, t: StationeryTheme) =>
 };
 
 /* Metallic gold linear gradient helper */
-const goldGrad = (ctx: Ctx, x0: number, y0: number, x1: number, y1: number, t: StationeryTheme) => {
+const goldGrad = (
+  ctx: Ctx,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  t: StationeryTheme
+) => {
   const g = ctx.createLinearGradient(x0, y0, x1, y1);
   g.addColorStop(0, "#FFF1BE");
   g.addColorStop(0.28, t.gold);
@@ -535,7 +537,7 @@ const drawEmbossedWatermark = (
   ctx.restore();
 };
 
-/* Royal Keraton & Emas — megah, berlapis emas metalik & ukiran tajuk */
+/* Royal Keraton & Emas | megah, berlapis emas metalik & ukiran tajuk */
 const drawRoyalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
   const s = w / 1240;
   const m = 44 * s;
@@ -548,7 +550,12 @@ const drawRoyalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
   // Soft outer vignette border glow
   ctx.strokeStyle = hexA(t.gold, 0.14);
   ctx.lineWidth = 22 * s;
-  ctx.strokeRect(m + 8 * s, m + 8 * s, w - (m + 8 * s) * 2, h - (m + 8 * s) * 2);
+  ctx.strokeRect(
+    m + 8 * s,
+    m + 8 * s,
+    w - (m + 8 * s) * 2,
+    h - (m + 8 * s) * 2
+  );
 
   // Triple metallic luxury frame
   ctx.strokeStyle = mg;
@@ -557,11 +564,21 @@ const drawRoyalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
 
   ctx.strokeStyle = hexA(t.accent, 0.65);
   ctx.lineWidth = 1.6 * s;
-  ctx.strokeRect(m + 14 * s, m + 14 * s, w - (m + 14 * s) * 2, h - (m + 14 * s) * 2);
+  ctx.strokeRect(
+    m + 14 * s,
+    m + 14 * s,
+    w - (m + 14 * s) * 2,
+    h - (m + 14 * s) * 2
+  );
 
   ctx.strokeStyle = mg;
   ctx.lineWidth = 1.2 * s;
-  ctx.strokeRect(m + 24 * s, m + 24 * s, w - (m + 24 * s) * 2, h - (m + 24 * s) * 2);
+  ctx.strokeRect(
+    m + 24 * s,
+    m + 24 * s,
+    w - (m + 24 * s) * 2,
+    h - (m + 24 * s) * 2
+  );
 
   // Ornate scalloped baroque corner reliefs (4 corners)
   const corners: [number, number, number, number][] = [
@@ -691,8 +708,13 @@ const drawRoyalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
   ctx.restore();
 };
 
-/* Islamic Kubah & Arabesque — gaya manuskrip emas (illuminated mihrab & shamseh) */
-const drawIslamicDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
+/* Islamic Kubah & Arabesque | gaya manuskrip emas (illuminated mihrab & shamseh) */
+const drawIslamicDecor = (
+  ctx: Ctx,
+  w: number,
+  h: number,
+  t: StationeryTheme
+) => {
   const s = w / 1240;
   const m = 44 * s;
   const cx = w / 2;
@@ -706,7 +728,12 @@ const drawIslamicDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) =>
   ctx.strokeRect(m, m, w - m * 2, h - m * 2);
   ctx.strokeStyle = hexA(t.accent, 0.55);
   ctx.lineWidth = 1.2 * s;
-  ctx.strokeRect(m + 12 * s, m + 12 * s, w - (m + 12 * s) * 2, h - (m + 12 * s) * 2);
+  ctx.strokeRect(
+    m + 12 * s,
+    m + 12 * s,
+    w - (m + 12 * s) * 2,
+    h - (m + 12 * s) * 2
+  );
 
   // Mihrab Archway geometry
   const ax = m + 30 * s;
@@ -845,8 +872,13 @@ const drawIslamicDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) =>
   ctx.restore();
 };
 
-/* Mewah Art Deco & Mutiara — kipas emas sunburst, bingkai bertingkat & kilau mutiara */
-const drawMinimalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
+/* Mewah Art Deco & Mutiara | kipas emas sunburst, bingkai bertingkat & kilau mutiara */
+const drawMinimalDecor = (
+  ctx: Ctx,
+  w: number,
+  h: number,
+  t: StationeryTheme
+) => {
   const s = w / 1240;
   const m = 48 * s;
   const cx = w / 2;
@@ -855,7 +887,14 @@ const drawMinimalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) =>
   ctx.save();
 
   // Soft silk sheen gradient across page
-  const sheen = ctx.createRadialGradient(cx, h * 0.28, 0, cx, h * 0.28, w * 0.72);
+  const sheen = ctx.createRadialGradient(
+    cx,
+    h * 0.28,
+    0,
+    cx,
+    h * 0.28,
+    w * 0.72
+  );
   sheen.addColorStop(0, hexA("#ffffff", 0.55));
   sheen.addColorStop(0.55, hexA(t.gold, 0.08));
   sheen.addColorStop(1, hexA(t.accent, 0.05));
@@ -1045,13 +1084,7 @@ export const drawBloom = (
   for (let i = 0; i < 10; i++) {
     const a = (i * TAU) / 10;
     ctx.beginPath();
-    ctx.arc(
-      Math.cos(a) * r * 0.22,
-      Math.sin(a) * r * 0.22,
-      r * 0.028,
-      0,
-      TAU
-    );
+    ctx.arc(Math.cos(a) * r * 0.22, Math.sin(a) * r * 0.22, r * 0.028, 0, TAU);
     ctx.fillStyle = t.gold;
     ctx.fill();
   }
@@ -1234,14 +1267,7 @@ const paintDesignBackdrop = (
   } else {
     drawFrame(ctx, w, h, t);
     ([0, 1, 2, 3] as const).forEach((k) =>
-      drawCornerBouquet(
-        ctx,
-        w,
-        h,
-        k,
-        bigCorners.includes(k) ? 0.68 : 0.34,
-        t
-      )
+      drawCornerBouquet(ctx, w, h, k, bigCorners.includes(k) ? 0.68 : 0.34, t)
     );
   }
 };
@@ -1313,13 +1339,7 @@ export const drawStyledQr = (
     for (let c = 0; c < n; c++) {
       if (isEye(r, c) || !model.modules.get(r, c)) continue;
       ctx.beginPath();
-      ctx.arc(
-        x + (c + 0.5) * cell,
-        y + (r + 0.5) * cell,
-        cell * 0.46,
-        0,
-        TAU
-      );
+      ctx.arc(x + (c + 0.5) * cell, y + (r + 0.5) * cell, cell * 0.46, 0, TAU);
       ctx.fill();
     }
   }
@@ -1694,7 +1714,11 @@ export const renderEventPage = (
   const cx = PAGE_W / 2;
   ctx.fillStyle = t.ink;
   ctx.font = serif(35, 500, true);
-  ctx.fillText("Insya Allah rangkaian acara akan diselenggarakan pada:", cx, 250);
+  ctx.fillText(
+    "Insya Allah rangkaian acara akan diselenggarakan pada:",
+    cx,
+    250
+  );
 
   const card = (
     title: string,
@@ -1736,7 +1760,13 @@ export const renderEventPage = (
   let y = drawLines(ctx, wrapText(ctx, d.venueName, 880), cx, 1062, 52);
   ctx.fillStyle = t.muted;
   ctx.font = serif(30, 500);
-  y = drawLines(ctx, wrapText(ctx, d.venueAddress, 820).slice(0, 3), cx, y + 4, 40);
+  y = drawLines(
+    ctx,
+    wrapText(ctx, d.venueAddress, 820).slice(0, 3),
+    cx,
+    y + 4,
+    40
+  );
 
   const qrSize = 230;
   const top = Math.min(y + 30, PAGE_H - 160 - qrSize * 1.18);

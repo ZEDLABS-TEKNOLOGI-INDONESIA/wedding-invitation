@@ -121,7 +121,7 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
       {
         selector: "[data-tour='qr-mode-switch']",
         title: "Kartu QR Elegan Satuan & Massal ZIP",
-        body: "Pilih dari 4 motif desain megah, 5 format/ukuran kartu QR, dan 5 nuansa warna — unduh satuan PNG atau ratusan sekaligus dalam berkas ZIP.",
+        body: "Pilih dari 4 motif desain megah, 5 format/ukuran kartu QR, dan 5 nuansa warna | unduh satuan PNG atau ratusan sekaligus dalam berkas ZIP.",
       },
     ],
   },
@@ -154,7 +154,7 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
   },
   sa_weddings: {
     key: "sa_weddings",
-    name: "Superadmin — Pasangan & Undangan",
+    name: "Superadmin | Pasangan & Undangan",
     steps: [
       {
         selector: "[data-tour='sa-sidebar-nav']",
@@ -180,7 +180,7 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
   },
   sa_billing: {
     key: "sa_billing",
-    name: "Superadmin — Tagihan & Pembayaran",
+    name: "Superadmin | Tagihan & Pembayaran",
     steps: [
       {
         selector: "[data-tour='sa-billing-filter']",
@@ -201,7 +201,7 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
   },
   sa_platform_wa: {
     key: "sa_platform_wa",
-    name: "Superadmin — WhatsApp Gateway Platform",
+    name: "Superadmin | WhatsApp Gateway Platform",
     steps: [
       {
         selector: "[data-tour='sa-wa-card']",
@@ -212,7 +212,7 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
   },
   sa_account: {
     key: "sa_account",
-    name: "Superadmin — Akun & Profil",
+    name: "Superadmin | Akun & Profil",
     steps: [
       {
         selector: "[data-tour='sa-account-form']",

@@ -1,5 +1,5 @@
-import crypto from "node:crypto";
 import type { APIRoute } from "astro";
+import crypto from "node:crypto";
 import { getAuthSession } from "../../../lib/auth";
 import {
   FREE_GUEST_QUOTA,
@@ -78,11 +78,9 @@ function syncBroadcastedGuestRecords(
        VALUES (?, ?, ?, ?, ?, 'Undangan WA', 2, 0, '', 0, ?)`
     ).run(weddingId, guestCode, guestName, phone, address, nowIso);
   } else if (!existingGuest.phone && phone) {
-    db.prepare("UPDATE guests SET phone = ? WHERE id = ? AND wedding_id = ?").run(
-      phone,
-      existingGuest.id,
-      weddingId
-    );
+    db.prepare(
+      "UPDATE guests SET phone = ? WHERE id = ? AND wedding_id = ?"
+    ).run(phone, existingGuest.id, weddingId);
   }
 
   // 2. Sync ke tabel rsvps dengan status 'ragu' (hanya jika belum ada)
@@ -92,7 +90,9 @@ function syncBroadcastedGuestRecords(
        WHERE wedding_id = ? AND (LOWER(guest_name) = LOWER(?) OR (? != '' AND phone = ?))
        LIMIT 1`
     )
-    .get(weddingId, guestName, phone, phone) as { id: number; phone: string } | undefined;
+    .get(weddingId, guestName, phone, phone) as
+    | { id: number; phone: string }
+    | undefined;
 
   if (!existingRsvp) {
     db.prepare(
@@ -100,11 +100,9 @@ function syncBroadcastedGuestRecords(
        VALUES (?, ?, ?, 'ragu', 1, 'Diundang via WhatsApp (belum konfirmasi)', ?)`
     ).run(weddingId, guestName, phone, nowIso);
   } else if (!existingRsvp.phone && phone) {
-    db.prepare("UPDATE rsvps SET phone = ? WHERE id = ? AND wedding_id = ?").run(
-      phone,
-      existingRsvp.id,
-      weddingId
-    );
+    db.prepare(
+      "UPDATE rsvps SET phone = ? WHERE id = ? AND wedding_id = ?"
+    ).run(phone, existingRsvp.id, weddingId);
   }
 
   return guestCode;
@@ -184,7 +182,9 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
       Number(wedding?.guest_quota_limit || FREE_GUEST_QUOTA)
     );
     const existingGuests = db
-      .prepare("SELECT LOWER(name) AS name, phone FROM guests WHERE wedding_id = ?")
+      .prepare(
+        "SELECT LOWER(name) AS name, phone FROM guests WHERE wedding_id = ?"
+      )
       .all(session.weddingId) as Array<{ name: string; phone: string }>;
     const knownNames = new Set(existingGuests.map((g) => g.name));
     const knownPhones = new Set(
@@ -192,8 +192,10 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
     );
     let newContacts = 0;
     for (const item of guests) {
-      const n = typeof item?.name === "string" ? item.name.trim().toLowerCase() : "";
-      const p = typeof item?.phone === "string" ? normalizeWaPhone(item.phone) : "";
+      const n =
+        typeof item?.name === "string" ? item.name.trim().toLowerCase() : "";
+      const p =
+        typeof item?.phone === "string" ? normalizeWaPhone(item.phone) : "";
       if (!n || !p) continue;
       if (!knownNames.has(n) && !knownPhones.has(p)) {
         knownNames.add(n);
@@ -367,7 +369,7 @@ export const POST: APIRoute = async ({ request, cookies, site, url }) => {
           const qrMedia: WaMedia = {
             jenis: "gambar",
             url: qrBase64,
-            caption: `Kartu QR Tamu untuk ${sanitizeWaVariable(guestName, "Bapak/Ibu")} — tunjukkan saat Check-In di meja penerima tamu.`,
+            caption: `Kartu QR Tamu untuk ${sanitizeWaVariable(guestName, "Bapak/Ibu")} | tunjukkan saat Check-In di meja penerima tamu.`,
           };
           try {
             await client.sendMessage({

@@ -1,5 +1,5 @@
 ---
-import { ArrowLeft, Heart, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Moon, Sun } from "lucide-react";
 import { getPlatformConfig } from "../lib/db";
 import Layout from "./Layout.astro";
 
@@ -11,11 +11,11 @@ interface Props {
 
 const { title, description, wide = false } = Astro.props;
 const platformCfg = getPlatformConfig();
-const platformName = platformCfg.PLATFORM_NAME || "Wedding Platform";
+const platformName = platformCfg.PLATFORM_NAME || "Wedding Management";
 const tahunSekarang = new Date().getFullYear();
 ---
 
-<Layout title={`${title} — ${platformName}`} noindex={true}>
+<Layout title={`${title} | ${platformName}`} noindex={true}>
   <div class="admin-shell flex min-h-dvh flex-col bg-(--adm-bg-primary) text-(--adm-text-primary)">
     <header class="border-b border-(--adm-border) bg-(--adm-bg-secondary)">
       <div class="mx-auto flex h-13 max-w-5xl items-center justify-between px-4 sm:px-6">
@@ -44,9 +44,13 @@ const tahunSekarang = new Date().getFullYear();
         <div class="text-center">
           <a
             href="/"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-(--adm-accent-soft) text-(--adm-accent)"
+            class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-1.5"
           >
-            <Heart className="h-5 w-5" />
+            <img
+              src="/logo.png"
+              alt={platformName}
+              class="h-full w-full object-contain"
+            />
           </a>
           <h1 class="mt-3 text-xl font-semibold text-(--adm-text-primary)">
             {title}

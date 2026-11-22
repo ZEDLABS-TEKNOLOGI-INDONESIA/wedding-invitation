@@ -1,4 +1,20 @@
 ---
+import "@fontsource/cormorant-garamond/300.css";
+import "@fontsource/cormorant-garamond/400.css";
+import "@fontsource/cormorant-garamond/400-italic.css";
+import "@fontsource/cormorant-garamond/500.css";
+import "@fontsource/cormorant-garamond/600.css";
+import "@fontsource/cormorant-garamond/600-italic.css";
+import "@fontsource/cormorant-garamond/700.css";
+import "@fontsource/great-vibes/400.css";
+import "@fontsource/lexend/400.css";
+import "@fontsource/lexend/500.css";
+import "@fontsource/lexend/600.css";
+import "@fontsource/lexend/700.css";
+import "@fontsource/outfit/300.css";
+import "@fontsource/outfit/400.css";
+import "@fontsource/outfit/500.css";
+import "@fontsource/outfit/600.css";
 import "../styles/global.css";
 
 interface Props {
@@ -12,8 +28,8 @@ interface Props {
 }
 
 const {
-  title = "The Wedding Invitation",
-  description = "Kami mengundang Anda untuk hadir di pernikahan kami.",
+  title = "Wedding Management",
+  description = "Platform Undangan Pernikahan Digital, RSVP, Check-In QR & Manajemen Persiapan Nikah.",
   image = "/thumbnail.png",
   noindex = false,
   weddingTheme = "ocean",
@@ -37,7 +53,9 @@ const ogImageURL = image.startsWith("http")
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/ico" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="generator" content={Astro.generator} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
 
@@ -67,13 +85,7 @@ const ogImageURL = image.startsWith("http")
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Lexend:wght@400;500;600;700&family=Outfit:wght@100;200;300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
+    <meta name="apple-mobile-web-app-title" content="Wedding Management" />
 
     <script is:inline define:vars={{ defaultColorMode, weddingTheme, allowGuestThemeSwitch }}>
       (function () {
