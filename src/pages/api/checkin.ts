@@ -69,6 +69,63 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       guest = db
         .prepare("SELECT * FROM guests WHERE LOWER(name) = LOWER(?) LIMIT 1")
         .get(name) as GuestRow | undefined;
+
+      // Jika belum cocok persis, coba pencarian parsial bila hanya 1 kandidat unik
+      if (!guest) {
+        const partialMatches = db
+          .prepare("SELECT * FROM guests WHERE LOWER(name) LIKE LOWER(?) LIMIT 2")
+          .all(`%${name}%`) as GuestRow[];
+        if (partialMatches.length === 1) {
+          guest = partialMatches[0];
+        }
+      }
+
+      // Jika belum ada di tabel guests, cek data RSVP lalu promosikan otomatis ke guests
+      if (!guest) {
+        const rsvpMatch = (db
+          .prepare(
+            "SELECT guest_name, phone, guest_count FROM rsvps WHERE LOWER(guest_name) = LOWER(?) LIMIT 1"
+          )
+          .get(name) ||
+          (() => {
+            const partial = db
+              .prepare(
+                "SELECT guest_name, phone, guest_count FROM rsvps WHERE LOWER(guest_name) LIKE LOWER(?) LIMIT 2"
+              )
+              .all(`%${name}%`) as Array<{
+              guest_name: string;
+              phone: string;
+              guest_count: number;
+            }>;
+            return partial.length === 1 ? partial[0] : undefined;
+          })()) as
+          | { guest_name: string; phone: string; guest_count: number }
+          | undefined;
+
+        if (rsvpMatch) {
+          const newCode = `G-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+          const nowIso = new Date().toISOString();
+          const quota =
+            Number.isInteger(rsvpMatch.guest_count) && rsvpMatch.guest_count > 0
+              ? rsvpMatch.guest_count
+              : 2;
+          const inserted = db
+            .prepare(
+              `INSERT INTO guests (code, name, phone, address, group_name, quota, checked_in, checked_in_at, checked_in_pax, created_at)
+               VALUES (?, ?, ?, 'Di Tempat', 'RSVP', ?, 0, '', 0, ?)`
+            )
+            .run(
+              newCode,
+              rsvpMatch.guest_name,
+              rsvpMatch.phone || "",
+              quota,
+              nowIso
+            );
+          guest = db
+            .prepare("SELECT * FROM guests WHERE id = ?")
+            .get(Number(inserted.lastInsertRowid)) as GuestRow;
+        }
+      }
     }
 
     if (!guest) {

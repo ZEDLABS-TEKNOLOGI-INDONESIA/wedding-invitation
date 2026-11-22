@@ -26,22 +26,22 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
       {
         selector: "[data-tour='sidebar-nav']",
         title: "Navigasi Panel Admin",
-        body: "Gunakan menu di sisi kiri untuk berpindah antar fitur. Tekan tombol '/' atau Ctrl+K kapan saja untuk mencari menu dengan cepat.",
+        body: "Gunakan menu di sisi kiri untuk berpindah fitur. Menu Pengaturan kini terbagi menjadi 6 sub-menu ringkas. Tekan '/' atau Ctrl+K untuk pencarian cepat.",
       },
       {
         selector: "[data-tour='stat-cards']",
         title: "Ringkasan Kehadiran Real-Time",
-        body: "Pantau total respon, jumlah tamu hadir beserta estimasi pax, tamu ragu, dan yang berhalangan secara langsung.",
+        body: "Pantau total respon, tamu hadir beserta estimasi pax, tamu ragu/belum konfirmasi (termasuk dari broadcast WhatsApp), dan yang berhalangan.",
       },
       {
         selector: "[data-tour='page-actions']",
-        title: "Tambah Manual & Import CSV / Excel",
-        body: "Anda bisa menambah data RSVP manual, mengimpor file CSV atau copy-paste dari Excel, serta mengunduh laporan CSV.",
+        title: "Tambah Manual & Impor/Ekspor CSV",
+        body: "Tambah data RSVP secara manual, impor dari CSV/Excel, atau unduh laporan daftar kehadiran tamu kapan saja.",
       },
       {
         selector: "[data-tour='topbar-controls']",
         title: "Tema, Panduan & Pratinjau",
-        body: "Ganti tema terang/gelap, putar ulang panduan halaman ini, atau buka halaman undangan langsung dari bilah atas.",
+        body: "Ganti mode terang/gelap, putar ulang panduan halaman ini, atau buka pratinjau halaman undangan langsung dari bilah atas.",
       },
     ],
   },
@@ -51,29 +51,29 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
     steps: [
       {
         selector: "[data-tour='page-actions']",
-        title: "Kelola Buku Tamu",
-        body: "Tambahkan ucapan secara manual, impor daftar ucapan dari CSV/Excel, atau ekspor seluruh doa tamu ke file CSV.",
+        title: "Kelola Ucapan & Doa Restu",
+        body: "Tambahkan ucapan secara manual, impor daftar ucapan dari CSV/Excel, atau ekspor seluruh doa tamu ke berkas CSV.",
       },
       {
         selector: "[data-tour='data-table']",
         title: "Moderasi & Pencarian Cepat",
-        body: "Cari ucapan tertentu, edit teks yang typo (tombol hijau), atau hapus satuan maupun massal (tombol merah).",
+        body: "Cari ucapan tertentu, sunting teks (tombol hijau), atau hapus satuan maupun massal (tombol merah).",
       },
     ],
   },
   guests: {
     key: "guests",
-    name: "Tamu & Check-In",
+    name: "Buku Tamu & Check-In Hari H",
     steps: [
       {
         selector: "[data-tour='guest-subtabs']",
-        title: "Daftar Tamu & Scanner Hari H",
-        body: "Kelola daftar tamu permanen beserta kode QR uniknya, lalu pindah ke Scanner Check-In saat hari resepsi tiba.",
+        title: "Daftar Tamu & Scanner Check-In Hari H",
+        body: "Kelola daftar tamu permanen beserta kode QR uniknya, lalu pindah ke Scanner Check-In (kamera lintas browser & pencarian nama parsial) saat hari acara.",
       },
       {
         selector: "[data-tour='guest-add-form']",
-        title: "Input Mudah & Import Excel",
-        body: "Tambahkan tamu satuan dengan preset grup dan stepper kuota pax, atau klik 'Import CSV / Excel' untuk ratusan tamu sekaligus.",
+        title: "Input Tamu & Impor Excel",
+        body: "Tambahkan tamu satuan dengan preset grup dan kuota pax, atau klik 'Impor CSV / Excel' untuk ratusan tamu sekaligus. Tamu dari broadcast WhatsApp juga otomatis masuk ke sini.",
       },
     ],
   },
@@ -83,13 +83,13 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
     steps: [
       {
         selector: "[data-tour='wa-mode-switch']",
-        title: "Kirim Satuan atau Massal",
-        body: "Pilih Kirim Satuan untuk satu tamu (bisa pilih cepat dari Daftar Tamu), atau Kirim Massal dengan tarik 1-klik dari Daftar Tamu / CSV.",
+        title: "Teks Undangan + Lampiran PDF & QR Tamu",
+        body: "Kirim satuan atau massal: setiap tamu menerima 1 pesan teks undangan, 1 berkas Surat Undangan PDF 4 halaman, dan 1 gambar Kartu QR untuk Check-In Hari H. Kontak broadcast otomatis masuk ke Daftar Tamu & Data RSVP (status Ragu).",
       },
       {
         selector: "[data-tour='wa-history']",
         title: "Pantau Status Pengiriman",
-        body: "Cek status pesan (Antre, Terkirim, Sampai, Dibaca, Gagal) dan kirim ulang bila ada pesan yang gagal.",
+        body: "Cek status pesan (Antre, Terkirim, Sampai, Dibaca, Gagal) dan kirim ulang bila ada pengiriman yang gagal.",
       },
     ],
   },
@@ -99,8 +99,8 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
     steps: [
       {
         selector: "[data-tour='qr-mode-switch']",
-        title: "QR Personal Satuan & Massal ZIP",
-        body: "Buat QR Code undangan dengan inisial mempelai di tengah — satuan PNG atau ratusan sekaligus dalam 1 file ZIP dari Daftar Tamu / CSV.",
+        title: "Kartu QR Elegan Satuan & Massal ZIP",
+        body: "Pilih dari 4 motif desain megah, 5 format/ukuran kartu QR, dan 5 nuansa warna — unduh satuan PNG atau ratusan sekaligus dalam berkas ZIP.",
       },
     ],
   },
@@ -110,8 +110,8 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
     steps: [
       {
         selector: "[data-tour='pdf-themes']",
-        title: "Pilih Tema Undangan Cetak A5",
-        body: "Pilih salah satu dari 4 palet warna floral. Setiap PDF berisi 4 halaman A5 lengkap dengan QR undangan & QR Google Maps.",
+        title: "Desain, Ukuran Kertas & Nuansa Warna",
+        body: "Pilih 4 motif desain megah, 5 ukuran kertas (A5, A4, A6, B5, Persegi), dan 5 nuansa warna. Pilihan Anda otomatis tersinkron ke lampiran PDF & QR di menu Kirim WhatsApp.",
       },
     ],
   },
@@ -120,30 +120,20 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
     name: "Pengaturan Undangan",
     steps: [
       {
+        selector: "[data-tour='sidebar-nav']",
+        title: "6 Sub-Menu Pengaturan Terstruktur",
+        body: "Gunakan sub-menu Pengaturan di sidebar untuk berpindah cepat antara Tema & Tampilan, Profil Mempelai, Jadwal & Lokasi, Media & Audio, Konten & Hadiah, serta WhatsApp & Pengingat H-1.",
+      },
+      {
         selector: "[data-tour='settings-sticky-bar']",
-        title: "Simpan, Import/Export & Lompat Cepat",
-        body: "Bilah ini tetap menempel saat scroll. Anda bisa lompat ke bagian mana saja, backup/import CSV pengaturan, dan simpan kapan pun.",
-      },
-      {
-        selector: "#sec-lokasi",
-        title: "Ekstrak Koordinat Google Maps Otomatis",
-        body: "Cukup tempel link Google Maps di kolom biru untuk mengisi Latitude dan Longitude secara otomatis.",
-      },
-      {
-        selector: "#sec-jadwal",
-        title: "Date & Time Picker Otomatis",
-        body: "Pilih tanggal dan jam acara — nama hari, format tanggal Indonesia, dan jadwal kalender otomatis dibuatkan.",
-      },
-      {
-        selector: "#sec-media",
-        title: "Upload Foto & Audio Backsound",
-        body: "Unggah foto Hero/Amplop serta musik latar (MP3/M4A/OGG/WAV hingga 15 MB) langsung dari perangkat dan dengarkan pratinjaunya.",
+        title: "Simpan & Cadangkan Pengaturan",
+        body: "Bilah ini tetap menempel saat halaman digulir. Simpan perubahan, atau ekspor/impor seluruh pengaturan melalui berkas CSV kapan saja.",
       },
     ],
   },
 };
 
-const STORAGE_KEY = "wedding_admin_coachmark_done_v1";
+const STORAGE_KEY = "wedding_admin_coachmark_done_v2";
 
 const readDoneSet = (): Set<string> => {
   try {

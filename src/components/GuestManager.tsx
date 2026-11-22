@@ -29,6 +29,13 @@ import React, {
 import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
 import { GUEST_GROUP_PRESETS } from "../utils/formHelpers";
 import {
+  buildInvitationContentFromConfig,
+  generateGuestQrStampBase64,
+  generateInvitationPdfBase64,
+  loadPdfPrefs,
+  resolvePdfPrefs,
+} from "../utils/pdfInvitation";
+import {
   ConfirmModal,
   ToastBanner,
   type ConfirmDialogState,
@@ -50,6 +57,25 @@ interface GuestItem {
   created_at: string;
 }
 
+interface RsvpSummaryItem {
+  id: number;
+  guest_name: string;
+  phone: string;
+  attendance: string;
+  guest_count: number;
+}
+
+interface ScannerCandidate {
+  key: string;
+  name: string;
+  code: string;
+  phone: string;
+  group_name: string;
+  quota: number;
+  checked_in: number;
+  source: "guest" | "rsvp";
+}
+
 interface GuestManagerProps {
   siteUrl: string;
   initialSubTab?: "list" | "scanner";
@@ -61,6 +87,8 @@ const GuestManager: React.FC<GuestManagerProps> = ({
 }) => {
   const [subTab, setSubTab] = useState<"list" | "scanner">(initialSubTab);
   const [guests, setGuests] = useState<GuestItem[]>([]);
+  const [rsvpGuests, setRsvpGuests] = useState<RsvpSummaryItem[]>([]);
+  const [cfg, setCfg] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<
@@ -117,10 +145,17 @@ const GuestManager: React.FC<GuestManagerProps> = ({
 
   const loadGuests = useCallback(async () => {
     try {
-      const res = await fetch("/api/guests", { credentials: "include" });
-      if (res.ok) {
-        const data = (await res.json()) as GuestItem[];
+      const [guestsRes, rsvpRes] = await Promise.all([
+        fetch("/api/guests", { credentials: "include" }),
+        fetch("/api/rsvp", { credentials: "include" }),
+      ]);
+      if (guestsRes.ok) {
+        const data = (await guestsRes.json()) as GuestItem[];
         setGuests(data);
+      }
+      if (rsvpRes.ok) {
+        const rsvpData = (await rsvpRes.json()) as RsvpSummaryItem[];
+        if (Array.isArray(rsvpData)) setRsvpGuests(rsvpData);
       }
     } catch {
       // ignore initial error
@@ -131,6 +166,14 @@ const GuestManager: React.FC<GuestManagerProps> = ({
 
   useEffect(() => {
     loadGuests();
+    fetch("/api/config")
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data) => {
+        if (data && typeof data === "object") {
+          setCfg(data as Record<string, string>);
+        }
+      })
+      .catch(() => {});
   }, [loadGuests]);
 
   useEffect(() => {
@@ -187,19 +230,63 @@ const GuestManager: React.FC<GuestManagerProps> = ({
     });
   }, [guests, filterStatus, search]);
 
-  const scannerSuggestions = useMemo(() => {
+  const scannerSuggestions = useMemo<ScannerCandidate[]>(() => {
     const q = scanInput.trim().toLowerCase();
-    if (!q || q.startsWith("http")) return [];
-    return guests
+    if (q.startsWith("http")) return [];
+
+    // Gabungkan Daftar Tamu Permanen + Data RSVP (deduplikasi berdasarkan nama)
+    const merged: ScannerCandidate[] = guests.map((g) => ({
+      key: `g-${g.id}`,
+      name: g.name,
+      code: g.code,
+      phone: g.phone || "",
+      group_name: g.group_name || "",
+      quota: g.quota || 2,
+      checked_in: g.checked_in,
+      source: "guest",
+    }));
+
+    const seenNames = new Set(merged.map((m) => m.name.trim().toLowerCase()));
+    for (const r of rsvpGuests) {
+      const cleanName = (r.guest_name || "").trim();
+      if (!cleanName) continue;
+      const lower = cleanName.toLowerCase();
+      if (seenNames.has(lower)) continue;
+      seenNames.add(lower);
+      merged.push({
+        key: `r-${r.id}`,
+        name: cleanName,
+        code: "",
+        phone: r.phone || "",
+        group_name:
+          r.attendance === "hadir"
+            ? "RSVP Hadir"
+            : r.attendance === "tidak_hadir"
+              ? "RSVP Tidak Hadir"
+              : "RSVP Ragu",
+        quota: r.guest_count > 0 ? r.guest_count : 1,
+        checked_in: 0,
+        source: "rsvp",
+      });
+    }
+
+    if (!q) {
+      // Saat input kosong, tampilkan maksimal 6 tamu yang belum check-in agar bisa langsung diklik
+      return merged.filter((m) => m.checked_in === 0).slice(0, 6);
+    }
+
+    // Pencarian parsial lintas nama, kode, nomor WA, dan grup; dahulukan yang belum check-in
+    return merged
       .filter(
-        (g) =>
-          g.checked_in === 0 &&
-          (g.name.toLowerCase().includes(q) ||
-            g.code.toLowerCase().includes(q) ||
-            g.group_name.toLowerCase().includes(q))
+        (m) =>
+          m.name.toLowerCase().includes(q) ||
+          m.code.toLowerCase().includes(q) ||
+          m.phone.toLowerCase().includes(q) ||
+          m.group_name.toLowerCase().includes(q)
       )
-      .slice(0, 6);
-  }, [guests, scanInput]);
+      .sort((a, b) => a.checked_in - b.checked_in)
+      .slice(0, 8);
+  }, [guests, rsvpGuests, scanInput]);
 
   const guestInviteLink = (g: GuestItem) =>
     `${baseUrl}/?to=${encodeURIComponent(g.name)}&code=${encodeURIComponent(g.code)}`;
@@ -354,6 +441,28 @@ const GuestManager: React.FC<GuestManagerProps> = ({
     }
     setSendingWaId(guest.id);
     try {
+      const resolvedPdf = resolvePdfPrefs(loadPdfPrefs());
+      const content = buildInvitationContentFromConfig(cfg);
+      const guestUrl = guestInviteLink(guest);
+      const [pdfBase64, qrBase64] = await Promise.all([
+        generateInvitationPdfBase64(
+          content,
+          { name: guest.name, address: guest.address || "Di Tempat" },
+          baseUrl,
+          resolvedPdf.theme,
+          { design: resolvedPdf.designId, paper: resolvedPdf.paper },
+          undefined,
+          0.85
+        ),
+        generateGuestQrStampBase64(
+          content,
+          guest.name,
+          guestUrl,
+          resolvedPdf.theme,
+          resolvedPdf.designId
+        ),
+      ]);
+
       const res = await fetch("/api/whatsapp/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -364,9 +473,12 @@ const GuestManager: React.FC<GuestManagerProps> = ({
               name: guest.name,
               phone: guest.phone,
               address: guest.address,
+              pdfBase64,
+              qrBase64,
             },
           ],
           siteUrl: baseUrl,
+          attachPdf: true,
           attachQr: true,
         }),
       });
@@ -374,7 +486,7 @@ const GuestManager: React.FC<GuestManagerProps> = ({
       if (res.ok && payload.queued > 0) {
         setToast({
           type: "success",
-          message: `Undangan WhatsApp untuk ${guest.name} masuk antrean.`,
+          message: `Undangan + PDF & QR untuk ${guest.name} masuk antrean WhatsApp.`,
         });
       } else {
         setToast({
@@ -788,29 +900,46 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                 {scannerSuggestions.length > 0 && (
                   <div className="rounded-md border border-(--adm-border) bg-(--adm-bg-secondary) p-1 shadow-(--adm-shadow-pop)">
                     <p className="adm-hint px-2 py-1">
-                      Klik tamu untuk langsung check-in ({scanPax} pax):
+                      {scanInput.trim()
+                        ? `Hasil pencarian (${scannerSuggestions.length} tamu) — klik untuk langsung check-in:`
+                        : "Tamu diundang yang belum check-in — klik untuk langsung check-in:"}
                     </p>
-                    <div className="divide-y divide-(--adm-border)">
+                    <div className="max-h-56 divide-y divide-(--adm-border) overflow-y-auto">
                       {scannerSuggestions.map((g) => (
                         <button
-                          key={g.id}
+                          key={g.key}
                           type="button"
                           onClick={() =>
-                            void processCheckin(g.code, g.quota || scanPax)
+                            void processCheckin(
+                              g.code || g.name,
+                              g.quota || scanPax
+                            )
                           }
-                          className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[12px] hover:bg-(--adm-bg-tertiary)"
+                          className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[12px] hover:bg-(--adm-bg-tertiary)"
                         >
-                          <div>
+                          <div className="min-w-0">
                             <span className="font-semibold text-(--adm-text-primary)">
                               {g.name}
                             </span>
-                            <span className="ml-2 font-mono text-[11px] text-(--adm-text-muted)">
-                              {g.code}
-                            </span>
+                            {g.code ? (
+                              <span className="ml-2 font-mono text-[11px] text-(--adm-text-muted)">
+                                {g.code}
+                              </span>
+                            ) : (
+                              <span className="ml-2 text-[11px] text-(--adm-text-muted)">
+                                {g.group_name}
+                              </span>
+                            )}
                           </div>
-                          <span className="adm-badge adm-badge-accent">
-                            Check-In ({g.quota} Pax)
-                          </span>
+                          {g.checked_in === 1 ? (
+                            <span className="adm-badge adm-badge-success shrink-0">
+                              Sudah Hadir
+                            </span>
+                          ) : (
+                            <span className="adm-badge adm-badge-accent shrink-0">
+                              Check-In ({g.quota} Pax)
+                            </span>
+                          )}
                         </button>
                       ))}
                     </div>

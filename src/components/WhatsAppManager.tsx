@@ -16,6 +16,7 @@ import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
 import {
   PDF_PREFS_EVENT,
   buildInvitationContentFromConfig,
+  generateGuestQrStampBase64,
   generateInvitationPdfBase64,
   loadPdfPrefs,
   renderSharedMiddlePages,
@@ -79,6 +80,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     address: "Di Tempat",
   });
   const [attachPdf, setAttachPdf] = useState(true);
+  const [attachQr, setAttachQr] = useState(true);
   const [pdfPrefs, setPdfPrefs] = useState<PdfStationeryPrefs>(() =>
     loadPdfPrefs()
   );
@@ -220,34 +222,61 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     });
   };
 
-  const buildGuestPdfPayload = async (
+  const buildGuestAttachmentPayload = async (
     guest: GuestInviteRow,
     sharedMiddlePages?: { page2: string; page3: string }
   ) => {
-    if (!attachPdf) return guest;
-    const pdfBase64 = await generateInvitationPdfBase64(
-      invitationContent,
-      { name: guest.name, address: guest.address || "Di Tempat" },
-      baseUrl,
-      resolvedPdf.theme,
-      { design: resolvedPdf.designId, paper: resolvedPdf.paper },
-      sharedMiddlePages,
-      0.85
-    );
-    return { ...guest, pdfBase64 };
+    const out: GuestInviteRow & { pdfBase64?: string; qrBase64?: string } = {
+      ...guest,
+    };
+    const cleanName = guest.name.trim();
+    const guestUrl = `${baseUrl}/?to=${encodeURIComponent(cleanName)}`;
+
+    if (attachPdf) {
+      out.pdfBase64 = await generateInvitationPdfBase64(
+        invitationContent,
+        { name: cleanName, address: guest.address || "Di Tempat" },
+        baseUrl,
+        resolvedPdf.theme,
+        { design: resolvedPdf.designId, paper: resolvedPdf.paper },
+        sharedMiddlePages,
+        0.85
+      );
+    }
+    if (attachQr) {
+      out.qrBase64 = await generateGuestQrStampBase64(
+        invitationContent,
+        cleanName,
+        guestUrl,
+        resolvedPdf.theme,
+        resolvedPdf.designId
+      );
+    }
+    return out;
   };
+
+  const attachmentSummaryLabel =
+    attachPdf && attachQr
+      ? " beserta PDF & QR Tamu"
+      : attachPdf
+        ? " beserta berkas PDF"
+        : attachQr
+          ? " beserta gambar QR Tamu"
+          : "";
 
   const sendSingle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!singleForm.name.trim() || !singleForm.phone.trim()) return;
     setIsSending(true);
     setSendingLabel(
-      attachPdf ? "Menyusun PDF undangan..." : "Mengirim ke Antrean..."
+      attachPdf || attachQr
+        ? "Menyusun lampiran undangan..."
+        : "Mengirim ke Antrean..."
     );
     setFeedback(null);
 
     try {
-      const guestPayload = await buildGuestPdfPayload(singleForm);
+      const guestPayload = await buildGuestAttachmentPayload(singleForm);
       setSendingLabel("Mengirim ke Antrean...");
       const res = await fetch("/api/whatsapp/invitations", {
         method: "POST",
@@ -257,13 +286,14 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           guests: [guestPayload],
           siteUrl: baseUrl,
           attachPdf,
+          attachQr,
         }),
       });
       const payload = await res.json().catch(() => ({}));
       if (res.ok && payload.queued > 0) {
         setFeedback({
           type: "success",
-          message: `Undangan${attachPdf ? " beserta berkas PDF" : ""} untuk ${singleForm.name.trim()} berhasil masuk antrean WhatsApp Gateway.`,
+          message: `Undangan${attachmentSummaryLabel} untuk ${singleForm.name.trim()} berhasil masuk antrean WhatsApp Gateway (otomatis tercatat di Daftar Tamu & Data RSVP).`,
         });
         setSingleForm({ name: "", phone: "", address: "Di Tempat" });
         await loadHistory();
@@ -291,13 +321,15 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     setIsSending(true);
     setBulkProgress(0);
     setSendingLabel(
-      attachPdf ? "Menyiapkan templat surat PDF..." : "Mengirim undangan..."
+      attachPdf || attachQr
+        ? "Menyiapkan lampiran PDF & QR..."
+        : "Mengirim undangan..."
     );
     setFeedback(null);
 
     let totalQueued = 0;
     let totalFailed = 0;
-    const CHUNK_SIZE = attachPdf ? 3 : 20;
+    const CHUNK_SIZE = attachPdf || attachQr ? 3 : 20;
 
     try {
       let sharedMiddlePages: { page2: string; page3: string } | undefined;
@@ -315,13 +347,13 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         const chunk = bulkGuests.slice(i, i + CHUNK_SIZE);
         const preparedGuests = [];
         for (let idx = 0; idx < chunk.length; idx++) {
-          if (attachPdf) {
+          if (attachPdf || attachQr) {
             setSendingLabel(
-              `Menyusun PDF ${i + idx + 1}/${bulkGuests.length}...`
+              `Menyusun lampiran ${i + idx + 1}/${bulkGuests.length}...`
             );
           }
           preparedGuests.push(
-            await buildGuestPdfPayload(chunk[idx], sharedMiddlePages)
+            await buildGuestAttachmentPayload(chunk[idx], sharedMiddlePages)
           );
         }
 
@@ -336,6 +368,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             guests: preparedGuests,
             siteUrl: baseUrl,
             attachPdf,
+            attachQr,
           }),
         });
         const payload = await res.json().catch(() => ({}));
@@ -357,7 +390,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
       setFeedback({
         type: totalFailed === 0 ? "success" : "error",
-        message: `Selesai diproses: ${totalQueued} masuk antrean, ${totalFailed} gagal. Periksa tabel riwayat di bawah untuk detailnya.`,
+        message: `Selesai diproses: ${totalQueued} masuk antrean, ${totalFailed} gagal. Kontak broadcast juga otomatis masuk ke Daftar Tamu & Data RSVP (status Ragu).`,
       });
       if (totalQueued > 0) setBulkGuests([]);
       await loadHistory();
@@ -403,7 +436,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     setResendingId(row.id);
     setFeedback(null);
     try {
-      const guestPayload = await buildGuestPdfPayload({
+      const guestPayload = await buildGuestAttachmentPayload({
         name: row.guest_name,
         phone: row.phone,
         address: row.address || "Di Tempat",
@@ -416,13 +449,14 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           guests: [guestPayload],
           siteUrl: baseUrl,
           attachPdf,
+          attachQr,
         }),
       });
       const payload = await res.json().catch(() => ({}));
       if (res.ok && payload.queued > 0) {
         setFeedback({
           type: "success",
-          message: `Undangan${attachPdf ? " beserta PDF" : ""} untuk ${row.guest_name} dikirim ulang ke antrean.`,
+          message: `Undangan${attachmentSummaryLabel} untuk ${row.guest_name} dikirim ulang ke antrean.`,
         });
       } else {
         setFeedback({
@@ -543,23 +577,34 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           </button>
         </div>
 
-        <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-(--adm-text-secondary)">
-          <input
-            type="checkbox"
-            checked={attachPdf}
-            onChange={(e) => setAttachPdf(e.target.checked)}
-            className="h-4 w-4 accent-(--adm-accent)"
-          />
-          Lampirkan Surat Undangan PDF
-        </label>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-(--adm-text-secondary)">
+            <input
+              type="checkbox"
+              checked={attachPdf}
+              onChange={(e) => setAttachPdf(e.target.checked)}
+              className="h-4 w-4 accent-(--adm-accent)"
+            />
+            Lampirkan Surat Undangan PDF
+          </label>
+          <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-(--adm-text-secondary)">
+            <input
+              type="checkbox"
+              checked={attachQr}
+              onChange={(e) => setAttachQr(e.target.checked)}
+              className="h-4 w-4 accent-(--adm-accent)"
+            />
+            Lampirkan Gambar QR Tamu (Check-In)
+          </label>
+        </div>
       </div>
 
-      {attachPdf && (
+      {(attachPdf || attachQr) && (
         <div className="rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-3.5">
           <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-(--adm-text-primary)">
               <FileText className="h-3.5 w-3.5 text-(--adm-accent)" />
-              Format Surat Undangan PDF (4 Halaman)
+              Format Lampiran ({attachPdf && attachQr ? "PDF 4 Halaman + Gambar QR Tamu" : attachPdf ? "PDF 4 Halaman" : "Gambar QR Tamu"})
             </span>
             <span className="text-[11px] text-(--adm-text-secondary)">
               Tersinkron otomatis dengan pilihan pada tab{" "}
@@ -751,9 +796,13 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               )}
               {isSending
                 ? sendingLabel || "Mengirim ke Antrean..."
-                : attachPdf
-                  ? "Kirim Undangan & PDF via WhatsApp"
-                  : "Kirim Undangan WhatsApp"}
+                : attachPdf && attachQr
+                  ? "Kirim Undangan + PDF & QR via WhatsApp"
+                  : attachPdf
+                    ? "Kirim Undangan & PDF via WhatsApp"
+                    : attachQr
+                      ? "Kirim Undangan & QR via WhatsApp"
+                      : "Kirim Undangan WhatsApp"}
             </button>
           </div>
         </form>

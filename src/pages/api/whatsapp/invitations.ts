@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import type { APIRoute } from "astro";
 import { isAdminAuthenticated } from "../../../lib/auth";
 import db, { getConfig } from "../../../lib/db";
@@ -17,13 +18,14 @@ const JSON_HEADERS = {
   "Cache-Control": "no-store",
 };
 
-const MAX_PDF_BASE64_LENGTH = 15 * 1024 * 1024;
+const MAX_ATTACHMENT_BASE64_LENGTH = 15 * 1024 * 1024;
 
 interface GuestInviteInput {
   name: string;
   phone: string;
   address?: string;
   pdfBase64?: string;
+  qrBase64?: string;
 }
 
 function cleanBase64Payload(raw: unknown): string {
@@ -35,8 +37,68 @@ function cleanBase64Payload(raw: unknown): string {
     trimmed.startsWith("data:") && commaIdx >= 0
       ? trimmed.slice(commaIdx + 1).trim()
       : trimmed;
-  if (!payload || payload.length > MAX_PDF_BASE64_LENGTH) return "";
+  if (!payload || payload.length > MAX_ATTACHMENT_BASE64_LENGTH) return "";
   return payload;
+}
+
+/**
+ * Pastikan tamu yang dikirim undangan WhatsApp tercatat di:
+ * 1) Tabel `guests` (Daftar Tamu Permanen) agar QR & pencarian manual Hari H langsung menemukan tamu.
+ * 2) Tabel `rsvps` dengan status `ragu` (belum konfirmasi) bila belum pernah mengisi RSVP.
+ */
+function syncBroadcastedGuestRecords(
+  guestName: string,
+  phone: string,
+  address: string,
+  nowIso: string
+): string {
+  // 1. Sync ke tabel guests
+  const existingGuest = db
+    .prepare(
+      `SELECT id, code, phone FROM guests
+       WHERE LOWER(name) = LOWER(?) OR (? != '' AND phone = ?)
+       LIMIT 1`
+    )
+    .get(guestName, phone, phone) as
+    | { id: number; code: string; phone: string }
+    | undefined;
+
+  let guestCode = existingGuest?.code || "";
+  if (!existingGuest) {
+    guestCode = `G-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+    db.prepare(
+      `INSERT INTO guests (code, name, phone, address, group_name, quota, checked_in, checked_in_at, checked_in_pax, created_at)
+       VALUES (?, ?, ?, ?, 'Undangan WA', 2, 0, '', 0, ?)`
+    ).run(guestCode, guestName, phone, address, nowIso);
+  } else if (!existingGuest.phone && phone) {
+    db.prepare("UPDATE guests SET phone = ? WHERE id = ?").run(
+      phone,
+      existingGuest.id
+    );
+  }
+
+  // 2. Sync ke tabel rsvps dengan status 'ragu' (hanya jika belum ada)
+  const existingRsvp = db
+    .prepare(
+      `SELECT id, phone FROM rsvps
+       WHERE LOWER(guest_name) = LOWER(?) OR (? != '' AND phone = ?)
+       LIMIT 1`
+    )
+    .get(guestName, phone, phone) as { id: number; phone: string } | undefined;
+
+  if (!existingRsvp) {
+    db.prepare(
+      `INSERT INTO rsvps (guest_name, phone, attendance, guest_count, message, created_at)
+       VALUES (?, ?, 'ragu', 1, 'Diundang via WhatsApp (belum konfirmasi)', ?)`
+    ).run(guestName, phone, nowIso);
+  } else if (!existingRsvp.phone && phone) {
+    db.prepare("UPDATE rsvps SET phone = ? WHERE id = ?").run(
+      phone,
+      existingRsvp.id
+    );
+  }
+
+  return guestCode;
 }
 
 export const GET: APIRoute = async ({ cookies }) => {
@@ -79,6 +141,7 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
       guests?: GuestInviteInput[];
       siteUrl?: string;
       attachPdf?: boolean;
+      attachQr?: boolean;
     };
 
     const guests = Array.isArray(body.guests) ? body.guests : [];
@@ -166,11 +229,18 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
         continue;
       }
 
-      const invitationUrl = `${rawBaseUrl}/?to=${encodeURIComponent(guestName)}`;
+      const guestCode = syncBroadcastedGuestRecords(
+        guestName,
+        phone,
+        address,
+        nowIso
+      );
+      const invitationUrl = `${rawBaseUrl}/?to=${encodeURIComponent(guestName)}${guestCode ? `&code=${encodeURIComponent(guestCode)}` : ""}`;
       const referenceId = `WED-INV-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
       const pdfBase64 = body.attachPdf
         ? cleanBase64Payload(item?.pdfBase64)
         : "";
+      const qrBase64 = body.attachQr ? cleanBase64Payload(item?.qrBase64) : "";
       const templateVariables = {
         nama_tamu: sanitizeWaVariable(guestName, "Bapak/Ibu", {
           maxLength: 100,
@@ -201,9 +271,9 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
           referenceId,
         });
 
-        // 2. Jika lampiran PDF diaktifkan, kirim dokumen PDF menyusul sebagai pesan terpisah
-        //    (karena whatsapp-service hanya menampilkan media.caption untuk pesan bertipe dokumen).
-        let pdfWarning = "";
+        const attachmentWarnings: string[] = [];
+
+        // 2. Lampiran 1: Dokumen PDF Surat Undangan (4 halaman)
         if (pdfBase64) {
           const pdfMedia: WaMedia = {
             jenis: "dokumen",
@@ -225,9 +295,40 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
                 : pdfErr instanceof Error
                   ? pdfErr.message
                   : "Gagal mengirim lampiran PDF";
-            pdfWarning = `Teks terkirim, namun lampiran PDF gagal: ${pdfMsg}`;
+            attachmentWarnings.push(`PDF gagal: ${pdfMsg}`);
           }
         }
+
+        // 3. Lampiran 2: Gambar Kartu QR Tamu untuk Check-In Hari H
+        if (qrBase64) {
+          const qrMedia: WaMedia = {
+            jenis: "gambar",
+            url: qrBase64,
+            caption: `Kartu QR Tamu untuk ${sanitizeWaVariable(guestName, "Bapak/Ibu")} — tunjukkan saat Check-In di meja penerima tamu.`,
+          };
+          try {
+            await client.sendMessage({
+              templateCode: WA_TEMPLATE_CODES.INVITATION,
+              recipient: phone,
+              variables: templateVariables,
+              media: qrMedia,
+              referenceId: `${referenceId}-qr`,
+            });
+          } catch (qrErr) {
+            const qrMsg =
+              qrErr instanceof WaGatewayError
+                ? qrErr.pesan
+                : qrErr instanceof Error
+                  ? qrErr.message
+                  : "Gagal mengirim lampiran QR";
+            attachmentWarnings.push(`QR gagal: ${qrMsg}`);
+          }
+        }
+
+        const warningText =
+          attachmentWarnings.length > 0
+            ? `Teks terkirim, namun ${attachmentWarnings.join("; ")}`
+            : "";
 
         const inserted = insertStmt.run(
           guestName,
@@ -237,7 +338,7 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
           res.job_id || "",
           referenceId,
           res.status || "queued",
-          pdfWarning,
+          warningText,
           nowIso,
           nowIso
         );
@@ -247,7 +348,7 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
           phone,
           status: res.status || "queued",
           job_id: res.job_id || "",
-          error_message: pdfWarning,
+          error_message: warningText,
         });
       } catch (err) {
         const errMsg =

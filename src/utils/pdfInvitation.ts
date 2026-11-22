@@ -8,6 +8,7 @@ import {
   renderCouplePage,
   renderCoverPage,
   renderEventPage,
+  renderQrStamp,
   type InvitationContent,
   type PaperSizeId,
   type PaperSizeOption,
@@ -226,6 +227,28 @@ export async function generateInvitationPdfBase64(
     jpegQuality
   );
   const dataUri = doc.output("datauristring");
+  const commaIdx = dataUri.indexOf(",");
+  return commaIdx >= 0 ? dataUri.slice(commaIdx + 1) : dataUri;
+}
+
+export async function generateGuestQrStampBase64(
+  content: InvitationContent,
+  guestName: string,
+  guestUrl: string,
+  theme: StationeryTheme,
+  design: StationeryDesignId
+): Promise<string> {
+  await ensureStationeryFonts();
+  const canvas = renderQrStamp({
+    url: guestUrl,
+    guestName: guestName.trim() || "Tamu Undangan",
+    bride: content.brideName,
+    groom: content.groomName,
+    theme,
+    design,
+    width: 900,
+  });
+  const dataUri = canvas.toDataURL("image/png");
   const commaIdx = dataUri.indexOf(",");
   return commaIdx >= 0 ? dataUri.slice(commaIdx + 1) : dataUri;
 }
