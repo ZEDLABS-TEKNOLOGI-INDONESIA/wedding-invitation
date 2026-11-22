@@ -496,3 +496,156 @@ export const HeartFrameWatermark: React.FC<{ className?: string }> = ({
     </g>
   </svg>
 );
+
+/** Bingkai oval wreath botani & bunga romantis untuk potret mempelai. */
+export const PortraitFloralFrame: React.FC<{
+  mirror?: boolean;
+  className?: string;
+}> = ({ mirror = false, className = "" }) => (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 320 400"
+    fill="none"
+    className={`text-accentDark dark:text-accent pointer-events-none absolute -inset-5 h-[calc(100%+2.5rem)] w-[calc(100%+2.5rem)] select-none ${
+      mirror ? "-scale-x-100" : ""
+    } ${className}`}
+  >
+    {/* Primary delicate oval ring */}
+    <ellipse
+      cx="160"
+      cy="200"
+      rx="132"
+      ry="172"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeOpacity="0.45"
+    />
+    {/* Romantic offset secondary oval ring */}
+    <ellipse
+      cx="160"
+      cy="200"
+      rx="138"
+      ry="176"
+      transform="rotate(-4 160 200)"
+      stroke="currentColor"
+      strokeWidth="0.85"
+      strokeOpacity="0.28"
+    />
+    {/* Subtle dotted inner lace halo */}
+    <ellipse
+      cx="160"
+      cy="200"
+      rx="126"
+      ry="166"
+      stroke="currentColor"
+      strokeWidth="0.8"
+      strokeDasharray="2 6"
+      strokeOpacity="0.3"
+    />
+
+    {/* Top-Right Botanical Rose & Laurel Cluster */}
+    <g transform="translate(244, 62)">
+      {/* Curved trailing leaves */}
+      <path
+        d="M-36 -18 C-14 -30, 8 -26, 22 -12 C2 -6, -18 -8, -36 -18 Z"
+        fill="currentColor"
+        fillOpacity="0.32"
+      />
+      <path
+        d="M14 -4 C34 -4, 48 12, 52 32 C34 26, 20 14, 14 -4 Z"
+        fill="currentColor"
+        fillOpacity="0.36"
+      />
+      <path
+        d="M24 22 C44 30, 54 48, 52 68 C36 56, 26 40, 24 22 Z"
+        fill="currentColor"
+        fillOpacity="0.25"
+      />
+      <path
+        d="M-12 -24 C-2 -42, 16 -48, 32 -40 C18 -28, 4 -22, -12 -24 Z"
+        fill="currentColor"
+        fillOpacity="0.26"
+      />
+      {/* Layered Rose Bloom */}
+      <g transform="translate(8, -4)">
+        {[0, 60, 120, 180, 240, 300].map((deg) => (
+          <ellipse
+            key={deg}
+            cx="0"
+            cy="-9"
+            rx="6"
+            ry="9.5"
+            fill="currentColor"
+            fillOpacity="0.45"
+            transform={`rotate(${deg})`}
+          />
+        ))}
+        {[30, 110, 190, 270].map((deg) => (
+          <ellipse
+            key={deg}
+            cx="0"
+            cy="-5"
+            rx="4"
+            ry="6"
+            fill="currentColor"
+            fillOpacity="0.72"
+            transform={`rotate(${deg})`}
+          />
+        ))}
+        <circle cx="0" cy="0" r="3.5" fill="currentColor" fillOpacity="0.9" />
+      </g>
+      {/* Secondary tiny bud */}
+      <circle cx="30" cy="24" r="4.5" fill="currentColor" fillOpacity="0.55" />
+      <circle cx="-18" cy="-14" r="3" fill="currentColor" fillOpacity="0.45" />
+    </g>
+
+    {/* Bottom-Left Botanical Rose & Laurel Cluster */}
+    <g transform="translate(76, 338) rotate(180)">
+      <path
+        d="M-36 -18 C-14 -30, 8 -26, 22 -12 C2 -6, -18 -8, -36 -18 Z"
+        fill="currentColor"
+        fillOpacity="0.32"
+      />
+      <path
+        d="M14 -4 C34 -4, 48 12, 52 32 C34 26, 20 14, 14 -4 Z"
+        fill="currentColor"
+        fillOpacity="0.36"
+      />
+      <path
+        d="M24 22 C44 30, 54 48, 52 68 C36 56, 26 40, 24 22 Z"
+        fill="currentColor"
+        fillOpacity="0.25"
+      />
+      <g transform="translate(8, -4)">
+        {[0, 60, 120, 180, 240, 300].map((deg) => (
+          <ellipse
+            key={deg}
+            cx="0"
+            cy="-9"
+            rx="6"
+            ry="9.5"
+            fill="currentColor"
+            fillOpacity="0.45"
+            transform={`rotate(${deg})`}
+          />
+        ))}
+        <circle cx="0" cy="0" r="3.5" fill="currentColor" fillOpacity="0.85" />
+      </g>
+      <circle cx="30" cy="24" r="4" fill="currentColor" fillOpacity="0.5" />
+    </g>
+
+    {/* Delicate 4-point star & pearl accents */}
+    <path
+      d="M66 96 L68.5 103.5 L76 106 L68.5 108.5 L66 116 L63.5 108.5 L56 106 L63.5 103.5 Z"
+      fill="currentColor"
+      fillOpacity="0.55"
+    />
+    <path
+      d="M258 296 L260 302 L266 304 L260 306 L258 312 L256 306 L250 304 L256 302 Z"
+      fill="currentColor"
+      fillOpacity="0.5"
+    />
+    <circle cx="160" cy="24" r="2.5" fill="currentColor" fillOpacity="0.5" />
+    <circle cx="160" cy="376" r="2.5" fill="currentColor" fillOpacity="0.5" />
+  </svg>
+);
