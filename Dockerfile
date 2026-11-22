@@ -8,11 +8,17 @@ RUN apt-get update \
     && npm install -g pnpm@12.16.1
 
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . ./
-RUN pnpm run build \
+# Buang binary native linux-x64 agar loader napi-rs memakai versi WebAssembly
+# (menghindari crash "Illegal instruction" di CPU server tanpa AVX2/BMI2).
+RUN rm -rf node_modules/.pnpm/@astrojs+compiler-binding-linux-x64-* \
+        node_modules/.pnpm/@rolldown+binding-linux-x64-* \
+        node_modules/.pnpm/@tailwindcss+oxide-linux-x64-* \
+        node_modules/.pnpm/@bruits+satteri-linux-x64-* \
+    && NAPI_RS_FORCE_WASI=true pnpm run build \
     && pnpm prune --prod
 
 # Stage 2: Production runtime (non-root + tini + healthcheck)

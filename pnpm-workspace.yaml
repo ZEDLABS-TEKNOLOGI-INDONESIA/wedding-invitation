@@ -3,3 +3,18 @@ allowBuilds:
   core-js: true
   esbuild: true
   sharp: true
+onlyBuiltDependencies:
+  - better-sqlite3
+  - core-js
+  - esbuild
+  - sharp
+# Paket wasm32 ikut dipasang agar build Docker bisa memakai NAPI_RS_FORCE_WASI=true
+# (lihat Dockerfile): CPU server tanpa AVX2/BMI2 dapat crash di binary native.
+supportedArchitectures:
+  os:
+    - current
+  cpu:
+    - current
+    - wasm32
+  libc:
+    - current
