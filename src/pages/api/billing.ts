@@ -8,27 +8,26 @@ import {
   generateInvoiceCode,
 } from "../../lib/billing";
 import db, { getPlatformConfig, getWeddingById } from "../../lib/db";
+import {
+  normalizeOrderStatus,
+  notifyInvoiceEvent,
+  parsePlatformBankAccounts,
+  type BillingOrderRecord,
+} from "../../lib/invoicing";
+import { resolveOriginDomain } from "../../lib/whatsapp";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json",
   "Cache-Control": "no-store",
 };
 
-export interface BillingOrderRow {
-  id: number;
-  wedding_id: number;
-  invoice_code: string;
-  current_quota: number;
-  requested_total_quota: number;
-  added_guests: number;
-  amount: number;
-  status: "pending" | "paid" | "rejected";
-  payment_method: string;
-  payment_note: string;
-  proof_url: string;
-  admin_note: string;
-  created_at: string;
-  verified_at: string;
+const INVOICE_DUE_DAYS = 7;
+
+function serializeOrder(row: BillingOrderRecord) {
+  return {
+    ...row,
+    status: normalizeOrderStatus(row.status, row.proof_url),
+  };
 }
 
 export const GET: APIRoute = async ({ cookies }) => {
@@ -51,37 +50,16 @@ export const GET: APIRoute = async ({ cookies }) => {
       .get(session.weddingId) as { c: number }
   ).c;
 
-  const orders = db
+  const rawOrders = db
     .prepare(
       "SELECT * FROM billing_orders WHERE wedding_id = ? ORDER BY id DESC LIMIT 50"
     )
-    .all(session.weddingId) as BillingOrderRow[];
+    .all(session.weddingId) as BillingOrderRecord[];
+
+  const orders = rawOrders.map(serializeOrder);
 
   const platformCfg = getPlatformConfig();
-  let bankAccounts: Array<{ bank: string; number: string; holder: string }> = [];
-  if (platformCfg.PAYMENT_BANK_ACCOUNTS) {
-    try {
-      const parsed = JSON.parse(platformCfg.PAYMENT_BANK_ACCOUNTS);
-      if (Array.isArray(parsed)) {
-        bankAccounts = parsed
-          .filter((a) => a && typeof a.bank === "string" && typeof a.number === "string" && a.bank.trim() && a.number.trim())
-          .map((a) => ({
-            bank: String(a.bank).trim(),
-            number: String(a.number).trim(),
-            holder: String(a.holder || "").trim(),
-          }));
-      }
-    } catch {
-      bankAccounts = [];
-    }
-  }
-  if (bankAccounts.length === 0 && platformCfg.PAYMENT_BANK_ACCOUNT?.trim()) {
-    bankAccounts.push({
-      bank: platformCfg.PAYMENT_BANK_NAME || "Bank BCA",
-      number: platformCfg.PAYMENT_BANK_ACCOUNT.trim(),
-      holder: platformCfg.PAYMENT_BANK_HOLDER || "ZEDLABS Teknologi Indonesia",
-    });
-  }
+  const bankAccounts = parsePlatformBankAccounts(platformCfg);
 
   return new Response(
     JSON.stringify({
@@ -94,8 +72,10 @@ export const GET: APIRoute = async ({ cookies }) => {
         minPayment: MIN_PAYMENT_AMOUNT,
       },
       paymentInfo: {
-        bankName: bankAccounts[0]?.bank || platformCfg.PAYMENT_BANK_NAME || "Bank BCA",
-        bankAccount: bankAccounts[0]?.number || platformCfg.PAYMENT_BANK_ACCOUNT || "",
+        bankName:
+          bankAccounts[0]?.bank || platformCfg.PAYMENT_BANK_NAME || "Bank BCA",
+        bankAccount:
+          bankAccounts[0]?.number || platformCfg.PAYMENT_BANK_ACCOUNT || "",
         bankHolder:
           bankAccounts[0]?.holder ||
           platformCfg.PAYMENT_BANK_HOLDER ||
@@ -109,7 +89,7 @@ export const GET: APIRoute = async ({ cookies }) => {
   );
 };
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, url }) => {
   const session = getAuthSession(cookies);
   if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -119,9 +99,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   let body: {
+    action?: string;
+    orderId?: number;
     targetTotalGuests?: number;
     paymentMethod?: string;
     paymentNote?: string;
+    senderName?: string;
+    senderBank?: string;
     proofUrl?: string;
   } = {};
   try {
@@ -131,6 +115,152 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       status: 400,
       headers: JSON_HEADERS,
     });
+  }
+
+  const action = String(body.action || "create_order").trim();
+  const originDomain = resolveOriginDomain(request, url);
+
+  // 1. Unggah / Kirim Bukti Transfer (WAJIB upload bukti/nota bayar)
+  if (action === "submit_proof") {
+    const orderId = Number(body.orderId || 0);
+    const senderName = String(body.senderName || "").trim().slice(0, 100);
+    const senderBank = String(body.senderBank || "").trim().slice(0, 60);
+    const proofUrl = String(body.proofUrl || "").trim().slice(0, 500);
+    const paymentNote = String(body.paymentNote || "").trim().slice(0, 400);
+
+    if (!senderName) {
+      return new Response(
+        JSON.stringify({ error: "Nama pemilik rekening pengirim wajib diisi." }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+    if (!senderBank) {
+      return new Response(
+        JSON.stringify({ error: "Nama bank / e-wallet pengirim wajib diisi." }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+    if (!proofUrl || !proofUrl.startsWith("/uploads/")) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Bukti transfer / nota pembayaran wajib diunggah (format JPG, PNG, atau WebP).",
+        }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    const order = db
+      .prepare(
+        "SELECT * FROM billing_orders WHERE id = ? AND wedding_id = ? LIMIT 1"
+      )
+      .get(orderId, session.weddingId) as BillingOrderRecord | undefined;
+
+    if (!order) {
+      return new Response(
+        JSON.stringify({ error: "Tagihan tidak ditemukan." }),
+        { status: 404, headers: JSON_HEADERS }
+      );
+    }
+
+    const normStatus = normalizeOrderStatus(order.status, order.proof_url);
+    if (normStatus !== "unpaid" && normStatus !== "rejected") {
+      return new Response(
+        JSON.stringify({
+          error:
+            normStatus === "review"
+              ? "Bukti pembayaran sudah dikirim dan sedang diperiksa oleh Superadmin."
+              : "Tagihan ini sudah tidak dapat dikonfirmasi lagi.",
+        }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    const nowIso = new Date().toISOString();
+    const combinedNote =
+      paymentNote || `${senderName} (${senderBank})`;
+
+    db.prepare(
+      `UPDATE billing_orders
+       SET status = 'review',
+           sender_name = ?,
+           sender_bank = ?,
+           proof_url = ?,
+           payment_note = ?,
+           submitted_at = ?,
+           admin_note = ''
+       WHERE id = ?`
+    ).run(senderName, senderBank, proofUrl, combinedNote, nowIso, order.id);
+
+    const updated = db
+      .prepare("SELECT * FROM billing_orders WHERE id = ?")
+      .get(order.id) as BillingOrderRecord;
+
+    // Kirim notifikasi WA ke Pengguna & Superadmin
+    const notifyResult = await notifyInvoiceEvent("submitted", updated, {
+      originDomain,
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        order: serializeOrder(updated),
+        waNotify: notifyResult,
+      }),
+      { status: 200, headers: JSON_HEADERS }
+    );
+  }
+
+  // 2. Batalkan tagihan yang belum dibayar / ditolak
+  if (action === "cancel_order") {
+    const orderId = Number(body.orderId || 0);
+    const order = db
+      .prepare(
+        "SELECT * FROM billing_orders WHERE id = ? AND wedding_id = ? LIMIT 1"
+      )
+      .get(orderId, session.weddingId) as BillingOrderRecord | undefined;
+
+    if (!order) {
+      return new Response(
+        JSON.stringify({ error: "Tagihan tidak ditemukan." }),
+        { status: 404, headers: JSON_HEADERS }
+      );
+    }
+    const normStatus = normalizeOrderStatus(order.status, order.proof_url);
+    if (normStatus !== "unpaid" && normStatus !== "rejected") {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Hanya tagihan yang belum dibayar atau ditolak yang dapat dibatalkan.",
+        }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    db.prepare("UPDATE billing_orders SET status = 'cancelled' WHERE id = ?").run(
+      order.id
+    );
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: JSON_HEADERS,
+    });
+  }
+
+  // 3. Buat tagihan baru (create_order) — mengikuti alur invoicing whatsapp-service
+  const openOrders = db
+    .prepare(
+      "SELECT * FROM billing_orders WHERE wedding_id = ? AND status IN ('unpaid', 'review', 'pending', 'rejected') ORDER BY id DESC LIMIT 1"
+    )
+    .all(session.weddingId) as BillingOrderRecord[];
+
+  if (openOrders.length > 0) {
+    const open = openOrders[0];
+    return new Response(
+      JSON.stringify({
+        error: `Masih ada tagihan aktif (${open.invoice_code}). Selesaikan unggah bukti bayar atau batalkan tagihan tersebut terlebih dahulu.`,
+      }),
+      { status: 409, headers: JSON_HEADERS }
+    );
   }
 
   const wedding = getWeddingById(session.weddingId);
@@ -159,19 +289,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   const quote = calculateGuestQuotaPrice(requestedTotal, currentQuota);
   const invoiceCode = generateInvoiceCode();
-  const paymentMethod = String(
-    body.paymentMethod || "Transfer Bank / QRIS"
-  )
+  const paymentMethod = String(body.paymentMethod || "Transfer Bank")
     .trim()
     .slice(0, 60);
-  const paymentNote = String(body.paymentNote || "").trim().slice(0, 400);
-  const proofUrl = String(body.proofUrl || "").trim().slice(0, 500);
+  const nowIso = new Date().toISOString();
+  const dueIso = new Date(
+    Date.now() + INVOICE_DUE_DAYS * 86400 * 1000
+  ).toISOString();
 
   const res = db
     .prepare(
       `INSERT INTO billing_orders
-        (wedding_id, invoice_code, current_quota, requested_total_quota, added_guests, amount, status, payment_method, payment_note, proof_url, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`
+        (wedding_id, invoice_code, current_quota, requested_total_quota, added_guests, amount, status, payment_method, payment_note, proof_url, sender_name, sender_bank, due_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'unpaid', ?, '', '', '', '', ?, ?)`
     )
     .run(
       session.weddingId,
@@ -181,17 +311,26 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       quote.grantedAddedGuests,
       quote.amount,
       paymentMethod,
-      paymentNote,
-      proofUrl,
-      new Date().toISOString()
+      dueIso,
+      nowIso
     );
 
   const created = db
     .prepare("SELECT * FROM billing_orders WHERE id = ?")
-    .get(Number(res.lastInsertRowid)) as BillingOrderRow;
+    .get(Number(res.lastInsertRowid)) as BillingOrderRecord;
+
+  // Kirim notifikasi WA invoice baru ke Pengguna & Superadmin
+  const notifyResult = await notifyInvoiceEvent("created", created, {
+    originDomain,
+  });
 
   return new Response(
-    JSON.stringify({ success: true, order: created, quote }),
+    JSON.stringify({
+      success: true,
+      order: serializeOrder(created),
+      quote,
+      waNotify: notifyResult,
+    }),
     { status: 201, headers: JSON_HEADERS }
   );
 };

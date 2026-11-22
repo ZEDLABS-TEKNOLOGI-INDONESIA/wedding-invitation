@@ -17,6 +17,11 @@ import {
   verifyPasswordHash,
 } from "../../lib/password";
 import {
+  normalizeOrderStatus,
+  notifyInvoiceEvent,
+  type BillingOrderRecord,
+} from "../../lib/invoicing";
+import {
   PLATFORM_WA_TEMPLATES,
   WaGatewayClient,
   formatWaGatewayError,
@@ -72,15 +77,29 @@ export const GET: APIRoute = async ({ cookies }) => {
     members: users.filter((u) => u.wedding_id === w.id),
   }));
 
-  const orders = db
+  const rawOrders = db
     .prepare(
       `SELECT b.*, w.slug AS wedding_slug, w.title AS wedding_title
        FROM billing_orders b
        JOIN weddings w ON w.id = b.wedding_id
-       ORDER BY CASE b.status WHEN 'pending' THEN 0 ELSE 1 END, b.id DESC
-       LIMIT 100`
+       ORDER BY
+         CASE b.status
+           WHEN 'review' THEN 0
+           WHEN 'pending' THEN 1
+           WHEN 'unpaid' THEN 2
+           ELSE 3
+         END,
+         b.id DESC
+       LIMIT 150`
     )
-    .all();
+    .all() as Array<
+    BillingOrderRecord & { wedding_slug: string; wedding_title: string }
+  >;
+
+  const orders = rawOrders.map((o) => ({
+    ...o,
+    status: normalizeOrderStatus(o.status, o.proof_url),
+  }));
 
   const platformConfig = getPlatformConfig();
 
@@ -91,9 +110,8 @@ export const GET: APIRoute = async ({ cookies }) => {
         activeWeddings: weddings.filter((w) => w.status === "active").length,
         totalUsers: users.filter((u) => u.role !== "superadmin").length,
         totalRsvps: Object.values(rsvpCounts).reduce((a, b) => a + b, 0),
-        pendingOrders: (orders as Array<{ status: string }>).filter(
-          (o) => o.status === "pending"
-        ).length,
+        pendingOrders: orders.filter((o) => o.status === "review").length,
+        unpaidOrders: orders.filter((o) => o.status === "unpaid").length,
       },
       weddings: enrichedWeddings,
       orders,
@@ -154,29 +172,62 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     });
   }
 
-  if (action === "approve_order" || action === "reject_order") {
+  if (
+    action === "approve_order" ||
+    action === "reject_order" ||
+    action === "resend_invoice"
+  ) {
     const orderId = Number(body.orderId || 0);
-    const adminNote = String(body.adminNote || "").trim().slice(0, 300);
+    const adminNote = String(body.adminNote || "").trim().slice(0, 500);
     const order = db
       .prepare("SELECT * FROM billing_orders WHERE id = ? LIMIT 1")
-      .get(orderId) as
-      | {
-          id: number;
-          wedding_id: number;
-          requested_total_quota: number;
-          status: string;
-        }
-      | undefined;
+      .get(orderId) as BillingOrderRecord | undefined;
 
     if (!order) {
-      return new Response(JSON.stringify({ error: "Tagihan tidak ditemukan." }), {
-        status: 404,
-        headers: JSON_HEADERS,
-      });
-    }
-    if (order.status !== "pending") {
       return new Response(
-        JSON.stringify({ error: "Tagihan ini sudah diproses sebelumnya." }),
+        JSON.stringify({ error: "Tagihan tidak ditemukan." }),
+        {
+          status: 404,
+          headers: JSON_HEADERS,
+        }
+      );
+    }
+
+    const normStatus = normalizeOrderStatus(order.status, order.proof_url);
+    const originDomain = resolveOriginDomain(request, url);
+
+    if (action === "resend_invoice") {
+      const ev =
+        normStatus === "paid"
+          ? "paid"
+          : normStatus === "rejected"
+            ? "rejected"
+            : normStatus === "review"
+              ? "submitted"
+              : "created";
+      const waNotify = await notifyInvoiceEvent(ev, order, {
+        originDomain,
+        onlyUser: true,
+      });
+      return new Response(
+        JSON.stringify({ success: true, waNotify }),
+        { status: 200, headers: JSON_HEADERS }
+      );
+    }
+
+    if (normStatus === "paid" || normStatus === "cancelled") {
+      return new Response(
+        JSON.stringify({ error: "Tagihan ini sudah selesai diproses." }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    if (action === "reject_order" && !adminNote) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Alasan penolakan wajib diisi agar pengguna tahu apa yang perlu diperbaiki.",
+        }),
         { status: 400, headers: JSON_HEADERS }
       );
     }
@@ -195,10 +246,20 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     } else {
       db.prepare(
         "UPDATE billing_orders SET status = 'rejected', admin_note = ?, verified_at = ? WHERE id = ?"
-      ).run(adminNote || "Pembayaran ditolak", nowIso, order.id);
+      ).run(adminNote, nowIso, order.id);
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    const updated = db
+      .prepare("SELECT * FROM billing_orders WHERE id = ?")
+      .get(order.id) as BillingOrderRecord;
+
+    const waNotify = await notifyInvoiceEvent(
+      action === "approve_order" ? "paid" : "rejected",
+      updated,
+      { originDomain }
+    );
+
+    return new Response(JSON.stringify({ success: true, waNotify }), {
       status: 200,
       headers: JSON_HEADERS,
     });

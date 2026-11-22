@@ -356,6 +356,19 @@ try {
 } catch {
   // Kolom avatar_url sudah ada
 }
+for (const sql of [
+  "ALTER TABLE billing_orders ADD COLUMN sender_name TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE billing_orders ADD COLUMN sender_bank TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE billing_orders ADD COLUMN due_at TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE billing_orders ADD COLUMN submitted_at TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE billing_orders ADD COLUMN invoice_sent_at TEXT NOT NULL DEFAULT ''",
+]) {
+  try {
+    db.exec(sql);
+  } catch {
+    // Kolom sudah ada
+  }
+}
 
 export const DEFAULT_WEDDING_ID = 1;
 

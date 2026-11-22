@@ -325,6 +325,13 @@ export const WA_TEMPLATE_CODES = {
 
 export const PLATFORM_OTP_TEMPLATE_CODE = "wedding_auth_otp";
 
+export const PLATFORM_BILLING_TEMPLATE_CODES = {
+  INVOICE_CREATED: "wedding_invoice_created",
+  INVOICE_SUBMITTED: "wedding_invoice_submitted",
+  INVOICE_PAID: "wedding_invoice_paid",
+  INVOICE_REJECTED: "wedding_invoice_rejected",
+} as const;
+
 export const PLATFORM_WA_TEMPLATES: Record<string, WaTemplateDef> = {
   [PLATFORM_OTP_TEMPLATE_CODE]: {
     kategori: "Keamanan",
@@ -334,6 +341,62 @@ export const PLATFORM_WA_TEMPLATES: Record<string, WaTemplateDef> = {
       "Kode verifikasi ({{keperluan}}) Anda adalah {{kode_otp}}. Kode ini berlaku selama {{berlaku_menit}} menit. Mohon jaga kerahasiaan kode ini dan jangan bagikan kepada siapa pun.",
       "Halo, berikut kode verifikasi akun untuk {{keperluan}}: {{kode_otp}}. Masa berlaku kode adalah {{berlaku_menit}} menit. Abaikan pesan ini jika Anda tidak merasa memintanya.",
       "Gunakan kode {{kode_otp}} untuk menyelesaikan proses {{keperluan}}. Kode berlaku {{berlaku_menit}} menit dan bersifat rahasia.",
+    ],
+  },
+  [PLATFORM_BILLING_TEMPLATE_CODES.INVOICE_CREATED]: {
+    kategori: "Tagihan",
+    prioritas: "High",
+    variabel_wajib: [
+      "nomor_invoice",
+      "nama_undangan",
+      "nominal",
+      "tambahan_kuota",
+      "jatuh_tempo",
+      "rekening_tujuan",
+    ],
+    varian: [
+      "Tagihan penambahan kuota tamu {{nama_undangan}} telah terbit.\n\nNomor invoice: {{nomor_invoice}}\nTambahan kuota: {{tambahan_kuota}}\nTotal tagihan: {{nominal}}\nJatuh tempo: {{jatuh_tempo}}\nRekening tujuan: {{rekening_tujuan}}\n\nSilakan lakukan transfer lalu unggah bukti bayar pada menu Kuota dan Tagihan di panel admin.",
+      "Halo, invoice {{nomor_invoice}} untuk undangan {{nama_undangan}} sudah dibuat.\n\nRincian tagihan:\nKuota tambahan: {{tambahan_kuota}}\nJumlah bayar: {{nominal}}\nBatas waktu: {{jatuh_tempo}}\nTujuan transfer: {{rekening_tujuan}}\n\nSetelah transfer, mohon unggah bukti pembayaran agar dapat diverifikasi admin.",
+    ],
+  },
+  [PLATFORM_BILLING_TEMPLATE_CODES.INVOICE_SUBMITTED]: {
+    kategori: "Tagihan",
+    prioritas: "High",
+    variabel_wajib: [
+      "nomor_invoice",
+      "nama_undangan",
+      "nominal",
+      "nama_pengirim",
+      "bank_pengirim",
+      "keterangan",
+    ],
+    varian: [
+      "Konfirmasi pembayaran diterima untuk invoice {{nomor_invoice}} ({{nama_undangan}}).\n\nNominal: {{nominal}}\nPengirim: {{nama_pengirim}} ({{bank_pengirim}})\nStatus: {{keterangan}}",
+      "Bukti transfer untuk tagihan {{nomor_invoice}} milik {{nama_undangan}} telah diunggah.\n\nJumlah: {{nominal}}\nRekening pengirim: {{nama_pengirim}} - {{bank_pengirim}}\nKeterangan: {{keterangan}}",
+    ],
+  },
+  [PLATFORM_BILLING_TEMPLATE_CODES.INVOICE_PAID]: {
+    kategori: "Tagihan",
+    prioritas: "High",
+    variabel_wajib: [
+      "nomor_invoice",
+      "nama_undangan",
+      "nominal",
+      "kuota_baru",
+      "tanggal_lunas",
+    ],
+    varian: [
+      "Pembayaran invoice {{nomor_invoice}} untuk {{nama_undangan}} telah diverifikasi dan dinyatakan lunas.\n\nNominal: {{nominal}}\nKuota tamu aktif sekarang: {{kuota_baru}}\nTanggal lunas: {{tanggal_lunas}}\n\nTerima kasih telah menggunakan layanan kami.",
+      "Halo, tagihan {{nomor_invoice}} ({{nama_undangan}}) sebesar {{nominal}} sudah lunas pada {{tanggal_lunas}}.\n\nKuota tamu undangan Anda kini aktif hingga {{kuota_baru}}. Invoice resmi dapat diunduh pada menu Kuota dan Tagihan.",
+    ],
+  },
+  [PLATFORM_BILLING_TEMPLATE_CODES.INVOICE_REJECTED]: {
+    kategori: "Tagihan",
+    prioritas: "High",
+    variabel_wajib: ["nomor_invoice", "nama_undangan", "nominal", "alasan"],
+    varian: [
+      "Bukti pembayaran untuk invoice {{nomor_invoice}} ({{nama_undangan}}) sebesar {{nominal}} belum dapat disetujui.\n\nAlasan penolakan: {{alasan}}\n\nSilakan periksa kembali lalu unggah ulang bukti transfer yang benar pada menu Kuota dan Tagihan.",
+      "Mohon maaf, verifikasi bukti bayar tagihan {{nomor_invoice}} milik {{nama_undangan}} ({{nominal}}) ditolak.\n\nCatatan admin: {{alasan}}\n\nAnda dapat mengunggah ulang bukti pembayaran melalui halaman Kuota dan Tagihan.",
     ],
   },
 };
