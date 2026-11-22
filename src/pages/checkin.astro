@@ -1,4 +1,5 @@
 ---
+import { ArrowLeft, Moon, QrCode, Sun } from "lucide-react";
 import GuestManager from "../components/GuestManager";
 import Layout from "../layouts/Layout.astro";
 import { isAdminAuthenticated } from "../lib/auth";
@@ -11,36 +12,67 @@ if (!isAdminAuthenticated(Astro.cookies)) {
 ---
 
 <Layout title="Scanner Check-In Tamu" noindex={true}>
-  <main
-    class="min-h-screen bg-slate-50 px-4 py-10 text-slate-800 dark:bg-slate-900 dark:text-slate-200"
-  >
-    <div class="mx-auto max-w-5xl space-y-6">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 class="font-serif text-3xl font-bold italic dark:text-white">
-            Buku Tamu & Check-In Hari H
-          </h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400">
-            Pindai QR Code tamu atau cari nama untuk mencatat kehadiran
-          </p>
-        </div>
+  <div class="admin-shell flex min-h-dvh flex-col bg-(--adm-bg-secondary) text-(--adm-text-primary)">
+    <header class="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-(--adm-border) bg-(--adm-bg-secondary) px-3 md:px-6">
+      <div class="flex items-center gap-2 text-[13px]">
+        <QrCode className="h-4 w-4 text-(--adm-accent)" />
         <a
           href="/admin"
-          class="rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          class="hidden text-(--adm-text-secondary) hover:text-(--adm-accent) sm:inline"
         >
-          &larr; Kembali ke Dashboard
+          Wedding Panel
+        </a>
+        <span class="hidden text-(--adm-text-muted) sm:inline">/</span>
+        <span class="font-semibold text-(--adm-text-primary)">
+          Scanner Check-In Hari H
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          id="checkin-theme-toggle"
+          type="button"
+          aria-label="Ubah tema terang atau gelap"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-primary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
+        >
+          <Moon className="h-4 w-4 dark:hidden" />
+          <Sun className="hidden h-4 w-4 dark:inline" />
+        </button>
+        <a href="/admin" class="adm-btn adm-btn-secondary">
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Dashboard
         </a>
       </div>
+    </header>
 
-      <div
-        class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8 dark:border-slate-700 dark:bg-slate-800"
-      >
-        <GuestManager
-          client:load
-          siteUrl={Astro.site?.toString() || "https://wedding.zedlabs.id"}
-          initialSubTab="scanner"
-        />
+    <main class="adm-panel-main m-2 flex-1 px-4 py-5 md:m-3 md:px-6 md:py-6">
+      <div class="mx-auto max-w-[1200px] space-y-5">
+        <div>
+          <h1 class="text-xl font-semibold text-(--adm-text-primary)">
+            Buku Tamu &amp; Check-In Hari H
+          </h1>
+          <p class="mt-1 text-xs text-(--adm-text-secondary)">
+            Pindai QR Code tamu atau ketik nama untuk mencatat kehadiran secara real-time.
+          </p>
+        </div>
+
+        <div class="adm-card p-4 md:p-5">
+          <GuestManager
+            client:load
+            siteUrl={Astro.site?.toString() || "https://wedding.zedlabs.id"}
+            initialSubTab="scanner"
+          />
+        </div>
       </div>
-    </div>
-  </main>
+    </main>
+  </div>
+
+  <script>
+    const btn = document.getElementById("checkin-theme-toggle");
+    if (btn) {
+      btn.addEventListener("click", () => {
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+      });
+    }
+  </script>
 </Layout>

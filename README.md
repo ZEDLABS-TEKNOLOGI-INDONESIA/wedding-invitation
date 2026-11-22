@@ -34,7 +34,7 @@ Website undangan pernikahan digital modern, cepat, dan interaktif yang dibangun 
   - **Kirim Undangan Otomatis (Satuan, Daftar Tamu & Massal CSV/Excel):** Tarik langsung penerima dari Daftar Tamu Permanen (dengan filter grup) atau Import CSV/Excel, opsi lampiran QR Code PNG, riwayat pengiriman, polling status, dan kirim ulang.
   - **Sinkronisasi 4 Template 1-Klik** langsung ke gateway + tombol **Uji Koneksi (Ping)** & **Kirim Pesan Tes**.
 - **QR Generator & Design PDF:** Generator QR resolusi seragam `300×300px` dan undangan cetak PDF 4 halaman A5 multi-tema; mendukung pilih cepat atau muat massal 1-klik dari Daftar Tamu maupun Import CSV/Excel.
-- **Pengaturan Konten User-Friendly & Import/Export CSV:** Date/Time picker otomatis (mengisi hari, tanggal Indonesia, dan ISO sekaligus), ekstrak koordinat otomatis dari link Google Maps, auto-clean username Instagram, preset bank/e-wallet, upload banyak foto galeri sekaligus, sticky save bar, serta **Import & Export CSV** untuk pengaturan, rekening bank, dan kisah cinta.
+- **Pengaturan Konten User-Friendly, Upload Audio Backsound & Import/Export CSV:** Date/Time picker otomatis (mengisi hari, tanggal Indonesia, dan ISO sekaligus), ekstrak koordinat otomatis dari link Google Maps, auto-clean username Instagram, preset bank/e-wallet, **upload audio backsound lokal (`MP3`/`M4A`/`OGG`/`WAV`, maks 15 MB, mendukung HTTP Range streaming + pratinjau audio)**, upload banyak foto galeri sekaligus, sticky save bar, serta **Import & Export CSV** untuk pengaturan, rekening bank, dan kisah cinta.
 
 ---
 

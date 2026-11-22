@@ -151,3 +151,172 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ===== Admin Compact Design System (GitHub Primer / whatsapp-service style) ===== */
+.admin-shell {
+  --adm-bg-primary: #f6f8fa;
+  --adm-bg-secondary: #ffffff;
+  --adm-bg-tertiary: #eaeef2;
+  --adm-bg-overlay: rgba(208, 215, 222, 0.32);
+  --adm-text-primary: #1f2328;
+  --adm-text-secondary: #656d76;
+  --adm-text-muted: #818b98;
+  --adm-border: #d0d7de;
+  --adm-accent: #0969da;
+  --adm-accent-hover: #0860ca;
+  --adm-accent-soft: rgba(9, 105, 218, 0.1);
+  --adm-green: #1a7f37;
+  --adm-green-soft: rgba(26, 127, 55, 0.12);
+  --adm-red: #cf222e;
+  --adm-red-hover: #a40e26;
+  --adm-red-soft: rgba(207, 34, 46, 0.1);
+  --adm-yellow: #9a6700;
+  --adm-yellow-soft: rgba(154, 103, 0, 0.12);
+  --adm-backdrop: rgba(31, 35, 40, 0.45);
+  background-color: var(--adm-bg-secondary);
+  color: var(--adm-text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.dark .admin-shell {
+  --adm-bg-primary: #0d1117;
+  --adm-bg-secondary: #161b22;
+  --adm-bg-tertiary: #21262d;
+  --adm-bg-overlay: rgba(110, 118, 129, 0.16);
+  --adm-text-primary: #e6edf3;
+  --adm-text-secondary: #8b949e;
+  --adm-text-muted: #6e7681;
+  --adm-border: #30363d;
+  --adm-accent: #2f81f7;
+  --adm-accent-hover: #388bfd;
+  --adm-accent-soft: rgba(47, 129, 247, 0.16);
+  --adm-green: #3fb950;
+  --adm-green-soft: rgba(46, 160, 67, 0.16);
+  --adm-red: #f85149;
+  --adm-red-hover: #da3633;
+  --adm-red-soft: rgba(248, 81, 73, 0.14);
+  --adm-yellow: #d29922;
+  --adm-yellow-soft: rgba(210, 153, 34, 0.15);
+  --adm-backdrop: rgba(1, 4, 9, 0.72);
+}
+
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell h4 {
+  font-family: var(--font-sans);
+}
+
+.adm-auth-dotgrid {
+  background-image: radial-gradient(var(--adm-border) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.adm-panel-main {
+  background: var(--adm-bg-primary);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+}
+
+.adm-card {
+  background: var(--adm-bg-secondary);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+}
+
+.adm-input {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--adm-border);
+  background: var(--adm-bg-primary);
+  color: var(--adm-text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
+.adm-input:focus {
+  border-color: var(--adm-accent);
+  box-shadow: 0 0 0 3px var(--adm-accent-soft);
+}
+
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms, border-color 150ms, color 150ms, opacity 150ms;
+}
+
+.adm-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.adm-btn-primary {
+  background: var(--adm-accent);
+  color: #ffffff;
+}
+.adm-btn-primary:not(:disabled):hover {
+  background: var(--adm-accent-hover);
+}
+
+.adm-btn-secondary {
+  background: var(--adm-bg-tertiary);
+  color: var(--adm-text-primary);
+  border-color: var(--adm-border);
+}
+.adm-btn-secondary:not(:disabled):hover {
+  background: var(--adm-bg-overlay);
+}
+
+.adm-btn-danger {
+  background: var(--adm-red);
+  color: #ffffff;
+}
+.adm-btn-danger:not(:disabled):hover {
+  background: var(--adm-red-hover);
+}
+
+.adm-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 16px 8px 14px;
+  border-left: 3px solid transparent;
+  color: var(--adm-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+  transition: background-color 150ms, color 150ms, border-color 150ms;
+}
+
+.adm-sidebar-item:hover {
+  background: var(--adm-bg-overlay);
+  color: var(--adm-text-primary);
+}
+
+.adm-sidebar-item.is-active {
+  border-left-color: var(--adm-accent);
+  background: var(--adm-accent-soft);
+  color: var(--adm-text-primary);
+  font-weight: 600;
+}
+
+.adm-sidebar-item.is-active svg {
+  color: var(--adm-accent);
+}

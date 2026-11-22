@@ -12,6 +12,7 @@ import {
   Loader2,
   MapPin,
   Minus,
+  Music,
   Plus,
   RefreshCcw,
   Save,
@@ -344,16 +345,18 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
     }
   };
 
-  const uploadImageFile = async (
+  const uploadMediaFile = async (
     file: File,
     uploadId: string,
     onSuccess: (url: string) => void,
+    kind: "image" | "audio" = "image",
     silentToast = false
   ) => {
     setUploadingKey(uploadId);
     try {
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("kind", kind);
       const res = await fetch("/api/upload", {
         method: "POST",
         credentials: "include",
@@ -367,14 +370,20 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           onNotify({
             type: "success",
             message:
-              "Gambar berhasil diunggah. Klik 'Simpan Semua' untuk menerapkan.",
+              kind === "audio"
+                ? "Audio backsound berhasil diunggah. Klik 'Simpan Semua' untuk menerapkan."
+                : "Gambar berhasil diunggah. Klik 'Simpan Semua' untuk menerapkan.",
           });
         }
         return true;
       } else {
         onNotify({
           type: "error",
-          message: payload?.error || "Gagal mengunggah gambar.",
+          message:
+            payload?.error ||
+            (kind === "audio"
+              ? "Gagal mengunggah audio."
+              : "Gagal mengunggah gambar."),
         });
         return false;
       }
@@ -391,10 +400,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
     const list = Array.from(files);
     let uploaded = 0;
     for (const f of list) {
-      const ok = await uploadImageFile(
+      const ok = await uploadMediaFile(
         f,
         "gallery-new",
         (url) => setGalleryImages((prev) => [...prev, url]),
+        "image",
         true
       );
       if (ok) uploaded++;
@@ -623,7 +633,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               const f = e.target.files?.[0];
               e.target.value = "";
               if (f) {
-                void uploadImageFile(f, key, (url) => handleChange(key, url));
+                void uploadMediaFile(f, key, (url) => handleChange(key, url));
               }
             }}
           />
@@ -636,8 +646,8 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
     prefix: "BRIDE" | "GROOM",
     title: string
   ) => (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-      <h3 className="mb-5 font-serif text-lg font-bold text-slate-800 italic dark:text-white">
+    <div className="adm-card p-4">
+      <h3 className="mb-3.5 text-sm font-semibold text-(--adm-text-primary)">
         {title}
       </h3>
       <div className="grid gap-4 md:grid-cols-2">
@@ -977,7 +987,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       )}
 
       {/* Sticky Action & Quick-Jump Bar */}
-      <div className="sticky top-3 z-20 space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-md backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/95">
+      <div className="sticky top-[62px] z-20 space-y-2.5 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary)/95 p-3 shadow-xs backdrop-blur-md">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <span
@@ -1051,10 +1061,10 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       {/* Lokasi / Venue */}
       <div
         id="sec-lokasi"
-        className="scroll-mt-32 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+        className="adm-card scroll-mt-36 p-4"
       >
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-(--adm-text-primary)">
             Lokasi / Venue Acara
           </h3>
           {rawConfig.VENUE_LAT && rawConfig.VENUE_LNG && (
@@ -1163,11 +1173,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       {/* Jadwal Akad & Resepsi */}
       <div
         id="sec-jadwal"
-        className="scroll-mt-32 space-y-5 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+        className="adm-card scroll-mt-36 space-y-4 p-4"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
+            <h3 className="text-sm font-semibold text-(--adm-text-primary)">
               Jadwal Akad Nikah & Resepsi
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -1204,10 +1214,10 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       {/* Hero & Media */}
       <div
         id="sec-media"
-        className="scroll-mt-32 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+        className="adm-card scroll-mt-36 p-4"
       >
-        <h3 className="mb-5 font-serif text-lg font-bold text-slate-800 italic dark:text-white">
-          Hero, Musik & Batas RSVP
+        <h3 className="mb-4 text-sm font-semibold text-(--adm-text-primary)">
+          Hero, Musik Backsound &amp; Batas RSVP
         </h3>
         <div className="grid gap-4 md:grid-cols-2">
           {renderPhotoField("HERO_IMAGE", "Gambar Utama (Hero)")}
@@ -1232,21 +1242,76 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
             />
           </div>
-          <div>
+          <div className="md:col-span-2">
             <label
               htmlFor="cfg-MUSIC_URL"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
+              className="mb-1.5 flex items-center gap-1.5 text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
             >
-              URL Musik Latar (MP3)
+              <Music className="h-3.5 w-3.5" /> Musik Latar / Backsound (MP3, M4A, OGG, WAV — Maks. 15 MB)
             </label>
-            <input
-              id="cfg-MUSIC_URL"
-              type="url"
-              value={rawConfig.MUSIC_URL ?? ""}
-              onChange={(e) => handleChange("MUSIC_URL", e.target.value)}
-              placeholder="https://.../lagu.mp3"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            />
+            <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+              <input
+                id="cfg-MUSIC_URL"
+                type="url"
+                value={rawConfig.MUSIC_URL ?? ""}
+                onChange={(e) => handleChange("MUSIC_URL", e.target.value)}
+                placeholder="https://.../lagu.mp3 atau klik Upload Audio"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+              <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                {uploadingKey === "MUSIC_URL" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                <span>
+                  {uploadingKey === "MUSIC_URL" ? "Mengunggah..." : "Upload Audio"}
+                </span>
+                <input
+                  type="file"
+                  accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,.mp3,.m4a,.ogg,.wav"
+                  className="hidden"
+                  disabled={uploadingKey !== null}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (f) {
+                      void uploadMediaFile(
+                        f,
+                        "MUSIC_URL",
+                        (url) => handleChange("MUSIC_URL", url),
+                        "audio"
+                      );
+                    }
+                  }}
+                />
+              </label>
+              {rawConfig.MUSIC_URL?.trim() && (
+                <button
+                  type="button"
+                  title="Hapus musik latar"
+                  aria-label="Hapus musik latar"
+                  onClick={() => handleChange("MUSIC_URL", "")}
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 p-2.5 text-red-600 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {rawConfig.MUSIC_URL?.trim() && (
+              <div className="mt-2.5 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/60">
+                <span className="text-[11px] font-semibold text-slate-500">
+                  Pratinjau Backsound:
+                </span>
+                <audio
+                  key={rawConfig.MUSIC_URL}
+                  controls
+                  preload="metadata"
+                  src={rawConfig.MUSIC_URL}
+                  className="h-8 flex-1"
+                />
+              </div>
+            )}
           </div>
           <div>
             <span className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400">
@@ -1290,9 +1355,9 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       {/* Teks & Konten */}
       <div
         id="sec-teks"
-        className="scroll-mt-32 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+        className="adm-card scroll-mt-36 p-4"
       >
-        <h3 className="mb-5 font-serif text-lg font-bold text-slate-800 italic dark:text-white">
+        <h3 className="mb-4 text-sm font-semibold text-(--adm-text-primary)">
           Teks & Konten Undangan
         </h3>
         <div className="grid gap-4 md:grid-cols-2">
@@ -1337,10 +1402,10 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       {/* WhatsApp Gateway */}
       <div
         id="sec-wa"
-        className="scroll-mt-32 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+        className="adm-card scroll-mt-36 p-4"
       >
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
+          <h3 className="text-sm font-semibold text-(--adm-text-primary)">
             Integrasi WhatsApp Gateway (whatsapp.zedlabs.id)
           </h3>
           <span className="rounded-full bg-green-100 px-3 py-1 text-[11px] font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
@@ -1560,7 +1625,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       {/* Rekening Bank Editor */}
       <div
         id="sec-rekening"
-        className="scroll-mt-32 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+        className="adm-card scroll-mt-36 p-4"
       >
         <datalist id="bank-presets-list">
           {BANK_PRESETS.map((bank) => (
@@ -1568,8 +1633,8 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           ))}
         </datalist>
 
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-(--adm-text-primary)">
             Rekening Bank (Amplop Digital)
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -1690,10 +1755,10 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       {/* Kisah Cinta Editor */}
       <div
         id="sec-story"
-        className="scroll-mt-32 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+        className="adm-card scroll-mt-36 p-4"
       >
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-(--adm-text-primary)">
             Kisah Cinta
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -1834,11 +1899,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       {/* Galeri Foto Editor */}
       <div
         id="sec-galeri"
-        className="scroll-mt-32 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+        className="adm-card scroll-mt-36 p-4"
       >
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-serif text-lg font-bold text-slate-800 italic dark:text-white">
+            <h3 className="text-sm font-semibold text-(--adm-text-primary)">
               Galeri Foto ({galleryImages.length})
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
