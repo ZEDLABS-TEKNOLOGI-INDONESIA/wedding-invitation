@@ -577,17 +577,14 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-(--adm-text-muted)" />
       </div>
     );
   }
 
   if (loadError) {
     return (
-      <div
-        role="alert"
-        className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm font-medium text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400"
-      >
+      <div role="alert" className="adm-alert adm-alert-danger">
         {loadError}
       </div>
     );
@@ -595,10 +592,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
 
   const renderPhotoField = (key: string, label: string, placeholder = "") => (
     <div>
-      <label
-        htmlFor={`cfg-${key}`}
-        className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-      >
+      <label htmlFor={`cfg-${key}`} className="adm-label">
         {label}
       </label>
       <div className="flex items-center gap-2">
@@ -606,7 +600,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           <img
             src={rawConfig[key]}
             alt={label}
-            className="h-11 w-11 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-slate-700"
+            className="h-9 w-9 shrink-0 rounded-md border border-(--adm-border) object-cover"
           />
         )}
         <input
@@ -615,13 +609,13 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           value={rawConfig[key] ?? ""}
           onChange={(e) => handleChange(key, e.target.value)}
           placeholder={placeholder || "https://... atau klik Upload"}
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          className="adm-input"
         />
-        <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+        <label className="adm-btn adm-btn-secondary shrink-0 cursor-pointer">
           {uploadingKey === key ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <Upload className="h-4 w-4" />
+            <Upload className="h-3.5 w-3.5" />
           )}
           <span className="hidden sm:inline">Upload</span>
           <input
@@ -642,54 +636,38 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
     </div>
   );
 
-  const renderCoupleCard = (
-    prefix: "BRIDE" | "GROOM",
-    title: string
-  ) => (
-    <div className="adm-card p-4">
-      <h3 className="mb-3.5 text-sm font-semibold text-(--adm-text-primary)">
-        {title}
-      </h3>
-      <div className="grid gap-4 md:grid-cols-2">
+  const renderCoupleCard = (prefix: "BRIDE" | "GROOM", title: string) => (
+    <div className="adm-card">
+      <div className="adm-card-header">
+        <h3 className="adm-card-title">{title}</h3>
+      </div>
+      <div className="adm-card-body grid gap-3.5 md:grid-cols-2">
         <div>
-          <label
-            htmlFor={`cfg-${prefix}_NICKNAME`}
-            className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-          >
+          <label htmlFor={`cfg-${prefix}_NICKNAME`} className="adm-label">
             Nama Panggilan
           </label>
           <input
             id={`cfg-${prefix}_NICKNAME`}
             type="text"
             value={rawConfig[`${prefix}_NICKNAME`] ?? ""}
-            onChange={(e) =>
-              handleChange(`${prefix}_NICKNAME`, e.target.value)
-            }
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            onChange={(e) => handleChange(`${prefix}_NICKNAME`, e.target.value)}
+            className="adm-input"
           />
         </div>
         <div>
-          <label
-            htmlFor={`cfg-${prefix}_FULLNAME`}
-            className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-          >
+          <label htmlFor={`cfg-${prefix}_FULLNAME`} className="adm-label">
             Nama Lengkap
           </label>
           <input
             id={`cfg-${prefix}_FULLNAME`}
             type="text"
             value={rawConfig[`${prefix}_FULLNAME`] ?? ""}
-            onChange={(e) =>
-              handleChange(`${prefix}_FULLNAME`, e.target.value)
-            }
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            onChange={(e) => handleChange(`${prefix}_FULLNAME`, e.target.value)}
+            className="adm-input"
           />
         </div>
         <div className="md:col-span-2">
-          <label
-            htmlFor={`cfg-${prefix}_PARENTS`}
-            className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-          >
+          <label htmlFor={`cfg-${prefix}_PARENTS`} className="adm-label">
             Nama Orang Tua
           </label>
           <input
@@ -698,18 +676,15 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             value={rawConfig[`${prefix}_PARENTS`] ?? ""}
             onChange={(e) => handleChange(`${prefix}_PARENTS`, e.target.value)}
             placeholder="Putri/Putra dari Bpk. ... & Ibu ..."
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="adm-input"
           />
         </div>
         <div>
-          <label
-            htmlFor={`cfg-${prefix}_INSTAGRAM`}
-            className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-          >
+          <label htmlFor={`cfg-${prefix}_INSTAGRAM`} className="adm-label">
             Instagram (Tempel URL atau Username)
           </label>
-          <div className="flex items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 focus-within:ring-2 focus-within:ring-blue-500 dark:border-slate-700 dark:bg-slate-900">
-            <span className="border-r border-slate-200 bg-slate-100 px-3 py-3 text-sm font-bold text-slate-500 dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex items-center overflow-hidden rounded-md border border-(--adm-border) bg-(--adm-bg-primary) focus-within:border-(--adm-accent) focus-within:ring-[3px] focus-within:ring-(--adm-accent-soft)">
+            <span className="border-r border-(--adm-border) bg-(--adm-bg-tertiary) px-2.5 py-2 text-xs font-semibold text-(--adm-text-secondary)">
               @
             </span>
             <input
@@ -723,7 +698,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                 )
               }
               placeholder="username_ig"
-              className="w-full bg-transparent px-3 py-3 text-sm outline-none dark:text-white"
+              className="w-full bg-transparent px-2.5 py-1.5 text-[13px] text-(--adm-text-primary) outline-none"
             />
           </div>
         </div>
@@ -737,10 +712,10 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
     title: string,
     schedule: { dateYmd: string; startTime: string; endTime: string }
   ) => (
-    <div className="space-y-4 rounded-xl border border-slate-100 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+    <div className="space-y-3 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white">
-          <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <h4 className="flex items-center gap-1.5 text-[13px] font-semibold text-(--adm-text-primary)">
+          <Calendar className="h-3.5 w-3.5 text-(--adm-accent)" />
           {title}
         </h4>
         {prefix === "RESEPSI" && akadSchedule.dateYmd && (
@@ -749,19 +724,16 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             onClick={() =>
               updateSchedule("RESEPSI", { dateYmd: akadSchedule.dateYmd })
             }
-            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-100 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-300"
+            className="adm-btn adm-btn-outline-primary adm-btn-sm"
           >
             <Copy className="h-3 w-3" /> Samakan Tanggal dengan Akad
           </button>
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-4">
         <div className="md:col-span-4">
-          <label
-            htmlFor={`cfg-${prefix}_TITLE`}
-            className="mb-1 block text-xs font-bold text-slate-500 uppercase"
-          >
+          <label htmlFor={`cfg-${prefix}_TITLE`} className="adm-label">
             Judul Acara
           </label>
           <input
@@ -769,15 +741,12 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             type="text"
             value={rawConfig[`${prefix}_TITLE`] ?? ""}
             onChange={(e) => handleChange(`${prefix}_TITLE`, e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="adm-input bg-(--adm-bg-secondary)"
           />
         </div>
 
         <div className="md:col-span-2">
-          <label
-            htmlFor={`picker-${prefix}-date`}
-            className="mb-1 block text-xs font-bold text-slate-500 uppercase"
-          >
+          <label htmlFor={`picker-${prefix}-date`} className="adm-label">
             Pilih Tanggal
           </label>
           <input
@@ -787,14 +756,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             onChange={(e) =>
               updateSchedule(prefix, { dateYmd: e.target.value })
             }
-            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="adm-input bg-(--adm-bg-secondary)"
           />
         </div>
         <div>
-          <label
-            htmlFor={`picker-${prefix}-start`}
-            className="mb-1 block text-xs font-bold text-slate-500 uppercase"
-          >
+          <label htmlFor={`picker-${prefix}-start`} className="adm-label">
             Jam Mulai
           </label>
           <input
@@ -804,14 +770,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             onChange={(e) =>
               updateSchedule(prefix, { startTime: e.target.value })
             }
-            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="adm-input bg-(--adm-bg-secondary)"
           />
         </div>
         <div>
-          <label
-            htmlFor={`picker-${prefix}-end`}
-            className="mb-1 block text-xs font-bold text-slate-500 uppercase"
-          >
+          <label htmlFor={`picker-${prefix}-end`} className="adm-label">
             Jam Selesai
           </label>
           <input
@@ -821,16 +784,17 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             onChange={(e) =>
               updateSchedule(prefix, { endTime: e.target.value })
             }
-            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="adm-input bg-(--adm-bg-secondary)"
           />
         </div>
       </div>
 
-      {/* Live Preview */}
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs dark:border-slate-700 dark:bg-slate-800">
-        <Clock className="h-3.5 w-3.5 text-slate-400" />
-        <span className="text-slate-500">Tampilan di undangan:</span>
-        <strong className="text-slate-800 dark:text-white">
+      <div className="flex flex-wrap items-center gap-2 rounded-md border border-(--adm-border) bg-(--adm-bg-secondary) px-3 py-2 text-xs">
+        <Clock className="h-3.5 w-3.5 text-(--adm-text-muted)" />
+        <span className="text-(--adm-text-secondary)">
+          Tampilan di undangan:
+        </span>
+        <strong className="font-semibold text-(--adm-text-primary)">
           {rawConfig[`${prefix}_DAY`] || "-"},{" "}
           {rawConfig[`${prefix}_DATE`] || "-"} ·{" "}
           {rawConfig[`${prefix}_START`] || "--:--"} -{" "}
@@ -839,33 +803,31 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
         </strong>
       </div>
 
-      <details className="text-xs text-slate-500">
-        <summary className="cursor-pointer font-medium hover:text-slate-700 dark:hover:text-slate-300">
+      <details className="text-xs text-(--adm-text-secondary)">
+        <summary className="cursor-pointer font-medium hover:text-(--adm-text-primary)">
           Opsi lanjutan (teks khusus seperti &quot;Selesai&quot; / ISO)
         </summary>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <div className="mt-2.5 grid gap-3 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase">
+            <label className="adm-label">
               Teks Jam Selesai (Opsional, mis. &quot;Selesai&quot;)
             </label>
             <input
               type="text"
               value={rawConfig[`${prefix}_END`] ?? ""}
               onChange={(e) => handleChange(`${prefix}_END`, e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="adm-input adm-input-sm bg-(--adm-bg-secondary)"
             />
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase">
-              ISO Start (Otomatis)
-            </label>
+            <label className="adm-label">ISO Start (Otomatis)</label>
             <input
               type="text"
               value={rawConfig[`${prefix}_ISO_START`] ?? ""}
               onChange={(e) =>
                 handleChange(`${prefix}_ISO_START`, e.target.value)
               }
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="adm-input adm-input-sm bg-(--adm-bg-secondary) font-mono"
             />
           </div>
         </div>
@@ -890,7 +852,9 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           ["VENUE_NAME", "The Royal Ballroom"],
           ["HERO_CITY", "Jakarta Selatan"],
         ]}
-        pastePlaceholder={"BRIDE_NICKNAME,Fey\nGROOM_NICKNAME,Yaya\nVENUE_NAME,The Royal Ballroom"}
+        pastePlaceholder={
+          "BRIDE_NICKNAME,Fey\nGROOM_NICKNAME,Yaya\nVENUE_NAME,The Royal Ballroom"
+        }
         parseText={(txt) => parseConfigCsvText(txt, ALLOWED_CSV_CONFIG_SET)}
         columns={[
           {
@@ -929,11 +893,19 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           ["Bank BCA", "1234567890", "Fera Oktapia"],
           ["Bank Mandiri", "0987654321", "Yahya Zulfikri"],
         ]}
-        pastePlaceholder={"Bank BCA,1234567890,Fera Oktapia\nGoPay,081234567890,Yahya Zulfikri"}
+        pastePlaceholder={
+          "Bank BCA,1234567890,Fera Oktapia\nGoPay,081234567890,Yahya Zulfikri"
+        }
         parseText={parseBankAccountsText}
         columns={[
-          { header: "Bank / E-Wallet", render: (r) => <strong>{r.bank}</strong> },
-          { header: "No. Rekening", render: (r) => <span className="font-mono">{r.number}</span> },
+          {
+            header: "Bank / E-Wallet",
+            render: (r) => <strong>{r.bank}</strong>,
+          },
+          {
+            header: "No. Rekening",
+            render: (r) => <span className="font-mono">{r.number}</span>,
+          },
           { header: "Atas Nama", render: (r) => r.name },
         ]}
         onConfirm={(rows) => {
@@ -958,12 +930,17 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
           ["2020", "Awal Pertemuan", "Pertama kali bertemu di kampus."],
           ["2024", "Lamaran", "Resmi mengikat janji di hadapan keluarga."],
         ]}
-        pastePlaceholder={"2020,Awal Pertemuan,Pertama kali bertemu di kampus.\n2024,Lamaran,Resmi mengikat janji."}
+        pastePlaceholder={
+          "2020,Awal Pertemuan,Pertama kali bertemu di kampus.\n2024,Lamaran,Resmi mengikat janji."
+        }
         parseText={parseLoveStoryText}
         columns={[
           { header: "Tahun", render: (r) => <strong>{r.date}</strong> },
           { header: "Judul", render: (r) => r.title },
-          { header: "Cerita", render: (r) => <span className="line-clamp-2">{r.desc}</span> },
+          {
+            header: "Cerita",
+            render: (r) => <span className="line-clamp-2">{r.desc}</span>,
+          },
         ]}
         onConfirm={(rows) => {
           setLoveStory((prev) => [...prev, ...rows]);
@@ -978,24 +955,26 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       />
 
       {saveError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400"
-        >
+        <div role="alert" className="adm-alert adm-alert-danger">
           {saveError}
         </div>
       )}
 
       {/* Sticky Action & Quick-Jump Bar */}
-      <div className="sticky top-[62px] z-20 space-y-2.5 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary)/95 p-3 shadow-xs backdrop-blur-md">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+      <div
+        data-tour="settings-sticky-bar"
+        className="sticky top-[62px] z-20 space-y-2.5 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary)/95 p-3 shadow-xs backdrop-blur-md"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2">
             <span
-              className={`h-2.5 w-2.5 rounded-full ${
-                hasUnsaved ? "animate-pulse bg-amber-500" : "bg-green-500"
+              className={`h-2 w-2 rounded-full ${
+                hasUnsaved
+                  ? "animate-pulse bg-(--adm-yellow)"
+                  : "bg-(--adm-green)"
               }`}
             />
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <span className="text-xs font-medium text-(--adm-text-secondary)">
               {hasUnsaved
                 ? "Ada perubahan belum disimpan"
                 : "Semua perubahan tersimpan"}
@@ -1006,14 +985,14 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             <button
               type="button"
               onClick={() => setCsvModalType("config")}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="adm-btn adm-btn-outline-primary adm-btn-sm"
             >
               <Upload className="h-3.5 w-3.5" /> Import CSV
             </button>
             <button
               type="button"
               onClick={handleExportConfigCsv}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="adm-btn adm-btn-secondary adm-btn-sm"
             >
               <Download className="h-3.5 w-3.5" /> Export CSV
             </button>
@@ -1021,18 +1000,14 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-all disabled:opacity-50 ${
-                saved
-                  ? "bg-green-600"
-                  : hasUnsaved
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : "bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+              className={`adm-btn adm-btn-sm ${
+                saved ? "adm-btn-edit" : "adm-btn-primary"
               }`}
             >
               {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Save className="h-4 w-4" />
+                <Save className="h-3.5 w-3.5" />
               )}
               {saved ? "Tersimpan!" : "Simpan Semua"}
             </button>
@@ -1044,7 +1019,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             <a
               key={item.id}
               href={`#${item.id}`}
-              className="rounded-lg bg-slate-100 px-3 py-1 text-[11px] font-bold whitespace-nowrap text-slate-600 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-2.5 py-1 text-[11px] font-medium whitespace-nowrap text-(--adm-text-secondary) hover:border-(--adm-accent) hover:text-(--adm-accent)"
             >
               {item.label}
             </a>
@@ -1059,32 +1034,24 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       </div>
 
       {/* Lokasi / Venue */}
-      <div
-        id="sec-lokasi"
-        className="adm-card scroll-mt-36 p-4"
-      >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-(--adm-text-primary)">
-            Lokasi / Venue Acara
-          </h3>
+      <div id="sec-lokasi" className="adm-card scroll-mt-36">
+        <div className="adm-card-header">
+          <h3 className="adm-card-title">Lokasi / Venue Acara</h3>
           {rawConfig.VENUE_LAT && rawConfig.VENUE_LNG && (
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawConfig.VENUE_LAT)},${encodeURIComponent(rawConfig.VENUE_LNG)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-300"
+              className="adm-btn adm-btn-outline-primary adm-btn-sm"
             >
-              <ExternalLink className="h-3.5 w-3.5" /> Cek Titik di Google Maps
+              <ExternalLink className="h-3.5 w-3.5" /> Cek di Google Maps
             </a>
           )}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="adm-card-body grid gap-3.5 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label
-              htmlFor="cfg-VENUE_NAME"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
+            <label htmlFor="cfg-VENUE_NAME" className="adm-label">
               Nama Gedung / Tempat
             </label>
             <input
@@ -1092,14 +1059,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               type="text"
               value={rawConfig.VENUE_NAME ?? ""}
               onChange={(e) => handleChange("VENUE_NAME", e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="adm-input"
             />
           </div>
           <div className="md:col-span-2">
-            <label
-              htmlFor="cfg-VENUE_ADDRESS"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
+            <label htmlFor="cfg-VENUE_ADDRESS" className="adm-label">
               Alamat Lengkap
             </label>
             <textarea
@@ -1107,15 +1071,14 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               rows={2}
               value={rawConfig.VENUE_ADDRESS ?? ""}
               onChange={(e) => handleChange("VENUE_ADDRESS", e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="adm-input"
             />
           </div>
 
-          {/* Smart Google Maps Link Extractor */}
-          <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 md:col-span-2 dark:border-blue-900/30 dark:bg-blue-900/15">
+          <div className="adm-alert flex-col items-stretch md:col-span-2">
             <label
               htmlFor="maps-smart-input"
-              className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-blue-700 uppercase dark:text-blue-300"
+              className="flex items-center gap-1.5 text-xs font-semibold text-(--adm-accent)"
             >
               <MapPin className="h-3.5 w-3.5" /> Isi Cepat Koordinat dari Link
               Google Maps
@@ -1126,20 +1089,15 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               value={mapsUrlInput}
               onChange={(e) => handleMapsPaste(e.target.value)}
               placeholder="Tempel link Google Maps (contoh: https://www.google.com/maps/place/.../@-6.303,106.101,17z) atau -6.303, 106.101"
-              className="w-full rounded-lg border border-blue-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="adm-input bg-(--adm-bg-secondary)"
             />
             {mapsExtractMsg && (
-              <p className="mt-1.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-                {mapsExtractMsg}
-              </p>
+              <p className="text-xs text-(--adm-accent)">{mapsExtractMsg}</p>
             )}
           </div>
 
           <div>
-            <label
-              htmlFor="cfg-VENUE_LAT"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
+            <label htmlFor="cfg-VENUE_LAT" className="adm-label">
               Latitude (Otomatis dari Link di Atas)
             </label>
             <input
@@ -1148,14 +1106,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               value={rawConfig.VENUE_LAT ?? ""}
               onChange={(e) => handleChange("VENUE_LAT", e.target.value)}
               placeholder="-6.3032707"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="adm-input font-mono"
             />
           </div>
           <div>
-            <label
-              htmlFor="cfg-VENUE_LNG"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
+            <label htmlFor="cfg-VENUE_LNG" className="adm-label">
               Longitude (Otomatis dari Link di Atas)
             </label>
             <input
@@ -1164,39 +1119,29 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               value={rawConfig.VENUE_LNG ?? ""}
               onChange={(e) => handleChange("VENUE_LNG", e.target.value)}
               placeholder="106.1011039"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="adm-input font-mono"
             />
           </div>
         </div>
       </div>
 
       {/* Jadwal Akad & Resepsi */}
-      <div
-        id="sec-jadwal"
-        className="adm-card scroll-mt-36 space-y-4 p-4"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div id="sec-jadwal" className="adm-card scroll-mt-36">
+        <div className="adm-card-header">
           <div>
-            <h3 className="text-sm font-semibold text-(--adm-text-primary)">
-              Jadwal Akad Nikah & Resepsi
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Cukup pilih tanggal & jam — nama hari, format tanggal Indonesia,
-              dan jadwal kalender (ISO) otomatis disesuaikan.
+            <h3 className="adm-card-title">Jadwal Akad Nikah &amp; Resepsi</h3>
+            <p className="adm-card-desc">
+              Pilih tanggal &amp; jam — nama hari, tanggal Indonesia, dan ISO
+              kalender otomatis sinkron.
             </p>
           </div>
           <div className="w-full sm:w-64">
-            <label
-              htmlFor="cfg-EVENT_TIMEZONE"
-              className="mb-1 block text-[11px] font-bold text-slate-500 uppercase"
-            >
-              Zona Waktu Acara
-            </label>
             <select
               id="cfg-EVENT_TIMEZONE"
+              aria-label="Zona Waktu Acara"
               value={rawConfig.EVENT_TIMEZONE || "WIB"}
               onChange={(e) => handleTimezoneChange(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="adm-input adm-input-sm"
             >
               {TIMEZONE_OPTIONS.map((tz) => (
                 <option key={tz.value} value={tz.value}>
@@ -1206,20 +1151,24 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             </select>
           </div>
         </div>
-
-        {renderEventScheduleCard("AKAD", "Akad Nikah", akadSchedule)}
-        {renderEventScheduleCard("RESEPSI", "Resepsi Pernikahan", resepsiSchedule)}
+        <div className="adm-card-body space-y-4">
+          {renderEventScheduleCard("AKAD", "Akad Nikah", akadSchedule)}
+          {renderEventScheduleCard(
+            "RESEPSI",
+            "Resepsi Pernikahan",
+            resepsiSchedule
+          )}
+        </div>
       </div>
 
       {/* Hero & Media */}
-      <div
-        id="sec-media"
-        className="adm-card scroll-mt-36 p-4"
-      >
-        <h3 className="mb-4 text-sm font-semibold text-(--adm-text-primary)">
-          Hero, Musik Backsound &amp; Batas RSVP
-        </h3>
-        <div className="grid gap-4 md:grid-cols-2">
+      <div id="sec-media" className="adm-card scroll-mt-36">
+        <div className="adm-card-header">
+          <h3 className="adm-card-title">
+            Hero, Musik Backsound &amp; Batas RSVP
+          </h3>
+        </div>
+        <div className="adm-card-body grid gap-3.5 md:grid-cols-2">
           {renderPhotoField("HERO_IMAGE", "Gambar Utama (Hero)")}
           {renderPhotoField(
             "ENVELOPE_IMAGE",
@@ -1227,10 +1176,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             "Kosongkan untuk mengikuti gambar Hero"
           )}
           <div>
-            <label
-              htmlFor="cfg-HERO_CITY"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
+            <label htmlFor="cfg-HERO_CITY" className="adm-label">
               Kota / Wilayah
             </label>
             <input
@@ -1239,15 +1185,51 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               value={rawConfig.HERO_CITY ?? ""}
               onChange={(e) => handleChange("HERO_CITY", e.target.value)}
               placeholder="Kab. Pandeglang, Banten"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="adm-input"
             />
           </div>
+          <div>
+            <span className="adm-label">Maksimal Tamu per RSVP</span>
+            <div className="inline-flex items-center gap-1 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-0.5">
+              <button
+                type="button"
+                aria-label="Kurangi batas tamu"
+                onClick={() =>
+                  handleChange(
+                    "RSVP_MAX_GUESTS",
+                    String(Math.max(1, maxGuestsVal - 1))
+                  )
+                }
+                className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <span className="w-16 text-center text-xs font-semibold tabular-nums">
+                {maxGuestsVal} Orang
+              </span>
+              <button
+                type="button"
+                aria-label="Tambah batas tamu"
+                onClick={() =>
+                  handleChange(
+                    "RSVP_MAX_GUESTS",
+                    String(Math.min(100, maxGuestsVal + 1))
+                  )
+                }
+                className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
           <div className="md:col-span-2">
             <label
               htmlFor="cfg-MUSIC_URL"
-              className="mb-1.5 flex items-center gap-1.5 text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
+              className="adm-label flex items-center gap-1.5"
             >
-              <Music className="h-3.5 w-3.5" /> Musik Latar / Backsound (MP3, M4A, OGG, WAV — Maks. 15 MB)
+              <Music className="h-3.5 w-3.5 text-(--adm-accent)" /> Musik Latar
+              / Backsound (MP3, M4A, OGG, WAV — Maks. 15 MB)
             </label>
             <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
               <input
@@ -1256,16 +1238,18 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                 value={rawConfig.MUSIC_URL ?? ""}
                 onChange={(e) => handleChange("MUSIC_URL", e.target.value)}
                 placeholder="https://.../lagu.mp3 atau klik Upload Audio"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                className="adm-input"
               />
-              <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+              <label className="adm-btn adm-btn-secondary shrink-0 cursor-pointer">
                 {uploadingKey === "MUSIC_URL" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Upload className="h-4 w-4" />
+                  <Upload className="h-3.5 w-3.5" />
                 )}
                 <span>
-                  {uploadingKey === "MUSIC_URL" ? "Mengunggah..." : "Upload Audio"}
+                  {uploadingKey === "MUSIC_URL"
+                    ? "Mengunggah..."
+                    : "Upload Audio"}
                 </span>
                 <input
                   type="file"
@@ -1292,15 +1276,15 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                   title="Hapus musik latar"
                   aria-label="Hapus musik latar"
                   onClick={() => handleChange("MUSIC_URL", "")}
-                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 p-2.5 text-red-600 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400"
+                  className="adm-btn-aksi aksi-hapus h-[34px] w-[34px] shrink-0"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               )}
             </div>
             {rawConfig.MUSIC_URL?.trim() && (
-              <div className="mt-2.5 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/60">
-                <span className="text-[11px] font-semibold text-slate-500">
+              <div className="mt-2.5 flex flex-wrap items-center gap-3 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-3 py-2">
+                <span className="text-[11px] font-medium text-(--adm-text-secondary)">
                   Pratinjau Backsound:
                 </span>
                 <audio
@@ -1313,54 +1297,15 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
               </div>
             )}
           </div>
-          <div>
-            <span className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400">
-              Maksimal Tamu per RSVP
-            </span>
-            <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1.5 dark:border-slate-700 dark:bg-slate-900">
-              <button
-                type="button"
-                aria-label="Kurangi batas tamu"
-                onClick={() =>
-                  handleChange(
-                    "RSVP_MAX_GUESTS",
-                    String(Math.max(1, maxGuestsVal - 1))
-                  )
-                }
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-sm hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <span className="w-20 text-center text-sm font-bold">
-                {maxGuestsVal} Orang
-              </span>
-              <button
-                type="button"
-                aria-label="Tambah batas tamu"
-                onClick={() =>
-                  handleChange(
-                    "RSVP_MAX_GUESTS",
-                    String(Math.min(100, maxGuestsVal + 1))
-                  )
-                }
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-sm hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Teks & Konten */}
-      <div
-        id="sec-teks"
-        className="adm-card scroll-mt-36 p-4"
-      >
-        <h3 className="mb-4 text-sm font-semibold text-(--adm-text-primary)">
-          Teks & Konten Undangan
-        </h3>
-        <div className="grid gap-4 md:grid-cols-2">
+      <div id="sec-teks" className="adm-card scroll-mt-36">
+        <div className="adm-card-header">
+          <h3 className="adm-card-title">Teks &amp; Konten Undangan</h3>
+        </div>
+        <div className="adm-card-body grid gap-3.5 md:grid-cols-2">
           {TEXT_CONTENT_FIELDS.map((field) => {
             const fieldId = `cfg-${field.key}`;
             return (
@@ -1368,10 +1313,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                 key={field.key}
                 className={field.type === "textarea" ? "md:col-span-2" : ""}
               >
-                <label
-                  htmlFor={fieldId}
-                  className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-                >
+                <label htmlFor={fieldId} className="adm-label">
                   {field.label}
                 </label>
                 {field.type === "textarea" ? (
@@ -1381,7 +1323,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                     value={rawConfig[field.key] ?? ""}
                     onChange={(e) => handleChange(field.key, e.target.value)}
                     placeholder={field.placeholder}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                    className="adm-input"
                   />
                 ) : (
                   <input
@@ -1390,7 +1332,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                     value={rawConfig[field.key] ?? ""}
                     onChange={(e) => handleChange(field.key, e.target.value)}
                     placeholder={field.placeholder}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                    className="adm-input"
                   />
                 )}
               </div>
@@ -1400,248 +1342,244 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       </div>
 
       {/* WhatsApp Gateway */}
-      <div
-        id="sec-wa"
-        className="adm-card scroll-mt-36 p-4"
-      >
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-(--adm-text-primary)">
-            Integrasi WhatsApp Gateway (whatsapp.zedlabs.id)
-          </h3>
-          <span className="rounded-full bg-green-100 px-3 py-1 text-[11px] font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
-            HMAC-SHA256 v2
-          </span>
+      <div id="sec-wa" className="adm-card scroll-mt-36">
+        <div className="adm-card-header">
+          <div>
+            <h3 className="adm-card-title">
+              Integrasi WhatsApp Gateway (whatsapp.zedlabs.id)
+            </h3>
+            <p className="adm-card-desc">
+              Notifikasi admin/mempelai, kirim undangan otomatis, dan konfirmasi
+              tamu setelah RSVP.
+            </p>
+          </div>
+          <span className="adm-badge adm-badge-success">HMAC-SHA256 v2</span>
         </div>
-        <p className="mb-6 text-xs text-slate-500 dark:text-slate-400">
-          Digunakan untuk notifikasi admin/mempelai, kirim undangan otomatis,
-          dan konfirmasi otomatis ke tamu setelah RSVP.
-        </p>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="cfg-WA_BASE_URL"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
-              URL Gateway
-            </label>
-            <input
-              id="cfg-WA_BASE_URL"
-              type="url"
-              value={rawConfig.WA_BASE_URL ?? "https://whatsapp.zedlabs.id"}
-              onChange={(e) => handleChange("WA_BASE_URL", e.target.value)}
-              placeholder="https://whatsapp.zedlabs.id"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="cfg-WA_API_KEY"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
-              API Key (key_id)
-            </label>
-            <input
-              id="cfg-WA_API_KEY"
-              type="text"
-              value={rawConfig.WA_API_KEY ?? ""}
-              onChange={(e) => handleChange("WA_API_KEY", e.target.value)}
-              placeholder="key_xxxxxxxxxxxx"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="cfg-WA_API_SECRET"
-              className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-            >
-              HMAC Secret
-            </label>
-            <div className="relative">
-              <input
-                id="cfg-WA_API_SECRET"
-                type={showWaSecret ? "text" : "password"}
-                value={rawConfig.WA_API_SECRET ?? ""}
-                onChange={(e) => handleChange("WA_API_SECRET", e.target.value)}
-                placeholder="Secret HMAC API Key"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pr-11 pl-4 font-mono text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-              />
-              <button
-                type="button"
-                aria-label={
-                  showWaSecret ? "Sembunyikan secret" : "Tampilkan secret"
-                }
-                onClick={() => setShowWaSecret((prev) => !prev)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                {showWaSecret ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <label
-                htmlFor="cfg-WA_ADMIN_NUMBERS"
-                className="block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400"
-              >
-                Nomor WA Admin / Mempelai (pisah koma)
+        <div className="adm-card-body space-y-4">
+          <div className="grid gap-3.5 md:grid-cols-2">
+            <div>
+              <label htmlFor="cfg-WA_BASE_URL" className="adm-label">
+                URL Gateway
               </label>
-              {adminWaCount > 0 && (
-                <span className="rounded bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                  {adminWaCount} nomor aktif
-                </span>
-              )}
+              <input
+                id="cfg-WA_BASE_URL"
+                type="url"
+                value={rawConfig.WA_BASE_URL ?? "https://whatsapp.zedlabs.id"}
+                onChange={(e) => handleChange("WA_BASE_URL", e.target.value)}
+                placeholder="https://whatsapp.zedlabs.id"
+                className="adm-input"
+              />
             </div>
-            <input
-              id="cfg-WA_ADMIN_NUMBERS"
-              type="text"
-              value={rawConfig.WA_ADMIN_NUMBERS ?? ""}
-              onChange={(e) => handleChange("WA_ADMIN_NUMBERS", e.target.value)}
-              placeholder="081234567890, 089876543210"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            />
+            <div>
+              <label htmlFor="cfg-WA_API_KEY" className="adm-label">
+                API Key (key_id)
+              </label>
+              <input
+                id="cfg-WA_API_KEY"
+                type="text"
+                value={rawConfig.WA_API_KEY ?? ""}
+                onChange={(e) => handleChange("WA_API_KEY", e.target.value)}
+                placeholder="key_xxxxxxxxxxxx"
+                className="adm-input font-mono"
+              />
+            </div>
+            <div>
+              <label htmlFor="cfg-WA_API_SECRET" className="adm-label">
+                HMAC Secret
+              </label>
+              <div className="relative">
+                <input
+                  id="cfg-WA_API_SECRET"
+                  type={showWaSecret ? "text" : "password"}
+                  value={rawConfig.WA_API_SECRET ?? ""}
+                  onChange={(e) =>
+                    handleChange("WA_API_SECRET", e.target.value)
+                  }
+                  placeholder="Secret HMAC API Key"
+                  className="adm-input pr-10 font-mono"
+                />
+                <button
+                  type="button"
+                  aria-label={
+                    showWaSecret ? "Sembunyikan secret" : "Tampilkan secret"
+                  }
+                  onClick={() => setShowWaSecret((prev) => !prev)}
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 text-(--adm-text-muted) hover:text-(--adm-text-primary)"
+                >
+                  {showWaSecret ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 flex items-center justify-between">
+                <label
+                  htmlFor="cfg-WA_ADMIN_NUMBERS"
+                  className="text-xs font-semibold text-(--adm-text-secondary)"
+                >
+                  Nomor WA Admin / Mempelai (pisah koma)
+                </label>
+                {adminWaCount > 0 && (
+                  <span className="adm-badge adm-badge-success text-[10px]">
+                    {adminWaCount} nomor aktif
+                  </span>
+                )}
+              </div>
+              <input
+                id="cfg-WA_ADMIN_NUMBERS"
+                type="text"
+                value={rawConfig.WA_ADMIN_NUMBERS ?? ""}
+                onChange={(e) =>
+                  handleChange("WA_ADMIN_NUMBERS", e.target.value)
+                }
+                placeholder="081234567890, 089876543210"
+                className="adm-input"
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 md:grid-cols-3 dark:border-slate-700">
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40">
-            <input
-              type="checkbox"
-              checked={(rawConfig.WA_NOTIFY_ADMIN_RSVP ?? "true") === "true"}
-              onChange={(e) =>
-                handleChange(
-                  "WA_NOTIFY_ADMIN_RSVP",
-                  e.target.checked ? "true" : "false"
-                )
-              }
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
-            />
-            <span>
-              <strong className="block text-slate-800 dark:text-slate-200">
-                Notif RSVP ke Admin
-              </strong>
-              Kirim WA ke admin/mempelai saat tamu mengisi atau mengubah RSVP.
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40">
-            <input
-              type="checkbox"
-              checked={(rawConfig.WA_NOTIFY_ADMIN_WISH ?? "true") === "true"}
-              onChange={(e) =>
-                handleChange(
-                  "WA_NOTIFY_ADMIN_WISH",
-                  e.target.checked ? "true" : "false"
-                )
-              }
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
-            />
-            <span>
-              <strong className="block text-slate-800 dark:text-slate-200">
-                Notif Ucapan ke Admin
-              </strong>
-              Kirim WA ke admin/mempelai saat ada ucapan & doa baru masuk.
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40">
-            <input
-              type="checkbox"
-              checked={(rawConfig.WA_AUTO_CONFIRM_GUEST ?? "true") === "true"}
-              onChange={(e) =>
-                handleChange(
-                  "WA_AUTO_CONFIRM_GUEST",
-                  e.target.checked ? "true" : "false"
-                )
-              }
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
-            />
-            <span>
-              <strong className="block text-slate-800 dark:text-slate-200">
-                Konfirmasi Otomatis Tamu
-              </strong>
-              Balas otomatis ke WA tamu berisi ringkasan RSVP & info acara.
-            </span>
-          </label>
-        </div>
+          <div className="grid gap-3 border-t border-(--adm-border) pt-4 md:grid-cols-3">
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-3 text-xs">
+              <input
+                type="checkbox"
+                checked={(rawConfig.WA_NOTIFY_ADMIN_RSVP ?? "true") === "true"}
+                onChange={(e) =>
+                  handleChange(
+                    "WA_NOTIFY_ADMIN_RSVP",
+                    e.target.checked ? "true" : "false"
+                  )
+                }
+                className="mt-0.5 h-4 w-4 accent-(--adm-accent)"
+              />
+              <span>
+                <strong className="block font-semibold text-(--adm-text-primary)">
+                  Notif RSVP ke Admin
+                </strong>
+                <span className="text-(--adm-text-secondary)">
+                  Kirim WA ke admin saat tamu mengisi atau mengubah RSVP.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-3 text-xs">
+              <input
+                type="checkbox"
+                checked={(rawConfig.WA_NOTIFY_ADMIN_WISH ?? "true") === "true"}
+                onChange={(e) =>
+                  handleChange(
+                    "WA_NOTIFY_ADMIN_WISH",
+                    e.target.checked ? "true" : "false"
+                  )
+                }
+                className="mt-0.5 h-4 w-4 accent-(--adm-accent)"
+              />
+              <span>
+                <strong className="block font-semibold text-(--adm-text-primary)">
+                  Notif Ucapan ke Admin
+                </strong>
+                <span className="text-(--adm-text-secondary)">
+                  Kirim WA ke admin saat ada ucapan &amp; doa baru masuk.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-3 text-xs">
+              <input
+                type="checkbox"
+                checked={(rawConfig.WA_AUTO_CONFIRM_GUEST ?? "true") === "true"}
+                onChange={(e) =>
+                  handleChange(
+                    "WA_AUTO_CONFIRM_GUEST",
+                    e.target.checked ? "true" : "false"
+                  )
+                }
+                className="mt-0.5 h-4 w-4 accent-(--adm-accent)"
+              />
+              <span>
+                <strong className="block font-semibold text-(--adm-text-primary)">
+                  Konfirmasi Otomatis Tamu
+                </strong>
+                <span className="text-(--adm-text-secondary)">
+                  Balas otomatis ke WA tamu berisi ringkasan RSVP &amp; info
+                  acara.
+                </span>
+              </span>
+            </label>
+          </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-700">
-          <button
-            type="button"
-            onClick={() => handleWaAction("ping")}
-            disabled={waActionLoading !== null}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            {waActionLoading === "ping" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Wifi className="h-3.5 w-3.5" />
-            )}
-            Uji Koneksi (Ping)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleWaAction("sync")}
-            disabled={waActionLoading !== null}
-            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700 disabled:opacity-50"
-          >
-            {waActionLoading === "sync" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCcw className="h-3.5 w-3.5" />
-            )}
-            Sinkron 4 Template ke Gateway
-          </button>
-          <button
-            type="button"
-            onClick={() => handleWaAction("test")}
-            disabled={waActionLoading !== null}
-            className="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300"
-          >
-            {waActionLoading === "test" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Send className="h-3.5 w-3.5" />
-            )}
-            Kirim Pesan Tes
-          </button>
-        </div>
+          <div className="flex flex-wrap items-center gap-2 border-t border-(--adm-border) pt-4">
+            <button
+              type="button"
+              onClick={() => handleWaAction("ping")}
+              disabled={waActionLoading !== null}
+              className="adm-btn adm-btn-secondary"
+            >
+              {waActionLoading === "ping" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Wifi className="h-3.5 w-3.5" />
+              )}
+              Uji Koneksi (Ping)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleWaAction("sync")}
+              disabled={waActionLoading !== null}
+              className="adm-btn adm-btn-edit"
+            >
+              {waActionLoading === "sync" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCcw className="h-3.5 w-3.5" />
+              )}
+              Sinkron 4 Template ke Gateway
+            </button>
+            <button
+              type="button"
+              onClick={() => handleWaAction("test")}
+              disabled={waActionLoading !== null}
+              className="adm-btn adm-btn-outline-edit"
+            >
+              {waActionLoading === "test" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Send className="h-3.5 w-3.5" />
+              )}
+              Kirim Pesan Tes
+            </button>
+          </div>
 
-        {waFeedback && (
-          <p
-            className={`mt-3 text-xs font-medium ${
-              waFeedback.type === "success"
-                ? "text-green-600 dark:text-green-400"
-                : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {waFeedback.message}
-          </p>
-        )}
+          {waFeedback && (
+            <div
+              className={`adm-alert text-xs ${
+                waFeedback.type === "success"
+                  ? "adm-alert-success"
+                  : "adm-alert-danger"
+              }`}
+            >
+              {waFeedback.message}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Rekening Bank Editor */}
-      <div
-        id="sec-rekening"
-        className="adm-card scroll-mt-36 p-4"
-      >
+      <div id="sec-rekening" className="adm-card scroll-mt-36">
         <datalist id="bank-presets-list">
           {BANK_PRESETS.map((bank) => (
             <option key={bank} value={bank} />
           ))}
         </datalist>
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold text-(--adm-text-primary)">
-            Rekening Bank (Amplop Digital)
-          </h3>
+        <div className="adm-card-header">
+          <h3 className="adm-card-title">Rekening Bank (Amplop Digital)</h3>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setCsvModalType("bank")}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+              className="adm-btn adm-btn-outline-primary adm-btn-sm"
             >
               <Upload className="h-3.5 w-3.5" /> Import CSV
             </button>
@@ -1654,15 +1592,15 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                 ]);
                 setHasUnsaved(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+              className="adm-btn adm-btn-primary adm-btn-sm"
             >
               <Plus className="h-3.5 w-3.5" /> Tambah Rekening
             </button>
           </div>
         </div>
-        <div className="space-y-4">
+        <div className="adm-card-body space-y-3">
           {bankAccounts.length === 0 ? (
-            <p className="text-sm text-slate-400 italic">
+            <p className="text-xs text-(--adm-text-secondary)">
               Belum ada rekening bank. Klik &quot;Tambah Rekening&quot; atau
               &quot;Import CSV&quot;.
             </p>
@@ -1670,12 +1608,10 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             bankAccounts.map((acc, idx) => (
               <div
                 key={idx}
-                className="grid items-end gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4 md:grid-cols-10 dark:border-slate-700 dark:bg-slate-900/50"
+                className="grid items-end gap-3 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-3.5 md:grid-cols-10"
               >
                 <div className="md:col-span-3">
-                  <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                    Nama Bank / E-Wallet
-                  </label>
+                  <label className="adm-label">Nama Bank / E-Wallet</label>
                   <input
                     type="text"
                     list="bank-presets-list"
@@ -1689,13 +1625,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                       );
                       setHasUnsaved(true);
                     }}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="adm-input bg-(--adm-bg-secondary)"
                   />
                 </div>
                 <div className="md:col-span-3">
-                  <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                    Nomor Rekening
-                  </label>
+                  <label className="adm-label">Nomor Rekening</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -1709,13 +1643,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                       );
                       setHasUnsaved(true);
                     }}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="adm-input bg-(--adm-bg-secondary) font-mono"
                   />
                 </div>
                 <div className="md:col-span-3">
-                  <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                    Atas Nama
-                  </label>
+                  <label className="adm-label">Atas Nama</label>
                   <input
                     type="text"
                     value={acc.name}
@@ -1728,7 +1660,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                       );
                       setHasUnsaved(true);
                     }}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="adm-input bg-(--adm-bg-secondary)"
                   />
                 </div>
                 <div className="flex justify-end md:col-span-1">
@@ -1741,9 +1673,9 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                       );
                       setHasUnsaved(true);
                     }}
-                    className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    className="adm-btn-aksi aksi-hapus"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -1753,19 +1685,14 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       </div>
 
       {/* Kisah Cinta Editor */}
-      <div
-        id="sec-story"
-        className="adm-card scroll-mt-36 p-4"
-      >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold text-(--adm-text-primary)">
-            Kisah Cinta
-          </h3>
+      <div id="sec-story" className="adm-card scroll-mt-36">
+        <div className="adm-card-header">
+          <h3 className="adm-card-title">Kisah Cinta</h3>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setCsvModalType("story")}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+              className="adm-btn adm-btn-outline-primary adm-btn-sm"
             >
               <Upload className="h-3.5 w-3.5" /> Import CSV
             </button>
@@ -1778,15 +1705,15 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                 ]);
                 setHasUnsaved(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+              className="adm-btn adm-btn-primary adm-btn-sm"
             >
               <Plus className="h-3.5 w-3.5" /> Tambah Momen
             </button>
           </div>
         </div>
-        <div className="space-y-4">
+        <div className="adm-card-body space-y-3">
           {loveStory.length === 0 ? (
-            <p className="text-sm text-slate-400 italic">
+            <p className="text-xs text-(--adm-text-secondary)">
               Belum ada kisah cinta. Klik &quot;Tambah Momen&quot; atau
               &quot;Import CSV&quot;.
             </p>
@@ -1794,13 +1721,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             loveStory.map((story, idx) => (
               <div
                 key={idx}
-                className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50"
+                className="space-y-3 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-3.5"
               >
                 <div className="grid items-end gap-3 md:grid-cols-12">
                   <div className="md:col-span-3">
-                    <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                      Tahun / Waktu
-                    </label>
+                    <label className="adm-label">Tahun / Waktu</label>
                     <input
                       type="text"
                       value={story.date}
@@ -1813,13 +1738,11 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                         );
                         setHasUnsaved(true);
                       }}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      className="adm-input bg-(--adm-bg-secondary)"
                     />
                   </div>
                   <div className="md:col-span-6">
-                    <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                      Judul Momen
-                    </label>
+                    <label className="adm-label">Judul Momen</label>
                     <input
                       type="text"
                       value={story.title}
@@ -1834,7 +1757,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                         );
                         setHasUnsaved(true);
                       }}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      className="adm-input bg-(--adm-bg-secondary)"
                     />
                   </div>
                   <div className="flex justify-end gap-1 md:col-span-3">
@@ -1843,18 +1766,18 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                       aria-label={`Naikkan momen ${idx + 1}`}
                       disabled={idx === 0}
                       onClick={() => moveLoveStory(idx, -1)}
-                      className="rounded-lg p-2 text-slate-500 hover:bg-slate-200/70 disabled:opacity-30 dark:hover:bg-slate-700"
+                      className="adm-btn-aksi aksi-netral"
                     >
-                      <ArrowUp className="h-4 w-4" />
+                      <ArrowUp className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
                       aria-label={`Turunkan momen ${idx + 1}`}
                       disabled={idx === loveStory.length - 1}
                       onClick={() => moveLoveStory(idx, 1)}
-                      className="rounded-lg p-2 text-slate-500 hover:bg-slate-200/70 disabled:opacity-30 dark:hover:bg-slate-700"
+                      className="adm-btn-aksi aksi-netral"
                     >
-                      <ArrowDown className="h-4 w-4" />
+                      <ArrowDown className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
@@ -1865,16 +1788,14 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                         );
                         setHasUnsaved(true);
                       }}
-                      className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                      className="adm-btn-aksi aksi-hapus"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                    Cerita Singkat
-                  </label>
+                  <label className="adm-label">Cerita Singkat</label>
                   <textarea
                     rows={2}
                     value={story.desc}
@@ -1887,7 +1808,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                       );
                       setHasUnsaved(true);
                     }}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="adm-input bg-(--adm-bg-secondary)"
                   />
                 </div>
               </div>
@@ -1897,21 +1818,18 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
       </div>
 
       {/* Galeri Foto Editor */}
-      <div
-        id="sec-galeri"
-        className="adm-card scroll-mt-36 p-4"
-      >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div id="sec-galeri" className="adm-card scroll-mt-36">
+        <div className="adm-card-header">
           <div>
-            <h3 className="text-sm font-semibold text-(--adm-text-primary)">
+            <h3 className="adm-card-title">
               Galeri Foto ({galleryImages.length})
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Bisa pilih banyak foto sekaligus saat upload!
+            <p className="adm-card-desc">
+              Bisa memilih banyak foto sekaligus saat upload.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700">
+            <label className="adm-btn adm-btn-secondary adm-btn-sm cursor-pointer">
               {uploadingKey === "gallery-new" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
@@ -1937,15 +1855,15 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                 setGalleryImages((prev) => [...prev, ""]);
                 setHasUnsaved(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+              className="adm-btn adm-btn-primary adm-btn-sm"
             >
               <Plus className="h-3.5 w-3.5" /> Tambah URL
             </button>
           </div>
         </div>
-        <div className="space-y-3">
+        <div className="adm-card-body space-y-2.5">
           {galleryImages.length === 0 ? (
-            <p className="text-sm text-slate-400 italic">
+            <p className="text-xs text-(--adm-text-secondary)">
               Belum ada foto galeri. Klik &quot;Upload Banyak Foto&quot; atau
               &quot;Tambah URL&quot;.
             </p>
@@ -1953,16 +1871,16 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
             galleryImages.map((url, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-900/50"
+                className="flex items-center gap-2.5 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-2.5"
               >
                 {url.trim() ? (
                   <img
                     src={url}
                     alt={`Pratinjau foto ${idx + 1}`}
-                    className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-slate-700"
+                    className="h-10 w-10 shrink-0 rounded border border-(--adm-border) object-cover"
                   />
                 ) : (
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-300 text-xs text-slate-400 dark:border-slate-600">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-dashed border-(--adm-border) text-xs text-(--adm-text-muted)">
                     {idx + 1}
                   </div>
                 )}
@@ -1977,7 +1895,7 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                     );
                     setHasUnsaved(true);
                   }}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="adm-input bg-(--adm-bg-secondary)"
                 />
                 <button
                   type="button"
@@ -1988,9 +1906,9 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                     );
                     setHasUnsaved(true);
                   }}
-                  className="shrink-0 rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                  className="adm-btn-aksi aksi-hapus shrink-0"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))
@@ -1998,15 +1916,13 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
         </div>
       </div>
 
-      <div className="flex justify-end pb-8">
+      <div className="flex justify-end pb-4">
         <button
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className={`flex items-center gap-2 rounded-xl px-8 py-4 text-sm font-bold text-white shadow-lg transition-all disabled:opacity-50 ${
-            saved
-              ? "bg-green-600"
-              : "bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+          className={`adm-btn adm-btn-lg ${
+            saved ? "adm-btn-edit" : "adm-btn-primary"
           }`}
         >
           {saving ? (

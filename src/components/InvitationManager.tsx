@@ -15,10 +15,7 @@ import {
 } from "lucide-react";
 import QRCode from "qrcode";
 import React, { useEffect, useState } from "react";
-import {
-  parseGuestsText,
-  type ParsedGuestRow,
-} from "../utils/csvImport";
+import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
 import {
   ConfirmModal,
   ToastBanner,
@@ -111,8 +108,9 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
   const [cfg, setCfg] = useState<Record<string, string>>({});
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [confirmDialog, setConfirmDialog] =
-    useState<ConfirmDialogState | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
+    null
+  );
 
   useEffect(() => {
     fetch("/api/config")
@@ -697,7 +695,10 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     );
     const closing = doc.splitTextToSize(closingText, width - 50) as string[];
     doc.text(closing, cx, closingY, { align: "center" });
-    const afterClosingY = Math.max(closingY + 18, closingY + closing.length * 4.5 + 6);
+    const afterClosingY = Math.max(
+      closingY + 18,
+      closingY + closing.length * 4.5 + 6
+    );
     doc.setFont("times", "bolditalic");
     doc.text(salamClosing, cx, afterClosingY, { align: "center" });
     doc.setFont("times", "normal");
@@ -859,89 +860,62 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
         onClose={() => setIsCsvModalOpen(false)}
         confirmLabel="Muat Daftar Tamu"
       />
-      <div className="space-y-3 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-slate-100 to-slate-50 px-4 py-1.5 shadow-sm dark:from-slate-800 dark:to-slate-900">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></div>
-          <span className="text-xs font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
-            Premium Edition
+      <div
+        data-tour="pdf-themes"
+        className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4"
+      >
+        <div>
+          <span className="adm-label mb-0.5">
+            Nuansa Warna Undangan (A5 · 4 Halaman)
           </span>
+          <p className="text-xs text-(--adm-text-secondary)">
+            Tema aktif:{" "}
+            <strong className="text-(--adm-text-primary)">
+              {currentTheme.name}
+            </strong>
+          </p>
         </div>
-        <h3 className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text font-serif text-3xl font-bold text-transparent dark:from-white dark:to-slate-300">
-          Floral PDF Invitation
-        </h3>
-        <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          Template Floral Elegan (4 Halaman A5) dengan Ornamen Vektor, QR Code &
-          Multi-Theme Support
-        </p>
-      </div>
-
-      <div className="flex flex-col items-center gap-4">
-        <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">
-          Pilih Nuansa Warna
-        </span>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap items-center gap-2.5">
           {THEMES.map((theme) => (
             <button
               key={theme.id}
+              type="button"
               onClick={() => {
                 setCurrentTheme(theme);
                 setPreviewUri(null);
               }}
-              className={`group relative flex h-16 w-16 items-center justify-center rounded-full border-2 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl ${
+              className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium transition-all ${
                 currentTheme.id === theme.id
-                  ? "scale-110 border-slate-800 ring-4 ring-slate-200 dark:border-white dark:ring-slate-700"
-                  : "border-transparent hover:border-slate-300 dark:hover:border-slate-600"
+                  ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
+                  : "border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
               }`}
-              style={{
-                backgroundColor: `rgb(${theme.bg[0]},${theme.bg[1]},${theme.bg[2]})`,
-              }}
               title={theme.name}
             >
-              <div className="relative h-9 w-9">
-                <div
-                  className="absolute top-0 right-0 h-6 w-6 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-110 dark:border-slate-900"
-                  style={{
-                    backgroundColor: `rgb(${theme.primary[0]},${theme.primary[1]},${theme.primary[2]})`,
-                  }}
-                />
-                <div
-                  className="absolute bottom-0 left-0 h-6 w-6 rounded-tl-xl rounded-br-xl border-2 border-white shadow-md transition-transform group-hover:scale-110 dark:border-slate-900"
-                  style={{
-                    backgroundColor: `rgb(${theme.secondary[0]},${theme.secondary[1]},${theme.secondary[2]})`,
-                  }}
-                />
-              </div>
-              {currentTheme.id === theme.id && (
-                <div className="absolute -bottom-3 rounded-lg bg-gradient-to-r from-slate-800 to-slate-700 px-3 py-1 text-[10px] font-bold whitespace-nowrap text-white shadow-lg dark:from-white dark:to-slate-100 dark:text-slate-900">
-                  {theme.name}
-                </div>
-              )}
+              <span
+                className="h-3.5 w-3.5 rounded-full border border-(--adm-border)"
+                style={{
+                  backgroundColor: `rgb(${theme.primary[0]},${theme.primary[1]},${theme.primary[2]})`,
+                }}
+              />
+              {theme.name}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="flex justify-center">
-        <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
+      <div className="flex justify-start">
+        <div className="adm-seg">
           <button
             type="button"
             onClick={() => setActiveTab("single")}
-            className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
-              activeTab === "single"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+            className={`adm-seg-btn ${activeTab === "single" ? "is-active" : ""}`}
           >
             Manual (Satuan)
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("bulk")}
-            className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
-              activeTab === "bulk"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+            className={`adm-seg-btn ${activeTab === "bulk" ? "is-active" : ""}`}
           >
             Massal (Daftar Tamu / CSV)
           </button>
@@ -949,15 +923,20 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       </div>
 
       {activeTab === "single" && (
-        <div className="grid items-start gap-8 md:grid-cols-2">
-          <div className="space-y-6">
-            <div className="space-y-4">
+        <div className="grid items-start gap-4 md:grid-cols-2">
+          <div className="adm-card">
+            <div className="adm-card-header">
+              <div>
+                <h3 className="adm-card-title">Undangan PDF Satuan</h3>
+                <p className="adm-card-desc">
+                  Cetak satu undangan PDF personal dengan tema terpilih.
+                </p>
+              </div>
+            </div>
+            <div className="adm-card-body space-y-3">
               {savedGuests.length > 0 && (
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="pdf-quick-pick"
-                    className="text-xs font-bold tracking-widest text-slate-400 uppercase"
-                  >
+                <div>
+                  <label htmlFor="pdf-quick-pick" className="adm-label">
                     Pilih Cepat dari Daftar Tamu
                   </label>
                   <select
@@ -974,7 +953,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                         });
                       }
                     }}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="adm-input"
                   >
                     <option value="">
                       -- Pilih dari {savedGuests.length} tamu tersimpan --
@@ -988,11 +967,8 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <label
-                  htmlFor="pdf-single-name"
-                  className="text-xs font-bold tracking-widest text-slate-400 uppercase"
-                >
+              <div>
+                <label htmlFor="pdf-single-name" className="adm-label">
                   Nama Tamu
                 </label>
                 <input
@@ -1003,14 +979,11 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                     setSingleData({ ...singleData, name: e.target.value })
                   }
                   placeholder="Contoh: Bpk. Habibie & Keluarga"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-4 text-lg focus:ring-2 focus:ring-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="adm-input"
                 />
               </div>
-              <div className="space-y-2">
-                <label
-                  htmlFor="pdf-single-address"
-                  className="text-xs font-bold tracking-widest text-slate-400 uppercase"
-                >
+              <div>
+                <label htmlFor="pdf-single-address" className="adm-label">
                   Alamat / Kota (Opsional)
                 </label>
                 <input
@@ -1021,202 +994,209 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                     setSingleData({ ...singleData, address: e.target.value })
                   }
                   placeholder="Jakarta Selatan"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base focus:ring-2 focus:ring-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="adm-input"
                 />
               </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={handlePreview}
-                disabled={!singleData.name || !isConfigLoaded}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-xs font-bold uppercase hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
-              >
-                <Eye className="h-4 w-4" /> Preview
-              </button>
-              <button
-                type="button"
-                onClick={downloadSingle}
-                disabled={!singleData.name || !isConfigLoaded}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-800 py-3 text-xs font-bold text-white uppercase shadow-lg hover:bg-slate-900 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-              >
-                <Printer className="h-4 w-4" /> Download PDF
-              </button>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handlePreview}
+                  disabled={!singleData.name || !isConfigLoaded}
+                  className="adm-btn adm-btn-secondary flex-1"
+                >
+                  <Eye className="h-3.5 w-3.5" /> Pratinjau
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadSingle}
+                  disabled={!singleData.name || !isConfigLoaded}
+                  className="adm-btn adm-btn-primary flex-1"
+                >
+                  <Printer className="h-3.5 w-3.5" /> Unduh PDF
+                </button>
+              </div>
             </div>
           </div>
-          <div className="flex min-h-[400px] items-center justify-center rounded-xl bg-slate-200 p-4 dark:bg-slate-900/50">
-            {previewUri ? (
-              <iframe
-                src={previewUri}
-                className="h-[500px] w-full rounded-lg bg-white shadow-2xl"
-                title="PDF Preview"
-              />
-            ) : (
-              <div className="text-center text-slate-400">
-                <FileSpreadsheet className="mx-auto mb-2 h-12 w-12 opacity-50" />
-                <p className="text-sm">Masukkan data & klik Preview</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  (Ornamen bunga dirender menggunakan vektor PDF)
-                </p>
-              </div>
-            )}
+          <div className="adm-card">
+            <div className="adm-card-header">
+              <h3 className="adm-card-title">Pratinjau PDF</h3>
+            </div>
+            <div className="adm-card-body flex min-h-[400px] items-center justify-center bg-(--adm-bg-tertiary)">
+              {previewUri ? (
+                <iframe
+                  src={previewUri}
+                  className="h-[500px] w-full rounded-md border border-(--adm-border) bg-white"
+                  title="PDF Preview"
+                />
+              ) : (
+                <div className="text-center text-(--adm-text-muted)">
+                  <FileSpreadsheet className="mx-auto mb-2 h-10 w-10 opacity-50" />
+                  <p className="text-[13px]">Masukkan data & klik Pratinjau</p>
+                  <p className="adm-hint mt-1">
+                    (Ornamen bunga dirender menggunakan vektor PDF)
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {activeTab === "bulk" && (
-        <div className="animate-reveal space-y-8">
+        <div className="animate-reveal space-y-4">
           {bulkData.length === 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col justify-between space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800/50">
-                <div className="space-y-2">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                    <Users className="h-6 w-6" />
+              <div className="adm-card flex flex-col">
+                <div className="adm-card-body flex flex-1 flex-col justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-(--adm-accent-soft) text-(--adm-accent)">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <h3 className="adm-card-title">
+                      Ambil dari Daftar Tamu Permanen
+                    </h3>
+                    <p className="adm-card-desc">
+                      Cetak PDF massal untuk seluruh {savedGuests.length} tamu
+                      yang sudah tersimpan di database.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                    Ambil dari Daftar Tamu Permanen
-                  </h3>
-                  <p className="text-sm text-slate-500">
-                    Cetak PDF massal untuk seluruh {savedGuests.length} tamu
-                    yang sudah tersimpan di database.
-                  </p>
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    disabled={savedGuests.length === 0}
-                    onClick={loadFromGuestDb}
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    <Users className="h-4 w-4" /> Muat {savedGuests.length} Tamu
-                  </button>
+                  <div>
+                    <button
+                      type="button"
+                      disabled={savedGuests.length === 0}
+                      onClick={loadFromGuestDb}
+                      className="adm-btn adm-btn-primary"
+                    >
+                      <Users className="h-3.5 w-3.5" /> Muat{" "}
+                      {savedGuests.length} Tamu
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-col justify-between space-y-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800/50">
-                <div className="space-y-2">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
-                    <Upload className="h-6 w-6" />
+              <div className="adm-card flex flex-col border-dashed">
+                <div className="adm-card-body flex flex-1 flex-col justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-(--adm-bg-tertiary) text-(--adm-text-secondary)">
+                      <Upload className="h-4 w-4" />
+                    </div>
+                    <h3 className="adm-card-title">
+                      Impor CSV / Tempel dari Excel
+                    </h3>
+                    <p className="adm-card-desc">
+                      Seret & lepas file CSV atau tempel daftar tamu langsung
+                      dari Excel/Google Sheets.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                    Import CSV / Tempel dari Excel
-                  </h3>
-                  <p className="text-sm text-slate-500">
-                    Seret & lepas file CSV atau tempel daftar tamu langsung dari
-                    Excel/Google Sheets.
-                  </p>
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setIsCsvModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-xs font-bold text-white shadow-sm hover:bg-slate-800 dark:bg-white dark:text-slate-900"
-                  >
-                    <Upload className="h-4 w-4" /> Buka Import CSV / Teks
-                  </button>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setIsCsvModalOpen(true)}
+                      className="adm-btn adm-btn-outline-primary"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> Buka Impor CSV / Teks
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50 p-4 md:flex-row md:items-center md:justify-between dark:border-blue-900/30 dark:bg-blue-900/10">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-blue-100 p-2 font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
-                    {bulkData.length}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-700 dark:text-blue-100">
-                      Tamu Terdeteksi
+            <div className="space-y-4">
+              <div className="adm-card">
+                <div className="adm-card-body flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="adm-badge adm-badge-accent">
+                      {bulkData.length}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      Tema:{" "}
-                      <span className="font-bold">{currentTheme.name}</span>
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setConfirmDialog({
-                        title: "Reset Data Tamu",
-                        message:
-                          "Yakin ingin menghapus semua data yang dimuat?",
-                        confirmLabel: "Reset",
-                        destructive: true,
-                        onConfirm: () => setBulkData([]),
-                      })
-                    }
-                    className="group flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-2.5 text-xs font-bold text-red-600 transition-all hover:bg-red-100 hover:shadow-sm active:scale-95 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-                  >
-                    <RefreshCcw className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-180" />
-                    Reset Data
-                  </button>
-                  <button
-                    type="button"
-                    onClick={processBulk}
-                    disabled={isProcessing}
-                    className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-slate-900 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
-                  >
-                    <div className="relative z-10 flex items-center gap-2">
-                      {isProcessing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4" />
-                      )}
-                      <span>
-                        {isProcessing ? "Memproses..." : "Download ZIP"}
+                    <div className="flex flex-col">
+                      <span className="adm-card-title">Tamu Terdeteksi</span>
+                      <span className="adm-hint">
+                        Tema:{" "}
+                        <span className="font-semibold">
+                          {currentTheme.name}
+                        </span>
                       </span>
                     </div>
-                  </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setConfirmDialog({
+                          title: "Reset Data Tamu",
+                          message:
+                            "Yakin ingin menghapus semua data yang dimuat?",
+                          confirmLabel: "Reset",
+                          destructive: true,
+                          onConfirm: () => setBulkData([]),
+                        })
+                      }
+                      className="adm-btn adm-btn-outline-danger"
+                    >
+                      <RefreshCcw className="h-3.5 w-3.5" />
+                      Reset Data
+                    </button>
+                    <button
+                      type="button"
+                      onClick={processBulk}
+                      disabled={isProcessing}
+                      className="adm-btn adm-btn-primary"
+                    >
+                      {isProcessing ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Download className="h-3.5 w-3.5" />
+                      )}
+                      {isProcessing ? "Memproses..." : "Unduh ZIP"}
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {isProcessing && (
-                <div className="animate-reveal space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                <div className="animate-reveal space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-semibold text-(--adm-text-secondary)">
                     <span>{statusMsg}</span>
                     <span>{progress}%</span>
                   </div>
-                  <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-(--adm-bg-tertiary)">
                     <div
-                      className="h-full rounded-full bg-blue-600 transition-all duration-300 ease-out"
+                      className="h-full rounded-full bg-(--adm-accent) transition-all duration-300 ease-out"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
               )}
 
-              <div className="custom-scrollbar grid max-h-[400px] grid-cols-1 gap-3 overflow-y-auto pr-2 md:grid-cols-2 lg:grid-cols-3">
+              <div className="custom-scrollbar grid max-h-[400px] grid-cols-1 gap-2 overflow-y-auto pr-1 md:grid-cols-2 lg:grid-cols-3">
                 {bulkData.map((guest, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                    className="adm-card flex items-center justify-between gap-3 px-3 py-2"
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-500 dark:bg-slate-700">
+                      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-(--adm-bg-tertiary) text-[10px] font-semibold text-(--adm-text-secondary)">
                         {idx + 1}
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <p className="truncate text-[12px] font-semibold text-(--adm-text-primary)">
                           {guest.name}
                         </p>
-                        <p className="truncate text-[10px] text-slate-400">
-                          {guest.address}
-                        </p>
+                        <p className="adm-hint truncate">{guest.address}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className="h-3.5 w-3.5 text-(--adm-green)" />
                       <button
                         type="button"
                         aria-label={`Hapus ${guest.name}`}
+                        title="Hapus"
                         onClick={() =>
                           setBulkData((prev) =>
                             prev.filter((_, i) => i !== idx)
                           )
                         }
-                        className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="adm-btn-aksi aksi-hapus"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>

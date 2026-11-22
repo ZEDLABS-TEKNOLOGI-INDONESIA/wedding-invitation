@@ -11,14 +11,8 @@ import {
   XCircle,
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  parseGuestsText,
-  type ParsedGuestRow,
-} from "../utils/csvImport";
-import {
-  ConfirmModal,
-  type ConfirmDialogState,
-} from "./Admin/AdminFeedback";
+import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
+import { ConfirmModal, type ConfirmDialogState } from "./Admin/AdminFeedback";
 import CsvImportModal from "./Admin/CsvImportModal";
 
 interface GuestInviteRow {
@@ -50,34 +44,12 @@ interface WaInvitationRecord {
 }
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  queued: {
-    label: "Antre",
-    className:
-      "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
-  },
-  processing: {
-    label: "Diproses",
-    className:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-  },
-  sent: {
-    label: "Terkirim",
-    className: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",
-  },
-  delivered: {
-    label: "Sampai",
-    className:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-  },
-  read: {
-    label: "Dibaca",
-    className:
-      "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
-  },
-  failed: {
-    label: "Gagal",
-    className: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
-  },
+  queued: { label: "Antre", className: "adm-badge" },
+  processing: { label: "Diproses", className: "adm-badge adm-badge-accent" },
+  sent: { label: "Terkirim", className: "adm-badge adm-badge-accent" },
+  delivered: { label: "Sampai", className: "adm-badge adm-badge-success" },
+  read: { label: "Dibaca", className: "adm-badge adm-badge-success" },
+  failed: { label: "Gagal", className: "adm-badge adm-badge-danger" },
 };
 
 const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
@@ -103,8 +75,9 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
   const [resendingId, setResendingId] = useState<number | null>(null);
-  const [confirmDialog, setConfirmDialog] =
-    useState<ConfirmDialogState | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
+    null
+  );
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
 
@@ -407,9 +380,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           {
             header: "No WhatsApp",
             render: (r) => (
-              <span
-                className={`font-mono ${!r.phone ? "text-red-500" : ""}`}
-              >
+              <span className={`font-mono ${!r.phone ? "text-red-500" : ""}`}>
                 {r.phone || "(Kosong)"}
               </span>
             ),
@@ -421,25 +392,13 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         confirmLabel="Muat ke Antrean"
       />
 
-      <div className="space-y-2 text-center">
-        <h3 className="font-serif text-3xl font-bold text-slate-900 italic dark:text-white">
-          Kirim Undangan via WhatsApp
-        </h3>
-        <p className="mx-auto max-w-2xl text-sm text-slate-500 dark:text-slate-400">
-          Kirim tautan undangan personal secara otomatis melalui antrean
-          WhatsApp Gateway (<code>whatsapp.zedlabs.id</code>). Anda bisa
-          mengambil data langsung dari <strong>Daftar Tamu</strong> atau{" "}
-          <strong>Import CSV / Excel</strong>.
-        </p>
-      </div>
-
       {feedback && (
         <div
           role="alert"
-          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium ${
+          className={`adm-alert ${
             feedback.type === "success"
-              ? "border-green-200 bg-green-50 text-green-700 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300"
-              : "border-red-200 bg-red-50 text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300"
+              ? "adm-alert-success"
+              : "adm-alert-danger"
           }`}
         >
           {feedback.type === "success" ? (
@@ -451,38 +410,33 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         </div>
       )}
 
-      <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
+      <div
+        data-tour="wa-mode-switch"
+        className="flex flex-wrap items-center justify-between gap-3"
+      >
+        <div className="adm-seg">
           <button
             type="button"
             onClick={() => setActiveMode("single")}
-            className={`rounded-lg px-5 py-2 text-sm font-bold transition-all ${
-              activeMode === "single"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+            className={`adm-seg-btn ${activeMode === "single" ? "is-active" : ""}`}
           >
             Kirim Satuan
           </button>
           <button
             type="button"
             onClick={() => setActiveMode("bulk")}
-            className={`rounded-lg px-5 py-2 text-sm font-bold transition-all ${
-              activeMode === "bulk"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+            className={`adm-seg-btn ${activeMode === "bulk" ? "is-active" : ""}`}
           >
             Kirim Massal (Daftar Tamu / CSV)
           </button>
         </div>
 
-        <label className="inline-flex cursor-pointer items-center gap-2.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-(--adm-text-secondary)">
           <input
             type="checkbox"
             checked={attachQr}
             onChange={(e) => setAttachQr(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+            className="h-4 w-4 accent-(--adm-accent)"
           />
           Lampirkan gambar QR Code undangan
         </label>
@@ -491,15 +445,12 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       {activeMode === "single" ? (
         <form
           onSubmit={sendSingle}
-          className="grid gap-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-6 md:grid-cols-2 dark:border-slate-700 dark:bg-slate-900/40"
+          className="grid gap-5 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4 md:grid-cols-2"
         >
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {savedGuestsWithPhone.length > 0 && (
               <div>
-                <label
-                  htmlFor="wa-quick-pick"
-                  className="mb-1.5 block text-xs font-bold text-slate-500 uppercase"
-                >
+                <label htmlFor="wa-quick-pick" className="adm-label">
                   Pilih Cepat dari Daftar Tamu (Opsional)
                 </label>
                 <select
@@ -517,10 +468,11 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       });
                     }
                   }}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="adm-input bg-(--adm-bg-secondary)"
                 >
                   <option value="">
-                    -- Pilih dari {savedGuestsWithPhone.length} tamu tersimpan --
+                    -- Pilih dari {savedGuestsWithPhone.length} tamu tersimpan
+                    --
                   </option>
                   {savedGuestsWithPhone.map((g) => (
                     <option key={g.id} value={g.id}>
@@ -532,11 +484,8 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             )}
 
             <div>
-              <label
-                htmlFor="wa-guest-name"
-                className="mb-1.5 block text-xs font-bold text-slate-500 uppercase"
-              >
-                Nama Tamu
+              <label htmlFor="wa-guest-name" className="adm-label">
+                Nama Tamu *
               </label>
               <input
                 id="wa-guest-name"
@@ -548,15 +497,12 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                   setSingleForm({ ...singleForm, name: e.target.value })
                 }
                 placeholder="Contoh: Bpk. Ahmad & Ibu Siti"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="adm-input bg-(--adm-bg-secondary)"
               />
             </div>
             <div>
-              <label
-                htmlFor="wa-guest-phone"
-                className="mb-1.5 block text-xs font-bold text-slate-500 uppercase"
-              >
-                Nomor WhatsApp
+              <label htmlFor="wa-guest-phone" className="adm-label">
+                Nomor WhatsApp *
               </label>
               <input
                 id="wa-guest-phone"
@@ -569,14 +515,11 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                   setSingleForm({ ...singleForm, phone: e.target.value })
                 }
                 placeholder="081234567890 atau 6281234567890"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="adm-input bg-(--adm-bg-secondary)"
               />
             </div>
             <div>
-              <label
-                htmlFor="wa-guest-address"
-                className="mb-1.5 block text-xs font-bold text-slate-500 uppercase"
-              >
+              <label htmlFor="wa-guest-address" className="adm-label">
                 Alamat / Kota (Opsional)
               </label>
               <input
@@ -588,20 +531,20 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                   setSingleForm({ ...singleForm, address: e.target.value })
                 }
                 placeholder="Di Tempat"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="adm-input bg-(--adm-bg-secondary)"
               />
             </div>
           </div>
 
           <div className="flex flex-col justify-between space-y-4">
-            <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase">
+            <div className="space-y-2 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary) p-4">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-(--adm-text-secondary)">
                 <Eye className="h-3.5 w-3.5" /> Pratinjau Tautan Personal
               </div>
-              <p className="font-mono text-xs break-all text-slate-600 dark:text-slate-300">
+              <p className="font-mono text-xs break-all text-(--adm-text-primary)">
                 {previewLink}
               </p>
-              <p className="pt-2 text-xs text-slate-500 dark:text-slate-400">
+              <p className="pt-1 text-xs text-(--adm-text-secondary)">
                 Gateway akan memilih salah satu dari 3 varian template{" "}
                 <code>wedding_undangan_tamu</code> secara otomatis dengan
                 antrean aman.
@@ -611,38 +554,34 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             <button
               type="submit"
               disabled={
-                isSending ||
-                !singleForm.name.trim() ||
-                !singleForm.phone.trim()
+                isSending || !singleForm.name.trim() || !singleForm.phone.trim()
               }
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3.5 text-xs font-bold tracking-wider text-white uppercase shadow-lg transition-all hover:bg-green-700 disabled:opacity-50"
+              className="adm-btn adm-btn-edit adm-btn-lg w-full"
             >
               {isSending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              {isSending
-                ? "Mengirim ke Antrean..."
-                : "Kirim Undangan WhatsApp"}
+              {isSending ? "Mengirim ke Antrean..." : "Kirim Undangan WhatsApp"}
             </button>
           </div>
         </form>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {bulkGuests.length === 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col justify-between space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-900/40">
-                <div className="space-y-2">
-                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                    <Users className="h-5 w-5" />
+              <div className="flex flex-col justify-between space-y-4 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-5">
+                <div className="space-y-1.5">
+                  <div className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-accent-soft) text-(--adm-accent)">
+                    <Users className="h-4 w-4" />
                   </div>
-                  <h4 className="text-base font-bold text-slate-800 dark:text-white">
+                  <h4 className="text-sm font-semibold text-(--adm-text-primary)">
                     Ambil dari Daftar Tamu Permanen
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-(--adm-text-secondary)">
                     Muat otomatis {savedGuestsWithPhone.length} tamu yang sudah
-                    memiliki nomor WhatsApp di tab Tamu & Check-In.
+                    memiliki nomor WhatsApp di tab Tamu &amp; Check-In.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -651,7 +590,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       aria-label="Filter grup tamu"
                       value={selectedGroupFilter}
                       onChange={(e) => setSelectedGroupFilter(e.target.value)}
-                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                      className="adm-input adm-input-sm w-auto bg-(--adm-bg-secondary)"
                     >
                       <option value="all">Semua Grup</option>
                       {availableGroups.map((grp) => (
@@ -665,23 +604,23 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                     type="button"
                     onClick={loadFromGuestDb}
                     disabled={savedGuestsWithPhone.length === 0}
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+                    className="adm-btn adm-btn-primary"
                   >
                     <Users className="h-3.5 w-3.5" /> Muat Daftar Tamu
                   </button>
                 </div>
               </div>
 
-              <div className="flex flex-col justify-between space-y-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-900/40">
-                <div className="space-y-2">
-                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                    <Upload className="h-5 w-5" />
+              <div className="flex flex-col justify-between space-y-4 rounded-lg border-2 border-dashed border-(--adm-border) bg-(--adm-bg-primary) p-5">
+                <div className="space-y-1.5">
+                  <div className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-green-soft) text-(--adm-green)">
+                    <Upload className="h-4 w-4" />
                   </div>
-                  <h4 className="text-base font-bold text-slate-800 dark:text-white">
+                  <h4 className="text-sm font-semibold text-(--adm-text-primary)">
                     Import CSV / Tempel dari Excel
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Seret & lepas file CSV (koma atau titik koma Excel) atau
+                  <p className="text-xs text-(--adm-text-secondary)">
+                    Seret &amp; lepas file CSV (koma atau titik koma Excel) atau
                     copy-paste langsung dari Google Sheets/Excel.
                   </p>
                 </div>
@@ -689,7 +628,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                   <button
                     type="button"
                     onClick={() => setIsCsvModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-green-700"
+                    className="adm-btn adm-btn-edit"
                   >
                     <Upload className="h-3.5 w-3.5" /> Buka Import CSV / Excel
                   </button>
@@ -697,13 +636,13 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-green-100 bg-green-50 p-4 dark:border-green-900/30 dark:bg-green-900/10">
-                <div className="flex items-center gap-3">
-                  <span className="rounded-lg bg-green-100 px-3 py-1.5 text-sm font-bold text-green-700 dark:bg-green-900/40 dark:text-green-300">
+            <div className="space-y-3.5">
+              <div className="adm-alert adm-alert-success flex-wrap justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="adm-badge adm-badge-success font-semibold">
                     {bulkGuests.length} Tamu
                   </span>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  <span className="text-xs text-(--adm-text-primary)">
                     Siap dimasukkan ke antrean WhatsApp Gateway
                   </span>
                 </div>
@@ -712,7 +651,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                     type="button"
                     disabled={isSending}
                     onClick={() => setBulkGuests([])}
-                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400"
+                    className="adm-btn adm-btn-outline-danger adm-btn-sm"
                   >
                     Reset
                   </button>
@@ -720,12 +659,12 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                     type="button"
                     disabled={isSending}
                     onClick={sendBulk}
-                    className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-6 py-2 text-xs font-bold text-white shadow-md hover:bg-green-700 disabled:opacity-50"
+                    className="adm-btn adm-btn-edit adm-btn-sm"
                   >
                     {isSending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <Send className="h-4 w-4" />
+                      <Send className="h-3.5 w-3.5" />
                     )}
                     {isSending
                       ? `Mengirim (${bulkProgress}%)...`
@@ -735,37 +674,43 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               </div>
 
               {isSending && (
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-(--adm-bg-tertiary)">
                   <div
-                    className="h-full bg-green-600 transition-all duration-300"
+                    className="h-full bg-(--adm-green) transition-all duration-300"
                     style={{ width: `${bulkProgress}%` }}
                   />
                 </div>
               )}
 
-              <div className="custom-scrollbar max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="custom-scrollbar max-h-60 overflow-y-auto rounded-lg border border-(--adm-border)">
                 <table className="w-full text-left text-xs">
-                  <thead className="sticky top-0 bg-slate-50 text-slate-500 uppercase dark:bg-slate-900 dark:text-slate-400">
+                  <thead className="sticky top-0 border-b border-(--adm-border) bg-(--adm-bg-primary) text-(--adm-text-secondary)">
                     <tr>
-                      <th className="px-4 py-3">#</th>
-                      <th className="px-4 py-3">Nama Tamu</th>
-                      <th className="px-4 py-3">No WhatsApp</th>
-                      <th className="px-4 py-3">Alamat</th>
-                      <th className="px-4 py-3 text-right">Hapus</th>
+                      <th className="px-3.5 py-2.5">#</th>
+                      <th className="px-3.5 py-2.5 font-semibold">Nama Tamu</th>
+                      <th className="px-3.5 py-2.5 font-semibold">
+                        No WhatsApp
+                      </th>
+                      <th className="px-3.5 py-2.5 font-semibold">Alamat</th>
+                      <th className="px-3.5 py-2.5 text-right font-semibold">
+                        Hapus
+                      </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                  <tbody className="divide-y divide-(--adm-border)">
                     {bulkGuests.map((g, i) => (
-                      <tr key={i}>
-                        <td className="px-4 py-2.5 text-slate-400">{i + 1}</td>
-                        <td className="px-4 py-2.5 font-medium">{g.name}</td>
-                        <td className="px-4 py-2.5 font-mono">
+                      <tr key={i} className="hover:bg-(--adm-bg-overlay)">
+                        <td className="px-3.5 py-2 text-(--adm-text-muted) tabular-nums">
+                          {i + 1}
+                        </td>
+                        <td className="px-3.5 py-2 font-medium">{g.name}</td>
+                        <td className="px-3.5 py-2 font-mono">
                           {g.phone || "-"}
                         </td>
-                        <td className="px-4 py-2.5 text-slate-500">
+                        <td className="px-3.5 py-2 text-(--adm-text-secondary)">
                           {g.address}
                         </td>
-                        <td className="px-4 py-2.5 text-right">
+                        <td className="px-3.5 py-2 text-right">
                           <button
                             type="button"
                             aria-label={`Hapus ${g.name} dari antrean`}
@@ -774,7 +719,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                                 prev.filter((_, idx) => idx !== i)
                               )
                             }
-                            className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            className="adm-btn-aksi aksi-hapus"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -790,13 +735,16 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       )}
 
       {/* Riwayat & Status Pengiriman */}
-      <div className="space-y-4 border-t border-slate-200 pt-6 dark:border-slate-700">
+      <div
+        data-tour="wa-history"
+        className="space-y-3 border-t border-(--adm-border) pt-5"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h4 className="font-serif text-xl font-bold text-slate-900 italic dark:text-white">
+            <h4 className="text-sm font-semibold text-(--adm-text-primary)">
               Riwayat Pengiriman Undangan
             </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-(--adm-text-secondary)">
               Total {history.length} catatan pengiriman terbaru
             </p>
           </div>
@@ -804,7 +752,7 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             type="button"
             onClick={refreshStatuses}
             disabled={refreshingStatus || history.length === 0}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="adm-btn adm-btn-secondary adm-btn-sm"
           >
             <RefreshCcw
               className={`h-3.5 w-3.5 ${refreshingStatus ? "animate-spin" : ""}`}
@@ -813,30 +761,30 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+        <div className="adm-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs text-slate-500 uppercase dark:bg-slate-900/50 dark:text-slate-400">
+            <table className="w-full text-left text-[13px]">
+              <thead className="border-b border-(--adm-border) bg-(--adm-bg-primary) text-[12px] font-semibold text-(--adm-text-secondary)">
                 <tr>
-                  <th className="px-4 py-3">Tamu</th>
-                  <th className="px-4 py-3">WhatsApp</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Waktu</th>
-                  <th className="px-4 py-3 text-right">Aksi</th>
+                  <th className="px-4 py-2.5">Tamu</th>
+                  <th className="px-4 py-2.5">WhatsApp</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5">Waktu</th>
+                  <th className="px-4 py-2.5 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+              <tbody className="divide-y divide-(--adm-border)">
                 {loadingHistory ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center">
-                      <Loader2 className="mx-auto h-5 w-5 animate-spin text-slate-400" />
+                      <Loader2 className="mx-auto h-5 w-5 animate-spin text-(--adm-text-muted)" />
                     </td>
                   </tr>
                 ) : history.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-8 text-center text-xs text-slate-400"
+                      className="px-4 py-8 text-center text-xs text-(--adm-text-secondary)"
                     >
                       Belum ada undangan yang dikirim lewat WhatsApp.
                     </td>
@@ -846,34 +794,29 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                     const badge =
                       STATUS_BADGE[row.status] || STATUS_BADGE.queued;
                     return (
-                      <tr
-                        key={row.id}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-700/40"
-                      >
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-slate-900 dark:text-white">
+                      <tr key={row.id} className="hover:bg-(--adm-bg-overlay)">
+                        <td className="px-4 py-2.5">
+                          <div className="font-medium text-(--adm-text-primary)">
                             {row.guest_name}
                           </div>
                           {row.error_message && (
-                            <div className="mt-0.5 text-xs text-red-500">
+                            <div className="mt-0.5 text-xs text-(--adm-red)">
                               {row.error_message}
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-300">
+                        <td className="px-4 py-2.5 font-mono text-xs text-(--adm-text-secondary)">
                           {row.phone}
                         </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase ${badge.className}`}
-                          >
+                        <td className="px-4 py-2.5">
+                          <span className={badge.className}>
                             {row.status === "queued" && (
                               <Clock className="h-3 w-3" />
                             )}
                             {badge.label}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-500">
+                        <td className="px-4 py-2.5 text-xs text-(--adm-text-secondary) tabular-nums">
                           {new Date(row.created_at).toLocaleString("id-ID", {
                             day: "2-digit",
                             month: "short",
@@ -881,21 +824,21 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                             minute: "2-digit",
                           })}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end gap-1.5">
+                        <td className="px-4 py-2.5 text-right">
+                          <div className="inline-flex justify-end gap-1">
                             {row.status === "failed" && (
                               <button
                                 type="button"
                                 aria-label={`Kirim ulang ke ${row.guest_name}`}
                                 disabled={resendingId === row.id}
                                 onClick={() => resendRow(row)}
-                                className="rounded p-1.5 text-green-600 hover:bg-green-50 disabled:opacity-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                className="adm-btn-aksi aksi-ubah"
                                 title="Kirim Ulang"
                               >
                                 {resendingId === row.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                 ) : (
-                                  <RefreshCcw className="h-4 w-4" />
+                                  <RefreshCcw className="h-3.5 w-3.5" />
                                 )}
                               </button>
                             )}
@@ -903,10 +846,10 @@ const WhatsAppManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                               type="button"
                               aria-label={`Hapus riwayat ${row.guest_name}`}
                               onClick={() => deleteRow(row.id)}
-                              className="rounded p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                              className="adm-btn-aksi aksi-hapus"
                               title="Hapus"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         </td>

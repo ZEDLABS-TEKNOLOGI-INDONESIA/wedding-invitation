@@ -5,6 +5,7 @@ import {
   Edit,
   ExternalLink,
   Heart,
+  HelpCircle,
   Loader2,
   LogOut,
   Menu,
@@ -25,7 +26,14 @@ import {
   Users,
   X,
 } from "lucide-react";
-import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  Suspense,
+  lazy,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   parseRsvpsText,
   parseWishesText,
@@ -38,6 +46,7 @@ import {
   type ConfirmDialogState,
   type ToastState,
 } from "./AdminFeedback";
+import Coachmark from "./Coachmark";
 import CsvImportModal from "./CsvImportModal";
 import SettingsTab from "./SettingsTab";
 
@@ -64,18 +73,9 @@ interface Wish {
 }
 
 type AdminTabId =
-  | "rsvp"
-  | "wishes"
-  | "guests"
-  | "wa"
-  | "qr"
-  | "pdf"
-  | "settings";
+  "rsvp" | "wishes" | "guests" | "wa" | "qr" | "pdf" | "settings";
 
-const TAB_META: Record<
-  AdminTabId,
-  { title: string; desc: string }
-> = {
+const TAB_META: Record<AdminTabId, { title: string; desc: string }> = {
   rsvp: {
     title: "Data RSVP",
     desc: "Pantau konfirmasi kehadiran tamu, tambah manual, atau import dari CSV/Excel.",
@@ -187,7 +187,7 @@ const DataTable = <T extends { id: number }>({
   };
 
   return (
-    <div className="adm-card overflow-hidden">
+    <div data-tour="data-table" className="adm-card overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-(--adm-border) px-4 py-2.5">
         <div className="flex items-center gap-2">
           <select
@@ -197,7 +197,7 @@ const DataTable = <T extends { id: number }>({
               setPageSize(Number(e.target.value));
               setPage(1);
             }}
-            className="adm-input w-auto py-1 text-xs"
+            className="adm-input adm-input-sm w-auto"
           >
             {[5, 10, 25, 50].map((size) => (
               <option key={size} value={size}>
@@ -209,7 +209,7 @@ const DataTable = <T extends { id: number }>({
             <button
               type="button"
               onClick={executeBulkDelete}
-              className="adm-btn adm-btn-danger h-7 px-2.5 text-xs"
+              className="adm-btn adm-btn-danger adm-btn-sm"
             >
               <Trash2 className="h-3.5 w-3.5" /> Hapus ({selected.length})
             </button>
@@ -222,14 +222,14 @@ const DataTable = <T extends { id: number }>({
             placeholder="Cari data..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="adm-input py-1 pl-8 text-xs"
+            className="adm-input adm-input-sm pl-8"
           />
         </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-[13px]">
-          <thead className="border-b border-(--adm-border) bg-(--adm-bg-primary) text-[11.5px] font-semibold text-(--adm-text-secondary)">
+          <thead className="border-b border-(--adm-border) bg-(--adm-bg-primary) text-[12px] font-semibold text-(--adm-text-secondary)">
             <tr>
               {onBulkDelete && (
                 <th className="w-4 px-4 py-2.5">
@@ -241,7 +241,7 @@ const DataTable = <T extends { id: number }>({
                       paginatedData.length > 0 &&
                       paginatedData.every((d) => selected.includes(d.id))
                     }
-                    className="rounded border-(--adm-border) text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 accent-(--adm-accent)"
                   />
                 </th>
               )}
@@ -262,9 +262,7 @@ const DataTable = <T extends { id: number }>({
             {paginatedData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={
-                    columns.length + (onBulkDelete ? 2 : onEdit ? 1 : 0)
-                  }
+                  colSpan={columns.length + (onBulkDelete ? 2 : onEdit ? 1 : 0)}
                   className="px-4 py-8 text-center text-xs text-(--adm-text-secondary)"
                 >
                   Tidak ada data ditemukan.
@@ -272,10 +270,7 @@ const DataTable = <T extends { id: number }>({
               </tr>
             ) : (
               paginatedData.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-(--adm-bg-overlay)"
-                >
+                <tr key={item.id} className="hover:bg-(--adm-bg-overlay)">
                   {onBulkDelete && (
                     <td className="px-4 py-2.5">
                       <input
@@ -283,7 +278,7 @@ const DataTable = <T extends { id: number }>({
                         aria-label={`Pilih baris ${item.id}`}
                         checked={selected.includes(item.id)}
                         onChange={() => handleSelectOne(item.id)}
-                        className="rounded border-(--adm-border) text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 accent-(--adm-accent)"
                       />
                     </td>
                   )}
@@ -304,8 +299,9 @@ const DataTable = <T extends { id: number }>({
                           <button
                             type="button"
                             aria-label="Edit data"
+                            title="Edit"
                             onClick={() => onEdit(item)}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-green-600/30 bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white dark:text-green-400"
+                            className="adm-btn-aksi aksi-ubah"
                           >
                             <Edit className="h-3.5 w-3.5" />
                           </button>
@@ -314,6 +310,7 @@ const DataTable = <T extends { id: number }>({
                           <button
                             type="button"
                             aria-label="Hapus data"
+                            title="Hapus"
                             onClick={() => {
                               if (onRequestConfirm) {
                                 onRequestConfirm({
@@ -327,7 +324,7 @@ const DataTable = <T extends { id: number }>({
                                 onDelete(item.id);
                               }
                             }}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-600/30 bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white dark:text-red-400"
+                            className="adm-btn-aksi aksi-hapus"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -353,7 +350,7 @@ const DataTable = <T extends { id: number }>({
             aria-label="Halaman sebelumnya"
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
-            className="adm-btn adm-btn-secondary h-7 w-7 p-0"
+            className="adm-btn adm-btn-secondary adm-btn-sm w-7 p-0"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </button>
@@ -362,7 +359,7 @@ const DataTable = <T extends { id: number }>({
             aria-label="Halaman berikutnya"
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages || totalPages === 0}
-            className="adm-btn adm-btn-secondary h-7 w-7 p-0"
+            className="adm-btn adm-btn-secondary adm-btn-sm w-7 p-0"
           >
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
@@ -399,6 +396,7 @@ const AdminDashboard = ({
   coupleLabel?: string;
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTabId>("rsvp");
+  const [coachmarkNonce, setCoachmarkNonce] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuQuery, setMenuQuery] = useState("");
@@ -412,8 +410,9 @@ const AdminDashboard = ({
     null
   );
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [confirmDialog, setConfirmDialog] =
-    useState<ConfirmDialogState | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
+    null
+  );
 
   const searchMenuRef = useRef<HTMLInputElement | null>(null);
 
@@ -433,7 +432,9 @@ const AdminDashboard = ({
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const inField = target?.closest("input, textarea, select, [contenteditable='true']");
+      const inField = target?.closest(
+        "input, textarea, select, [contenteditable='true']"
+      );
       const isShortcut =
         (e.key === "/" && !inField) ||
         (e.key.toLowerCase() === "k" && (e.ctrlKey || e.metaKey));
@@ -454,7 +455,10 @@ const AdminDashboard = ({
     setSidebarCollapsed((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem("wedding_admin_sidebar_collapsed", next ? "1" : "0");
+        localStorage.setItem(
+          "wedding_admin_sidebar_collapsed",
+          next ? "1" : "0"
+        );
       } catch {
         // ignore
       }
@@ -464,8 +468,10 @@ const AdminDashboard = ({
 
   const toggleTheme = () => {
     const isDark = document.documentElement.classList.toggle("dark");
+    const next = isDark ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
     try {
-      localStorage.setItem("theme", isDark ? "dark" : "light");
+      localStorage.setItem("theme", next);
     } catch {
       // ignore
     }
@@ -787,6 +793,7 @@ const AdminDashboard = ({
         dialog={confirmDialog}
         onClose={() => setConfirmDialog(null)}
       />
+      <Coachmark guideKey={activeTab} replayNonce={coachmarkNonce} />
 
       {/* Mobile Sidebar Backdrop */}
       {mobileMenuOpen && (
@@ -799,13 +806,17 @@ const AdminDashboard = ({
       {/* Compact Collapsible Sidebar (whatsapp-service style) */}
       <aside
         className={`fixed inset-y-0 top-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-(--adm-border) bg-(--adm-bg-secondary) transition-all duration-200 md:sticky md:z-auto ${
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          mobileMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0"
         } ${sidebarCollapsed ? "w-[260px] md:w-[64px]" : "w-[260px] md:w-[220px]"}`}
       >
         {/* Brand */}
         <div
           className={`flex h-14 shrink-0 items-center border-b border-(--adm-border) ${
-            sidebarCollapsed ? "justify-between px-4 md:justify-center md:px-0" : "justify-between px-4"
+            sidebarCollapsed
+              ? "justify-between px-4 md:justify-center md:px-0"
+              : "justify-between px-4"
           }`}
         >
           <button
@@ -820,9 +831,7 @@ const AdminDashboard = ({
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-accent-soft) text-(--adm-accent)">
               <Heart className="h-3.5 w-3.5" />
             </span>
-            <span
-              className={`min-w-0 ${sidebarCollapsed ? "md:hidden" : ""}`}
-            >
+            <span className={`min-w-0 ${sidebarCollapsed ? "md:hidden" : ""}`}>
               <span className="block truncate text-[13px] font-bold text-(--adm-text-primary)">
                 {coupleLabel}
               </span>
@@ -868,6 +877,7 @@ const AdminDashboard = ({
 
         {/* Nav Items */}
         <nav
+          data-tour="sidebar-nav"
           aria-label="Menu utama admin"
           className="custom-scrollbar flex-1 overflow-x-hidden overflow-y-auto py-2"
         >
@@ -1007,7 +1017,9 @@ const AdminDashboard = ({
             type="button"
             onClick={toggleSidebarCollapsed}
             title={sidebarCollapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
-            aria-label={sidebarCollapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
+            aria-label={
+              sidebarCollapsed ? "Perluas sidebar" : "Ciutkan sidebar"
+            }
             className="hidden w-10 items-center justify-center border-l border-(--adm-border) text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) md:flex"
           >
             <ChevronLeft
@@ -1045,7 +1057,10 @@ const AdminDashboard = ({
             </nav>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div
+            data-tour="topbar-controls"
+            className="flex shrink-0 items-center gap-1.5"
+          >
             <div className="hidden h-7 items-center gap-1.5 rounded-full border border-(--adm-border) px-2.5 text-[11.5px] text-(--adm-text-secondary) sm:inline-flex">
               <span className="h-2 w-2 rounded-full bg-(--adm-green)" />
               <span className="tabular-nums">
@@ -1060,10 +1075,21 @@ const AdminDashboard = ({
 
             <button
               type="button"
+              onClick={() => setCoachmarkNonce((n) => n + 1)}
+              aria-label="Putar panduan halaman ini"
+              title="Panduan Halaman"
+              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-xs font-medium text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
+            >
+              <HelpCircle className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">Panduan</span>
+            </button>
+
+            <button
+              type="button"
               onClick={toggleTheme}
-              aria-label="Ubah tema terang atau gelap"
-              title="Ubah Tema"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)"
+              aria-label="Ganti tema terang/gelap"
+              title="Ganti Tema"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
             >
               <Moon className="h-4 w-4 dark:hidden" />
               <Sun className="hidden h-4 w-4 dark:inline" />
@@ -1074,12 +1100,12 @@ const AdminDashboard = ({
               target="_blank"
               rel="noopener noreferrer"
               title="Buka Halaman Undangan"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
             >
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="h-3.5 w-3.5" />
             </a>
 
-            <div className="ml-1 flex items-center gap-2 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) py-1 pr-2.5 pl-1.5">
+            <div className="ml-0.5 flex items-center gap-2 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) py-1 pr-2.5 pl-1.5">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--adm-accent-soft) text-[11px] font-semibold text-(--adm-accent)">
                 A
               </span>
@@ -1105,7 +1131,10 @@ const AdminDashboard = ({
               </div>
 
               {activeTab === "rsvp" && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div
+                  data-tour="page-actions"
+                  className="flex flex-wrap items-center gap-2"
+                >
                   <button
                     type="button"
                     onClick={() =>
@@ -1124,7 +1153,7 @@ const AdminDashboard = ({
                   <button
                     type="button"
                     onClick={() => setCsvImportTab("rsvp")}
-                    className="adm-btn adm-btn-secondary"
+                    className="adm-btn adm-btn-outline-primary"
                   >
                     <Upload className="h-3.5 w-3.5" /> Import CSV
                   </button>
@@ -1139,7 +1168,10 @@ const AdminDashboard = ({
               )}
 
               {activeTab === "wishes" && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div
+                  data-tour="page-actions"
+                  className="flex flex-wrap items-center gap-2"
+                >
                   <button
                     type="button"
                     onClick={() => setWishModal({ name: "", message: "" })}
@@ -1150,7 +1182,7 @@ const AdminDashboard = ({
                   <button
                     type="button"
                     onClick={() => setCsvImportTab("wish")}
-                    className="adm-btn adm-btn-secondary"
+                    className="adm-btn adm-btn-outline-primary"
                   >
                     <Upload className="h-3.5 w-3.5" /> Import CSV
                   </button>
@@ -1167,7 +1199,10 @@ const AdminDashboard = ({
 
             {/* Compact Stat Row (tampil pada tab RSVP & Ucapan) */}
             {(activeTab === "rsvp" || activeTab === "wishes") && (
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div
+                data-tour="stat-cards"
+                className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+              >
                 <div className="adm-card flex flex-col gap-1.5 p-3.5">
                   <span className="text-xs text-(--adm-text-secondary)">
                     Total Respon RSVP
@@ -1418,7 +1453,13 @@ const AdminDashboard = ({
         templateHeaders={["Nama Tamu", "No WhatsApp", "Status", "Pax", "Pesan"]}
         templateRows={[
           ["Bpk. Andi Pratama", "081234567890", "Hadir", 2, "InsyaAllah hadir"],
-          ["Ibu Dewi", "089876543210", "Tidak Hadir", 0, "Maaf sedang di luar kota"],
+          [
+            "Ibu Dewi",
+            "089876543210",
+            "Tidak Hadir",
+            0,
+            "Maaf sedang di luar kota",
+          ],
           ["Raka Wijaya", "", "Ragu", 1, "Diupayakan hadir"],
         ]}
         pastePlaceholder={
@@ -1428,7 +1469,9 @@ const AdminDashboard = ({
         columns={[
           {
             header: "Nama Tamu",
-            render: (r) => <span className="font-semibold">{r.guest_name}</span>,
+            render: (r) => (
+              <span className="font-semibold">{r.guest_name}</span>
+            ),
           },
           {
             header: "Kontak",
@@ -1437,7 +1480,9 @@ const AdminDashboard = ({
           {
             header: "Status",
             render: (r) => (
-              <span className="uppercase">{r.attendance.replace("_", " ")}</span>
+              <span className="uppercase">
+                {r.attendance.replace("_", " ")}
+              </span>
             ),
           },
           { header: "Pax", render: (r) => r.guest_count },
@@ -1492,208 +1537,205 @@ const AdminDashboard = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-(--adm-backdrop) p-4 backdrop-blur-xs"
+          className="adm-modal-backdrop"
           onClick={(e) => {
             if (e.target === e.currentTarget) setRsvpModal(null);
           }}
         >
-          <div className="adm-card w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between border-b border-(--adm-border) px-4 py-3">
-              <h3 className="text-sm font-semibold">
+          <div className="adm-modal">
+            <div className="adm-modal-header">
+              <h3 className="adm-modal-title">
                 {rsvpModal.id ? "Edit Data RSVP" : "Tambah Data RSVP"}
               </h3>
               <button
                 type="button"
                 aria-label="Tutup modal RSVP"
                 onClick={() => setRsvpModal(null)}
-                className="rounded p-1 text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay)"
+                className="adm-btn adm-btn-ghost adm-btn-sm px-1.5"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <form onSubmit={handleSaveRsvpModal} className="space-y-3.5 p-4">
-              <div className="space-y-1">
-                <label
-                  htmlFor="modal-rsvp-name"
-                  className="text-xs font-semibold text-(--adm-text-secondary)"
-                >
-                  Nama Tamu *
-                </label>
-                <input
-                  id="modal-rsvp-name"
-                  value={rsvpModal.guest_name}
-                  onChange={(e) =>
-                    setRsvpModal({ ...rsvpModal, guest_name: e.target.value })
-                  }
-                  placeholder="Contoh: Bpk. Ahmad & Ibu Siti"
-                  className="adm-input"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  htmlFor="modal-rsvp-phone"
-                  className="text-xs font-semibold text-(--adm-text-secondary)"
-                >
-                  No. HP / WhatsApp (Opsional)
-                </label>
-                <input
-                  id="modal-rsvp-phone"
-                  type="tel"
-                  inputMode="tel"
-                  value={rsvpModal.phone}
-                  onChange={(e) =>
-                    setRsvpModal({ ...rsvpModal, phone: e.target.value })
-                  }
-                  placeholder="08xxxxxxxxxx"
-                  className="adm-input"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="block text-xs font-semibold text-(--adm-text-secondary)">
-                  Status Kehadiran
-                </span>
-                <div className="grid grid-cols-3 gap-2">
-                  {(
-                    [
-                      ["hadir", "Hadir"],
-                      ["ragu", "Ragu"],
-                      ["tidak_hadir", "Tidak Hadir"],
-                    ] as const
-                  ).map(([val, label]) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() =>
-                        setRsvpModal({
-                          ...rsvpModal,
-                          attendance: val,
-                          guest_count:
-                            val === "hadir"
-                              ? Math.max(1, rsvpModal.guest_count)
-                              : 0,
-                        })
-                      }
-                      className={`rounded-md border py-2 text-xs font-semibold transition-all ${
-                        rsvpModal.attendance === val
-                          ? val === "hadir"
-                            ? "border-green-600 bg-green-600 text-white"
-                            : val === "tidak_hadir"
-                              ? "border-red-600 bg-red-600 text-white"
-                              : "border-amber-500 bg-amber-500 text-white"
-                          : "border-(--adm-border) bg-(--adm-bg-primary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+            <form onSubmit={handleSaveRsvpModal}>
+              <div className="adm-modal-body space-y-3.5">
+                <div>
+                  <label htmlFor="modal-rsvp-name" className="adm-label">
+                    Nama Tamu *
+                  </label>
+                  <input
+                    id="modal-rsvp-name"
+                    value={rsvpModal.guest_name}
+                    onChange={(e) =>
+                      setRsvpModal({ ...rsvpModal, guest_name: e.target.value })
+                    }
+                    placeholder="Contoh: Bpk. Ahmad & Ibu Siti"
+                    className="adm-input"
+                    required
+                  />
                 </div>
-              </div>
+                <div>
+                  <label htmlFor="modal-rsvp-phone" className="adm-label">
+                    No. HP / WhatsApp (Opsional)
+                  </label>
+                  <input
+                    id="modal-rsvp-phone"
+                    type="tel"
+                    inputMode="tel"
+                    value={rsvpModal.phone}
+                    onChange={(e) =>
+                      setRsvpModal({ ...rsvpModal, phone: e.target.value })
+                    }
+                    placeholder="08xxxxxxxxxx"
+                    className="adm-input"
+                  />
+                </div>
 
-              {rsvpModal.attendance === "hadir" && (
-                <div className="space-y-1.5">
-                  <span className="block text-xs font-semibold text-(--adm-text-secondary)">
-                    Jumlah Tamu (Pax)
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="inline-flex items-center gap-1 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-0.5">
+                <div>
+                  <span className="adm-label">Status Kehadiran</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(
+                      [
+                        ["hadir", "Hadir"],
+                        ["ragu", "Ragu"],
+                        ["tidak_hadir", "Tidak Hadir"],
+                      ] as const
+                    ).map(([val, label]) => (
                       <button
+                        key={val}
                         type="button"
-                        aria-label="Kurangi pax"
                         onClick={() =>
                           setRsvpModal({
                             ...rsvpModal,
-                            guest_count: Math.max(1, rsvpModal.guest_count - 1),
+                            attendance: val,
+                            guest_count:
+                              val === "hadir"
+                                ? Math.max(1, rsvpModal.guest_count)
+                                : 0,
                           })
                         }
-                        className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
-                      >
-                        <Minus className="h-3.5 w-3.5" />
-                      </button>
-                      <span className="w-12 text-center text-xs font-semibold tabular-nums">
-                        {rsvpModal.guest_count} Pax
-                      </span>
-                      <button
-                        type="button"
-                        aria-label="Tambah pax"
-                        onClick={() =>
-                          setRsvpModal({
-                            ...rsvpModal,
-                            guest_count: Math.min(
-                              100,
-                              rsvpModal.guest_count + 1
-                            ),
-                          })
-                        }
-                        className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    {[1, 2, 3, 4].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() =>
-                          setRsvpModal({ ...rsvpModal, guest_count: n })
-                        }
-                        className={`rounded-md border px-2.5 py-1 text-xs font-medium ${
-                          rsvpModal.guest_count === n
-                            ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
-                            : "border-(--adm-border) text-(--adm-text-secondary)"
+                        className={`rounded-md border py-2 text-xs font-medium transition-all ${
+                          rsvpModal.attendance === val
+                            ? val === "hadir"
+                              ? "border-(--adm-green) bg-(--adm-green) text-white"
+                              : val === "tidak_hadir"
+                                ? "border-(--adm-btn-red) bg-(--adm-btn-red) text-white"
+                                : "border-(--adm-yellow) bg-(--adm-yellow) text-white"
+                            : "border-(--adm-border) bg-(--adm-bg-primary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
                         }`}
                       >
-                        {n}
+                        {label}
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
 
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="modal-rsvp-msg"
-                    className="text-xs font-semibold text-(--adm-text-secondary)"
-                  >
-                    Pesan (Opsional)
-                  </label>
-                  <span className="text-[10.5px] text-(--adm-text-muted)">
-                    {rsvpModal.message.length}/500
-                  </span>
+                {rsvpModal.attendance === "hadir" && (
+                  <div>
+                    <span className="adm-label">Jumlah Tamu (Pax)</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="inline-flex items-center gap-1 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-0.5">
+                        <button
+                          type="button"
+                          aria-label="Kurangi pax"
+                          onClick={() =>
+                            setRsvpModal({
+                              ...rsvpModal,
+                              guest_count: Math.max(
+                                1,
+                                rsvpModal.guest_count - 1
+                              ),
+                            })
+                          }
+                          className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="w-12 text-center text-xs font-semibold tabular-nums">
+                          {rsvpModal.guest_count} Pax
+                        </span>
+                        <button
+                          type="button"
+                          aria-label="Tambah pax"
+                          onClick={() =>
+                            setRsvpModal({
+                              ...rsvpModal,
+                              guest_count: Math.min(
+                                100,
+                                rsvpModal.guest_count + 1
+                              ),
+                            })
+                          }
+                          className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      {[1, 2, 3, 4].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() =>
+                            setRsvpModal({ ...rsvpModal, guest_count: n })
+                          }
+                          className={`rounded-md border px-2.5 py-1 text-xs font-medium ${
+                            rsvpModal.guest_count === n
+                              ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
+                              : "border-(--adm-border) text-(--adm-text-secondary)"
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label
+                      htmlFor="modal-rsvp-msg"
+                      className="text-xs font-semibold text-(--adm-text-secondary)"
+                    >
+                      Pesan (Opsional)
+                    </label>
+                    <span className="text-[11px] text-(--adm-text-muted)">
+                      {rsvpModal.message.length}/500
+                    </span>
+                  </div>
+                  <textarea
+                    id="modal-rsvp-msg"
+                    maxLength={500}
+                    value={rsvpModal.message}
+                    onChange={(e) =>
+                      setRsvpModal({ ...rsvpModal, message: e.target.value })
+                    }
+                    rows={3}
+                    className="adm-input"
+                  />
                 </div>
-                <textarea
-                  id="modal-rsvp-msg"
-                  maxLength={500}
-                  value={rsvpModal.message}
-                  onChange={(e) =>
-                    setRsvpModal({ ...rsvpModal, message: e.target.value })
-                  }
-                  rows={3}
-                  className="adm-input"
-                />
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-(--adm-border) pt-3">
+              <div className="adm-modal-footer">
                 <button
                   type="button"
                   onClick={() => setRsvpModal(null)}
-                  className="adm-btn adm-btn-secondary"
+                  className="adm-btn adm-btn-outline-danger"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="adm-btn adm-btn-primary"
+                  className={`adm-btn ${
+                    rsvpModal.id ? "adm-btn-edit" : "adm-btn-primary"
+                  }`}
                 >
                   {isSaving ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Save className="h-3.5 w-3.5" />
                   )}
-                  Simpan
+                  {rsvpModal.id ? "Simpan Perubahan" : "Simpan"}
                 </button>
               </div>
             </form>
@@ -1706,89 +1748,90 @@ const AdminDashboard = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-(--adm-backdrop) p-4 backdrop-blur-xs"
+          className="adm-modal-backdrop"
           onClick={(e) => {
             if (e.target === e.currentTarget) setWishModal(null);
           }}
         >
-          <div className="adm-card w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between border-b border-(--adm-border) px-4 py-3">
-              <h3 className="text-sm font-semibold">
+          <div className="adm-modal">
+            <div className="adm-modal-header">
+              <h3 className="adm-modal-title">
                 {wishModal.id ? "Edit Ucapan & Doa" : "Tambah Ucapan"}
               </h3>
               <button
                 type="button"
                 aria-label="Tutup modal ucapan"
                 onClick={() => setWishModal(null)}
-                className="rounded p-1 text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay)"
+                className="adm-btn adm-btn-ghost adm-btn-sm px-1.5"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <form onSubmit={handleSaveWishModal} className="space-y-3.5 p-4">
-              <div className="space-y-1">
-                <label
-                  htmlFor="modal-wish-name"
-                  className="text-xs font-semibold text-(--adm-text-secondary)"
-                >
-                  Nama Pengirim *
-                </label>
-                <input
-                  id="modal-wish-name"
-                  maxLength={100}
-                  value={wishModal.name}
-                  onChange={(e) =>
-                    setWishModal({ ...wishModal, name: e.target.value })
-                  }
-                  placeholder="Contoh: Keluarga Besar H. Budi"
-                  className="adm-input"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="modal-wish-msg"
-                    className="text-xs font-semibold text-(--adm-text-secondary)"
-                  >
-                    Ucapan & Doa *
+            <form onSubmit={handleSaveWishModal}>
+              <div className="adm-modal-body space-y-3.5">
+                <div>
+                  <label htmlFor="modal-wish-name" className="adm-label">
+                    Nama Pengirim *
                   </label>
-                  <span className="text-[10.5px] text-(--adm-text-muted)">
-                    {wishModal.message.length}/1000
-                  </span>
+                  <input
+                    id="modal-wish-name"
+                    maxLength={100}
+                    value={wishModal.name}
+                    onChange={(e) =>
+                      setWishModal({ ...wishModal, name: e.target.value })
+                    }
+                    placeholder="Contoh: Keluarga Besar H. Budi"
+                    className="adm-input"
+                    required
+                  />
                 </div>
-                <textarea
-                  id="modal-wish-msg"
-                  maxLength={1000}
-                  value={wishModal.message}
-                  onChange={(e) =>
-                    setWishModal({ ...wishModal, message: e.target.value })
-                  }
-                  rows={4}
-                  placeholder="Tuliskan ucapan & doa..."
-                  className="adm-input"
-                  required
-                />
+                <div>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label
+                      htmlFor="modal-wish-msg"
+                      className="text-xs font-semibold text-(--adm-text-secondary)"
+                    >
+                      Ucapan & Doa *
+                    </label>
+                    <span className="text-[11px] text-(--adm-text-muted)">
+                      {wishModal.message.length}/1000
+                    </span>
+                  </div>
+                  <textarea
+                    id="modal-wish-msg"
+                    maxLength={1000}
+                    value={wishModal.message}
+                    onChange={(e) =>
+                      setWishModal({ ...wishModal, message: e.target.value })
+                    }
+                    rows={4}
+                    placeholder="Tuliskan ucapan & doa..."
+                    className="adm-input"
+                    required
+                  />
+                </div>
               </div>
-              <div className="flex justify-end gap-2 border-t border-(--adm-border) pt-3">
+              <div className="adm-modal-footer">
                 <button
                   type="button"
                   onClick={() => setWishModal(null)}
-                  className="adm-btn adm-btn-secondary"
+                  className="adm-btn adm-btn-outline-danger"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="adm-btn adm-btn-primary"
+                  className={`adm-btn ${
+                    wishModal.id ? "adm-btn-edit" : "adm-btn-primary"
+                  }`}
                 >
                   {isSaving ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Save className="h-3.5 w-3.5" />
                   )}
-                  Simpan
+                  {wishModal.id ? "Simpan Perubahan" : "Simpan"}
                 </button>
               </div>
             </form>

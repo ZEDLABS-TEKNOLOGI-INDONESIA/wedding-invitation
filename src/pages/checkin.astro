@@ -31,8 +31,9 @@ if (!isAdminAuthenticated(Astro.cookies)) {
         <button
           id="checkin-theme-toggle"
           type="button"
-          aria-label="Ubah tema terang atau gelap"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-primary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
+          aria-label="Ganti tema terang/gelap"
+          title="Ganti Tema"
+          class="inline-flex h-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-2 text-(--adm-text-secondary) hover:text-(--adm-text-primary) hover:brightness-105"
         >
           <Moon className="h-4 w-4 dark:hidden" />
           <Sun className="hidden h-4 w-4 dark:inline" />
@@ -71,7 +72,9 @@ if (!isAdminAuthenticated(Astro.cookies)) {
     if (btn) {
       btn.addEventListener("click", () => {
         const isDark = document.documentElement.classList.toggle("dark");
-        localStorage.setItem("theme", isDark ? "dark" : "light");
+        const next = isDark ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
       });
     }
   </script>

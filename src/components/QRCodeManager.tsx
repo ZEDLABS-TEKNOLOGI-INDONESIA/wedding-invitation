@@ -1,7 +1,6 @@
 import FileSaver from "file-saver";
 import JSZip from "jszip";
 import {
-  CheckCircle2,
   Copy,
   Download,
   Loader2,
@@ -13,10 +12,7 @@ import {
 import QRCode from "qrcode";
 import { QRCodeCanvas } from "qrcode.react";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  parseGuestsText,
-  type ParsedGuestRow,
-} from "../utils/csvImport";
+import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
 import {
   ConfirmModal,
   ToastBanner,
@@ -54,8 +50,9 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [brideInitial, setBrideInitial] = useState("B");
   const [groomInitial, setGroomInitial] = useState("G");
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [confirmDialog, setConfirmDialog] =
-    useState<ConfirmDialogState | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
+    null
+  );
 
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
 
@@ -178,9 +175,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           chunk.map(async (name, chunkIdx) => {
             const globalIdx = i + chunkIdx;
             const base64Data = await renderQrBase64(name, logoImg);
-            const safeName = name
-              .replace(/[^a-z0-9]/gi, "_")
-              .substring(0, 50);
+            const safeName = name.replace(/[^a-z0-9]/gi, "_").substring(0, 50);
             folder?.file(`${globalIdx + 1}_${safeName}.png`, base64Data, {
               base64: true,
             });
@@ -265,27 +260,19 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         confirmLabel="Muat Daftar Nama"
       />
 
-      <div className="flex justify-center">
-        <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
+      <div data-tour="qr-mode-switch" className="flex justify-start">
+        <div className="adm-seg">
           <button
             type="button"
             onClick={() => setActiveTab("single")}
-            className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
-              activeTab === "single"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+            className={`adm-seg-btn ${activeTab === "single" ? "is-active" : ""}`}
           >
             Manual (Satuan)
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("bulk")}
-            className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
-              activeTab === "bulk"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+            className={`adm-seg-btn ${activeTab === "bulk" ? "is-active" : ""}`}
           >
             Massal (Daftar Tamu / CSV)
           </button>
@@ -293,91 +280,103 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       </div>
 
       {activeTab === "single" && (
-        <div className="animate-reveal grid items-center gap-8 md:grid-cols-2">
-          <div className="space-y-5">
-            {savedGuests.length > 0 && (
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="qr-quick-pick"
-                  className="text-xs font-bold tracking-widest text-slate-400 uppercase"
-                >
-                  Pilih Cepat dari Daftar Tamu
-                </label>
-                <select
-                  id="qr-quick-pick"
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) setSingleName(e.target.value);
-                  }}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                >
-                  <option value="">
-                    -- Pilih dari {savedGuests.length} tamu tersimpan --
-                  </option>
-                  {savedGuests.map((g) => (
-                    <option key={g.id} value={g.name}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
+        <div className="animate-reveal grid items-start gap-4 md:grid-cols-2">
+          <div className="adm-card">
+            <div className="adm-card-header">
+              <div>
+                <h3 className="adm-card-title">QR Code Satuan</h3>
+                <p className="adm-card-desc">
+                  Buat QR Code undangan personal untuk satu tamu.
+                </p>
               </div>
-            )}
+            </div>
+            <div className="adm-card-body space-y-3">
+              {savedGuests.length > 0 && (
+                <div>
+                  <label htmlFor="qr-quick-pick" className="adm-label">
+                    Pilih Cepat dari Daftar Tamu
+                  </label>
+                  <select
+                    id="qr-quick-pick"
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) setSingleName(e.target.value);
+                    }}
+                    className="adm-input"
+                  >
+                    <option value="">
+                      -- Pilih dari {savedGuests.length} tamu tersimpan --
+                    </option>
+                    {savedGuests.map((g) => (
+                      <option key={g.id} value={g.name}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <label
-                htmlFor="qr-single-name"
-                className="text-xs font-bold tracking-widest text-slate-400 uppercase"
-              >
-                Nama Tamu
-              </label>
-              <input
-                id="qr-single-name"
-                type="text"
-                value={singleName}
-                onChange={(e) => setSingleName(e.target.value)}
-                placeholder="Ketik nama tamu..."
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-4 text-lg focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
-            <div className="rounded-xl bg-slate-50 p-4 font-mono text-xs break-all text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
-              {generateUrl(singleName)}
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={copySingleLink}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-xs font-bold uppercase hover:bg-slate-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
-              >
-                <Copy className="h-4 w-4" /> Copy Link
-              </button>
-              <button
-                type="button"
-                onClick={downloadSingle}
-                disabled={!singleName}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-xs font-bold text-white uppercase shadow-lg transition-all hover:bg-blue-700 disabled:opacity-50"
-              >
-                <Download className="h-4 w-4" /> Download PNG
-              </button>
+              <div>
+                <label htmlFor="qr-single-name" className="adm-label">
+                  Nama Tamu
+                </label>
+                <input
+                  id="qr-single-name"
+                  type="text"
+                  value={singleName}
+                  onChange={(e) => setSingleName(e.target.value)}
+                  placeholder="Ketik nama tamu..."
+                  className="adm-input"
+                />
+              </div>
+              <div>
+                <span className="adm-label">Tautan Undangan</span>
+                <div className="rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) px-3 py-2 font-mono text-[11px] break-all text-(--adm-text-secondary)">
+                  {generateUrl(singleName)}
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={copySingleLink}
+                  className="adm-btn adm-btn-secondary flex-1"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Salin Link
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadSingle}
+                  disabled={!singleName}
+                  className="adm-btn adm-btn-primary flex-1"
+                >
+                  <Download className="h-3.5 w-3.5" /> Unduh PNG
+                </button>
+              </div>
             </div>
           </div>
-          <div className="flex justify-center">
-            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-800">
-              <QRCodeCanvas
-                id="single-qr"
-                value={generateUrl(singleName)}
-                size={250}
-                level="H"
-                includeMargin={true}
-                imageSettings={
-                  centerLogo
-                    ? { src: centerLogo, height: 50, width: 50, excavate: true }
-                    : undefined
-                }
-              />
-              <div className="mt-4 text-center">
-                <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
-                  Preview Desain
-                </p>
+          <div className="adm-card">
+            <div className="adm-card-header">
+              <h3 className="adm-card-title">Pratinjau Desain</h3>
+            </div>
+            <div className="adm-card-body flex justify-center">
+              <div className="rounded-md border border-(--adm-border) bg-white p-3">
+                <QRCodeCanvas
+                  id="single-qr"
+                  value={generateUrl(singleName)}
+                  size={250}
+                  level="H"
+                  includeMargin={true}
+                  imageSettings={
+                    centerLogo
+                      ? {
+                          src: centerLogo,
+                          height: 50,
+                          width: 50,
+                          excavate: true,
+                        }
+                      : undefined
+                  }
+                />
               </div>
             </div>
           </div>
@@ -385,146 +384,146 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
       )}
 
       {activeTab === "bulk" && (
-        <div className="animate-reveal space-y-8">
+        <div className="animate-reveal space-y-4">
           {bulkNames.length === 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col justify-between space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800/50">
-                <div className="space-y-2">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                    <Users className="h-6 w-6" />
+              <div className="adm-card flex flex-col">
+                <div className="adm-card-body flex flex-1 flex-col justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-(--adm-accent-soft) text-(--adm-accent)">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <h3 className="adm-card-title">
+                      Ambil dari Daftar Tamu Permanen
+                    </h3>
+                    <p className="adm-card-desc">
+                      Generate QR Code massal untuk seluruh {savedGuests.length}{" "}
+                      tamu tersimpan tanpa perlu upload ulang CSV.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                    Ambil dari Daftar Tamu Permanen
-                  </h3>
-                  <p className="text-sm text-slate-500">
-                    Generate QR Code massal untuk seluruh {savedGuests.length}{" "}
-                    tamu tersimpan tanpa perlu upload ulang CSV.
-                  </p>
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    disabled={savedGuests.length === 0}
-                    onClick={loadFromGuestDb}
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    <Users className="h-4 w-4" /> Muat {savedGuests.length} Tamu
-                  </button>
+                  <div>
+                    <button
+                      type="button"
+                      disabled={savedGuests.length === 0}
+                      onClick={loadFromGuestDb}
+                      className="adm-btn adm-btn-primary"
+                    >
+                      <Users className="h-3.5 w-3.5" /> Muat{" "}
+                      {savedGuests.length} Tamu
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-col justify-between space-y-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800/50">
-                <div className="space-y-2">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
-                    <Upload className="h-6 w-6" />
+              <div className="adm-card flex flex-col border-dashed">
+                <div className="adm-card-body flex flex-1 flex-col justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-(--adm-bg-tertiary) text-(--adm-text-secondary)">
+                      <Upload className="h-4 w-4" />
+                    </div>
+                    <h3 className="adm-card-title">
+                      Impor CSV / Tempel Daftar Nama
+                    </h3>
+                    <p className="adm-card-desc">
+                      Seret file CSV atau salin-tempel daftar nama dari Excel,
+                      Google Sheets, atau catatan WhatsApp.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                    Import CSV / Tempel Daftar Nama
-                  </h3>
-                  <p className="text-sm text-slate-500">
-                    Seret file CSV atau salin-tempel daftar nama dari Excel,
-                    Google Sheets, atau catatan WhatsApp.
-                  </p>
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setIsCsvModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-xs font-bold text-white shadow-sm hover:bg-slate-800 dark:bg-white dark:text-slate-900"
-                  >
-                    <Upload className="h-4 w-4" /> Buka Import CSV / Teks
-                  </button>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setIsCsvModalOpen(true)}
+                      className="adm-btn adm-btn-outline-primary"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> Buka Impor CSV / Teks
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50 p-4 md:flex-row md:items-center md:justify-between dark:border-blue-900/30 dark:bg-blue-900/10">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-blue-100 p-2 font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
-                    {bulkNames.length}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-700 dark:text-blue-100">
-                      Data Tamu Siap
+            <div className="space-y-4">
+              <div className="adm-card">
+                <div className="adm-card-body flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="adm-badge adm-badge-accent">
+                      {bulkNames.length}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      Desain Premium dengan Logo Terpasang
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setConfirmDialog({
-                        title: "Reset Daftar Tamu",
-                        message:
-                          "Yakin ingin menghapus semua data yang dimuat?",
-                        confirmLabel: "Reset",
-                        destructive: true,
-                        onConfirm: () => setBulkNames([]),
-                      })
-                    }
-                    className="group flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-5 py-2.5 text-xs font-bold text-red-600 transition-all hover:bg-red-100 hover:shadow-sm active:scale-95 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-                  >
-                    <RefreshCcw className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-180" />
-                    Reset Data
-                  </button>
-                  <button
-                    type="button"
-                    onClick={downloadAllZip}
-                    disabled={isProcessing}
-                    className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-blue-600 px-8 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    <div className="relative z-10 flex items-center gap-2">
-                      {isProcessing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4" />
-                      )}
-                      <span>
-                        {isProcessing ? "Memproses..." : "Download ZIP"}
+                    <div className="flex flex-col">
+                      <span className="adm-card-title">Data Tamu Siap</span>
+                      <span className="adm-hint">
+                        Desain premium dengan logo terpasang
                       </span>
                     </div>
-                  </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setConfirmDialog({
+                          title: "Reset Daftar Tamu",
+                          message:
+                            "Yakin ingin menghapus semua data yang dimuat?",
+                          confirmLabel: "Reset",
+                          destructive: true,
+                          onConfirm: () => setBulkNames([]),
+                        })
+                      }
+                      className="adm-btn adm-btn-outline-danger"
+                    >
+                      <RefreshCcw className="h-3.5 w-3.5" />
+                      Reset Data
+                    </button>
+                    <button
+                      type="button"
+                      onClick={downloadAllZip}
+                      disabled={isProcessing}
+                      className="adm-btn adm-btn-primary"
+                    >
+                      {isProcessing ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Download className="h-3.5 w-3.5" />
+                      )}
+                      {isProcessing ? "Memproses..." : "Unduh ZIP"}
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {isProcessing && (
-                <div className="animate-reveal space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                <div className="animate-reveal space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-semibold text-(--adm-text-secondary)">
                     <span>{statusMsg}</span>
                     <span>{progress}%</span>
                   </div>
-                  <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-(--adm-bg-tertiary)">
                     <div
-                      className="h-full bg-blue-600 transition-all duration-300 ease-out"
+                      className="h-full bg-(--adm-accent) transition-all duration-300 ease-out"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
                 {bulkNames.slice(0, 50).map((name, idx) => (
                   <div
                     key={idx}
-                    className="group relative flex flex-col items-center gap-3 rounded-xl border border-slate-100 bg-white p-3 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
+                    className="adm-card group relative flex flex-col items-center gap-2 p-3"
                   >
                     <button
                       type="button"
                       aria-label={`Hapus ${name}`}
+                      title="Hapus"
                       onClick={() =>
-                        setBulkNames((prev) =>
-                          prev.filter((_, i) => i !== idx)
-                        )
+                        setBulkNames((prev) => prev.filter((_, i) => i !== idx))
                       }
-                      className="absolute top-2 right-2 rounded-md p-1 text-red-500 opacity-0 transition-opacity hover:bg-red-50 group-hover:opacity-100 dark:hover:bg-red-900/30"
+                      className="adm-btn-aksi aksi-hapus absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                    <div className="rounded-lg bg-white p-1">
+                    <div className="rounded-md bg-white p-1">
                       <QRCodeCanvas
                         value={generateUrl(name)}
                         size={140}
@@ -542,20 +541,15 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                         }
                       />
                     </div>
-                    <div className="w-full text-center">
-                      <p className="truncate text-xs font-bold text-slate-700 dark:text-slate-300">
-                        {name}
-                      </p>
-                      <div className="mt-1 flex justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                        <CheckCircle2 className="h-3 w-3 text-green-500" />
-                      </div>
-                    </div>
+                    <p className="w-full truncate text-center text-[12px] font-semibold text-(--adm-text-primary)">
+                      {name}
+                    </p>
                   </div>
                 ))}
               </div>
 
               {bulkNames.length > 50 && (
-                <p className="text-center text-xs text-slate-400 italic">
+                <p className="adm-hint text-center">
                   ... dan {bulkNames.length - 50} QR Code lainnya (disembunyikan
                   agar browser tidak berat, namun tetap akan terunduh).
                 </p>

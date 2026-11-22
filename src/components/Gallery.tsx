@@ -99,7 +99,7 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
               key={index}
               type="button"
               aria-label={`Lihat foto momen ${index + 1}`}
-              className="group hover:shadow-accent/20 dark:bg-darkSurface relative block w-full cursor-pointer overflow-hidden rounded-[2rem] border border-slate-100 bg-slate-50 text-left shadow-xl transition-all duration-700 hover:-translate-y-3 focus:ring-2 focus:ring-accent focus:outline-none md:rounded-[3.5rem] dark:border-white/5"
+              className="group hover:shadow-accent/20 dark:bg-darkSurface focus:ring-accent relative block w-full cursor-pointer overflow-hidden rounded-[2rem] border border-slate-100 bg-slate-50 text-left shadow-xl transition-all duration-700 hover:-translate-y-3 focus:ring-2 focus:outline-none md:rounded-[3.5rem] dark:border-white/5"
               onClick={() => openLightbox(index)}
             >
               <img

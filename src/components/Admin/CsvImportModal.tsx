@@ -124,9 +124,7 @@ function CsvImportModal<T>({
       await onConfirm(rows);
       onClose();
     } catch (err) {
-      setErrorMsg(
-        err instanceof Error ? err.message : "Gagal mengimpor data."
-      );
+      setErrorMsg(err instanceof Error ? err.message : "Gagal mengimpor data.");
     } finally {
       setIsSubmitting(false);
     }
@@ -137,23 +135,22 @@ function CsvImportModal<T>({
       role="dialog"
       aria-modal="true"
       aria-labelledby="csv-import-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="adm-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isSubmitting) onClose();
       }}
     >
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-800">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 dark:border-slate-700">
+      <div className="adm-modal adm-modal-lg flex max-h-[90vh] flex-col">
+        <div className="adm-modal-header">
           <div>
             <h3
               id="csv-import-modal-title"
-              className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white"
+              className="adm-modal-title flex items-center gap-2"
             >
-              <FileSpreadsheet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <FileSpreadsheet className="h-4 w-4 text-(--adm-accent)" />
               {title}
             </h3>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-xs text-(--adm-text-secondary)">
               {description}
             </p>
           </div>
@@ -162,45 +159,36 @@ function CsvImportModal<T>({
             aria-label="Tutup modal import"
             disabled={isSubmitting}
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
+            className="adm-btn adm-btn-ghost adm-btn-sm px-1.5"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="custom-scrollbar flex-1 space-y-5 overflow-y-auto p-6">
-          {/* Switcher & Template */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
+        <div className="adm-modal-body custom-scrollbar flex-1 space-y-4 overflow-y-auto">
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="adm-seg">
               <button
                 type="button"
                 onClick={() => setInputMode("file")}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all ${
-                  inputMode === "file"
-                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                    : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                }`}
+                className={`adm-seg-btn ${inputMode === "file" ? "is-active" : ""}`}
               >
                 <Upload className="h-3.5 w-3.5" /> Upload File CSV
               </button>
               <button
                 type="button"
                 onClick={() => setInputMode("paste")}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all ${
-                  inputMode === "paste"
-                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                    : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                }`}
+                className={`adm-seg-btn ${inputMode === "paste" ? "is-active" : ""}`}
               >
-                <ClipboardPaste className="h-3.5 w-3.5" /> Tempel dari Excel / Teks
+                <ClipboardPaste className="h-3.5 w-3.5" /> Tempel dari Excel /
+                Teks
               </button>
             </div>
 
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+              className="adm-btn adm-btn-secondary adm-btn-sm"
             >
               <FileText className="h-3.5 w-3.5" /> Download Template CSV
             </button>
@@ -218,23 +206,23 @@ function CsvImportModal<T>({
                 setIsDragging(false);
                 handleFile(e.dataTransfer.files?.[0]);
               }}
-              className={`rounded-2xl border-2 border-dashed p-6 text-center transition-colors ${
+              className={`rounded-lg border-2 border-dashed p-5 text-center transition-colors ${
                 isDragging
-                  ? "border-blue-500 bg-blue-50/70 dark:bg-blue-900/20"
-                  : "border-slate-300 bg-slate-50/70 dark:border-slate-600 dark:bg-slate-900/40"
+                  ? "border-(--adm-accent) bg-(--adm-accent-soft)"
+                  : "border-(--adm-border) bg-(--adm-bg-primary)"
               }`}
             >
-              <Upload className="mx-auto mb-2 h-8 w-8 text-slate-400" />
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+              <Upload className="mx-auto mb-2 h-7 w-7 text-(--adm-text-muted)" />
+              <p className="text-[13px] font-semibold text-(--adm-text-primary)">
                 {fileName
                   ? `File dipilih: ${fileName}`
                   : "Seret & lepas file CSV di sini, atau klik tombol di bawah"}
               </p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-(--adm-text-secondary)">
                 Mendukung pemisah koma (<code>,</code>), titik koma Excel (
                 <code>;</code>), dan Tab.
               </p>
-              <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700">
+              <label className="adm-btn adm-btn-primary mt-3.5 cursor-pointer">
                 <Upload className="h-3.5 w-3.5" />
                 {fileName ? "Ganti File CSV" : "Pilih File CSV"}
                 <input
@@ -250,12 +238,10 @@ function CsvImportModal<T>({
               </label>
             </div>
           ) : (
-            <div className="space-y-2">
-              <label
-                htmlFor="csv-paste-area"
-                className="block text-xs font-bold text-slate-600 dark:text-slate-300"
-              >
-                Salin langsung tabel dari Excel / Google Sheets lalu tempel di sini:
+            <div>
+              <label htmlFor="csv-paste-area" className="adm-label">
+                Salin langsung tabel dari Excel / Google Sheets lalu tempel di
+                sini:
               </label>
               <textarea
                 id="csv-paste-area"
@@ -267,24 +253,21 @@ function CsvImportModal<T>({
                   applyParsedText(val, null as unknown as string);
                 }}
                 placeholder={pastePlaceholder}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3.5 font-mono text-xs outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                className="adm-input font-mono text-xs"
               />
             </div>
           )}
 
           {errorMsg && (
-            <div
-              role="alert"
-              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400"
-            >
+            <div role="alert" className="adm-alert adm-alert-danger text-xs">
               {errorMsg}
             </div>
           )}
 
           {warnings.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
-              <p className="font-bold">Catatan ({warnings.length}):</p>
-              <ul className="mt-1 list-disc pl-4">
+            <div className="adm-alert adm-alert-warning flex-col items-start text-xs">
+              <p className="font-semibold">Catatan ({warnings.length}):</p>
+              <ul className="list-disc pl-4">
                 {warnings.slice(0, 5).map((w, idx) => (
                   <li key={idx}>{w}</li>
                 ))}
@@ -295,16 +278,15 @@ function CsvImportModal<T>({
             </div>
           )}
 
-          {/* Preview */}
           {rows.length > 0 && (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="rounded-full bg-green-100 px-3 py-1 font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                <div className="flex items-center gap-2">
+                  <span className="adm-badge adm-badge-success">
                     {rows.length} baris siap diimpor
                   </span>
                   {skipped > 0 && (
-                    <span className="rounded-full bg-amber-100 px-3 py-1 font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                    <span className="adm-badge adm-badge-warning">
                       {skipped} baris dilewati
                     </span>
                   )}
@@ -318,32 +300,33 @@ function CsvImportModal<T>({
                     setFileName(null);
                     setPasteValue("");
                   }}
-                  className="text-xs font-bold text-red-600 hover:underline dark:text-red-400"
+                  className="text-xs font-medium text-(--adm-red) hover:underline"
                 >
                   Bersihkan
                 </button>
               </div>
 
-              <div className="custom-scrollbar max-h-60 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="custom-scrollbar max-h-56 overflow-auto rounded-lg border border-(--adm-border)">
                 <table className="w-full text-left text-xs">
-                  <thead className="sticky top-0 bg-slate-50 text-slate-500 uppercase dark:bg-slate-900 dark:text-slate-400">
+                  <thead className="sticky top-0 border-b border-(--adm-border) bg-(--adm-bg-primary) text-(--adm-text-secondary)">
                     <tr>
-                      <th className="px-3 py-2.5">#</th>
+                      <th className="px-3 py-2">#</th>
                       {columns.map((col, idx) => (
-                        <th key={idx} className="px-3 py-2.5">
+                        <th key={idx} className="px-3 py-2 font-semibold">
                           {col.header}
                         </th>
                       ))}
-                      <th className="px-3 py-2.5 text-right">Hapus</th>
+                      <th className="px-3 py-2 text-right font-semibold">
+                        Hapus
+                      </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                  <tbody className="divide-y divide-(--adm-border)">
                     {rows.slice(0, 100).map((row, idx) => (
-                      <tr
-                        key={idx}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-700/40"
-                      >
-                        <td className="px-3 py-2 text-slate-400">{idx + 1}</td>
+                      <tr key={idx} className="hover:bg-(--adm-bg-overlay)">
+                        <td className="px-3 py-2 text-(--adm-text-muted) tabular-nums">
+                          {idx + 1}
+                        </td>
                         {columns.map((col, cIdx) => (
                           <td key={cIdx} className="px-3 py-2">
                             {col.render(row, idx)}
@@ -358,7 +341,7 @@ function CsvImportModal<T>({
                                 prev.filter((_, i) => i !== idx)
                               )
                             }
-                            className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            className="adm-btn-aksi aksi-hapus"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -369,7 +352,7 @@ function CsvImportModal<T>({
                 </table>
               </div>
               {rows.length > 100 && (
-                <p className="text-center text-[11px] text-slate-400 italic">
+                <p className="text-center text-[11px] text-(--adm-text-muted)">
                   Menampilkan 100 baris pertama dari {rows.length} total baris.
                   Seluruh {rows.length} baris tetap akan diimpor.
                 </p>
@@ -378,13 +361,12 @@ function CsvImportModal<T>({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/70 px-6 py-4 dark:border-slate-700 dark:bg-slate-900/40">
+        <div className="adm-modal-footer">
           <button
             type="button"
             disabled={isSubmitting}
             onClick={onClose}
-            className="rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700"
+            className="adm-btn adm-btn-outline-danger"
           >
             Batal
           </button>
@@ -392,16 +374,14 @@ function CsvImportModal<T>({
             type="button"
             disabled={isSubmitting || rows.length === 0}
             onClick={handleConfirm}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+            className="adm-btn adm-btn-primary"
           >
             {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <Upload className="h-4 w-4" />
+              <Upload className="h-3.5 w-3.5" />
             )}
-            {isSubmitting
-              ? "Mengimpor..."
-              : `${confirmLabel} (${rows.length})`}
+            {isSubmitting ? "Mengimpor..." : `${confirmLabel} (${rows.length})`}
           </button>
         </div>
       </div>

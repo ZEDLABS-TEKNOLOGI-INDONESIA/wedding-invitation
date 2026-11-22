@@ -1,10 +1,4 @@
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Info,
-  X,
-  XCircle,
-} from "lucide-react";
+import { CheckCircle2, Info, X, XCircle } from "lucide-react";
 import React, { useEffect } from "react";
 
 export interface ToastState {
@@ -12,6 +6,10 @@ export interface ToastState {
   message: string;
 }
 
+/**
+ * Toast mengikuti whatsapp-service (Toast.astro):
+ * Posisi fixed top-4 right-4, border warna status tajam, background secondary/95 + backdrop-blur.
+ */
 export const ToastBanner: React.FC<{
   toast: ToastState | null;
   onClose: () => void;
@@ -24,21 +22,21 @@ export const ToastBanner: React.FC<{
 
   if (!toast) return null;
 
-  const styles =
+  const toneClass =
     toast.type === "success"
-      ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/90 dark:text-green-200"
+      ? "border-(--adm-green) text-(--adm-green)"
       : toast.type === "error"
-        ? "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/90 dark:text-red-200"
-        : "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/90 dark:text-blue-200";
+        ? "border-(--adm-red) text-(--adm-red)"
+        : "border-(--adm-accent) text-(--adm-accent)";
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className="fixed right-4 bottom-6 z-[200] max-w-md md:right-6"
+      className="fixed top-4 right-4 left-4 z-[200] flex flex-col items-stretch gap-2 sm:left-auto sm:max-w-sm sm:items-end"
     >
       <div
-        className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium shadow-2xl backdrop-blur-md ${styles}`}
+        className={`flex w-full items-center gap-2.5 rounded-md border bg-(--adm-bg-secondary)/95 px-4 py-2.5 text-[13px] font-medium break-words shadow-lg backdrop-blur-md sm:w-auto ${toneClass}`}
       >
         {toast.type === "success" ? (
           <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -52,9 +50,9 @@ export const ToastBanner: React.FC<{
           type="button"
           aria-label="Tutup notifikasi"
           onClick={onClose}
-          className="rounded p-1 opacity-70 hover:opacity-100"
+          className="rounded p-0.5 opacity-70 hover:opacity-100"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
@@ -69,6 +67,10 @@ export interface ConfirmDialogState {
   onConfirm: () => void;
 }
 
+/**
+ * ConfirmModal mengikuti whatsapp-service (ConfirmDialog.astro):
+ * Modal radius 12px, padding 20px, tombol Batal outline merah tajam + Konfirmasi fill merah/biru.
+ */
 export const ConfirmModal: React.FC<{
   dialog: ConfirmDialogState | null;
   onClose: () => void;
@@ -89,37 +91,24 @@ export const ConfirmModal: React.FC<{
       role="dialog"
       aria-modal="true"
       aria-label={dialog.title}
-      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="adm-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-800">
-        <div className="flex items-start gap-4">
-          <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-              dialog.destructive !== false
-                ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                : "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-            }`}
-          >
-            <AlertTriangle className="h-5 w-5" />
-          </div>
-          <div className="space-y-1.5">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              {dialog.title}
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              {dialog.message}
-            </p>
-          </div>
-        </div>
+      <div className="adm-modal p-5">
+        <h2 className="mb-2 text-base font-semibold text-(--adm-text-primary)">
+          {dialog.title}
+        </h2>
+        <p className="mb-5 text-[13.5px] leading-relaxed whitespace-pre-line text-(--adm-text-secondary)">
+          {dialog.message}
+        </p>
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            className="adm-btn adm-btn-outline-danger"
           >
             Batal
           </button>
@@ -129,13 +118,13 @@ export const ConfirmModal: React.FC<{
               dialog.onConfirm();
               onClose();
             }}
-            className={`rounded-xl px-5 py-2 text-xs font-bold text-white shadow-sm ${
+            className={`adm-btn ${
               dialog.destructive !== false
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-blue-600 hover:bg-blue-700"
+                ? "adm-btn-danger"
+                : "adm-btn-primary"
             }`}
           >
-            {dialog.confirmLabel || "Lanjutkan"}
+            {dialog.confirmLabel || "Konfirmasi"}
           </button>
         </div>
       </div>

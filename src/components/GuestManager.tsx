@@ -18,11 +18,14 @@ import {
   Users,
   X,
 } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  parseGuestsText,
-  type ParsedGuestRow,
-} from "../utils/csvImport";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
 import { GUEST_GROUP_PRESETS } from "../utils/formHelpers";
 import {
   ConfirmModal,
@@ -63,8 +66,9 @@ const GuestManager: React.FC<GuestManagerProps> = ({
     "all" | "checked" | "pending"
   >("all");
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [confirmDialog, setConfirmDialog] =
-    useState<ConfirmDialogState | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
+    null
+  );
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
   // Add guest form
@@ -397,7 +401,10 @@ const GuestManager: React.FC<GuestManagerProps> = ({
         });
         if (res.ok) {
           setGuests((prev) => prev.filter((item) => item.id !== guest.id));
-          setToast({ type: "success", message: `${guest.name} telah dihapus.` });
+          setToast({
+            type: "success",
+            message: `${guest.name} telah dihapus.`,
+          });
         } else {
           setToast({ type: "error", message: "Gagal menghapus tamu." });
         }
@@ -564,65 +571,60 @@ const GuestManager: React.FC<GuestManagerProps> = ({
       />
 
       {/* Ringkasan Tamu */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
-          <p className="text-xs font-bold text-slate-400 uppercase">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="adm-card flex flex-col gap-1 p-3.5">
+          <span className="text-xs text-(--adm-text-secondary)">
             Total Tamu
-          </p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+          </span>
+          <span className="text-xl font-semibold text-(--adm-text-primary) tabular-nums">
             {stats.total}
-          </p>
+          </span>
         </div>
-        <div className="rounded-xl border border-green-100 bg-green-50/70 p-4 dark:border-green-900/30 dark:bg-green-900/15">
-          <p className="text-xs font-bold text-green-600 uppercase dark:text-green-400">
+        <div className="adm-card flex flex-col gap-1 p-3.5">
+          <span className="text-xs text-(--adm-text-secondary)">
             Sudah Check-In
-          </p>
-          <p className="mt-1 text-2xl font-bold text-green-700 dark:text-green-300">
+          </span>
+          <span className="text-xl font-semibold text-(--adm-green) tabular-nums">
             {stats.checkedIn}
-          </p>
+          </span>
         </div>
-        <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/30 dark:bg-blue-900/15">
-          <p className="text-xs font-bold text-blue-600 uppercase dark:text-blue-400">
+        <div className="adm-card flex flex-col gap-1 p-3.5">
+          <span className="text-xs text-(--adm-text-secondary)">
             Total Pax Hadir
-          </p>
-          <p className="mt-1 text-2xl font-bold text-blue-700 dark:text-blue-300">
+          </span>
+          <span className="text-xl font-semibold text-(--adm-accent) tabular-nums">
             {stats.totalPax}
-          </p>
+          </span>
         </div>
-        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
-          <p className="text-xs font-bold text-slate-400 uppercase">
+        <div className="adm-card flex flex-col gap-1 p-3.5">
+          <span className="text-xs text-(--adm-text-secondary)">
             Belum Hadir
-          </p>
-          <p className="mt-1 text-2xl font-bold text-slate-700 dark:text-slate-200">
+          </span>
+          <span className="text-xl font-semibold text-(--adm-text-secondary) tabular-nums">
             {stats.pending}
-          </p>
+          </span>
         </div>
       </div>
 
       {/* Switcher Sub-Tab */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
+      <div
+        data-tour="guest-subtabs"
+        className="flex flex-wrap items-center justify-between gap-2.5"
+      >
+        <div className="adm-seg">
           <button
             type="button"
             onClick={() => setSubTab("list")}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ${
-              subTab === "list"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+            className={`adm-seg-btn ${subTab === "list" ? "is-active" : ""}`}
           >
-            <Users className="h-4 w-4" /> Daftar Tamu Permanen
+            <Users className="h-3.5 w-3.5" /> Daftar Tamu Permanen
           </button>
           <button
             type="button"
             onClick={() => setSubTab("scanner")}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ${
-              subTab === "scanner"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+            className={`adm-seg-btn ${subTab === "scanner" ? "is-active" : ""}`}
           >
-            <QrCode className="h-4 w-4" /> Scanner Check-In Hari H
+            <QrCode className="h-3.5 w-3.5" /> Scanner Check-In Hari H
           </button>
         </div>
 
@@ -630,47 +632,41 @@ const GuestManager: React.FC<GuestManagerProps> = ({
           href="/api/export-guests"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+          className="adm-btn adm-btn-secondary"
         >
           <Download className="h-3.5 w-3.5" /> Export CSV Tamu
         </a>
       </div>
 
       {subTab === "scanner" ? (
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="adm-card space-y-3 p-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-serif text-xl font-bold italic dark:text-white">
-                Pindai QR Kamera
-              </h4>
+              <h4 className="adm-card-title">Pindai QR Kamera</h4>
               <button
                 type="button"
                 onClick={cameraActive ? stopCamera : startCamera}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white ${
-                  cameraActive
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-green-600 hover:bg-green-700"
+                className={`adm-btn adm-btn-sm ${
+                  cameraActive ? "adm-btn-danger" : "adm-btn-edit"
                 }`}
               >
                 {cameraActive ? (
                   <>
-                    <CameraOff className="h-4 w-4" /> Matikan Kamera
+                    <CameraOff className="h-3.5 w-3.5" /> Matikan Kamera
                   </>
                 ) : (
                   <>
-                    <Camera className="h-4 w-4" /> Aktifkan Kamera
+                    <Camera className="h-3.5 w-3.5" /> Aktifkan Kamera
                   </>
                 )}
               </button>
             </div>
 
             {cameraError && (
-              <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
-                {cameraError}
-              </p>
+              <p className="adm-alert adm-alert-warning">{cameraError}</p>
             )}
 
-            <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-xl bg-slate-900">
+            <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-md border border-(--adm-border) bg-[#0d1117]">
               {cameraActive ? (
                 <video
                   ref={videoRef}
@@ -679,7 +675,7 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="text-center text-slate-400">
+                <div className="text-center text-[#8b949e]">
                   <QrCode className="mx-auto mb-2 h-10 w-10 opacity-50" />
                   <p className="text-xs">
                     Klik &quot;Aktifkan Kamera&quot; untuk memindai QR tamu
@@ -693,12 +689,9 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                 e.preventDefault();
                 void processCheckin(scanInput, scanPax);
               }}
-              className="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700"
+              className="space-y-3 border-t border-(--adm-border) pt-3"
             >
-              <label
-                htmlFor="manual-checkin-query"
-                className="block text-xs font-bold text-slate-500 uppercase"
-              >
+              <label htmlFor="manual-checkin-query" className="adm-label">
                 Check-In Manual (Ketik Nama / Kode / Tempel URL QR)
               </label>
               <div className="space-y-2">
@@ -708,15 +701,15 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                   value={scanInput}
                   onChange={(e) => setScanInput(e.target.value)}
                   placeholder="Contoh: Ahmad atau G-A1B2C3D4..."
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="adm-input"
                 />
 
                 {scannerSuggestions.length > 0 && (
-                  <div className="rounded-xl border border-blue-100 bg-white p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                    <p className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase">
+                  <div className="rounded-md border border-(--adm-border) bg-(--adm-bg-secondary) p-1 shadow-(--adm-shadow-pop)">
+                    <p className="adm-hint px-2 py-1">
                       Klik tamu untuk langsung check-in ({scanPax} pax):
                     </p>
-                    <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                    <div className="divide-y divide-(--adm-border)">
                       {scannerSuggestions.map((g) => (
                         <button
                           key={g.id}
@@ -724,17 +717,17 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                           onClick={() =>
                             void processCheckin(g.code, g.quota || scanPax)
                           }
-                          className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs hover:bg-blue-50 dark:hover:bg-slate-700"
+                          className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[12px] hover:bg-(--adm-bg-tertiary)"
                         >
                           <div>
-                            <span className="font-bold text-slate-900 dark:text-white">
+                            <span className="font-semibold text-(--adm-text-primary)">
                               {g.name}
                             </span>
-                            <span className="ml-2 font-mono text-[11px] text-slate-400">
+                            <span className="ml-2 font-mono text-[11px] text-(--adm-text-muted)">
                               {g.code}
                             </span>
                           </div>
-                          <span className="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                          <span className="adm-badge adm-badge-accent">
                             Check-In ({g.quota} Pax)
                           </span>
                         </button>
@@ -743,8 +736,8 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-2 dark:border-slate-700 dark:bg-slate-800">
-                  <span className="text-xs font-bold text-slate-500">
+                <div className="flex items-center justify-between gap-3 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-3 py-1.5">
+                  <span className="text-[12px] font-semibold text-(--adm-text-secondary)">
                     Jumlah Pax Hadir
                   </span>
                   <div className="flex items-center gap-2">
@@ -752,18 +745,18 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                       type="button"
                       aria-label="Kurangi pax"
                       onClick={() => setScanPax((p) => Math.max(1, p - 1))}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+                      className="adm-btn-aksi aksi-netral"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
-                    <span className="w-10 text-center text-sm font-bold">
+                    <span className="w-10 text-center text-[13px] font-semibold text-(--adm-text-primary)">
                       {scanPax}
                     </span>
                     <button
                       type="button"
                       aria-label="Tambah pax"
                       onClick={() => setScanPax((p) => Math.min(50, p + 1))}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+                      className="adm-btn-aksi aksi-netral"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -773,12 +766,12 @@ const GuestManager: React.FC<GuestManagerProps> = ({
               <button
                 type="submit"
                 disabled={checkingIn || !scanInput.trim()}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-xs font-bold text-white uppercase hover:bg-blue-700 disabled:opacity-50"
+                className="adm-btn adm-btn-primary w-full"
               >
                 {checkingIn ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <UserCheck className="h-4 w-4" />
+                  <UserCheck className="h-3.5 w-3.5" />
                 )}
                 Catat Kehadiran
               </button>
@@ -788,16 +781,18 @@ const GuestManager: React.FC<GuestManagerProps> = ({
           <div className="space-y-4">
             {scanResult && (
               <div
-                className={`rounded-2xl border p-5 ${
+                className={`adm-alert ${
                   scanResult.type === "success"
-                    ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-200"
+                    ? "adm-alert-success"
                     : scanResult.type === "warning"
-                      ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200"
-                      : "border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200"
+                      ? "adm-alert-warning"
+                      : "adm-alert-danger"
                 }`}
               >
-                <h4 className="text-lg font-bold">{scanResult.title}</h4>
-                <p className="mt-1 text-sm">{scanResult.detail}</p>
+                <h4 className="text-[14px] font-semibold">
+                  {scanResult.title}
+                </h4>
+                <p className="mt-1 text-[13px]">{scanResult.detail}</p>
                 {scanResult.type === "not_found" &&
                   scanResult.suggestedName && (
                     <button
@@ -809,7 +804,7 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                           true
                         )
                       }
-                      className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                      className="adm-btn adm-btn-sm adm-btn-primary mt-3"
                     >
                       + Check-In sebagai Tamu Walk-In (
                       {scanResult.suggestedName})
@@ -818,13 +813,11 @@ const GuestManager: React.FC<GuestManagerProps> = ({
               </div>
             )}
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
-              <h4 className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-200">
-                Check-In Terbaru
-              </h4>
+            <div className="adm-card p-4">
+              <h4 className="adm-card-title mb-3">Check-In Terbaru</h4>
               <div className="custom-scrollbar max-h-72 space-y-2 overflow-y-auto">
                 {guests.filter((g) => g.checked_in === 1).length === 0 ? (
-                  <p className="py-6 text-center text-xs text-slate-400">
+                  <p className="adm-hint py-6 text-center">
                     Belum ada tamu yang check-in hari ini.
                   </p>
                 ) : (
@@ -839,17 +832,17 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                     .map((g) => (
                       <div
                         key={g.id}
-                        className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-xs dark:border-slate-700 dark:bg-slate-900/50"
+                        className="flex items-center justify-between rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-3 py-2 text-[12px]"
                       >
                         <div>
-                          <span className="font-bold text-slate-900 dark:text-white">
+                          <span className="font-semibold text-(--adm-text-primary)">
                             {g.name}
                           </span>
-                          <span className="ml-2 font-mono text-[11px] text-slate-400">
+                          <span className="ml-2 font-mono text-[11px] text-(--adm-text-muted)">
                             {g.code}
                           </span>
                         </div>
-                        <span className="rounded-full bg-green-100 px-2.5 py-0.5 font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                        <span className="adm-badge adm-badge-success">
                           {g.checked_in_pax} Pax
                         </span>
                       </div>
@@ -860,18 +853,19 @@ const GuestManager: React.FC<GuestManagerProps> = ({
           </div>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Tambah Tamu & Import CSV */}
           <form
+            data-tour="guest-add-form"
             onSubmit={handleAddGuest}
-            className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-900/40"
+            className="space-y-3.5 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+                <h4 className="text-[13px] font-semibold text-(--adm-text-primary)">
                   Tambah Tamu Undangan
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-(--adm-text-secondary)">
                   Isi form di bawah atau gunakan Import CSV / tempel langsung
                   dari Excel untuk banyak tamu sekaligus.
                 </p>
@@ -879,7 +873,7 @@ const GuestManager: React.FC<GuestManagerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsCsvModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+                className="adm-btn adm-btn-outline-primary adm-btn-sm"
               >
                 <Upload className="h-3.5 w-3.5" /> Import CSV / Excel
               </button>
@@ -893,11 +887,8 @@ const GuestManager: React.FC<GuestManagerProps> = ({
 
             <div className="grid gap-3 md:grid-cols-12">
               <div className="md:col-span-4">
-                <label
-                  htmlFor="add-guest-name"
-                  className="mb-1 block text-[11px] font-bold text-slate-500 uppercase"
-                >
-                  Nama Tamu <span className="text-red-500">*</span>
+                <label htmlFor="add-guest-name" className="adm-label">
+                  Nama Tamu <span className="text-(--adm-red)">*</span>
                 </label>
                 <input
                   id="add-guest-name"
@@ -908,14 +899,11 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                   onChange={(e) =>
                     setNewGuest({ ...newGuest, name: e.target.value })
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="adm-input bg-(--adm-bg-secondary)"
                 />
               </div>
               <div className="md:col-span-3">
-                <label
-                  htmlFor="add-guest-phone"
-                  className="mb-1 block text-[11px] font-bold text-slate-500 uppercase"
-                >
+                <label htmlFor="add-guest-phone" className="adm-label">
                   No. WhatsApp
                 </label>
                 <input
@@ -927,14 +915,11 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                   onChange={(e) =>
                     setNewGuest({ ...newGuest, phone: e.target.value })
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="adm-input bg-(--adm-bg-secondary)"
                 />
               </div>
               <div className="md:col-span-2">
-                <label
-                  htmlFor="add-guest-address"
-                  className="mb-1 block text-[11px] font-bold text-slate-500 uppercase"
-                >
+                <label htmlFor="add-guest-address" className="adm-label">
                   Alamat / Kota
                 </label>
                 <input
@@ -945,14 +930,11 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                   onChange={(e) =>
                     setNewGuest({ ...newGuest, address: e.target.value })
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="adm-input bg-(--adm-bg-secondary)"
                 />
               </div>
               <div className="md:col-span-3">
-                <label
-                  htmlFor="add-guest-group"
-                  className="mb-1 block text-[11px] font-bold text-slate-500 uppercase"
-                >
+                <label htmlFor="add-guest-group" className="adm-label">
                   Grup / Kategori
                 </label>
                 <input
@@ -964,17 +946,15 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                   onChange={(e) =>
                     setNewGuest({ ...newGuest, group_name: e.target.value })
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="adm-input bg-(--adm-bg-secondary)"
                 />
               </div>
             </div>
 
             <div className="flex flex-wrap items-end justify-between gap-3 pt-1">
               <div>
-                <span className="mb-1 block text-[11px] font-bold text-slate-500 uppercase">
-                  Kuota Pax
-                </span>
-                <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
+                <span className="adm-label">Kuota Pax</span>
+                <div className="inline-flex items-center gap-1 rounded-md border border-(--adm-border) bg-(--adm-bg-secondary) p-0.5">
                   <button
                     type="button"
                     aria-label="Kurangi kuota"
@@ -984,11 +964,11 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                         quota: Math.max(1, prev.quota - 1),
                       }))
                     }
-                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </button>
-                  <span className="w-16 text-center text-sm font-bold">
+                  <span className="w-14 text-center text-xs font-semibold tabular-nums">
                     {newGuest.quota} Pax
                   </span>
                   <button
@@ -1000,7 +980,7 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                         quota: Math.min(50, prev.quota + 1),
                       }))
                     }
-                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
@@ -1010,21 +990,21 @@ const GuestManager: React.FC<GuestManagerProps> = ({
               <button
                 type="submit"
                 disabled={savingGuest || !newGuest.name.trim()}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+                className="adm-btn adm-btn-primary"
               >
                 {savingGuest ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                 )}
-                Tambah ke Daftar Tamu
+                Tambah Tamu
               </button>
             </div>
           </form>
 
           {/* Filter & Pencarian */}
-          <div className="flex flex-col justify-between gap-3 sm:flex-row">
-            <div className="flex gap-2">
+          <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-center">
+            <div className="adm-seg">
               {(
                 [
                   ["all", "Semua"],
@@ -1036,53 +1016,49 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                   key={val}
                   type="button"
                   onClick={() => setFilterStatus(val)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
-                    filterStatus === val
-                      ? "bg-slate-900 text-white dark:bg-blue-600"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-300"
-                  }`}
+                  className={`adm-seg-btn ${filterStatus === val ? "is-active" : ""}`}
                 >
                   {label}
                 </button>
               ))}
             </div>
             <div className="relative w-full sm:w-64">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-(--adm-text-muted)" />
               <input
                 type="text"
                 placeholder="Cari nama / kode / grup..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 py-2 pr-3 pl-9 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                className="adm-input adm-input-sm pl-8"
               />
             </div>
           </div>
 
           {/* Tabel Daftar Tamu */}
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+          <div className="adm-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-xs text-slate-500 uppercase dark:bg-slate-900/50 dark:text-slate-400">
+              <table className="w-full text-left text-[13px]">
+                <thead className="border-b border-(--adm-border) bg-(--adm-bg-primary) text-[12px] font-semibold text-(--adm-text-secondary)">
                   <tr>
-                    <th className="px-4 py-3">Tamu & Kode</th>
-                    <th className="px-4 py-3">Kontak & Grup</th>
-                    <th className="px-4 py-3">Kuota</th>
-                    <th className="px-4 py-3">Check-In</th>
-                    <th className="px-4 py-3 text-right">Aksi</th>
+                    <th className="px-4 py-2.5">Tamu &amp; Kode</th>
+                    <th className="px-4 py-2.5">Kontak &amp; Grup</th>
+                    <th className="px-4 py-2.5">Kuota</th>
+                    <th className="px-4 py-2.5">Check-In</th>
+                    <th className="px-4 py-2.5 text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                <tbody className="divide-y divide-(--adm-border)">
                   {loading ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center">
-                        <Loader2 className="mx-auto h-5 w-5 animate-spin text-slate-400" />
+                        <Loader2 className="mx-auto h-5 w-5 animate-spin text-(--adm-text-muted)" />
                       </td>
                     </tr>
                   ) : filteredGuests.length === 0 ? (
                     <tr>
                       <td
                         colSpan={5}
-                        className="px-4 py-8 text-center text-xs text-slate-400"
+                        className="px-4 py-8 text-center text-xs text-(--adm-text-secondary)"
                       >
                         Belum ada daftar tamu ditemukan.
                       </td>
@@ -1091,49 +1067,47 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                     filteredGuests.map((guest) => (
                       <tr
                         key={guest.id}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-700/40"
+                        className="hover:bg-(--adm-bg-overlay)"
                       >
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-slate-900 dark:text-white">
+                        <td className="px-4 py-2.5">
+                          <div className="font-medium text-(--adm-text-primary)">
                             {guest.name}
                           </div>
-                          <div className="font-mono text-[11px] text-slate-400">
+                          <div className="font-mono text-[11px] text-(--adm-text-muted)">
                             {guest.code} · {guest.address}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
-                          <div>{guest.phone || "-"}</div>
+                        <td className="px-4 py-2.5 text-xs text-(--adm-text-secondary)">
+                          <div className="font-mono">{guest.phone || "-"}</div>
                           {guest.group_name && (
-                            <span className="mt-0.5 inline-block rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                            <span className="adm-badge mt-0.5 text-[10px]">
                               {guest.group_name}
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-xs font-bold">
+                        <td className="px-4 py-2.5 text-xs font-semibold tabular-nums">
                           {guest.quota} Pax
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-2.5">
                           {guest.checked_in === 1 ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                            <span className="adm-badge adm-badge-success">
                               <CheckCircle2 className="h-3 w-3" /> Hadir (
                               {guest.checked_in_pax})
                             </span>
                           ) : (
-                            <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                              Belum
-                            </span>
+                            <span className="adm-badge">Belum</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex justify-end gap-1">
+                        <td className="px-4 py-2.5 text-right">
+                          <div className="inline-flex justify-end gap-1">
                             <button
                               type="button"
                               aria-label={`Edit ${guest.name}`}
                               title="Edit Data Tamu"
                               onClick={() => setEditingGuest({ ...guest })}
-                              className="rounded p-1.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                              className="adm-btn-aksi aksi-ubah"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-3.5 w-3.5" />
                             </button>
                             <button
                               type="button"
@@ -1148,9 +1122,9 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                                   message: `Tautan untuk ${guest.name} disalin.`,
                                 });
                               }}
-                              className="rounded p-1.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                              className="adm-btn-aksi aksi-netral"
                             >
-                              <Copy className="h-4 w-4" />
+                              <Copy className="h-3.5 w-3.5" />
                             </button>
                             <button
                               type="button"
@@ -1158,12 +1132,12 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                               title="Kirim Undangan via WhatsApp"
                               disabled={sendingWaId === guest.id}
                               onClick={() => sendWaInviteForGuest(guest)}
-                              className="rounded p-1.5 text-green-600 hover:bg-green-50 disabled:opacity-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                              className="adm-btn-aksi aksi-ubah"
                             >
                               {sendingWaId === guest.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : (
-                                <Send className="h-4 w-4" />
+                                <Send className="h-3.5 w-3.5" />
                               )}
                             </button>
                             <button
@@ -1179,12 +1153,12 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                                   : "Check-In Manual"
                               }
                               onClick={() => toggleManualCheckin(guest)}
-                              className="rounded p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                              className="adm-btn-aksi aksi-biru"
                             >
                               {guest.checked_in === 1 ? (
-                                <RotateCcw className="h-4 w-4" />
+                                <RotateCcw className="h-3.5 w-3.5" />
                               ) : (
-                                <UserCheck className="h-4 w-4" />
+                                <UserCheck className="h-3.5 w-3.5" />
                               )}
                             </button>
                             <button
@@ -1192,9 +1166,9 @@ const GuestManager: React.FC<GuestManagerProps> = ({
                               aria-label={`Hapus ${guest.name}`}
                               title="Hapus"
                               onClick={() => deleteGuest(guest)}
-                              className="rounded p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                              className="adm-btn-aksi aksi-hapus"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         </td>
@@ -1213,152 +1187,143 @@ const GuestManager: React.FC<GuestManagerProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          className="adm-modal-backdrop"
           onClick={(e) => {
             if (e.target === e.currentTarget) setEditingGuest(null);
           }}
         >
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Edit Data Tamu
-              </h3>
+          <div className="adm-modal">
+            <div className="adm-modal-header">
+              <h3 className="adm-modal-title">Edit Data Tamu</h3>
               <button
                 type="button"
                 aria-label="Tutup modal edit tamu"
                 onClick={() => setEditingGuest(null)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                className="adm-btn adm-btn-ghost adm-btn-sm px-1.5"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <form onSubmit={handleUpdateGuest} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="edit-guest-name"
-                  className="mb-1 block text-xs font-bold text-slate-500 uppercase"
-                >
-                  Nama Tamu *
-                </label>
-                <input
-                  id="edit-guest-name"
-                  type="text"
-                  required
-                  value={editingGuest.name}
-                  onChange={(e) =>
-                    setEditingGuest({ ...editingGuest, name: e.target.value })
-                  }
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="edit-guest-phone"
-                  className="mb-1 block text-xs font-bold text-slate-500 uppercase"
-                >
-                  No. WhatsApp
-                </label>
-                <input
-                  id="edit-guest-phone"
-                  type="tel"
-                  value={editingGuest.phone}
-                  onChange={(e) =>
-                    setEditingGuest({ ...editingGuest, phone: e.target.value })
-                  }
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleUpdateGuest}>
+              <div className="adm-modal-body space-y-3.5">
                 <div>
-                  <label
-                    htmlFor="edit-guest-address"
-                    className="mb-1 block text-xs font-bold text-slate-500 uppercase"
-                  >
-                    Alamat / Kota
+                  <label htmlFor="edit-guest-name" className="adm-label">
+                    Nama Tamu *
                   </label>
                   <input
-                    id="edit-guest-address"
+                    id="edit-guest-name"
                     type="text"
-                    value={editingGuest.address}
+                    required
+                    value={editingGuest.name}
                     onChange={(e) =>
-                      setEditingGuest({
-                        ...editingGuest,
-                        address: e.target.value,
-                      })
+                      setEditingGuest({ ...editingGuest, name: e.target.value })
                     }
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                    className="adm-input"
                   />
                 </div>
                 <div>
-                  <label
-                    htmlFor="edit-guest-group"
-                    className="mb-1 block text-xs font-bold text-slate-500 uppercase"
-                  >
-                    Grup
+                  <label htmlFor="edit-guest-phone" className="adm-label">
+                    No. WhatsApp
                   </label>
                   <input
-                    id="edit-guest-group"
-                    type="text"
-                    list="guest-group-presets"
-                    value={editingGuest.group_name}
+                    id="edit-guest-phone"
+                    type="tel"
+                    value={editingGuest.phone}
                     onChange={(e) =>
                       setEditingGuest({
                         ...editingGuest,
-                        group_name: e.target.value,
+                        phone: e.target.value,
                       })
                     }
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                    className="adm-input"
                   />
                 </div>
-              </div>
-              <div>
-                <span className="mb-1 block text-xs font-bold text-slate-500 uppercase">
-                  Kuota Pax
-                </span>
-                <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 p-1 dark:border-slate-600">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditingGuest({
-                        ...editingGuest,
-                        quota: Math.max(1, editingGuest.quota - 1),
-                      })
-                    }
-                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-                  <span className="w-16 text-center text-sm font-bold">
-                    {editingGuest.quota} Pax
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditingGuest({
-                        ...editingGuest,
-                        quota: Math.min(50, editingGuest.quota + 1),
-                      })
-                    }
-                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="edit-guest-address" className="adm-label">
+                      Alamat / Kota
+                    </label>
+                    <input
+                      id="edit-guest-address"
+                      type="text"
+                      value={editingGuest.address}
+                      onChange={(e) =>
+                        setEditingGuest({
+                          ...editingGuest,
+                          address: e.target.value,
+                        })
+                      }
+                      className="adm-input"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit-guest-group" className="adm-label">
+                      Grup
+                    </label>
+                    <input
+                      id="edit-guest-group"
+                      type="text"
+                      list="guest-group-presets"
+                      value={editingGuest.group_name}
+                      onChange={(e) =>
+                        setEditingGuest({
+                          ...editingGuest,
+                          group_name: e.target.value,
+                        })
+                      }
+                      className="adm-input"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <span className="adm-label">Kuota Pax</span>
+                  <div className="inline-flex items-center gap-1 rounded-md border border-(--adm-border) bg-(--adm-bg-primary) p-0.5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingGuest({
+                          ...editingGuest,
+                          quota: Math.max(1, editingGuest.quota - 1),
+                        })
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="w-14 text-center text-xs font-semibold tabular-nums">
+                      {editingGuest.quota} Pax
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingGuest({
+                          ...editingGuest,
+                          quota: Math.min(50, editingGuest.quota + 1),
+                        })
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded hover:bg-(--adm-bg-overlay)"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700">
+              <div className="adm-modal-footer">
                 <button
                   type="button"
                   onClick={() => setEditingGuest(null)}
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  className="adm-btn adm-btn-outline-danger"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={updatingGuest}
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="adm-btn adm-btn-edit"
                 >
-                  {updatingGuest && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {updatingGuest && (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  )}
                   Simpan Perubahan
                 </button>
               </div>

@@ -24,7 +24,12 @@ const NAV_ITEMS = [
   { icon: Calendar, label: "Acara", href: "#event", sectionId: "event" },
   { icon: ImageIcon, label: "Galeri", href: "#gallery", sectionId: "gallery" },
   { icon: Send, label: "RSVP", href: "#rsvp", sectionId: "rsvp" },
-  { icon: MessageCircle, label: "Ucapan", href: "#wishes", sectionId: "wishes" },
+  {
+    icon: MessageCircle,
+    label: "Ucapan",
+    href: "#wishes",
+    sectionId: "wishes",
+  },
   { icon: Gift, label: "Kado", href: "#gift", sectionId: "gift" },
 ];
 
@@ -73,8 +78,8 @@ const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
               title={item.label}
               className={`group relative flex shrink-0 items-center justify-center rounded-full p-2.5 transition-all md:p-3.5 ${
                 isActive
-                  ? "bg-primary text-white shadow-md dark:bg-accent dark:text-slate-950"
-                  : "text-slate-600 hover:bg-white/80 hover:text-accentDark dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-accent"
+                  ? "bg-primary dark:bg-accent text-white shadow-md dark:text-slate-950"
+                  : "hover:text-accentDark dark:hover:text-accent text-slate-600 hover:bg-white/80 dark:text-slate-300 dark:hover:bg-white/10"
               }`}
             >
               <item.icon className="h-4 w-4 md:h-5 md:w-5" />
@@ -85,7 +90,7 @@ const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
         <button
           type="button"
           onClick={toggleTheme}
-          className="group relative flex shrink-0 items-center justify-center rounded-full p-2.5 text-slate-600 transition-all hover:bg-white/80 hover:text-accentDark md:p-3.5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-accent"
+          className="group hover:text-accentDark dark:hover:text-accent relative flex shrink-0 items-center justify-center rounded-full p-2.5 text-slate-600 transition-all hover:bg-white/80 md:p-3.5 dark:text-slate-300 dark:hover:bg-white/10"
           aria-label={
             theme === "light" ? "Aktifkan mode gelap" : "Aktifkan mode terang"
           }
