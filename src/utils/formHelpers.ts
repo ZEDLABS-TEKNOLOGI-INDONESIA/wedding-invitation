@@ -40,10 +40,10 @@ export const GUEST_GROUP_PRESETS = [
 ];
 
 export const QUICK_WISH_TEMPLATES = [
-  "Barakallahu lakuma wa baraka 'alaikuma wa jama'a bainakuma fi khair. Semoga menjadi keluarga sakinah, mawaddah, warahmah.",
-  "Selamat menempuh hidup baru! Semoga cinta dan kebahagiaan selalu menyertai langkah kalian berdua.",
-  "Semoga pernikahan ini menjadi awal dari kisah indah yang penuh berkah, kesetiaan, dan kebahagiaan hingga menua bersama.",
-  "Turut berbahagia atas hari spesial kalian. Semoga dilancarkan segala urusannya dan selalu rukun selamanya.",
+  "Barakallahu lakuma wa baraka 'alaikuma wa jama'a bainakuma fi khair. Semoga senantiasa dikaruniai keluarga sakinah, mawaddah, warahmah.",
+  "Selamat menempuh bahtera rumah tangga. Semoga kasih sayang, keberkahan, dan kedamaian selalu menyertai langkah kedua mempelai.",
+  "Semoga ikatan suci ini menjadi awal kisah indah yang penuh berkah, kesetiaan, dan kebahagiaan hingga menua bersama.",
+  "Turut bersukacita atas hari bahagia kedua mempelai. Semoga Allah SWT senantiasa melimpahkan rahmat dan kebahagiaan sepanjang masa.",
 ];
 
 const ID_DAYS = [

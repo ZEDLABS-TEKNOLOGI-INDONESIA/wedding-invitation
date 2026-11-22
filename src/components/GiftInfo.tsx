@@ -72,7 +72,7 @@ const GiftInfo: React.FC<{ config: AppConfig }> = ({ config }) => {
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
-                    {copiedId === `bank-${idx}` ? "Disalin!" : "Salin Rekening"}
+                    {copiedId === `bank-${idx}` ? "Disalin!" : "Salin Nomor Rekening"}
                   </button>
                 </div>
               </div>
@@ -89,7 +89,7 @@ const GiftInfo: React.FC<{ config: AppConfig }> = ({ config }) => {
               </div>
               <div className="space-y-1">
                 <span className="text-accentDark dark:text-accent text-[10px] font-bold tracking-[0.24em] uppercase">
-                  Pengiriman Kado Fisik
+                  Alamat Pengiriman Tanda Kasih
                 </span>
                 <p className="max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                   {giftAddress}

@@ -13,10 +13,14 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
 import {
+  QR_FORMATS,
+  STATIONERY_DESIGNS,
   STATIONERY_THEMES,
   ensureStationeryFonts,
   renderQrCard,
   renderQrStamp,
+  type QrFormatOption,
+  type StationeryDesignId,
   type StationeryTheme,
 } from "../utils/stationery";
 import {
@@ -32,7 +36,46 @@ interface SavedGuestItem {
   name: string;
 }
 
-type QrStyleMode = "card" | "stamp";
+const renderQrByFormat = (
+  format: QrFormatOption,
+  opts: {
+    url: string;
+    guestName: string;
+    bride: string;
+    groom: string;
+    dateText: string;
+    theme: StationeryTheme;
+    design: StationeryDesignId;
+    scale?: number;
+  }
+) => {
+  const s = opts.scale ?? 1;
+  const w = Math.round(format.width * s);
+  const h = Math.round(format.height * s);
+  if (format.isCompactStamp) {
+    return renderQrStamp({
+      url: opts.url,
+      guestName: opts.guestName,
+      bride: opts.bride,
+      groom: opts.groom,
+      dateText: opts.dateText,
+      theme: opts.theme,
+      design: opts.design,
+      width: w,
+    });
+  }
+  return renderQrCard({
+    url: opts.url,
+    guestName: opts.guestName,
+    bride: opts.bride,
+    groom: opts.groom,
+    dateText: opts.dateText,
+    theme: opts.theme,
+    design: opts.design,
+    width: w,
+    height: h,
+  });
+};
 
 const QrThumbPreview: React.FC<{
   url: string;
@@ -41,30 +84,41 @@ const QrThumbPreview: React.FC<{
   groom: string;
   dateText: string;
   theme: StationeryTheme;
-  styleMode: QrStyleMode;
+  design: StationeryDesignId;
+  format: QrFormatOption;
   fontsReady: boolean;
-}> = ({ url, name, bride, groom, dateText, theme, styleMode, fontsReady }) => {
+}> = ({
+  url,
+  name,
+  bride,
+  groom,
+  dateText,
+  theme,
+  design,
+  format,
+  fontsReady,
+}) => {
   const [src, setSrc] = useState("");
 
   useEffect(() => {
-    const renderer = styleMode === "card" ? renderQrCard : renderQrStamp;
-    const canvas = renderer({
+    const canvas = renderQrByFormat(format, {
       url,
       guestName: name,
       bride,
       groom,
       dateText,
       theme,
-      width: styleMode === "card" ? 270 : 240,
+      design,
+      scale: 260 / format.width,
     });
     setSrc(canvas.toDataURL("image/jpeg", 0.86));
-  }, [url, name, bride, groom, dateText, theme, styleMode, fontsReady]);
+  }, [url, name, bride, groom, dateText, theme, design, format, fontsReady]);
 
   if (!src) {
     return (
       <div
         className={`w-full animate-pulse rounded-md bg-(--adm-bg-tertiary) ${
-          styleMode === "card" ? "aspect-[3/4]" : "aspect-square"
+          format.isCompactStamp ? "aspect-square" : "aspect-[3/4]"
         }`}
       />
     );
@@ -73,7 +127,7 @@ const QrThumbPreview: React.FC<{
   return (
     <img
       src={src}
-      alt={`QR ${name}`}
+      alt={`Kode QR ${name}`}
       className="w-full rounded-md border border-(--adm-border) object-cover shadow-xs"
     />
   );
@@ -84,7 +138,11 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   const [currentTheme, setCurrentTheme] = useState<StationeryTheme>(
     STATIONERY_THEMES[0]
   );
-  const [styleMode, setStyleMode] = useState<QrStyleMode>("card");
+  const [currentDesign, setCurrentDesign] =
+    useState<StationeryDesignId>("floral");
+  const [currentFormat, setCurrentFormat] = useState<QrFormatOption>(
+    QR_FORMATS[0]
+  );
   const [singleName, setSingleName] = useState("");
   const [bulkNames, setBulkNames] = useState<string[]>([]);
   const [savedGuests, setSavedGuests] = useState<SavedGuestItem[]>([]);
@@ -132,29 +190,33 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
   };
 
   const handleSaveAs = (blob: Blob | string, name: string) => {
-    const saveAsFunc = (FileSaver as unknown as { saveAs?: typeof FileSaver })
-      .saveAs || FileSaver;
+    const saveAsFunc =
+      (FileSaver as unknown as { saveAs?: typeof FileSaver }).saveAs ||
+      FileSaver;
     saveAsFunc(blob, name);
   };
 
   const singleUrl = useMemo(
-    () => (singleName.trim() ? `${baseUrl}/?to=${encodeURIComponent(singleName.trim())}` : baseUrl),
+    () =>
+      singleName.trim()
+        ? `${baseUrl}/?to=${encodeURIComponent(singleName.trim())}`
+        : baseUrl,
     [singleName, baseUrl]
   );
 
-  // Live preview kartu QR
+  // Pratinjau langsung kartu QR
   useEffect(() => {
     if (renderTimerRef.current) window.clearTimeout(renderTimerRef.current);
     renderTimerRef.current = window.setTimeout(() => {
-      const renderer = styleMode === "card" ? renderQrCard : renderQrStamp;
-      const canvas = renderer({
+      const canvas = renderQrByFormat(currentFormat, {
         url: singleUrl,
         guestName: singleName.trim() || "Tamu Undangan",
         bride: brideName,
         groom: groomName,
         dateText: eventDate,
         theme: currentTheme,
-        width: styleMode === "card" ? 540 : 500,
+        design: currentDesign,
+        scale: 520 / currentFormat.width,
       });
       setPreviewSrc(canvas.toDataURL("image/png"));
     }, 60);
@@ -168,7 +230,8 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     groomName,
     eventDate,
     currentTheme,
-    styleMode,
+    currentDesign,
+    currentFormat,
     fontsReady,
   ]);
 
@@ -183,44 +246,39 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
     setBulkNames(savedGuests.map((g) => g.name));
     setToast({
       type: "success",
-      message: `${savedGuests.length} nama tamu dimuat dari Daftar Tamu Permanen.`,
+      message: `${savedGuests.length} nama tamu berhasil dimuat dari Daftar Tamu Permanen.`,
     });
-  };
-
-  const renderHighResBase64 = (name: string): string => {
-    const renderer = styleMode === "card" ? renderQrCard : renderQrStamp;
-    const canvas = renderer({
-      url: generateUrl(name),
-      guestName: name,
-      bride: brideName,
-      groom: groomName,
-      dateText: eventDate,
-      theme: currentTheme,
-      width: styleMode === "card" ? 1080 : 900,
-    });
-    return canvas.toDataURL("image/png").split(",")[1];
   };
 
   const downloadAllZip = async () => {
     if (bulkNames.length === 0) return;
     setIsProcessing(true);
     setProgress(0);
-    setStatusMsg("Menyiapkan font & ornamen floral...");
+    setStatusMsg("Menyiapkan huruf & ornamen desain...");
     try {
       await ensureStationeryFonts();
       const zip = new JSZip();
       const folder = zip.folder(
-        `QR_${currentTheme.id}_${styleMode === "card" ? "Kartu" : "Stiker"}`
+        `QR_${currentDesign}_${currentTheme.id}_${currentFormat.id}`
       );
       const CHUNK_SIZE = 15;
       for (let i = 0; i < bulkNames.length; i += CHUNK_SIZE) {
         const chunk = bulkNames.slice(i, i + CHUNK_SIZE);
         setStatusMsg(
-          `Memproses ${i + 1} - ${Math.min(i + chunk.length, bulkNames.length)} dari ${bulkNames.length}...`
+          `Menyusun ${i + 1} – ${Math.min(i + chunk.length, bulkNames.length)} dari ${bulkNames.length} kartu...`
         );
         chunk.forEach((name, chunkIdx) => {
           const globalIdx = i + chunkIdx;
-          const base64Data = renderHighResBase64(name);
+          const canvas = renderQrByFormat(currentFormat, {
+            url: generateUrl(name),
+            guestName: name,
+            bride: brideName,
+            groom: groomName,
+            dateText: eventDate,
+            theme: currentTheme,
+            design: currentDesign,
+          });
+          const base64Data = canvas.toDataURL("image/png").split(",")[1];
           const safeName = name.replace(/[^a-z0-9]/gi, "_").substring(0, 50);
           folder?.file(`${globalIdx + 1}_${safeName}.png`, base64Data, {
             base64: true,
@@ -229,17 +287,17 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
         setProgress(Math.round(((i + chunk.length) / bulkNames.length) * 100));
         await new Promise((resolve) => setTimeout(resolve, 16));
       }
-      setStatusMsg("Mengompres file ZIP...");
+      setStatusMsg("Mengemas berkas ZIP...");
       const content = await zip.generateAsync({ type: "blob" });
       handleSaveAs(
         content,
-        `QR-${currentTheme.id}-${new Date().toISOString().slice(0, 10)}.zip`
+        `QR-${currentDesign}-${currentFormat.id}-${new Date().toISOString().slice(0, 10)}.zip`
       );
       setStatusMsg("Selesai!");
     } catch {
       setToast({
         type: "error",
-        message: "Terjadi kesalahan saat membuat ZIP.",
+        message: "Mohon maaf, terjadi kendala saat mengemas berkas ZIP.",
       });
     } finally {
       setTimeout(() => {
@@ -252,28 +310,30 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
   const downloadSingle = async () => {
     await ensureStationeryFonts();
-    const renderer = styleMode === "card" ? renderQrCard : renderQrStamp;
-    const canvas = renderer({
+    const canvas = renderQrByFormat(currentFormat, {
       url: singleUrl,
       guestName: singleName.trim() || "Tamu Undangan",
       bride: brideName,
       groom: groomName,
       dateText: eventDate,
       theme: currentTheme,
-      width: styleMode === "card" ? 1080 : 900,
+      design: currentDesign,
     });
-    const safeName = (singleName.trim() || "Wedding")
+    const safeName = (singleName.trim() || "Undangan")
       .replace(/[^a-z0-9]/gi, "_")
       .substring(0, 50);
     handleSaveAs(
       canvas.toDataURL("image/png"),
-      `QR-${safeName}-${currentTheme.id}.png`
+      `QR-${safeName}-${currentDesign}-${currentFormat.id}.png`
     );
   };
 
   const copySingleLink = () => {
     navigator.clipboard.writeText(singleUrl);
-    setToast({ type: "success", message: "Link undangan berhasil disalin!" });
+    setToast({
+      type: "success",
+      message: "Tautan undangan berhasil disalin ke papan klip.",
+    });
   };
 
   return (
@@ -286,17 +346,17 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
       <CsvImportModal<ParsedGuestRow>
         isOpen={isCsvModalOpen}
-        title="Import Daftar Nama untuk QR Code"
-        description="Upload file CSV atau tempel daftar nama (1 nama per baris) langsung dari Excel/WhatsApp."
+        title="Impor Daftar Nama untuk Kartu QR"
+        description="Unggah berkas CSV atau salin-tempel daftar nama tamu (satu nama per baris) dari Excel maupun WhatsApp."
         templateFilename="template_qr_tamu.csv"
         templateHeaders={["Nama Tamu"]}
         templateRows={[
-          ["Ahmad Syarief Ramadhan"],
-          ["Muhammad Ikbal Pauji"],
+          ["Bpk. Ahmad Syarief & Ibu"],
+          ["Sdr. Muhammad Ikbal Pauji"],
           ["Keluarga Besar H. Syarif"],
         ]}
         pastePlaceholder={
-          "Ahmad Syarief Ramadhan\nMuhammad Ikbal Pauji\nKeluarga Besar H. Syarif"
+          "Bpk. Ahmad Syarief & Ibu\nSdr. Muhammad Ikbal Pauji\nKeluarga Besar H. Syarif"
         }
         parseText={parseGuestsText}
         columns={[
@@ -309,60 +369,116 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
           setBulkNames(rows.map((r) => r.name));
           setToast({
             type: "success",
-            message: `${rows.length} nama tamu siap dibuatkan QR Code.`,
+            message: `${rows.length} nama tamu siap dibuatkan Kartu QR.`,
           });
         }}
         onClose={() => setIsCsvModalOpen(false)}
         confirmLabel="Muat Daftar Nama"
       />
 
-      {/* Pemilih Tema & Format Desain QR */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4">
-        <div>
-          <span className="adm-label mb-0.5 flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-(--adm-accent)" />
-            Nuansa Warna & Gaya QR
-          </span>
-          <p className="text-xs text-(--adm-text-secondary)">
-            Tema aktif:{" "}
-            <strong className="text-(--adm-text-primary)">
-              {currentTheme.name}
-            </strong>{" "}
-            · Format:{" "}
-            <strong className="text-(--adm-text-primary)">
-              {styleMode === "card"
-                ? "Kartu Floral (3:4)"
-                : "Stiker Kotak (1:1)"}
-            </strong>
-          </p>
+      {/* Panel Pilihan Desain, Warna & Ukuran Kertas/Format QR */}
+      <div className="space-y-3.5 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span className="adm-label mb-0.5 flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-(--adm-accent)" />
+              Pengaturan Desain, Nuansa Warna &amp; Ukuran Cetak QR
+            </span>
+            <p className="text-xs text-(--adm-text-secondary)">
+              Desain:{" "}
+              <strong className="text-(--adm-text-primary)">
+                {STATIONERY_DESIGNS.find((d) => d.id === currentDesign)?.name}
+              </strong>{" "}
+              · Warna:{" "}
+              <strong className="text-(--adm-text-primary)">
+                {currentTheme.name}
+              </strong>{" "}
+              · Ukuran:{" "}
+              <strong className="text-(--adm-text-primary)">
+                {currentFormat.name}
+              </strong>
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {STATIONERY_THEMES.map((theme) => (
-            <button
-              key={theme.id}
-              type="button"
-              onClick={() => setCurrentTheme(theme)}
-              className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all ${
-                currentTheme.id === theme.id
-                  ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
-                  : "border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
-              }`}
-              title={theme.name}
-            >
-              <span className="flex items-center -space-x-1">
-                <span
-                  className="h-3.5 w-3.5 rounded-full border border-white/70"
-                  style={{ backgroundColor: theme.accent }}
-                />
-                <span
-                  className="h-3.5 w-3.5 rounded-full border border-white/70"
-                  style={{ backgroundColor: theme.petal }}
-                />
-              </span>
-              {theme.name}
-            </button>
-          ))}
+        <div className="grid gap-3 md:grid-cols-2">
+          {/* Pilihan Motif Desain */}
+          <div>
+            <span className="adm-label">Motif Desain</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {STATIONERY_DESIGNS.map((design) => (
+                <button
+                  key={design.id}
+                  type="button"
+                  onClick={() => setCurrentDesign(design.id)}
+                  className={`rounded-md border px-2.5 py-2 text-left transition-all ${
+                    currentDesign === design.id
+                      ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
+                      : "border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
+                  }`}
+                >
+                  <div className="text-[12px] font-semibold">{design.name}</div>
+                  <div className="truncate text-[10px] opacity-80">
+                    {design.tagline}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Pilihan Ukuran Kertas / Format + Nuansa Warna */}
+          <div className="space-y-2.5">
+            <div>
+              <label htmlFor="qr-format-select" className="adm-label">
+                Ukuran Kertas / Format Cetak
+              </label>
+              <select
+                id="qr-format-select"
+                value={currentFormat.id}
+                onChange={(e) => {
+                  const next = QR_FORMATS.find((f) => f.id === e.target.value);
+                  if (next) setCurrentFormat(next);
+                }}
+                className="adm-input"
+              >
+                {QR_FORMATS.map((fmt) => (
+                  <option key={fmt.id} value={fmt.id}>
+                    {fmt.name} — {fmt.sizeLabel}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <span className="adm-label">Nuansa Warna</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {STATIONERY_THEMES.map((theme) => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setCurrentTheme(theme)}
+                    className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-all ${
+                      currentTheme.id === theme.id
+                        ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
+                        : "border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
+                    }`}
+                  >
+                    <span className="flex items-center -space-x-1">
+                      <span
+                        className="h-3 w-3 rounded-full border border-white/70"
+                        style={{ backgroundColor: theme.accent }}
+                      />
+                      <span
+                        className="h-3 w-3 rounded-full border border-white/70"
+                        style={{ backgroundColor: theme.petal }}
+                      />
+                    </span>
+                    {theme.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -374,7 +490,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             onClick={() => setActiveTab("single")}
             className={`adm-seg-btn ${activeTab === "single" ? "is-active" : ""}`}
           >
-            Manual (Satuan)
+            Satuan (Per Tamu)
           </button>
           <button
             type="button"
@@ -382,23 +498,6 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             className={`adm-seg-btn ${activeTab === "bulk" ? "is-active" : ""}`}
           >
             Massal (Daftar Tamu / CSV)
-          </button>
-        </div>
-
-        <div className="adm-seg">
-          <button
-            type="button"
-            onClick={() => setStyleMode("card")}
-            className={`adm-seg-btn ${styleMode === "card" ? "is-active" : ""}`}
-          >
-            Kartu Floral
-          </button>
-          <button
-            type="button"
-            onClick={() => setStyleMode("stamp")}
-            className={`adm-seg-btn ${styleMode === "stamp" ? "is-active" : ""}`}
-          >
-            Stiker Kotak
           </button>
         </div>
       </div>
@@ -410,7 +509,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
               <div>
                 <h3 className="adm-card-title">Kartu QR Satuan</h3>
                 <p className="adm-card-desc">
-                  QR Code berdesain floral dengan titik membulat & monogram
+                  Susun kartu QR personal lengkap dengan monogram inisial
                   mempelai.
                 </p>
               </div>
@@ -443,7 +542,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
               <div>
                 <label htmlFor="qr-single-name" className="adm-label">
-                  Nama Tamu
+                  Nama Tamu Yang Terhormat
                 </label>
                 <input
                   id="qr-single-name"
@@ -466,7 +565,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                   onClick={copySingleLink}
                   className="adm-btn adm-btn-secondary flex-1"
                 >
-                  <Copy className="h-3.5 w-3.5" /> Salin Link
+                  <Copy className="h-3.5 w-3.5" /> Salin Tautan
                 </button>
                 <button
                   type="button"
@@ -484,7 +583,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
             <div className="adm-card-header flex items-center justify-between">
               <h3 className="adm-card-title">Pratinjau Desain</h3>
               <span className="adm-badge adm-badge-accent">
-                {styleMode === "card" ? "1080 × 1440 px" : "900 × 900 px"}
+                {currentFormat.sizeLabel}
               </span>
             </div>
             <div className="adm-card-body flex justify-center bg-(--adm-bg-tertiary)">
@@ -492,11 +591,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                 <img
                   src={previewSrc}
                   alt="Pratinjau Kartu QR"
-                  className={`rounded-md border border-(--adm-border) shadow-md ${
-                    styleMode === "card"
-                      ? "max-h-[420px] w-auto"
-                      : "max-h-[340px] w-auto"
-                  }`}
+                  className="max-h-[430px] w-auto rounded-md border border-(--adm-border) shadow-md"
                 />
               ) : (
                 <div className="flex h-64 items-center justify-center text-(--adm-text-muted)">
@@ -519,12 +614,11 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       <Users className="h-4 w-4" />
                     </div>
                     <h3 className="adm-card-title">
-                      Ambil dari Daftar Tamu Permanen
+                      Muat dari Daftar Tamu Permanen
                     </h3>
                     <p className="adm-card-desc">
-                      Generate kartu QR massal untuk seluruh{" "}
-                      {savedGuests.length} tamu tersimpan tanpa perlu upload
-                      ulang CSV.
+                      Buat Kartu QR massal untuk seluruh {savedGuests.length}{" "}
+                      tamu tersimpan tanpa perlu mengunggah ulang berkas CSV.
                     </p>
                   </div>
                   <div>
@@ -551,8 +645,8 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       Impor CSV / Tempel Daftar Nama
                     </h3>
                     <p className="adm-card-desc">
-                      Seret file CSV atau salin-tempel daftar nama dari Excel,
-                      Google Sheets, atau catatan WhatsApp.
+                      Unggah berkas CSV atau salin-tempel daftar nama dari
+                      Excel, Google Sheets, maupun catatan WhatsApp.
                     </p>
                   </div>
                   <div>
@@ -578,10 +672,11 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                     <div className="flex flex-col">
                       <span className="adm-card-title">Data Tamu Siap</span>
                       <span className="adm-hint">
-                        Tema {currentTheme.name} ·{" "}
-                        {styleMode === "card"
-                          ? "Kartu Floral HD (1080×1440)"
-                          : "Stiker Kotak HD (900×900)"}
+                        {
+                          STATIONERY_DESIGNS.find((d) => d.id === currentDesign)
+                            ?.name
+                        }{" "}
+                        · {currentTheme.name} · {currentFormat.name}
                       </span>
                     </div>
                   </div>
@@ -590,10 +685,10 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       type="button"
                       onClick={() =>
                         setConfirmDialog({
-                          title: "Reset Daftar Tamu",
+                          title: "Atur Ulang Daftar Tamu",
                           message:
-                            "Yakin ingin menghapus semua data yang dimuat?",
-                          confirmLabel: "Reset",
+                            "Apakah Anda yakin ingin mengosongkan daftar tamu yang sedang dimuat?",
+                          confirmLabel: "Atur Ulang",
                           destructive: true,
                           onConfirm: () => setBulkNames([]),
                         })
@@ -601,7 +696,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       className="adm-btn adm-btn-outline-danger"
                     >
                       <RefreshCcw className="h-3.5 w-3.5" />
-                      Reset Data
+                      Atur Ulang
                     </button>
                     <button
                       type="button"
@@ -614,7 +709,7 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       ) : (
                         <Download className="h-3.5 w-3.5" />
                       )}
-                      {isProcessing ? "Memproses..." : "Unduh ZIP"}
+                      {isProcessing ? "Menyusun..." : "Unduh ZIP"}
                     </button>
                   </div>
                 </div>
@@ -661,7 +756,8 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
                       groom={groomName}
                       dateText={eventDate}
                       theme={currentTheme}
-                      styleMode={styleMode}
+                      design={currentDesign}
+                      format={currentFormat}
                       fontsReady={fontsReady}
                     />
                     <p className="w-full truncate text-center text-[12px] font-semibold text-(--adm-text-primary)">
@@ -673,9 +769,9 @@ const QRCodeManager: React.FC<{ siteUrl: string }> = ({ siteUrl }) => {
 
               {bulkNames.length > 20 && (
                 <p className="adm-hint text-center">
-                  ... dan {bulkNames.length - 20} kartu QR lainnya (disembunyikan
-                  agar browser tetap ringan, namun seluruhnya akan masuk ke file
-                  ZIP).
+                  … dan {bulkNames.length - 20} kartu QR lainnya (disembunyikan
+                  agar peramban tetap ringan, namun seluruhnya tetap akan masuk
+                  ke berkas ZIP).
                 </p>
               )}
             </div>

@@ -15,14 +15,15 @@ const LoveStory: React.FC<{ config: AppConfig }> = ({ config }) => {
       <div className="relative z-10 container mx-auto max-w-5xl px-5 md:px-6">
         <div className="mb-14 space-y-3 text-center md:mb-20">
           <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">
-            Perjalanan Cinta
+            Jejak Langkah Cinta
           </span>
           <h2 className="font-serif text-4xl font-medium tracking-tight text-primary italic sm:text-5xl md:text-6xl dark:text-white">
             Kisah Kami
           </h2>
           <SectionDivider className="py-1" />
           <p className="mx-auto max-w-lg text-sm font-light text-slate-500 italic sm:text-base dark:text-slate-400">
-            Setiap langkah kecil yang mempertemukan dua hati menuju satu tujuan
+            Untaian perjalanan dua hati yang dipertemukan dalam kasih dan
+            ridha-Nya
           </p>
         </div>
 

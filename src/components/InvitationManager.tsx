@@ -17,6 +17,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { parseGuestsText, type ParsedGuestRow } from "../utils/csvImport";
 import {
+  PAPER_SIZES,
+  STATIONERY_DESIGNS,
   STATIONERY_THEMES,
   ensureStationeryFonts,
   renderClosingPage,
@@ -24,6 +26,8 @@ import {
   renderCoverPage,
   renderEventPage,
   type InvitationContent,
+  type PaperSizeOption,
+  type StationeryDesignId,
   type StationeryTheme,
 } from "../utils/stationery";
 import {
@@ -60,6 +64,11 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
   const [activeTab, setActiveTab] = useState<"single" | "bulk">("single");
   const [currentTheme, setCurrentTheme] = useState<StationeryTheme>(
     STATIONERY_THEMES[0]
+  );
+  const [currentDesign, setCurrentDesign] =
+    useState<StationeryDesignId>("floral");
+  const [currentPaper, setCurrentPaper] = useState<PaperSizeOption>(
+    PAPER_SIZES[0]
   );
   const [singleData, setSingleData] = useState<GuestData>({
     name: "",
@@ -107,8 +116,9 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
   const baseUrl = siteUrl?.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl || "";
 
   const handleSaveAs = (blob: Blob | string, name: string) => {
-    const saveAsFunc = (FileSaver as unknown as { saveAs?: typeof FileSaver })
-      .saveAs || FileSaver;
+    const saveAsFunc =
+      (FileSaver as unknown as { saveAs?: typeof FileSaver }).saveAs ||
+      FileSaver;
     saveAsFunc(blob, name);
   };
 
@@ -123,10 +133,12 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     const lng = cfg.VENUE_LNG || "0";
 
     return {
-      brideName: cfg.BRIDE_NICKNAME || "Bride",
-      groomName: cfg.GROOM_NICKNAME || "Groom",
-      brideFullName: cfg.BRIDE_FULLNAME || cfg.BRIDE_NICKNAME || "Bride",
-      groomFullName: cfg.GROOM_FULLNAME || cfg.GROOM_NICKNAME || "Groom",
+      brideName: cfg.BRIDE_NICKNAME || "Mempelai Wanita",
+      groomName: cfg.GROOM_NICKNAME || "Mempelai Pria",
+      brideFullName:
+        cfg.BRIDE_FULLNAME || cfg.BRIDE_NICKNAME || "Mempelai Wanita",
+      groomFullName:
+        cfg.GROOM_FULLNAME || cfg.GROOM_NICKNAME || "Mempelai Pria",
       brideParents: cfg.BRIDE_PARENTS || "",
       groomParents: cfg.GROOM_PARENTS || "",
       venueName: cfg.VENUE_NAME || "",
@@ -152,7 +164,12 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     };
   }, [cfg]);
 
-  // Live 4-page visual preview
+  const pageOpts = useMemo(
+    () => ({ design: currentDesign, paper: currentPaper }),
+    [currentDesign, currentPaper]
+  );
+
+  // Pratinjau visual langsung 4 halaman
   const buildPreviewImages = useCallback(
     (guest: GuestData) => {
       const guestName = guest.name.trim() || "Bpk. Habibie & Keluarga";
@@ -161,15 +178,16 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
         renderCoverPage(
           invitationContent,
           { name: guestName, address: guest.address },
-          currentTheme
+          currentTheme,
+          pageOpts
         ),
-        renderCouplePage(invitationContent, currentTheme),
-        renderEventPage(invitationContent, currentTheme),
-        renderClosingPage(invitationContent, guestUrl, currentTheme),
+        renderCouplePage(invitationContent, currentTheme, pageOpts),
+        renderEventPage(invitationContent, currentTheme, pageOpts),
+        renderClosingPage(invitationContent, guestUrl, currentTheme, pageOpts),
       ];
-      return pages.map((c) => c.toDataURL("image/jpeg", 0.88));
+      return pages.map((c) => c.toDataURL("image/jpeg", 0.86));
     },
-    [baseUrl, currentTheme, invitationContent]
+    [baseUrl, currentTheme, invitationContent, pageOpts]
   );
 
   useEffect(() => {
@@ -192,7 +210,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
-      format: "a5",
+      format: [currentPaper.mmWidth, currentPaper.mmHeight],
       compress: true,
     });
     const width = doc.internal.pageSize.getWidth();
@@ -202,28 +220,30 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     const page1 = renderCoverPage(
       invitationContent,
       guest,
-      currentTheme
+      currentTheme,
+      pageOpts
     ).toDataURL("image/jpeg", 0.92);
     const page2 =
       sharedMiddlePages?.page2 ||
-      renderCouplePage(invitationContent, currentTheme).toDataURL(
+      renderCouplePage(invitationContent, currentTheme, pageOpts).toDataURL(
         "image/jpeg",
         0.92
       );
     const page3 =
       sharedMiddlePages?.page3 ||
-      renderEventPage(invitationContent, currentTheme).toDataURL(
+      renderEventPage(invitationContent, currentTheme, pageOpts).toDataURL(
         "image/jpeg",
         0.92
       );
     const page4 = renderClosingPage(
       invitationContent,
       guestUrl,
-      currentTheme
+      currentTheme,
+      pageOpts
     ).toDataURL("image/jpeg", 0.92);
 
     [page1, page2, page3, page4].forEach((img, idx) => {
-      if (idx > 0) doc.addPage();
+      if (idx > 0) doc.addPage([currentPaper.mmWidth, currentPaper.mmHeight]);
       doc.addImage(img, "JPEG", 0, 0, width, height, undefined, "FAST");
     });
 
@@ -251,7 +271,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
       const doc = await generatePDFDoc(singleData);
       handleSaveAs(
         doc.output("blob"),
-        `Undangan_${singleData.name.replace(/[^a-zA-Z0-9]/g, "_")}_${currentTheme.id}.pdf`
+        `Undangan_${singleData.name.replace(/[^a-zA-Z0-9]/g, "_")}_${currentDesign}_${currentPaper.id}.pdf`
       );
     } finally {
       setIsGeneratingSingle(false);
@@ -274,7 +294,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     );
     setToast({
       type: "success",
-      message: `${savedGuests.length} tamu dimuat dari Daftar Tamu Permanen.`,
+      message: `${savedGuests.length} tamu berhasil dimuat dari Daftar Tamu Permanen.`,
     });
   };
 
@@ -282,28 +302,31 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
     if (bulkData.length === 0) return;
     setIsProcessing(true);
     setProgress(0);
-    setStatusMsg("Menyiapkan font & halaman dasar...");
+    setStatusMsg("Menyiapkan huruf & halaman dasar...");
     try {
       await ensureStationeryFonts();
-      // Halaman 2 (Mempelai) dan Halaman 3 (Acara) identik untuk semua tamu — render sekali saja
       const sharedMiddlePages = {
-        page2: renderCouplePage(invitationContent, currentTheme).toDataURL(
-          "image/jpeg",
-          0.92
-        ),
-        page3: renderEventPage(invitationContent, currentTheme).toDataURL(
-          "image/jpeg",
-          0.92
-        ),
+        page2: renderCouplePage(
+          invitationContent,
+          currentTheme,
+          pageOpts
+        ).toDataURL("image/jpeg", 0.92),
+        page3: renderEventPage(
+          invitationContent,
+          currentTheme,
+          pageOpts
+        ).toDataURL("image/jpeg", 0.92),
       };
 
       const zip = new JSZip();
-      const folder = zip.folder(`Undangan_${currentTheme.name}_Floral`);
+      const folder = zip.folder(
+        `Undangan_${currentDesign}_${currentPaper.id.toUpperCase()}`
+      );
       const CHUNK_SIZE = 5;
       for (let i = 0; i < bulkData.length; i += CHUNK_SIZE) {
         const chunk = bulkData.slice(i, i + CHUNK_SIZE);
         setStatusMsg(
-          `Generating PDF ${i + 1} - ${Math.min(i + chunk.length, bulkData.length)} dari ${bulkData.length}...`
+          `Menyusun PDF ${i + 1} – ${Math.min(i + chunk.length, bulkData.length)} dari ${bulkData.length}...`
         );
         for (let idx = 0; idx < chunk.length; idx++) {
           const guest = chunk[idx];
@@ -321,18 +344,18 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
         );
         await new Promise((r) => setTimeout(r, 16));
       }
-      setStatusMsg("Mengompres ZIP...");
+      setStatusMsg("Mengemas berkas ZIP...");
       const content = await zip.generateAsync({ type: "blob" });
       handleSaveAs(
         content,
-        `Undangan-${currentTheme.id}-${new Date().toISOString().slice(0, 10)}.zip`
+        `Undangan-${currentDesign}-${currentPaper.id}-${new Date().toISOString().slice(0, 10)}.zip`
       );
       setStatusMsg("Selesai!");
     } catch (error) {
-      console.error("Gagal generate bulk:", error);
+      console.error("Gagal menyusun undangan massal:", error);
       setToast({
         type: "error",
-        message: "Terjadi kesalahan sistem saat memproses PDF.",
+        message: "Mohon maaf, terjadi kendala sistem saat menyusun berkas PDF.",
       });
     } finally {
       setTimeout(() => {
@@ -353,17 +376,17 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
 
       <CsvImportModal<ParsedGuestRow>
         isOpen={isCsvModalOpen}
-        title="Import Daftar Tamu untuk Undangan PDF"
-        description="Upload file CSV atau salin-tempel langsung dari Excel (Nama Tamu & Alamat/Kota)."
+        title="Impor Daftar Tamu untuk Undangan PDF"
+        description="Unggah berkas CSV atau salin-tempel langsung dari Excel (Nama Tamu & Alamat/Kota)."
         templateFilename="template_undangan_pdf.csv"
         templateHeaders={["Nama Tamu", "Alamat (Opsional)"]}
         templateRows={[
           ["Bapak Ahmad & Ibu Siti", "Jakarta"],
-          ["Teman-teman Alumni SMA 1", "Di Tempat"],
           ["Keluarga Besar H. Syarif", "Bandung"],
+          ["Rekan-rekan Alumni SMA 1", "Di Tempat"],
         ]}
         pastePlaceholder={
-          "Bapak Ahmad & Ibu Siti,Jakarta\nTeman-teman Alumni SMA 1,Di Tempat\nKeluarga Besar H. Syarif,Bandung"
+          "Bapak Ahmad & Ibu Siti,Jakarta\nKeluarga Besar H. Syarif,Bandung\nRekan-rekan Alumni SMA 1,Di Tempat"
         }
         parseText={parseGuestsText}
         columns={[
@@ -382,56 +405,119 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
           );
           setToast({
             type: "success",
-            message: `${rows.length} tamu siap dicetak ke PDF.`,
+            message: `${rows.length} tamu siap dicetak ke berkas PDF.`,
           });
         }}
         onClose={() => setIsCsvModalOpen(false)}
         confirmLabel="Muat Daftar Tamu"
       />
 
-      {/* Pemilih Tema */}
+      {/* Panel Pilihan Desain, Ukuran Kertas & Nuansa Warna */}
       <div
         data-tour="pdf-themes"
-        className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4"
+        className="space-y-3.5 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4"
       >
         <div>
           <span className="adm-label mb-0.5 flex items-center gap-1.5">
             <Sparkles className="h-3.5 w-3.5 text-(--adm-accent)" />
-            Nuansa Warna Undangan (A5 · 4 Halaman)
+            Pengaturan Desain, Ukuran Kertas &amp; Nuansa Warna (4 Halaman)
           </span>
           <p className="text-xs text-(--adm-text-secondary)">
-            Tema aktif:{" "}
+            Desain:{" "}
+            <strong className="text-(--adm-text-primary)">
+              {STATIONERY_DESIGNS.find((d) => d.id === currentDesign)?.name}
+            </strong>{" "}
+            · Kertas:{" "}
+            <strong className="text-(--adm-text-primary)">
+              {currentPaper.name} ({currentPaper.dimensionsLabel})
+            </strong>{" "}
+            · Warna:{" "}
             <strong className="text-(--adm-text-primary)">
               {currentTheme.name}
             </strong>
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {STATIONERY_THEMES.map((theme) => (
-            <button
-              key={theme.id}
-              type="button"
-              onClick={() => setCurrentTheme(theme)}
-              className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all ${
-                currentTheme.id === theme.id
-                  ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
-                  : "border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
-              }`}
-              title={theme.name}
-            >
-              <span className="flex items-center -space-x-1">
-                <span
-                  className="h-3.5 w-3.5 rounded-full border border-white/70"
-                  style={{ backgroundColor: theme.accent }}
-                />
-                <span
-                  className="h-3.5 w-3.5 rounded-full border border-white/70"
-                  style={{ backgroundColor: theme.petal }}
-                />
-              </span>
-              {theme.name}
-            </button>
-          ))}
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {/* Pilihan Motif Desain */}
+          <div>
+            <span className="adm-label">Motif Desain Surat Undangan</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {STATIONERY_DESIGNS.map((design) => (
+                <button
+                  key={design.id}
+                  type="button"
+                  onClick={() => setCurrentDesign(design.id)}
+                  className={`rounded-md border px-2.5 py-2 text-left transition-all ${
+                    currentDesign === design.id
+                      ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
+                      : "border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
+                  }`}
+                >
+                  <div className="text-[12px] font-semibold">{design.name}</div>
+                  <div className="truncate text-[10px] opacity-80">
+                    {design.tagline}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Pilihan Ukuran Kertas & Nuansa Warna */}
+          <div className="space-y-2.5">
+            <div>
+              <label htmlFor="pdf-paper-size" className="adm-label">
+                Ukuran Kertas PDF
+              </label>
+              <select
+                id="pdf-paper-size"
+                value={currentPaper.id}
+                onChange={(e) => {
+                  const found = PAPER_SIZES.find(
+                    (p) => p.id === e.target.value
+                  );
+                  if (found) setCurrentPaper(found);
+                }}
+                className="adm-input"
+              >
+                {PAPER_SIZES.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.dimensionsLabel}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <span className="adm-label">Nuansa Warna</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {STATIONERY_THEMES.map((theme) => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setCurrentTheme(theme)}
+                    className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-all ${
+                      currentTheme.id === theme.id
+                        ? "border-(--adm-accent) bg-(--adm-accent-soft) text-(--adm-accent)"
+                        : "border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-text-secondary) hover:text-(--adm-text-primary)"
+                    }`}
+                  >
+                    <span className="flex items-center -space-x-1">
+                      <span
+                        className="h-3 w-3 rounded-full border border-white/70"
+                        style={{ backgroundColor: theme.accent }}
+                      />
+                      <span
+                        className="h-3 w-3 rounded-full border border-white/70"
+                        style={{ backgroundColor: theme.petal }}
+                      />
+                    </span>
+                    {theme.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -442,7 +528,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
             onClick={() => setActiveTab("single")}
             className={`adm-seg-btn ${activeTab === "single" ? "is-active" : ""}`}
           >
-            Manual (Satuan)
+            Satuan (Per Tamu)
           </button>
           <button
             type="button"
@@ -459,10 +545,10 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
           <div className="adm-card">
             <div className="adm-card-header">
               <div>
-                <h3 className="adm-card-title">Undangan PDF Satuan</h3>
+                <h3 className="adm-card-title">Surat Undangan PDF Satuan</h3>
                 <p className="adm-card-desc">
-                  Cetak undangan A5 4 halaman bergaya floral cat air & kaligrafi
-                  elegan.
+                  Cetak undangan 4 halaman ukuran {currentPaper.dimensionsLabel}{" "}
+                  dengan desain &amp; nuansa pilihan Anda.
                 </p>
               </div>
             </div>
@@ -502,7 +588,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
 
               <div>
                 <label htmlFor="pdf-single-name" className="adm-label">
-                  Nama Tamu
+                  Nama Tamu Yang Terhormat
                 </label>
                 <input
                   id="pdf-single-name"
@@ -641,11 +727,11 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                       <Users className="h-4 w-4" />
                     </div>
                     <h3 className="adm-card-title">
-                      Ambil dari Daftar Tamu Permanen
+                      Muat dari Daftar Tamu Permanen
                     </h3>
                     <p className="adm-card-desc">
                       Cetak PDF massal untuk seluruh {savedGuests.length} tamu
-                      yang sudah tersimpan di database.
+                      yang sudah tersimpan di pangkalan data.
                     </p>
                   </div>
                   <div>
@@ -672,8 +758,8 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                       Impor CSV / Tempel dari Excel
                     </h3>
                     <p className="adm-card-desc">
-                      Seret & lepas file CSV atau tempel daftar tamu langsung
-                      dari Excel/Google Sheets.
+                      Unggah berkas CSV atau salin-tempel daftar tamu langsung
+                      dari Excel maupun Google Sheets.
                     </p>
                   </div>
                   <div>
@@ -697,12 +783,13 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                       {bulkData.length}
                     </span>
                     <div className="flex flex-col">
-                      <span className="adm-card-title">Tamu Terdeteksi</span>
+                      <span className="adm-card-title">Tamu Siap Dicetak</span>
                       <span className="adm-hint">
-                        Tema:{" "}
-                        <span className="font-semibold">
-                          {currentTheme.name}
-                        </span>
+                        {
+                          STATIONERY_DESIGNS.find((d) => d.id === currentDesign)
+                            ?.name
+                        }{" "}
+                        · {currentPaper.name} · {currentTheme.name}
                       </span>
                     </div>
                   </div>
@@ -711,10 +798,10 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                       type="button"
                       onClick={() =>
                         setConfirmDialog({
-                          title: "Reset Data Tamu",
+                          title: "Atur Ulang Data Tamu",
                           message:
-                            "Yakin ingin menghapus semua data yang dimuat?",
-                          confirmLabel: "Reset",
+                            "Apakah Anda yakin ingin mengosongkan daftar tamu yang sedang dimuat?",
+                          confirmLabel: "Atur Ulang",
                           destructive: true,
                           onConfirm: () => setBulkData([]),
                         })
@@ -722,7 +809,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                       className="adm-btn adm-btn-outline-danger"
                     >
                       <RefreshCcw className="h-3.5 w-3.5" />
-                      Reset Data
+                      Atur Ulang
                     </button>
                     <button
                       type="button"
@@ -735,7 +822,7 @@ const InvitationManager: React.FC<InvitationManagerProps> = ({ siteUrl }) => {
                       ) : (
                         <Download className="h-3.5 w-3.5" />
                       )}
-                      {isProcessing ? "Memproses..." : "Unduh ZIP"}
+                      {isProcessing ? "Menyusun..." : "Unduh ZIP"}
                     </button>
                   </div>
                 </div>

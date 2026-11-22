@@ -1,7 +1,7 @@
 /**
- * Stationery renderer — kartu QR & surat undangan bergaya floral elegan.
- * Semua digambar di <canvas> agar bisa memakai font script (Great Vibes)
- * dan Cormorant Garamond, gradasi lembut, serta ornamen bunga cat air.
+ * Stationery renderer — kartu QR & surat undangan bergaya Nusantara elegan.
+ * Mendukung 4 variasi desain (Taman Bunga, Keraton & Emas, Kubah Arabesque, Minimalis),
+ * 5 palet warna, serta pilihan ukuran kertas (A5, A4, A6, B5, Persegi) & format QR.
  */
 import QRCode from "qrcode";
 
@@ -20,6 +20,147 @@ export interface StationeryTheme {
   leafDeep: string;
   gold: string;
 }
+
+export type StationeryDesignId = "floral" | "royal" | "islamic" | "minimal";
+
+export interface StationeryDesignOption {
+  id: StationeryDesignId;
+  name: string;
+  tagline: string;
+}
+
+export const STATIONERY_DESIGNS: StationeryDesignOption[] = [
+  {
+    id: "floral",
+    name: "Taman Bunga Klasik",
+    tagline: "Buket bunga cat air & daun eucalyptus lembut",
+  },
+  {
+    id: "royal",
+    name: "Keraton & Emas",
+    tagline: "Bingkai berlapis anggun & ukiran sudut klasik",
+  },
+  {
+    id: "islamic",
+    name: "Kubah & Arabesque",
+    tagline: "Lengkung kubah & motif bintang delapan penjuru",
+  },
+  {
+    id: "minimal",
+    name: "Elegan Minimalis",
+    tagline: "Garis halus ganda bersih & berwibawa",
+  },
+];
+
+export type PaperSizeId = "a5" | "a4" | "a6" | "b5" | "square";
+
+export interface PaperSizeOption {
+  id: PaperSizeId;
+  name: string;
+  dimensionsLabel: string;
+  mmWidth: number;
+  mmHeight: number;
+  canvasWidth: number;
+  canvasHeight: number;
+}
+
+export const PAPER_SIZES: PaperSizeOption[] = [
+  {
+    id: "a5",
+    name: "A5 (Standar Undangan)",
+    dimensionsLabel: "148 × 210 mm",
+    mmWidth: 148,
+    mmHeight: 210,
+    canvasWidth: 1240,
+    canvasHeight: 1754,
+  },
+  {
+    id: "a4",
+    name: "A4 (Surat Resmi)",
+    dimensionsLabel: "210 × 297 mm",
+    mmWidth: 210,
+    mmHeight: 297,
+    canvasWidth: 1240,
+    canvasHeight: 1754,
+  },
+  {
+    id: "a6",
+    name: "A6 (Kartu Saku)",
+    dimensionsLabel: "105 × 148 mm",
+    mmWidth: 105,
+    mmHeight: 148,
+    canvasWidth: 1050,
+    canvasHeight: 1480,
+  },
+  {
+    id: "b5",
+    name: "B5 (Semi-Besar)",
+    dimensionsLabel: "176 × 250 mm",
+    mmWidth: 176,
+    mmHeight: 250,
+    canvasWidth: 1240,
+    canvasHeight: 1760,
+  },
+  {
+    id: "square",
+    name: "Persegi 15×15 cm",
+    dimensionsLabel: "150 × 150 mm",
+    mmWidth: 150,
+    mmHeight: 150,
+    canvasWidth: 1360,
+    canvasHeight: 1360,
+  },
+];
+
+export type QrFormatId = "card" | "a6" | "a5" | "stamp" | "story";
+
+export interface QrFormatOption {
+  id: QrFormatId;
+  name: string;
+  sizeLabel: string;
+  width: number;
+  height: number;
+  isCompactStamp?: boolean;
+}
+
+export const QR_FORMATS: QrFormatOption[] = [
+  {
+    id: "card",
+    name: "Kartu Undangan (3:4)",
+    sizeLabel: "1080 × 1440 px · 9×12 cm",
+    width: 1080,
+    height: 1440,
+  },
+  {
+    id: "a6",
+    name: "Kartu A6",
+    sizeLabel: "1050 × 1480 px · 10.5×14.8 cm",
+    width: 1050,
+    height: 1480,
+  },
+  {
+    id: "a5",
+    name: "Lembar A5",
+    sizeLabel: "1240 × 1754 px · 14.8×21 cm",
+    width: 1240,
+    height: 1754,
+  },
+  {
+    id: "stamp",
+    name: "Stiker Kotak (1:1)",
+    sizeLabel: "900 × 900 px · 8×8 cm",
+    width: 900,
+    height: 900,
+    isCompactStamp: true,
+  },
+  {
+    id: "story",
+    name: "Status WA / Story (9:16)",
+    sizeLabel: "1080 × 1920 px",
+    width: 1080,
+    height: 1920,
+  },
+];
 
 export const STATIONERY_THEMES: StationeryTheme[] = [
   {
@@ -243,7 +384,7 @@ const roundRect = (
 };
 
 /* ------------------------------------------------------------------ */
-/* Paper & frame                                                       */
+/* Paper, frames & decorative motifs                                   */
 /* ------------------------------------------------------------------ */
 
 export const drawPaper = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
@@ -260,40 +401,9 @@ export const drawPaper = (ctx: Ctx, w: number, h: number, t: StationeryTheme) =>
     ctx.fillStyle = rg;
     ctx.fillRect(0, 0, w, h);
   };
-  glow(0, 0, w * 0.7, t.petal, 0.35);
-  glow(w, h, w * 0.75, t.petal, 0.3);
+  glow(0, 0, w * 0.7, t.petal, 0.32);
+  glow(w, h, w * 0.75, t.petal, 0.28);
   glow(w * 0.5, h * 0.45, w * 0.6, "#ffffff", 0.55);
-};
-
-export const drawFrame = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
-  const s = w / 1240;
-  const m = 46 * s;
-  const gap = 14 * s;
-  ctx.save();
-  ctx.strokeStyle = hexA(t.accent, 0.55);
-  ctx.lineWidth = 2.2 * s;
-  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
-  ctx.strokeStyle = hexA(t.gold, 0.6);
-  ctx.lineWidth = 1 * s;
-  ctx.strokeRect(m + gap, m + gap, w - (m + gap) * 2, h - (m + gap) * 2);
-
-  // ornamen tengah sisi atas & bawah
-  [m, h - m].forEach((y) => {
-    ctx.fillStyle = t.paper[0];
-    ctx.fillRect(w / 2 - 70 * s, y - 8 * s, 140 * s, 16 * s);
-    drawDiamond(ctx, w / 2, y, 7 * s, t.gold);
-    [-1, 1].forEach((d) => {
-      ctx.beginPath();
-      ctx.arc(w / 2 + d * 26 * s, y, 3 * s, 0, TAU);
-      ctx.fillStyle = hexA(t.accent, 0.7);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(w / 2 + d * 46 * s, y, 2 * s, 0, TAU);
-      ctx.fillStyle = hexA(t.gold, 0.7);
-      ctx.fill();
-    });
-  });
-  ctx.restore();
 };
 
 const drawDiamond = (ctx: Ctx, x: number, y: number, r: number, c: string) => {
@@ -305,6 +415,25 @@ const drawDiamond = (ctx: Ctx, x: number, y: number, r: number, c: string) => {
   ctx.closePath();
   ctx.fillStyle = c;
   ctx.fill();
+};
+
+export const drawHeart = (
+  ctx: Ctx,
+  x: number,
+  y: number,
+  r: number,
+  color: string
+) => {
+  ctx.save();
+  ctx.translate(x, y - r * 0.2);
+  ctx.beginPath();
+  ctx.moveTo(0, r * 0.35);
+  ctx.bezierCurveTo(-r * 1.2, -r * 0.4, -r * 0.55, -r * 1.25, 0, -r * 0.5);
+  ctx.bezierCurveTo(r * 0.55, -r * 1.25, r * 1.2, -r * 0.4, 0, r * 0.35);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
 };
 
 export const drawDivider = (
@@ -330,28 +459,194 @@ export const drawDivider = (
   ctx.restore();
 };
 
-export const drawHeart = (
-  ctx: Ctx,
-  x: number,
-  y: number,
-  r: number,
-  color: string
-) => {
+export const drawFrame = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
+  const s = w / 1240;
+  const m = 46 * s;
+  const gap = 14 * s;
   ctx.save();
-  ctx.translate(x, y - r * 0.2);
-  ctx.beginPath();
-  ctx.moveTo(0, r * 0.35);
-  ctx.bezierCurveTo(-r * 1.2, -r * 0.4, -r * 0.55, -r * 1.25, 0, -r * 0.5);
-  ctx.bezierCurveTo(r * 0.55, -r * 1.25, r * 1.2, -r * 0.4, 0, r * 0.35);
-  ctx.closePath();
-  ctx.translate(0, 0);
-  ctx.fillStyle = color;
-  ctx.fill();
+  ctx.strokeStyle = hexA(t.accent, 0.55);
+  ctx.lineWidth = 2.2 * s;
+  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
+  ctx.strokeStyle = hexA(t.gold, 0.6);
+  ctx.lineWidth = 1 * s;
+  ctx.strokeRect(m + gap, m + gap, w - (m + gap) * 2, h - (m + gap) * 2);
+
+  [m, h - m].forEach((y) => {
+    ctx.fillStyle = t.paper[0];
+    ctx.fillRect(w / 2 - 70 * s, y - 8 * s, 140 * s, 16 * s);
+    drawDiamond(ctx, w / 2, y, 7 * s, t.gold);
+    [-1, 1].forEach((d) => {
+      ctx.beginPath();
+      ctx.arc(w / 2 + d * 26 * s, y, 3 * s, 0, TAU);
+      ctx.fillStyle = hexA(t.accent, 0.7);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(w / 2 + d * 46 * s, y, 2 * s, 0, TAU);
+      ctx.fillStyle = hexA(t.gold, 0.7);
+      ctx.fill();
+    });
+  });
+  ctx.restore();
+};
+
+/* Royal Keraton & Emas decorative corners & arch */
+const drawRoyalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
+  const s = w / 1240;
+  const m = 44 * s;
+  ctx.save();
+  // Triple frame
+  ctx.strokeStyle = hexA(t.gold, 0.85);
+  ctx.lineWidth = 3 * s;
+  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
+  ctx.strokeStyle = hexA(t.accent, 0.5);
+  ctx.lineWidth = 1.2 * s;
+  ctx.strokeRect(m + 12 * s, m + 12 * s, w - (m + 12 * s) * 2, h - (m + 12 * s) * 2);
+  ctx.setLineDash([4 * s, 6 * s]);
+  ctx.strokeStyle = hexA(t.gold, 0.55);
+  ctx.strokeRect(m + 22 * s, m + 22 * s, w - (m + 22 * s) * 2, h - (m + 22 * s) * 2);
+  ctx.setLineDash([]);
+
+  // 4 baroque notched corner medallions
+  const corners: [number, number, number, number][] = [
+    [m, m, 1, 1],
+    [w - m, m, -1, 1],
+    [w - m, h - m, -1, -1],
+    [m, h - m, 1, -1],
+  ];
+  corners.forEach(([x, y, sx, sy]) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+    ctx.strokeStyle = t.gold;
+    ctx.lineWidth = 2.4 * s;
+    ctx.beginPath();
+    ctx.moveTo(0, 110 * s);
+    ctx.quadraticCurveTo(22 * s, 22 * s, 110 * s, 0);
+    ctx.stroke();
+    ctx.strokeStyle = hexA(t.accent, 0.65);
+    ctx.lineWidth = 1.4 * s;
+    ctx.beginPath();
+    ctx.moveTo(14 * s, 86 * s);
+    ctx.quadraticCurveTo(30 * s, 30 * s, 86 * s, 14 * s);
+    ctx.stroke();
+    drawDiamond(ctx, 34 * s, 34 * s, 10 * s, t.gold);
+    drawDiamond(ctx, 34 * s, 34 * s, 5 * s, t.accent);
+    ctx.restore();
+  });
+
+  // Top & bottom royal crown flourish
+  [m + 6 * s, h - m - 6 * s].forEach((y) => {
+    drawDiamond(ctx, w / 2, y, 12 * s, t.gold);
+    drawDiamond(ctx, w / 2, y, 6 * s, t.paper[0]);
+    [-1, 1].forEach((d) => {
+      drawDiamond(ctx, w / 2 + d * 34 * s, y, 5 * s, t.accent);
+      drawDiamond(ctx, w / 2 + d * 56 * s, y, 3 * s, t.gold);
+    });
+  });
+  ctx.restore();
+};
+
+/* Islamic Kubah & Arabesque decorative frame */
+const drawIslamicDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
+  const s = w / 1240;
+  const m = 48 * s;
+  const cx = w / 2;
+  ctx.save();
+
+  // Outer fine frame
+  ctx.strokeStyle = hexA(t.gold, 0.7);
+  ctx.lineWidth = 2 * s;
+  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
+
+  // Pointed Islamic Arch framing top & sides
+  const ax = m + 28 * s;
+  const aw = w - ax * 2;
+  const topY = m + 32 * s;
+  const shoulderY = m + 220 * s;
+  const botY = h - m - 28 * s;
+
+  const drawArchPath = (inset: number) => {
+    ctx.beginPath();
+    ctx.moveTo(ax + inset, botY - inset);
+    ctx.lineTo(ax + inset, shoulderY);
+    ctx.bezierCurveTo(
+      ax + inset,
+      topY + 60 * s + inset,
+      cx - 80 * s,
+      topY + 28 * s + inset,
+      cx,
+      topY + inset
+    );
+    ctx.bezierCurveTo(
+      cx + 80 * s,
+      topY + 28 * s + inset,
+      ax + aw - inset,
+      topY + 60 * s + inset,
+      ax + aw - inset,
+      shoulderY
+    );
+    ctx.lineTo(ax + aw - inset, botY - inset);
+    ctx.closePath();
+  };
+
+  ctx.strokeStyle = hexA(t.accent, 0.65);
+  ctx.lineWidth = 2.4 * s;
+  drawArchPath(0);
+  ctx.stroke();
+
+  ctx.strokeStyle = hexA(t.gold, 0.55);
+  ctx.lineWidth = 1.1 * s;
+  drawArchPath(10 * s);
+  ctx.stroke();
+
+  // 8-point geometric Rub el Hizb stars in 4 corners
+  const drawStar8 = (x: number, y: number, r: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.strokeStyle = hexA(t.gold, 0.65);
+    ctx.fillStyle = hexA(t.accent, 0.12);
+    ctx.lineWidth = 1.4 * s;
+    [0, Math.PI / 4].forEach((rot) => {
+      ctx.save();
+      ctx.rotate(rot);
+      ctx.fillRect(-r, -r, r * 2, r * 2);
+      ctx.strokeRect(-r, -r, r * 2, r * 2);
+      ctx.restore();
+    });
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.35, 0, TAU);
+    ctx.fillStyle = hexA(t.gold, 0.7);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  drawStar8(m + 42 * s, m + 42 * s, 26 * s);
+  drawStar8(w - m - 42 * s, m + 42 * s, 26 * s);
+  drawStar8(m + 42 * s, h - m - 42 * s, 20 * s);
+  drawStar8(w - m - 42 * s, h - m - 42 * s, 20 * s);
+
+  drawDiamond(ctx, cx, topY, 9 * s, t.gold);
+  ctx.restore();
+};
+
+/* Minimalist clean hairline frame */
+const drawMinimalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
+  const s = w / 1240;
+  const m = 54 * s;
+  ctx.save();
+  ctx.strokeStyle = hexA(t.ink, 0.25);
+  ctx.lineWidth = 1.6 * s;
+  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
+  ctx.strokeStyle = hexA(t.gold, 0.45);
+  ctx.lineWidth = 0.9 * s;
+  ctx.strokeRect(m + 10 * s, m + 10 * s, w - (m + 10 * s) * 2, h - (m + 10 * s) * 2);
+  drawDiamond(ctx, w / 2, m, 6 * s, t.gold);
+  drawDiamond(ctx, w / 2, h - m, 6 * s, t.gold);
   ctx.restore();
 };
 
 /* ------------------------------------------------------------------ */
-/* Botanical ornaments                                                 */
+/* Botanical ornaments (for floral design)                             */
 /* ------------------------------------------------------------------ */
 
 const petalPath = (ctx: Ctx, len: number, wid: number) => {
@@ -402,7 +697,6 @@ export const drawBloom = (
       ctx.restore();
     }
   });
-  // putik
   const cg = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.2);
   cg.addColorStop(0, hexA(t.gold, 0.95));
   cg.addColorStop(1, hexA(t.petalDeep, 0.9));
@@ -462,7 +756,6 @@ export const drawLeaf = (
   ctx.restore();
 };
 
-/** Ranting eucalyptus/daun kecil di sepanjang batang melengkung. */
 export const drawSprig = (
   ctx: Ctx,
   x: number,
@@ -530,7 +823,6 @@ const drawBerries = (
   }
 };
 
-/** Rangkaian bunga sudut; digambar dalam koordinat lokal (+x,+y ke dalam halaman). */
 const paintBouquet = (ctx: Ctx, s: number, t: StationeryTheme) => {
   const dir = (deg: number) => (deg * Math.PI) / 180 + Math.PI / 2;
   drawSprig(ctx, 30 * s, 30 * s, 300 * s, dir(4), t, 0.18);
@@ -563,7 +855,6 @@ const getBouquet = (t: StationeryTheme): HTMLCanvasElement => {
   return c;
 };
 
-/** corner: 0=kiri-atas, 1=kanan-atas, 2=kanan-bawah, 3=kiri-bawah */
 export const drawCornerBouquet = (
   ctx: Ctx,
   w: number,
@@ -585,6 +876,36 @@ export const drawCornerBouquet = (
   ctx.rotate((corner * Math.PI) / 2);
   ctx.drawImage(sprite, -10, -10, size, size);
   ctx.restore();
+};
+
+const paintDesignBackdrop = (
+  ctx: Ctx,
+  w: number,
+  h: number,
+  t: StationeryTheme,
+  design: StationeryDesignId,
+  bigCorners: [0 | 1 | 2 | 3, 0 | 1 | 2 | 3] = [0, 2]
+) => {
+  drawPaper(ctx, w, h, t);
+  if (design === "royal") {
+    drawRoyalDecor(ctx, w, h, t);
+  } else if (design === "islamic") {
+    drawIslamicDecor(ctx, w, h, t);
+  } else if (design === "minimal") {
+    drawMinimalDecor(ctx, w, h, t);
+  } else {
+    drawFrame(ctx, w, h, t);
+    ([0, 1, 2, 3] as const).forEach((k) =>
+      drawCornerBouquet(
+        ctx,
+        w,
+        h,
+        k,
+        bigCorners.includes(k) ? 0.68 : 0.34,
+        t
+      )
+    );
+  }
 };
 
 /* ------------------------------------------------------------------ */
@@ -729,7 +1050,7 @@ const drawQrPanel = (
 };
 
 /* ------------------------------------------------------------------ */
-/* QR Card                                                             */
+/* QR Card & Stamp                                                     */
 /* ------------------------------------------------------------------ */
 
 export interface QrCardOptions {
@@ -739,54 +1060,57 @@ export interface QrCardOptions {
   groom: string;
   dateText?: string;
   theme: StationeryTheme;
+  design?: StationeryDesignId;
   width?: number;
+  height?: number;
 }
 
 export const renderQrCard = (o: QrCardOptions): HTMLCanvasElement => {
   const W = o.width || 1080;
-  const H = Math.round(W * (4 / 3));
+  const H = o.height || Math.round(W * (4 / 3));
   const s = W / 1080;
   const t = o.theme;
+  const design = o.design || "floral";
   const c = createCanvas(W, H);
   const ctx = c.getContext("2d")!;
   const cx = W / 2;
 
-  drawPaper(ctx, W, H, t);
-  drawFrame(ctx, W, H, t);
-  drawCornerBouquet(ctx, W, H, 0, 0.62, t);
-  drawCornerBouquet(ctx, W, H, 2, 0.62, t);
-  drawCornerBouquet(ctx, W, H, 1, 0.3, t);
-  drawCornerBouquet(ctx, W, H, 3, 0.3, t);
+  paintDesignBackdrop(ctx, W, H, t, design, [0, 2]);
+
+  const isTall = H / W > 1.55;
+  const topOffset = isTall ? H * 0.14 : H * 0.13;
 
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = t.muted;
-  ctx.font = serif(26 * s, 600);
-  setSpacing(ctx, 9 * s);
-  ctx.fillText("THE WEDDING OF", cx, 190 * s);
+  ctx.font = serif(24 * s, 600);
+  setSpacing(ctx, 8 * s);
+  ctx.fillText("UNDANGAN PERNIKAHAN", cx, topOffset);
   setSpacing(ctx, 0);
 
   const names = `${o.bride} & ${o.groom}`;
   fitFont(ctx, names, 760 * s, 96 * s, script);
   ctx.fillStyle = t.ink;
-  ctx.fillText(names, cx, 300 * s);
+  ctx.fillText(names, cx, topOffset + 108 * s);
 
   if (o.dateText) {
     ctx.font = serif(28 * s, 500, true);
     ctx.fillStyle = t.muted;
-    ctx.fillText(o.dateText, cx, 352 * s);
+    ctx.fillText(o.dateText, cx, topOffset + 160 * s);
   }
-  drawDivider(ctx, cx, 385 * s, 150 * s, t);
+  drawDivider(ctx, cx, topOffset + 194 * s, 150 * s, t);
 
-  const bottom = drawQrPanel(ctx, o.url, cx, 420 * s, 520 * s, t, {
+  const qrSize = Math.min(520 * s, H * 0.36);
+  const qrTop = topOffset + (isTall ? 260 * s : 228 * s);
+  const bottom = drawQrPanel(ctx, o.url, cx, qrTop, qrSize, t, {
     a: (o.bride || "A").charAt(0).toUpperCase(),
     b: (o.groom || "B").charAt(0).toUpperCase(),
   });
 
   ctx.fillStyle = t.muted;
-  ctx.font = serif(24 * s, 600);
-  setSpacing(ctx, 5 * s);
-  ctx.fillText("KEPADA YTH.", cx, bottom + 70 * s);
+  ctx.font = serif(23 * s, 600);
+  setSpacing(ctx, 4.5 * s);
+  ctx.fillText("KEPADA YANG TERHORMAT", cx, bottom + 68 * s);
   setSpacing(ctx, 0);
 
   ctx.fillStyle = t.ink;
@@ -795,44 +1119,33 @@ export const renderQrCard = (o: QrCardOptions): HTMLCanvasElement => {
     0,
     2
   );
-  if (lines.length === 1) fitFont(ctx, lines[0], 760 * s, 48 * s, (p) => serif(p, 600, true));
-  drawLines(ctx, lines, cx, bottom + 130 * s, 54 * s);
+  if (lines.length === 1)
+    fitFont(ctx, lines[0], 760 * s, 48 * s, (p) => serif(p, 600, true));
+  drawLines(ctx, lines, cx, bottom + 128 * s, 54 * s);
 
   ctx.fillStyle = t.muted;
-  ctx.font = serif(24 * s, 500, true);
+  ctx.font = serif(23 * s, 500, true);
   ctx.fillText(
-    "Pindai untuk membuka undangan digital",
+    "Pindai kode ini untuk membuka undangan digital",
     cx,
-    H - 92 * s
+    H - 88 * s
   );
   return c;
 };
 
-/** QR kotak elegan berbingkai emas & monogram (cocok untuk stiker amplop / souvenir). */
 export const renderQrStamp = (o: QrCardOptions): HTMLCanvasElement => {
   const W = o.width || 900;
   const s = W / 900;
   const t = o.theme;
+  const design = o.design || "floral";
   const c = createCanvas(W, W);
   const ctx = c.getContext("2d")!;
   const cx = W / 2;
 
-  drawPaper(ctx, W, W, t);
-  const m = 28 * s;
-  ctx.strokeStyle = hexA(t.accent, 0.5);
-  ctx.lineWidth = 2.5 * s;
-  roundRect(ctx, m, m, W - m * 2, W - m * 2, 28 * s);
-  ctx.stroke();
-  ctx.strokeStyle = hexA(t.gold, 0.6);
-  ctx.lineWidth = 1.2 * s;
-  roundRect(ctx, m + 10 * s, m + 10 * s, W - (m + 10 * s) * 2, W - (m + 10 * s) * 2, 22 * s);
-  ctx.stroke();
+  paintDesignBackdrop(ctx, W, W, t, design, [0, 2]);
 
-  drawCornerBouquet(ctx, W, W, 0, 0.34, t);
-  drawCornerBouquet(ctx, W, W, 2, 0.34, t);
-
-  const qrSize = 560 * s;
-  const top = 110 * s;
+  const qrSize = 510 * s;
+  const top = 128 * s;
   const bottom = drawQrPanel(ctx, o.url, cx, top, qrSize, t, {
     a: (o.bride || "A").charAt(0).toUpperCase(),
     b: (o.groom || "B").charAt(0).toUpperCase(),
@@ -842,13 +1155,13 @@ export const renderQrStamp = (o: QrCardOptions): HTMLCanvasElement => {
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = t.ink;
   const label = o.guestName?.trim() || `${o.bride} & ${o.groom}`;
-  fitFont(ctx, label, 700 * s, 44 * s, (p) => serif(p, 600, true), 22 * s);
-  ctx.fillText(label, cx, bottom + 64 * s);
+  fitFont(ctx, label, 660 * s, 42 * s, (p) => serif(p, 600, true), 22 * s);
+  ctx.fillText(label, cx, bottom + 62 * s);
   return c;
 };
 
 /* ------------------------------------------------------------------ */
-/* Invitation pages (A5, 4 halaman)                                    */
+/* Invitation pages (4 halaman, mendukung berbagai ukuran kertas)      */
 /* ------------------------------------------------------------------ */
 
 export const PAGE_W = 1240;
@@ -879,23 +1192,30 @@ export interface InvitationContent {
   signature: string;
 }
 
-const pageBase = (t: StationeryTheme, big: [0 | 1 | 2 | 3, 0 | 1 | 2 | 3]) => {
-  const c = createCanvas(PAGE_W, PAGE_H);
+export interface PageRenderOptions {
+  design?: StationeryDesignId;
+  paper?: PaperSizeOption;
+}
+
+const pageBase = (
+  t: StationeryTheme,
+  big: [0 | 1 | 2 | 3, 0 | 1 | 2 | 3],
+  opts?: PageRenderOptions
+) => {
+  const pw = opts?.paper?.canvasWidth || PAGE_W;
+  const ph = opts?.paper?.canvasHeight || PAGE_H;
+  const c = createCanvas(pw, ph);
   const ctx = c.getContext("2d")!;
-  drawPaper(ctx, PAGE_W, PAGE_H, t);
-  drawFrame(ctx, PAGE_W, PAGE_H, t);
-  ([0, 1, 2, 3] as const).forEach((k) =>
-    drawCornerBouquet(
-      ctx,
-      PAGE_W,
-      PAGE_H,
-      k,
-      big.includes(k) ? 0.72 : 0.36,
-      t
-    )
-  );
+  paintDesignBackdrop(ctx, pw, ph, t, opts?.design || "floral", big);
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
+  // Skala konten proporsional ke koordinat desain 1240×1754 (terpusat di tengah)
+  const scale = Math.min(pw / PAGE_W, ph / PAGE_H);
+  const ox = (pw - PAGE_W * scale) / 2;
+  const oy = (ph - PAGE_H * scale) / 2;
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.scale(scale, scale);
   return { c, ctx };
 };
 
@@ -917,38 +1237,38 @@ const smallCaps = (
 export const renderCoverPage = (
   d: InvitationContent,
   guest: { name: string; address?: string },
-  t: StationeryTheme
+  t: StationeryTheme,
+  opts?: PageRenderOptions
 ) => {
-  const { c, ctx } = pageBase(t, [0, 2]);
+  const { c, ctx } = pageBase(t, [0, 2], opts);
   const cx = PAGE_W / 2;
-  smallCaps(ctx, "The Wedding of", 400, t.muted, 30, 12);
+  smallCaps(ctx, "Undangan Pernikahan", 390, t.muted, 28, 10);
 
   ctx.fillStyle = t.ink;
   fitFont(ctx, d.brideName, 860, 168, script);
-  ctx.fillText(d.brideName, cx, 600);
+  ctx.fillText(d.brideName, cx, 590);
   ctx.fillStyle = t.accent;
   ctx.font = script(100);
-  ctx.fillText("&", cx, 725);
+  ctx.fillText("&", cx, 715);
   ctx.fillStyle = t.ink;
   fitFont(ctx, d.groomName, 860, 168, script);
-  ctx.fillText(d.groomName, cx, 880);
+  ctx.fillText(d.groomName, cx, 870);
 
-  drawDivider(ctx, cx, 950, 230, t);
+  drawDivider(ctx, cx, 945, 230, t);
   const dateLine = [d.resepsiDay, d.resepsiDate].filter(Boolean).join(", ");
-  smallCaps(ctx, dateLine, 1015, t.muted, 30, 6);
+  smallCaps(ctx, dateLine, 1012, t.muted, 30, 6);
 
-  // kartu tamu
   ctx.font = serif(52, 600, true);
   const nameLines = wrapText(ctx, guest.name, 640).slice(0, 3);
   const boxW = 780;
-  const boxH = 150 + nameLines.length * 62 + (guest.address ? 50 : 0);
+  const boxH = 152 + nameLines.length * 62 + (guest.address ? 50 : 0);
   const bx = cx - boxW / 2;
-  const by = 1130;
+  const by = 1125;
   ctx.save();
   ctx.shadowColor = hexA(t.petalDeep, 0.2);
   ctx.shadowBlur = 30;
   roundRect(ctx, bx, by, boxW, boxH, 30);
-  ctx.fillStyle = hexA("#ffffff", 0.82);
+  ctx.fillStyle = hexA("#ffffff", 0.84);
   ctx.fill();
   ctx.restore();
   ctx.strokeStyle = hexA(t.accent, 0.4);
@@ -961,8 +1281,8 @@ export const renderCoverPage = (
   ctx.stroke();
 
   ctx.fillStyle = t.muted;
-  ctx.font = serif(32, 500, true);
-  ctx.fillText("Kepada Yth. Bapak/Ibu/Saudara/i", cx, by + 72);
+  ctx.font = serif(30, 500, true);
+  ctx.fillText("Kepada Yang Terhormat Bapak/Ibu/Saudara/i", cx, by + 72);
   ctx.fillStyle = t.ink;
   ctx.font = serif(52, 600, true);
   if (nameLines.length === 1)
@@ -973,11 +1293,16 @@ export const renderCoverPage = (
     ctx.font = serif(32, 500);
     ctx.fillText(guest.address, cx, after + 10);
   }
+  ctx.restore();
   return c;
 };
 
-export const renderCouplePage = (d: InvitationContent, t: StationeryTheme) => {
-  const { c, ctx } = pageBase(t, [1, 3]);
+export const renderCouplePage = (
+  d: InvitationContent,
+  t: StationeryTheme,
+  opts?: PageRenderOptions
+) => {
+  const { c, ctx } = pageBase(t, [1, 3], opts);
   const cx = PAGE_W / 2;
   let y = 300;
   ctx.fillStyle = t.ink;
@@ -992,16 +1317,16 @@ export const renderCouplePage = (d: InvitationContent, t: StationeryTheme) => {
   drawDivider(ctx, cx, y + 30, 200, t);
 
   ctx.fillStyle = t.ink;
-  ctx.font = serif(32, 500);
+  ctx.font = serif(31, 500);
   y = drawLines(
     ctx,
     wrapText(
       ctx,
-      "Dengan memohon rahmat dan ridha Allah SWT, kami bermaksud menyelenggarakan pernikahan putra-putri kami:",
+      "Dengan memohon rahmat dan ridha Allah SWT, perkenankan kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri pernikahan putra-putri kami:",
       880
     ),
     cx,
-    y + 100,
+    y + 96,
     44
   );
 
@@ -1018,24 +1343,35 @@ export const renderCouplePage = (d: InvitationContent, t: StationeryTheme) => {
   ctx.font = script(90);
   ctx.fillText("&", cx, y + 70);
   person(d.groomFullName, d.groomParents, y + 80);
+  ctx.restore();
   return c;
 };
 
-export const renderEventPage = (d: InvitationContent, t: StationeryTheme) => {
-  const { c, ctx } = pageBase(t, [0, 2]);
+export const renderEventPage = (
+  d: InvitationContent,
+  t: StationeryTheme,
+  opts?: PageRenderOptions
+) => {
+  const { c, ctx } = pageBase(t, [0, 2], opts);
   const cx = PAGE_W / 2;
   ctx.fillStyle = t.ink;
-  ctx.font = serif(36, 500, true);
-  ctx.fillText("Insya Allah acara akan dilaksanakan pada:", cx, 250);
+  ctx.font = serif(35, 500, true);
+  ctx.fillText("Insya Allah rangkaian acara akan diselenggarakan pada:", cx, 250);
 
-  const card = (title: string, day: string, date: string, time: string, y: number) => {
+  const card = (
+    title: string,
+    day: string,
+    date: string,
+    time: string,
+    y: number
+  ) => {
     const w = 820;
     const h = 250;
     ctx.save();
     ctx.shadowColor = hexA(t.petalDeep, 0.18);
     ctx.shadowBlur = 24;
     roundRect(ctx, cx - w / 2, y, w, h, 28);
-    ctx.fillStyle = hexA("#ffffff", 0.8);
+    ctx.fillStyle = hexA("#ffffff", 0.82);
     ctx.fill();
     ctx.restore();
     ctx.strokeStyle = hexA(t.accent, 0.35);
@@ -1069,16 +1405,18 @@ export const renderEventPage = (d: InvitationContent, t: StationeryTheme) => {
   const end = drawQrPanel(ctx, d.mapsUrl, cx, top, qrSize, t);
   ctx.fillStyle = t.muted;
   ctx.font = serif(26, 500, true);
-  ctx.fillText("Pindai untuk petunjuk lokasi", cx, end + 42);
+  ctx.fillText("Pindai untuk petunjuk arah lokasi", cx, end + 42);
+  ctx.restore();
   return c;
 };
 
 export const renderClosingPage = (
   d: InvitationContent,
   guestUrl: string,
-  t: StationeryTheme
+  t: StationeryTheme,
+  opts?: PageRenderOptions
 ) => {
-  const { c, ctx } = pageBase(t, [1, 3]);
+  const { c, ctx } = pageBase(t, [1, 3], opts);
   const cx = PAGE_W / 2;
   smallCaps(ctx, "Undangan Digital", 230, t.accent, 30, 10);
   const end = drawQrPanel(ctx, guestUrl, cx, 275, 400, t, {
@@ -1106,5 +1444,6 @@ export const renderClosingPage = (
   const names = `${d.brideName} & ${d.groomName}`;
   fitFont(ctx, names, 900, 110, script, 40);
   ctx.fillText(names, cx, y + 150);
+  ctx.restore();
   return c;
 };

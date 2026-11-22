@@ -120,11 +120,12 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
             Konfirmasi Kehadiran
           </span>
           <h2 className="font-serif text-4xl font-medium tracking-tight text-primary italic sm:text-5xl md:text-6xl dark:text-white">
-            Reservasi Tamu
+            Reservasi Kehadiran
           </h2>
           <SectionDivider className="py-1" />
           <p className="mx-auto max-w-lg text-sm font-light text-slate-600 italic sm:text-base dark:text-slate-300">
-            Kehadiran Anda adalah kebahagiaan tersendiri bagi kami
+            Dengan segala kerendahan hati, mohon kiranya Bapak/Ibu/Saudara/i
+            berkenan mengonfirmasi kehadiran
           </p>
         </div>
 
@@ -139,10 +140,11 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-script text-4xl text-primary dark:text-white">
-                      Terima Kasih!
+                      Terima Kasih
                     </h3>
                     <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                      Konfirmasi kehadiran Anda telah berhasil kami simpan.
+                      Terima kasih atas konfirmasi Bapak/Ibu/Saudara/i. Data
+                      kehadiran telah kami catat dengan baik.
                     </p>
                   </div>
                   <button
@@ -275,15 +277,15 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                         {[
                           {
                             status: AttendanceStatus.HADIR,
-                            label: "Ya, InsyaAllah Hadir",
+                            label: "InsyaAllah, Berkenan Hadir",
                           },
                           {
                             status: AttendanceStatus.TIDAK_HADIR,
-                            label: "Maaf, Belum Bisa Hadir",
+                            label: "Mohon Maaf, Belum Dapat Hadir",
                           },
                           {
                             status: AttendanceStatus.RAGU,
-                            label: "Masih Ragu / Belum Pasti",
+                            label: "Masih Belum Dapat Memastikan",
                           },
                         ].map(({ status, label }) => (
                           <button
@@ -466,7 +468,7 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
                         {rsvp.attendance === AttendanceStatus.HADIR && (
                           <div className="mt-2.5 flex items-center gap-1.5 border-t border-slate-100 pt-2 text-[11px] text-slate-500 dark:border-white/5 dark:text-slate-400">
                             <Users className="h-3.5 w-3.5" />
-                            <span>Datang ber-{rsvp.guest_count}</span>
+                            <span>Hadir bersama {rsvp.guest_count} orang</span>
                           </div>
                         )}
                       </div>

@@ -128,14 +128,14 @@ const Wishes: React.FC<{ config: AppConfig }> = ({ config: _config }) => {
           className="mb-14 space-y-3 text-center md:mb-18"
         >
           <span className="text-accentDark dark:text-accent text-[11px] font-semibold tracking-[0.3em] uppercase">
-            Buku Tamu Digital
+            Untaian Doa &amp; Restu
           </span>
           <h2 className="font-serif text-4xl font-medium tracking-tight text-primary italic sm:text-5xl md:text-6xl dark:text-white">
             Ucapan &amp; Doa
           </h2>
           <SectionDivider className="py-1" />
           <p className="mx-auto max-w-lg text-sm font-light text-slate-500 italic sm:text-base dark:text-slate-400">
-            Untaian doa dan harapan tulus dari orang-orang tersayang
+            Sampaikan doa restu serta harapan tulus bagi kedua mempelai
           </p>
         </div>
 

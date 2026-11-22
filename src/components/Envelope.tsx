@@ -70,7 +70,7 @@ const Envelope: React.FC<EnvelopeProps> = ({ onOpen, config }) => {
             <div className="flex items-center justify-center gap-3">
               <span className="to-accent/60 h-[1px] w-10 bg-gradient-to-r from-transparent" />
               <span className="text-[11px] font-medium tracking-[0.32em] text-white/80 uppercase">
-                The Wedding of
+                Undangan Pernikahan
               </span>
               <span className="to-accent/60 h-[1px] w-10 bg-gradient-to-l from-transparent" />
             </div>
@@ -94,16 +94,17 @@ const Envelope: React.FC<EnvelopeProps> = ({ onOpen, config }) => {
           {/* Clean translucent invitation card */}
           <div className="rounded-3xl border border-white/20 bg-white/[0.11] px-6 py-7 shadow-[0_24px_64px_rgba(0,0,0,0.45)] ring-1 ring-white/10 backdrop-blur-xl ring-inset sm:px-9 sm:py-8">
             <div className="space-y-3">
-              <p className="text-accent text-[11px] font-semibold tracking-[0.24em] uppercase">
-                Kepada Yth. Bapak/Ibu/Saudara/i
+              <p className="text-accent text-[11px] font-semibold tracking-[0.22em] uppercase">
+                Kepada Yang Terhormat Bapak/Ibu/Saudara/i
               </p>
               <h2 className="font-serif text-3xl font-medium tracking-tight break-words text-white italic sm:text-4xl">
                 {guestName || "Tamu Undangan"}
               </h2>
               <div className="via-accent/45 mx-auto h-[1px] w-16 bg-gradient-to-r from-transparent to-transparent" />
-              <p className="mx-auto max-w-xs text-xs leading-relaxed font-light text-white/75 sm:text-sm">
-                Dengan memohon rahmat dan ridha Allah SWT, kami mengundang Anda
-                untuk hadir di hari bahagia kami.
+              <p className="mx-auto max-w-xs text-xs leading-relaxed font-light text-white/80 sm:text-sm">
+                Dengan segala kerendahan hati dan memohon ridha Allah SWT,
+                perkenankan kami mengundang Bapak/Ibu/Saudara/i ke hari bahagia
+                pernikahan kami.
               </p>
             </div>
           </div>

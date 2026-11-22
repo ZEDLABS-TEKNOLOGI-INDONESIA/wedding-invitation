@@ -218,7 +218,7 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
                 rel="noopener noreferrer"
                 className="bg-primary dark:bg-accentDark inline-flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-xs font-bold tracking-[0.14em] text-white uppercase shadow-sm transition-all hover:opacity-95 lg:flex-none"
               >
-                <ExternalLink className="h-4 w-4" /> Buka Maps
+                <ExternalLink className="h-4 w-4" /> Petunjuk Arah
               </a>
             </div>
           </div>

@@ -73,7 +73,7 @@ const Hero: React.FC<{ config: AppConfig }> = ({ config }) => {
           <div className="flex items-center justify-center gap-3">
             <span className="h-[1px] w-8 bg-white/40 md:w-14" />
             <span className="text-[11px] font-medium tracking-[0.34em] text-white/85 uppercase">
-              The Wedding of
+              Undangan Pernikahan
             </span>
             <span className="h-[1px] w-8 bg-white/40 md:w-14" />
           </div>

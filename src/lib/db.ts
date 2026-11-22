@@ -154,15 +154,15 @@ const DEFAULT_CONFIG: Record<string, string> = {
   TEXT_QUOTE_AR_RUM: `"Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang. Sesungguhnya pada yang demikian itu benar-benar terdapat tanda-tanda (kebesaran Allah) bagi kaum yang berpikir."`,
   TEXT_QUOTE_SOURCE: "QS. Ar-Rum: 21",
   TEXT_INVITATION:
-    "Tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i, kawan, dan sahabat, untuk memberikan doa restu pada acara pernikahan kami:",
+    "Dengan segala kerendahan hati dan tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i beserta keluarga untuk berkenan hadir dan memberikan doa restu pada hari bahagia pernikahan kami:",
   TEXT_CLOSING:
-    "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir untuk memberikan doa restu kepada kami.",
+    "Merupakan suatu kehormatan dan kebahagiaan yang tiada terkira bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir serta melimpahkan doa restu kepada kedua mempelai.",
   TEXT_SALAM_CLOSING: "Wassalamu'alaikum Warahmatullahi Wabarakatuh",
   TEXT_SIGNATURE: "Kami yang berbahagia,",
-  TEXT_FAMILY: "Kel. Bpk [Ayah Pria] & Kel. Bpk [Ayah Wanita]",
+  TEXT_FAMILY: "Segenap Keluarga Besar Kedua Mempelai",
   TEXT_GIFT_TITLE: "Tanda Kasih",
   TEXT_GIFT_DESC:
-    "Kehadiran dan doa restu Anda adalah hadiah terbaik bagi kami. Namun, jika Anda ingin memberikan tanda kasih dalam bentuk lain, kami menerimanya dengan segala kerendahan hati.",
+    "Kehadiran serta untaian doa restu Bapak/Ibu/Saudara/i merupakan anugerah terindah bagi kami. Namun, apabila Bapak/Ibu/Saudara/i bermaksud menyampaikan tanda kasih, kami menerimanya dengan segala kerendahan hati dan rasa syukur.",
   WA_BASE_URL: "https://whatsapp.zedlabs.id",
   WA_API_KEY: "",
   WA_API_SECRET: "",
