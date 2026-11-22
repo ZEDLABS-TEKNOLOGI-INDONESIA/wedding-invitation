@@ -166,7 +166,7 @@ const Navbar: React.FC<NavbarProps> = ({
           isInteractingRef.current = false;
         }
       }}
-      className={`pointer-events-none fixed bottom-4 left-1/2 z-[100] w-[96%] max-w-xl -translate-x-1/2 px-1 transition-all duration-500 ease-out md:bottom-8 md:w-fit md:max-w-none ${
+      className={`pointer-events-none fixed bottom-4 left-1/2 z-[100] w-auto max-w-[calc(100vw-1rem)] -translate-x-1/2 transition-all duration-500 ease-out md:bottom-7 ${
         isVisible || paletteOpen
           ? "translate-y-0 opacity-100"
           : "translate-y-24 opacity-0"
@@ -226,7 +226,7 @@ const Navbar: React.FC<NavbarProps> = ({
       )}
 
       <div
-        className={`dark:bg-darkSurface/75 flex items-center justify-between gap-0.5 overflow-x-auto rounded-full border border-white/40 bg-white/75 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.2)] backdrop-blur-2xl transition-colors duration-500 md:justify-center md:gap-1 md:p-2 dark:border-white/10 ${
+        className={`dark:bg-darkSurface/80 flex items-center justify-center gap-0 rounded-full border border-white/40 bg-white/80 px-1.5 py-1 shadow-[0_18px_44px_rgba(0,0,0,0.2)] backdrop-blur-2xl transition-colors duration-500 sm:gap-0.5 sm:px-2 sm:py-1.5 md:gap-1 dark:border-white/10 ${
           isVisible || paletteOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
       >
@@ -239,13 +239,13 @@ const Navbar: React.FC<NavbarProps> = ({
               aria-label={item.label}
               aria-current={isActive ? "location" : undefined}
               title={item.label}
-              className={`group relative flex shrink-0 items-center justify-center rounded-full p-2.5 transition-all md:p-3.5 ${
+              className={`group relative flex shrink-0 items-center justify-center rounded-full p-2 transition-all sm:p-2.5 md:p-3 ${
                 isActive
                   ? "bg-primary dark:bg-accent text-white shadow-md dark:text-slate-950"
                   : "hover:text-accentDark dark:hover:text-accent text-slate-600 hover:bg-white/80 dark:text-slate-300 dark:hover:bg-white/10"
               }`}
             >
-              <item.icon className="h-4 w-4 md:h-5 md:w-5" />
+              <item.icon className="h-4 w-4 md:h-[18px] md:w-[18px]" />
               <span className={tooltipClass}>{item.label}</span>
             </a>
           );
@@ -258,13 +258,13 @@ const Navbar: React.FC<NavbarProps> = ({
             aria-expanded={paletteOpen}
             aria-label="Ubah tema warna undangan"
             title="Tema Warna"
-            className={`group relative flex shrink-0 items-center justify-center rounded-full p-2.5 transition-all md:p-3.5 ${
+            className={`group relative flex shrink-0 items-center justify-center rounded-full p-2 transition-all sm:p-2.5 md:p-3 ${
               paletteOpen
                 ? "bg-primary dark:bg-accent text-white shadow-md dark:text-slate-950"
                 : "hover:text-accentDark dark:hover:text-accent text-slate-600 hover:bg-white/80 dark:text-slate-300 dark:hover:bg-white/10"
             }`}
           >
-            <Palette className="h-4 w-4 md:h-5 md:w-5" />
+            <Palette className="h-4 w-4 md:h-[18px] md:w-[18px]" />
             <span className={tooltipClass}>Tema Warna</span>
           </button>
         )}
@@ -272,16 +272,16 @@ const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={toggleTheme}
-          className="group hover:text-accentDark dark:hover:text-accent relative flex shrink-0 items-center justify-center rounded-full p-2.5 text-slate-600 transition-all hover:bg-white/80 md:p-3.5 dark:text-slate-300 dark:hover:bg-white/10"
+          className="group hover:text-accentDark dark:hover:text-accent relative flex shrink-0 items-center justify-center rounded-full p-2 text-slate-600 transition-all hover:bg-white/80 sm:p-2.5 md:p-3 dark:text-slate-300 dark:hover:bg-white/10"
           aria-label={
             theme === "light" ? "Aktifkan mode gelap" : "Aktifkan mode terang"
           }
           title={theme === "light" ? "Mode Gelap" : "Mode Terang"}
         >
           {theme === "light" ? (
-            <Moon className="h-4 w-4 md:h-5 md:w-5" />
+            <Moon className="h-4 w-4 md:h-[18px] md:w-[18px]" />
           ) : (
-            <Sun className="h-4 w-4 md:h-5 md:w-5" />
+            <Sun className="h-4 w-4 md:h-[18px] md:w-[18px]" />
           )}
           <span className={tooltipClass}>
             {theme === "light" ? "Mode Gelap" : "Mode Terang"}
