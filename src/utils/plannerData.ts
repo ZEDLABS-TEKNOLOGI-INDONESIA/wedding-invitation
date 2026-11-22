@@ -311,11 +311,11 @@ export const TODO_STARTER_TEMPLATE: Array<{
     notes: "Lengkapi KTP, KK, akta lahir, ijazah, serta pas foto latar biru 2×3 & 4×6.",
   },
   {
-    title: "Pendaftaran nikah ke KUA, cek jadwal penghulu & ikut Bimwin",
+    title: "Pendaftaran nikah online di SIMKAH Web & skrining Elsimil BKKBN",
     phase: "H-1 Bulan",
     category: "KUA & Berkas",
     pic: "Bersama",
-    notes: "Daftar minimal 10 hari kerja sebelum akad; setor PNBP Rp600.000 jika di luar KUA.",
+    notes: "Daftar di simkah4.kemenag.go.id min. 10 hari kerja sebelum akad; ikuti Bimwin & setor PNBP Rp600.000 via kode billing bila akad di luar KUA.",
   },
   {
     title: "Konfirmasi wali nikah, dua saksi adil & pembacaan doa",
@@ -518,17 +518,24 @@ export const ESSENTIALS_STARTER_TEMPLATE: Array<{
   },
   {
     kind: "kua",
-    title: "Surat Keterangan Kesehatan / Imunisasi TT (Puskesmas)",
-    price: 50000,
-    owner: "Keduanya",
-    notes: "Sekaligus pemeriksaan kesehatan pranikah catin.",
+    title: "Pendaftaran Online SIMKAH Web (simkah4.kemenag.go.id)",
+    price: 0,
+    owner: "Bersama",
+    notes: "Daftar kehendak nikah min. 10 hari kerja sebelum akad untuk jadwal penghulu & Kartu Nikah Digital.",
   },
   {
     kind: "kua",
-    title: "Bukti Setor PNBP Nikah di Luar KUA (Rp600.000)",
+    title: "Surat Keterangan Sehat Faskes & Sertifikat Elsimil (BKKBN)",
+    price: 50000,
+    owner: "Keduanya",
+    notes: "Pemeriksaan kesehatan pranikah di Puskesmas/Klinik/RS & skrining siap nikah Elsimil.",
+  },
+  {
+    kind: "kua",
+    title: "Bukti Setor PNBP Nikah di Luar KUA / Luar Jam Kerja (Rp600.000)",
     price: 600000,
     owner: "Bersama",
-    notes: "Disetorkan lewat bank/kode billing resmi; Rp0 jika akad di kantor KUA jam kerja.",
+    notes: "Bayar via kode billing resmi ke kas negara (PP 59/2018); Rp0 jika akad di kantor KUA hari & jam kerja.",
   },
 ];
 
@@ -585,6 +592,7 @@ export interface FiqhGuideItem {
   translation?: string;
   points: string[];
   reference: string;
+  referenceUrl?: string;
 }
 
 export const FIQH_GUIDES: FiqhGuideItem[] = [
@@ -703,15 +711,17 @@ export const FIQH_GUIDES: FiqhGuideItem[] = [
   {
     id: "alur-kua",
     category: "Administrasi Negara",
-    title: "Alur Resmi Pendaftaran Nikah di KUA Indonesia",
+    title: "Alur Resmi Pendaftaran Nikah KUA (PMA No. 30 Tahun 2024)",
     summary:
-      "Pencatatan pernikahan di KUA melindungi hak hukum suami, istri, dan keturunan secara resmi di negara.",
+      "Pencatatan pernikahan resmi di KUA berdasarkan PMA No. 30 Tahun 2024 melindungi hak hukum suami, istri, dan keturunan serta menerbitkan Buku Nikah & Kartu Nikah Digital.",
     points: [
-      "1. Minta surat pengantar dari RT/RW setempat, lalu urus Formulir N1, N2, N4 (dan N5 jika usia < 21 tahun) di Kelurahan/Desa.",
-      "2. Daftarkan berkas ke KUA kecamatan lokasi akad minimal 10 hari kerja sebelum pelaksanaan (dapat juga didaftarkan online melalui SIMKAH Kemenag).",
-      "3. Ikuti pemeriksaan berkas/wali bersama penghulu serta Bimbingan Perkawinan (Bimwin) calon pengantin.",
-      "4. Biaya resmi: Rp0 (gratis) bila akad dilaksanakan di kantor KUA pada hari dan jam kerja; Rp600.000 (PNBP resmi ke kas negara via bank) bila akad di luar kantor KUA atau di luar jam kerja.",
+      "1. Persyaratan Usia & Izin: Usia minimal catin 19 tahun (UU No. 16 Tahun 2019). Jika berusia di bawah 21 tahun wajib melampirkan izin tertulis orang tua (Model N5); jika di bawah 19 tahun wajib dispensasi Pengadilan Agama.",
+      "2. Berkas Kelurahan/Desa: Minta pengantar RT/RW untuk mengurus Surat Pengantar Nikah (N1), Permohonan Kehendak Nikah (N2), dan Persetujuan Mempelai (N4), plus fotokopi KTP, KK, Akta Kelahiran, pas foto latar biru, dan Surat Keterangan Sehat Faskes + skrining Elsimil BKKBN.",
+      "3. Pendaftaran Digital SIMKAH: Daftar kehendak nikah minimal 10 hari kerja sebelum akad melalui portal resmi SIMKAH Web (simkah4.kemenag.go.id), lalu ikuti pemeriksaan nikah & Bimbingan Perkawinan (Bimwin).",
+      "4. Tarif Resmi PNBP (PP No. 59 Tahun 2018): Rp0 (gratis) bila akad di kantor KUA pada hari & jam kerja (Senin–Jumat); Rp600.000 bila akad di luar KUA atau di luar jam kerja (dibayar melalui kode billing resmi ke kas negara, bukan tunai ke petugas). Tersedia tarif Rp0 khusus warga tidak mampu/korban bencana dengan surat keterangan sah.",
     ],
-    reference: "PMA No. 20 Tahun 2019 & PP No. 59 Tahun 2018",
+    reference:
+      "PMA No. 30 Tahun 2024, UU No. 16 Tahun 2019, & PP No. 59 Tahun 2018",
+    referenceUrl: "https://simkah4.kemenag.go.id",
   },
 ];

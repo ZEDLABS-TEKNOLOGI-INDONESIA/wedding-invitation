@@ -84,7 +84,17 @@ export const ADMIN_COACHMARK_GUIDES: Record<string, CoachmarkGuide> = {
       {
         selector: "[data-tour='planner-nav']",
         title: "6 Modul Persiapan Pernikahan Terpadu",
-        body: "Kelola To-Do Persiapan, Anggaran & Vendor (DP/Lunas), Tabungan Menuju Halal, Mahar/Seserahan & Berkas KUA (N1/N2/N4), Jurnal Menikah, hingga Tuntunan Fikih Munakahat dalam satu tempat.",
+        body: "Berpindah cepat antara To-Do Persiapan, Anggaran & Vendor, Tabungan Menuju Halal, Mahar/Seserahan & Berkas KUA (PMA 30/2024), Jurnal Menikah, dan Tuntunan Fikih Munakahat.",
+      },
+      {
+        selector: "[data-tour='planner-summary']",
+        title: "Ringkasan Progres & Finansial Real-Time",
+        body: "Pantau persentase penyelesaian tugas, estimasi vs harga deal vendor, saldo Dompet Nikah, dan perkiraan setoran bulanan menuju hari akad.",
+      },
+      {
+        selector: "[data-tour='planner-form']",
+        title: "Templat 1-Klik & Kelola Data Lengkap",
+        body: "Gunakan tombol Muat Templat untuk mengisi daftar persiapan, anggaran, mahar, dan berkas KUA secara otomatis tanpa duplikasi, lalu sunting atau hapus kapan saja.",
       },
     ],
   },

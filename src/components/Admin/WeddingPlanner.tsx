@@ -7,8 +7,8 @@ import {
   CheckSquare,
   ChevronDown,
   Download,
+  Edit,
   ExternalLink,
-  FileCheck2,
   Gift,
   Loader2,
   MessageCircle,
@@ -126,6 +126,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
 
   // Filters & drafts
   const [todoPhaseFilter, setTodoPhaseFilter] = useState<string>("all");
+  const [editingTodoId, setEditingTodoId] = useState<number | null>(null);
   const [todoDraft, setTodoDraft] = useState({
     title: "",
     phase: "H-3 Bulan",
@@ -150,6 +151,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
     notes: "",
   });
 
+  const [editingSavingId, setEditingSavingId] = useState<number | null>(null);
   const [savingDraft, setSavingDraft] = useState({
     entry_date: new Date().toISOString().slice(0, 10),
     contributor: "Bersama",
@@ -159,6 +161,9 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
   });
 
   const [essentialTab, setEssentialTab] = useState<"gifts" | "kua">("gifts");
+  const [editingEssentialId, setEditingEssentialId] = useState<number | null>(
+    null
+  );
   const [essentialDraft, setEssentialDraft] = useState({
     kind: "seserahan" as "mahar" | "seserahan" | "kua",
     title: "",
@@ -167,6 +172,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
     notes: "",
   });
 
+  const [editingJournalId, setEditingJournalId] = useState<number | null>(null);
   const [journalDraft, setJournalDraft] = useState({
     entry_date: new Date().toISOString().slice(0, 10),
     author: "Bersama",
@@ -274,9 +280,14 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
       });
       const payload = await res.json().catch(() => ({}));
       if (res.ok) {
+        const added = Number(payload.count || 0);
+        const skipped = Number(payload.skipped || 0);
         setToast({
           type: "success",
-          message: `${payload.count || 0} item templat persiapan berhasil dimuat.`,
+          message:
+            added > 0
+              ? `${added} item templat berhasil ditambahkan${skipped > 0 ? ` (${skipped} sudah ada)` : ""}.`
+              : "Seluruh item templat sudah tersedia pada daftar Anda.",
         });
         await loadAll();
       } else {
@@ -316,28 +327,53 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
   };
 
   // --- TODO handlers ---
+  const resetTodoDraft = () => {
+    setEditingTodoId(null);
+    setTodoDraft({
+      title: "",
+      phase: "H-3 Bulan",
+      category: "Umum",
+      due_date: "",
+      pic: "Bersama",
+      notes: "",
+    });
+  };
+
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!todoDraft.title.trim()) return;
     setBusyAction("add-todo");
     try {
+      const existing = editingTodoId
+        ? todos.find((t) => t.id === editingTodoId)
+        : undefined;
       const res = await fetch("/api/planner", {
-        method: "POST",
+        method: editingTodoId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ resource: "todos", ...todoDraft }),
+        body: JSON.stringify({
+          resource: "todos",
+          id: editingTodoId ?? undefined,
+          done: existing?.done === 1,
+          ...todoDraft,
+        }),
       });
+      const payload = await res.json().catch(() => ({}));
       if (res.ok) {
-        setTodoDraft({
-          title: "",
-          phase: todoDraft.phase,
-          category: todoDraft.category,
-          due_date: "",
-          pic: "Bersama",
-          notes: "",
-        });
+        const wasEdit = Boolean(editingTodoId);
+        resetTodoDraft();
         await loadAll();
-        setToast({ type: "success", message: "Tugas persiapan ditambahkan." });
+        setToast({
+          type: "success",
+          message: wasEdit
+            ? "Tugas persiapan diperbarui."
+            : "Tugas persiapan ditambahkan.",
+        });
+      } else {
+        setToast({
+          type: "error",
+          message: payload?.error || "Gagal menyimpan tugas.",
+        });
       }
     } finally {
       setBusyAction(null);
@@ -467,35 +503,57 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
     }
   };
 
+  const resetSavingDraft = () => {
+    setEditingSavingId(null);
+    setSavingDraft({
+      entry_date: new Date().toISOString().slice(0, 10),
+      contributor: "Bersama",
+      entry_type: "setor",
+      amount: "",
+      note: "",
+    });
+  };
+
   const handleAddSaving = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = Number(savingDraft.amount);
-    if (!amt || amt <= 0) return;
+    if (!amt || amt <= 0) {
+      setToast({
+        type: "error",
+        message: "Nominal transaksi harus lebih dari Rp0.",
+      });
+      return;
+    }
     setBusyAction("add-saving");
     try {
       const res = await fetch("/api/planner", {
-        method: "POST",
+        method: editingSavingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           resource: "savings",
+          id: editingSavingId ?? undefined,
           ...savingDraft,
           amount: amt,
         }),
       });
+      const payload = await res.json().catch(() => ({}));
       if (res.ok) {
-        setSavingDraft({
-          ...savingDraft,
-          amount: "",
-          note: "",
-        });
+        const wasEdit = Boolean(editingSavingId);
+        resetSavingDraft();
         await loadAll();
         setToast({
           type: "success",
-          message:
-            savingDraft.entry_type === "setor"
+          message: wasEdit
+            ? "Catatan tabungan diperbarui."
+            : savingDraft.entry_type === "setor"
               ? "Setoran tabungan berhasil dicatat."
               : "Penarikan dana berhasil dicatat.",
+        });
+      } else {
+        setToast({
+          type: "error",
+          message: payload?.error || "Gagal menyimpan catatan tabungan.",
         });
       }
     } finally {
@@ -504,31 +562,56 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
   };
 
   // --- ESSENTIALS handlers ---
+  const resetEssentialDraft = () => {
+    setEditingEssentialId(null);
+    setEssentialDraft({
+      kind: essentialTab === "kua" ? "kua" : "seserahan",
+      title: "",
+      price: "",
+      owner: "Calon Suami",
+      notes: "",
+    });
+  };
+
   const handleAddEssential = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!essentialDraft.title.trim()) return;
     setBusyAction("add-essential");
     try {
+      const existing = editingEssentialId
+        ? essentials.find((item) => item.id === editingEssentialId)
+        : undefined;
       const res = await fetch("/api/planner", {
-        method: "POST",
+        method: editingEssentialId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           resource: "essentials",
+          id: editingEssentialId ?? undefined,
           ...essentialDraft,
           kind: essentialTab === "kua" ? "kua" : essentialDraft.kind,
           price: Number(essentialDraft.price) || 0,
+          status: existing?.status || "rencana",
+          done_groom: existing?.done_groom === 1,
+          done_bride: existing?.done_bride === 1,
         }),
       });
+      const payload = await res.json().catch(() => ({}));
       if (res.ok) {
-        setEssentialDraft({
-          ...essentialDraft,
-          title: "",
-          price: "",
-          notes: "",
-        });
+        const wasEdit = Boolean(editingEssentialId);
+        resetEssentialDraft();
         await loadAll();
-        setToast({ type: "success", message: "Item berhasil ditambahkan." });
+        setToast({
+          type: "success",
+          message: wasEdit
+            ? "Item berhasil diperbarui."
+            : "Item berhasil ditambahkan.",
+        });
+      } else {
+        setToast({
+          type: "error",
+          message: payload?.error || "Gagal menyimpan item.",
+        });
       }
     } finally {
       setBusyAction(null);
@@ -581,27 +664,47 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
   };
 
   // --- JOURNAL handlers ---
+  const resetJournalDraft = () => {
+    setEditingJournalId(null);
+    setJournalDraft({
+      entry_date: new Date().toISOString().slice(0, 10),
+      author: "Bersama",
+      mood: "bersyukur",
+      title: "",
+      content: "",
+    });
+  };
+
   const handleAddJournal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!journalDraft.title.trim() || !journalDraft.content.trim()) return;
     setBusyAction("add-journal");
     try {
       const res = await fetch("/api/planner", {
-        method: "POST",
+        method: editingJournalId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ resource: "journal", ...journalDraft }),
-      });
-      if (res.ok) {
-        setJournalDraft({
+        body: JSON.stringify({
+          resource: "journal",
+          id: editingJournalId ?? undefined,
           ...journalDraft,
-          title: "",
-          content: "",
-        });
+        }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const wasEdit = Boolean(editingJournalId);
+        resetJournalDraft();
         await loadAll();
         setToast({
           type: "success",
-          message: "Catatan jurnal menuju halal tersimpan.",
+          message: wasEdit
+            ? "Catatan jurnal diperbarui."
+            : "Catatan jurnal menuju halal tersimpan.",
+        });
+      } else {
+        setToast({
+          type: "error",
+          message: payload?.error || "Gagal menyimpan jurnal.",
         });
       }
     } finally {
@@ -658,7 +761,10 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
       {/* ==================== 1. TO-DO & PERSIAPAN ==================== */}
       {currentSection === "todo" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div
+            data-tour="planner-summary"
+            className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+          >
             <div className="adm-card p-3.5">
               <span className="text-xs text-(--adm-text-secondary)">
                 Progres Persiapan
@@ -709,11 +815,16 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
           </div>
 
           <form
+            data-tour="planner-form"
             onSubmit={handleAddTodo}
-            className="adm-card space-y-3 p-4"
+            className={`adm-card space-y-3 p-4 ${editingTodoId ? "ring-1 ring-(--adm-accent)" : ""}`}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="adm-card-title">Tambah Tugas Persiapan</h3>
+              <h3 className="adm-card-title">
+                {editingTodoId
+                  ? "Sunting Tugas Persiapan"
+                  : "Tambah Tugas Persiapan"}
+              </h3>
               <button
                 type="button"
                 disabled={busyAction === "seed-todos"}
@@ -831,14 +942,31 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                   className="adm-input"
                 />
               </div>
-              <div className="flex items-end sm:col-span-3">
+              <div className="flex items-end gap-1.5 sm:col-span-3">
                 <button
                   type="submit"
                   disabled={busyAction === "add-todo" || !todoDraft.title.trim()}
-                  className="adm-btn adm-btn-primary w-full"
+                  className="adm-btn adm-btn-primary flex-1"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Tambah Tugas
+                  {editingTodoId ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" /> Simpan
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-3.5 w-3.5" /> Tambah Tugas
+                    </>
+                  )}
                 </button>
+                {editingTodoId && (
+                  <button
+                    type="button"
+                    onClick={resetTodoDraft}
+                    className="adm-btn adm-btn-secondary px-2.5"
+                  >
+                    Batal
+                  </button>
+                )}
               </div>
             </div>
           </form>
@@ -920,14 +1048,35 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                       <p className="adm-hint mt-1 leading-relaxed">{t.notes}</p>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    aria-label={`Hapus ${t.title}`}
-                    onClick={() => handleDelete("todos", t.id, t.title)}
-                    className="adm-btn-aksi aksi-hapus shrink-0"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      title="Sunting tugas"
+                      aria-label={`Sunting ${t.title}`}
+                      onClick={() => {
+                        setEditingTodoId(t.id);
+                        setTodoDraft({
+                          title: t.title,
+                          phase: t.phase,
+                          category: t.category,
+                          due_date: t.due_date || "",
+                          pic: t.pic || "Bersama",
+                          notes: t.notes || "",
+                        });
+                      }}
+                      className="adm-btn-aksi aksi-ubah"
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Hapus ${t.title}`}
+                      onClick={() => handleDelete("todos", t.id, t.title)}
+                      className="adm-btn-aksi aksi-hapus"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -1281,7 +1430,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                                   rel="noopener noreferrer"
                                   title="Chat WhatsApp Vendor"
                                   aria-label={`Chat WA ${b.name}`}
-                                  className="adm-btn-aksi aksi-ubah"
+                                  className="adm-btn-aksi aksi-netral"
                                 >
                                   <MessageCircle className="h-3.5 w-3.5" />
                                 </a>
@@ -1289,6 +1438,7 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                               <button
                                 type="button"
                                 title="Sunting pos"
+                                aria-label={`Sunting ${b.name}`}
                                 onClick={() => {
                                   setEditingBudgetId(b.id);
                                   setBudgetDraft({
@@ -1303,9 +1453,9 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                                     notes: b.notes,
                                   });
                                 }}
-                                className="adm-btn-aksi aksi-netral"
+                                className="adm-btn-aksi aksi-ubah"
                               >
-                                <FileCheck2 className="h-3.5 w-3.5" />
+                                <Edit className="h-3.5 w-3.5" />
                               </button>
                               <button
                                 type="button"
@@ -1418,8 +1568,15 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
             )}
           </div>
 
-          <form onSubmit={handleAddSaving} className="adm-card space-y-3 p-4">
-            <h3 className="adm-card-title">Catat Setoran / Penarikan Dana</h3>
+          <form
+            onSubmit={handleAddSaving}
+            className={`adm-card space-y-3 p-4 ${editingSavingId ? "ring-1 ring-(--adm-accent)" : ""}`}
+          >
+            <h3 className="adm-card-title">
+              {editingSavingId
+                ? "Sunting Catatan Tabungan"
+                : "Catat Setoran / Penarikan Dana"}
+            </h3>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
               <div className="lg:col-span-2">
                 <label htmlFor="sav-date" className="adm-label">
@@ -1512,13 +1669,30 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                 />
               </div>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {editingSavingId && (
+                <button
+                  type="button"
+                  onClick={resetSavingDraft}
+                  className="adm-btn adm-btn-secondary"
+                >
+                  Batal
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={busyAction === "add-saving" || !savingDraft.amount}
                 className="adm-btn adm-btn-primary w-full sm:w-auto"
               >
-                <Plus className="h-3.5 w-3.5" /> Catat Transaksi
+                {editingSavingId ? (
+                  <>
+                    <Check className="h-3.5 w-3.5" /> Simpan Perubahan
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-3.5 w-3.5" /> Catat Transaksi
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -1554,20 +1728,40 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                     </div>
                     {s.note && <p className="adm-hint mt-0.5">{s.note}</p>}
                   </div>
-                  <button
-                    type="button"
-                    aria-label="Hapus catatan tabungan"
-                    onClick={() =>
-                      handleDelete(
-                        "savings",
-                        s.id,
-                        `${s.contributor} ${formatRupiah(s.amount)}`
-                      )
-                    }
-                    className="adm-btn-aksi aksi-hapus shrink-0"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      title="Sunting transaksi"
+                      aria-label="Sunting catatan tabungan"
+                      onClick={() => {
+                        setEditingSavingId(s.id);
+                        setSavingDraft({
+                          entry_date: s.entry_date,
+                          contributor: s.contributor,
+                          entry_type: s.entry_type,
+                          amount: String(s.amount),
+                          note: s.note || "",
+                        });
+                      }}
+                      className="adm-btn-aksi aksi-ubah"
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Hapus catatan tabungan"
+                      onClick={() =>
+                        handleDelete(
+                          "savings",
+                          s.id,
+                          `${s.contributor} ${formatRupiah(s.amount)}`
+                        )
+                      }
+                      className="adm-btn-aksi aksi-hapus"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -1680,16 +1874,33 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                 className="adm-input"
               />
             </div>
-            <div className="flex items-end sm:col-span-3">
+            <div className="flex items-end gap-1.5 sm:col-span-3">
               <button
                 type="submit"
                 disabled={
                   busyAction === "add-essential" || !essentialDraft.title.trim()
                 }
-                className="adm-btn adm-btn-primary w-full"
+                className="adm-btn adm-btn-primary flex-1"
               >
-                <Plus className="h-3.5 w-3.5" /> Tambah
+                {editingEssentialId ? (
+                  <>
+                    <Check className="h-3.5 w-3.5" /> Simpan
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-3.5 w-3.5" /> Tambah
+                  </>
+                )}
               </button>
+              {editingEssentialId && (
+                <button
+                  type="button"
+                  onClick={resetEssentialDraft}
+                  className="adm-btn adm-btn-secondary px-2.5"
+                >
+                  Batal
+                </button>
+              )}
             </div>
           </form>
 
@@ -1746,6 +1957,24 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                             className={`${meta.badgeClass} cursor-pointer`}
                           >
                             {meta.label}
+                          </button>
+                          <button
+                            type="button"
+                            title="Sunting item"
+                            aria-label={`Sunting ${item.title}`}
+                            onClick={() => {
+                              setEditingEssentialId(item.id);
+                              setEssentialDraft({
+                                kind: item.kind,
+                                title: item.title,
+                                price: String(item.price),
+                                owner: item.owner || "Calon Suami",
+                                notes: item.notes || "",
+                              });
+                            }}
+                            className="adm-btn-aksi aksi-ubah"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
                           </button>
                           <button
                             type="button"
@@ -1953,7 +2182,16 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                 className="adm-input h-auto py-2"
               />
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {editingJournalId && (
+                <button
+                  type="button"
+                  onClick={resetJournalDraft}
+                  className="adm-btn adm-btn-secondary"
+                >
+                  Batal
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={
@@ -1963,7 +2201,15 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                 }
                 className="adm-btn adm-btn-primary w-full sm:w-auto"
               >
-                <Plus className="h-3.5 w-3.5" /> Simpan Catatan Jurnal
+                {editingJournalId ? (
+                  <>
+                    <Check className="h-3.5 w-3.5" /> Simpan Perubahan
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-3.5 w-3.5" /> Simpan Catatan Jurnal
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -1994,16 +2240,36 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                         </span>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      aria-label={`Hapus jurnal ${entry.title}`}
-                      onClick={() =>
-                        handleDelete("journal", entry.id, entry.title)
-                      }
-                      className="adm-btn-aksi aksi-hapus shrink-0"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        title="Sunting jurnal"
+                        aria-label={`Sunting jurnal ${entry.title}`}
+                        onClick={() => {
+                          setEditingJournalId(entry.id);
+                          setJournalDraft({
+                            entry_date: entry.entry_date,
+                            author: entry.author,
+                            mood: entry.mood,
+                            title: entry.title,
+                            content: entry.content,
+                          });
+                        }}
+                        className="adm-btn-aksi aksi-ubah"
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Hapus jurnal ${entry.title}`}
+                        onClick={() =>
+                          handleDelete("journal", entry.id, entry.title)
+                        }
+                        className="adm-btn-aksi aksi-hapus"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-[13px] leading-relaxed whitespace-pre-line text-(--adm-text-secondary)">
                     {entry.content}
@@ -2101,9 +2367,18 @@ const WeddingPlanner: React.FC<WeddingPlannerProps> = ({
                         ))}
                       </ul>
 
-                      <div className="flex items-center justify-between border-t border-(--adm-border) pt-2 text-[11px] text-(--adm-text-muted)">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-(--adm-border) pt-2 text-[11px] text-(--adm-text-muted)">
                         <span>Rujukan: {guide.reference}</span>
-                        <ExternalLink className="h-3 w-3 opacity-60" />
+                        {guide.referenceUrl && (
+                          <a
+                            href={guide.referenceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-medium text-(--adm-accent) hover:underline"
+                          >
+                            Portal Resmi <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
                       </div>
                     </div>
                   )}

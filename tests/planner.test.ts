@@ -67,7 +67,7 @@ test("computeTodoSummary menghitung persentase penyelesaian dengan akurat", () =
   );
 });
 
-test("seluruh templat bawaan & panduan Fikih Munakahat tersedia lengkap", () => {
+test("seluruh templat bawaan & panduan Fikih Munakahat tersedia lengkap dan mutakhir", () => {
   assert.ok(TODO_STARTER_TEMPLATE.length >= 10);
   assert.ok(BUDGET_STARTER_TEMPLATE.length >= 8);
   assert.ok(
@@ -75,6 +75,20 @@ test("seluruh templat bawaan & panduan Fikih Munakahat tersedia lengkap", () => 
       ESSENTIALS_STARTER_TEMPLATE.some((e) => e.kind === "mahar") &&
       ESSENTIALS_STARTER_TEMPLATE.some((e) => e.kind === "seserahan")
   );
+  assert.ok(
+    ESSENTIALS_STARTER_TEMPLATE.some(
+      (e) => e.kind === "kua" && e.title.includes("SIMKAH")
+    )
+  );
+  assert.ok(
+    ESSENTIALS_STARTER_TEMPLATE.some(
+      (e) => e.kind === "kua" && e.title.includes("Elsimil")
+    )
+  );
   assert.ok(JOURNAL_PROMPTS.length >= 5);
   assert.ok(FIQH_GUIDES.length >= 7);
+  const kuaGuide = FIQH_GUIDES.find((g) => g.id === "alur-kua");
+  assert.ok(kuaGuide);
+  assert.match(kuaGuide.reference, /PMA No\. 30 Tahun 2024/);
+  assert.equal(kuaGuide.referenceUrl, "https://simkah4.kemenag.go.id");
 });

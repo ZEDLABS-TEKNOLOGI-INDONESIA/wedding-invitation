@@ -33,6 +33,26 @@ function cleanInt(val: unknown, min = 0, max = 10_000_000_000): number {
   return Math.max(min, Math.min(max, Math.round(n)));
 }
 
+function cleanDate(val: unknown, fallback = ""): string {
+  if (typeof val !== "string") return fallback;
+  const trimmed = val.trim();
+  if (!trimmed) return fallback;
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : fallback;
+}
+
+function cleanPhone(val: unknown): string {
+  if (typeof val !== "string") return "";
+  return val.replace(/[^0-9+\-\s]/g, "").trim().slice(0, 25);
+}
+
+function hasNegativeValue(...values: unknown[]): boolean {
+  return values.some((v) => {
+    if (v === undefined || v === null || v === "") return false;
+    const n = Number(v);
+    return Number.isFinite(n) && n < 0;
+  });
+}
+
 function fetchAllPlannerData() {
   const cfg = getConfig();
   return {
@@ -122,13 +142,22 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (action === "seed") {
       let insertedCount = 0;
+      let skippedCount = 0;
       if (resource === "todos") {
+        const existingRows = db
+          .prepare("SELECT LOWER(title) AS key FROM planner_todos")
+          .all() as Array<{ key: string }>;
+        const existing = new Set(existingRows.map((r) => r.key));
         const stmt = db.prepare(
           `INSERT INTO planner_todos (title, phase, category, due_date, pic, done, notes, created_at)
            VALUES (?, ?, ?, '', ?, 0, ?, ?)`
         );
         const tx = db.transaction(() => {
           for (const item of TODO_STARTER_TEMPLATE) {
+            if (existing.has(item.title.toLowerCase())) {
+              skippedCount++;
+              continue;
+            }
             stmt.run(
               item.title,
               item.phase,
@@ -142,12 +171,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         });
         tx();
       } else if (resource === "budget") {
+        const existingRows = db
+          .prepare("SELECT LOWER(name) AS key FROM planner_budget")
+          .all() as Array<{ key: string }>;
+        const existing = new Set(existingRows.map((r) => r.key));
         const stmt = db.prepare(
           `INSERT INTO planner_budget (name, category, estimated_cost, actual_cost, paid_amount, payment_status, vendor_phone, due_date, notes, created_at)
            VALUES (?, ?, ?, 0, 0, 'belum', '', '', ?, ?)`
         );
         const tx = db.transaction(() => {
           for (const item of BUDGET_STARTER_TEMPLATE) {
+            if (existing.has(item.name.toLowerCase())) {
+              skippedCount++;
+              continue;
+            }
             stmt.run(
               item.name,
               item.category,
@@ -160,12 +197,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         });
         tx();
       } else if (resource === "essentials") {
+        const existingRows = db
+          .prepare("SELECT LOWER(title) AS key FROM planner_essentials")
+          .all() as Array<{ key: string }>;
+        const existing = new Set(existingRows.map((r) => r.key));
         const stmt = db.prepare(
           `INSERT INTO planner_essentials (kind, title, price, status, owner, done_groom, done_bride, notes, created_at)
            VALUES (?, ?, ?, 'rencana', ?, 0, 0, ?, ?)`
         );
         const tx = db.transaction(() => {
           for (const item of ESSENTIALS_STARTER_TEMPLATE) {
+            if (existing.has(item.title.toLowerCase())) {
+              skippedCount++;
+              continue;
+            }
             stmt.run(
               item.kind,
               item.title,
@@ -186,7 +231,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true, count: insertedCount }),
+        JSON.stringify({
+          success: true,
+          count: insertedCount,
+          skipped: skippedCount,
+        }),
         { status: 200, headers: JSON_HEADERS }
       );
     }
@@ -230,6 +279,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           { status: 400, headers: JSON_HEADERS }
         );
       }
+      if (
+        hasNegativeValue(
+          body.estimated_cost,
+          body.actual_cost,
+          body.paid_amount
+        )
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Nominal harga atau pembayaran tidak boleh negatif." }),
+          { status: 400, headers: JSON_HEADERS }
+        );
+      }
       const status = ["belum", "dp", "cicilan", "lunas"].includes(
         String(body.payment_status)
       )
@@ -247,8 +308,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           cleanInt(body.actual_cost, 0),
           cleanInt(body.paid_amount, 0),
           status,
-          cleanText(body.vendor_phone, 30, ""),
-          cleanText(body.due_date, 30, ""),
+          cleanPhone(body.vendor_phone),
+          cleanDate(body.due_date, ""),
           cleanText(body.notes, 500, ""),
           nowIso
         );
@@ -534,6 +595,48 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       }
       const item = db
         .prepare("SELECT * FROM planner_essentials WHERE id = ?")
+        .get(id);
+      return new Response(JSON.stringify({ success: true, item }), {
+        status: 200,
+        headers: JSON_HEADERS,
+      });
+    }
+
+    if (resource === "savings") {
+      const amount = cleanInt(body.amount, 0);
+      if (amount <= 0) {
+        return new Response(
+          JSON.stringify({ error: "Nominal tabungan harus lebih dari 0." }),
+          { status: 400, headers: JSON_HEADERS }
+        );
+      }
+      const entryType = body.entry_type === "tarik" ? "tarik" : "setor";
+      const entryDate = cleanDate(
+        body.entry_date,
+        new Date().toISOString().slice(0, 10)
+      );
+      const result = db
+        .prepare(
+          `UPDATE planner_savings
+           SET entry_date = ?, contributor = ?, entry_type = ?, amount = ?, note = ?
+           WHERE id = ?`
+        )
+        .run(
+          entryDate,
+          cleanText(body.contributor, 60, "Bersama"),
+          entryType,
+          amount,
+          cleanText(body.note, 300, ""),
+          id
+        );
+      if (result.changes === 0) {
+        return new Response(
+          JSON.stringify({ error: "Catatan tabungan tidak ditemukan." }),
+          { status: 404, headers: JSON_HEADERS }
+        );
+      }
+      const item = db
+        .prepare("SELECT * FROM planner_savings WHERE id = ?")
         .get(id);
       return new Response(JSON.stringify({ success: true, item }), {
         status: 200,
