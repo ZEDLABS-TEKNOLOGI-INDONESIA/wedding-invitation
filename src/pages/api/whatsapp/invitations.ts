@@ -168,44 +168,66 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
 
       const invitationUrl = `${rawBaseUrl}/?to=${encodeURIComponent(guestName)}`;
       const referenceId = `WED-INV-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
+      const pdfBase64 = body.attachPdf
+        ? cleanBase64Payload(item?.pdfBase64)
+        : "";
+      const templateVariables = {
+        nama_tamu: sanitizeWaVariable(guestName, "Bapak/Ibu", {
+          maxLength: 100,
+        }),
+        mempelai: sanitizeWaVariable(summary.mempelai, "Mempelai", {
+          maxLength: 80,
+        }),
+        tanggal_acara: sanitizeWaVariable(summary.tanggal, "Hari Bahagia", {
+          maxLength: 80,
+        }),
+        waktu_acara: sanitizeWaVariable(summary.waktu, "Sesuai jadwal", {
+          maxLength: 60,
+        }),
+        tempat_acara: sanitizeWaVariable(summary.tempat, "Lokasi Acara", {
+          maxLength: 160,
+        }),
+        link_undangan: invitationUrl,
+      };
 
-      let media: WaMedia | null = null;
-      if (body.attachPdf) {
-        const pdfBase64 = cleanBase64Payload(item?.pdfBase64);
+      try {
+        // 1. Kirim pesan teks undangan (template wedding_undangan_tamu) terlebih dahulu
+        //    agar isi undangan & tautan digital selalu diterima secara utuh.
+        const res = await client.sendMessage({
+          templateCode: WA_TEMPLATE_CODES.INVITATION,
+          recipient: phone,
+          variables: templateVariables,
+          media: null,
+          referenceId,
+        });
+
+        // 2. Jika lampiran PDF diaktifkan, kirim dokumen PDF menyusul sebagai pesan terpisah
+        //    (karena whatsapp-service hanya menampilkan media.caption untuk pesan bertipe dokumen).
+        let pdfWarning = "";
         if (pdfBase64) {
-          media = {
+          const pdfMedia: WaMedia = {
             jenis: "dokumen",
             url: pdfBase64,
             caption: `Surat Undangan Pernikahan untuk ${sanitizeWaVariable(guestName, "Bapak/Ibu")}`,
           };
+          try {
+            await client.sendMessage({
+              templateCode: WA_TEMPLATE_CODES.INVITATION,
+              recipient: phone,
+              variables: templateVariables,
+              media: pdfMedia,
+              referenceId: `${referenceId}-pdf`,
+            });
+          } catch (pdfErr) {
+            const pdfMsg =
+              pdfErr instanceof WaGatewayError
+                ? pdfErr.pesan
+                : pdfErr instanceof Error
+                  ? pdfErr.message
+                  : "Gagal mengirim lampiran PDF";
+            pdfWarning = `Teks terkirim, namun lampiran PDF gagal: ${pdfMsg}`;
+          }
         }
-      }
-
-      try {
-        const res = await client.sendMessage({
-          templateCode: WA_TEMPLATE_CODES.INVITATION,
-          recipient: phone,
-          variables: {
-            nama_tamu: sanitizeWaVariable(guestName, "Bapak/Ibu", {
-              maxLength: 100,
-            }),
-            mempelai: sanitizeWaVariable(summary.mempelai, "Mempelai", {
-              maxLength: 80,
-            }),
-            tanggal_acara: sanitizeWaVariable(summary.tanggal, "Hari Bahagia", {
-              maxLength: 80,
-            }),
-            waktu_acara: sanitizeWaVariable(summary.waktu, "Sesuai jadwal", {
-              maxLength: 60,
-            }),
-            tempat_acara: sanitizeWaVariable(summary.tempat, "Lokasi Acara", {
-              maxLength: 160,
-            }),
-            link_undangan: invitationUrl,
-          },
-          media,
-          referenceId,
-        });
 
         const inserted = insertStmt.run(
           guestName,
@@ -215,7 +237,7 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
           res.job_id || "",
           referenceId,
           res.status || "queued",
-          "",
+          pdfWarning,
           nowIso,
           nowIso
         );
@@ -225,7 +247,7 @@ export const POST: APIRoute = async ({ request, cookies, site }) => {
           phone,
           status: res.status || "queued",
           job_id: res.job_id || "",
-          error_message: "",
+          error_message: pdfWarning,
         });
       } catch (err) {
         const errMsg =
