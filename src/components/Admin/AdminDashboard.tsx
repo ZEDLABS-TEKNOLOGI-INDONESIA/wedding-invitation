@@ -1091,7 +1091,7 @@ const AdminDashboard = ({
             aria-label="Keluar"
             className={`flex flex-1 items-center gap-2.5 text-[12.5px] font-medium text-(--adm-red) hover:bg-(--adm-red-soft) ${
               sidebarCollapsed
-                ? "px-4 md:h-10 md:w-full md:flex-none md:justify-center md:border-t md:border-(--adm-border) md:px-0"
+                ? "px-4 md:h-[44px] md:w-full md:flex-none md:justify-center md:border-t md:border-(--adm-border) md:px-0"
                 : "px-4"
             }`}
           >
@@ -1107,7 +1107,7 @@ const AdminDashboard = ({
             }
             className={`hidden items-center justify-center text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) md:flex ${
               sidebarCollapsed
-                ? "h-10 w-full"
+                ? "h-[44px] w-full"
                 : "w-10 border-l border-(--adm-border)"
             }`}
           >
