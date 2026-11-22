@@ -47,8 +47,8 @@ export const STATIONERY_DESIGNS: StationeryDesignOption[] = [
   },
   {
     id: "minimal",
-    name: "Elegan Minimalis",
-    tagline: "Garis halus ganda bersih & berwibawa",
+    name: "Mewah Art Deco",
+    tagline: "Kipas emas geometris, bingkai bertingkat & aksen mutiara",
   },
 ];
 
@@ -489,24 +489,81 @@ export const drawFrame = (ctx: Ctx, w: number, h: number, t: StationeryTheme) =>
   ctx.restore();
 };
 
-/* Royal Keraton & Emas decorative corners & arch */
+/* Metallic gold linear gradient helper */
+const goldGrad = (ctx: Ctx, x0: number, y0: number, x1: number, y1: number, t: StationeryTheme) => {
+  const g = ctx.createLinearGradient(x0, y0, x1, y1);
+  g.addColorStop(0, "#FFF1BE");
+  g.addColorStop(0.28, t.gold);
+  g.addColorStop(0.55, "#8E6920");
+  g.addColorStop(0.8, "#E7CA78");
+  g.addColorStop(1, t.gold);
+  return g;
+};
+
+/* Subtle embossed lotus / kawung watermark for grand designs */
+const drawEmbossedWatermark = (
+  ctx: Ctx,
+  w: number,
+  h: number,
+  t: StationeryTheme
+) => {
+  const s = w / 1240;
+  const cx = w / 2;
+  const cy = h / 2;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.strokeStyle = hexA(t.gold, 0.07);
+  ctx.fillStyle = hexA(t.accent, 0.025);
+  ctx.lineWidth = 1.5 * s;
+  for (let i = 0; i < 16; i++) {
+    ctx.save();
+    ctx.rotate((i * TAU) / 16);
+    ctx.beginPath();
+    ctx.ellipse(0, -240 * s, 36 * s, 140 * s, 0, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.beginPath();
+  ctx.arc(0, 0, 390 * s, 0, TAU);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, 415 * s, 0, TAU);
+  ctx.setLineDash([6 * s, 10 * s]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+};
+
+/* Royal Keraton & Emas — megah, berlapis emas metalik & ukiran tajuk */
 const drawRoyalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
   const s = w / 1240;
   const m = 44 * s;
-  ctx.save();
-  // Triple frame
-  ctx.strokeStyle = hexA(t.gold, 0.85);
-  ctx.lineWidth = 3 * s;
-  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
-  ctx.strokeStyle = hexA(t.accent, 0.5);
-  ctx.lineWidth = 1.2 * s;
-  ctx.strokeRect(m + 12 * s, m + 12 * s, w - (m + 12 * s) * 2, h - (m + 12 * s) * 2);
-  ctx.setLineDash([4 * s, 6 * s]);
-  ctx.strokeStyle = hexA(t.gold, 0.55);
-  ctx.strokeRect(m + 22 * s, m + 22 * s, w - (m + 22 * s) * 2, h - (m + 22 * s) * 2);
-  ctx.setLineDash([]);
+  const cx = w / 2;
+  drawEmbossedWatermark(ctx, w, h, t);
 
-  // 4 baroque notched corner medallions
+  ctx.save();
+  const mg = goldGrad(ctx, 0, 0, w, h, t);
+
+  // Soft outer vignette border glow
+  ctx.strokeStyle = hexA(t.gold, 0.14);
+  ctx.lineWidth = 22 * s;
+  ctx.strokeRect(m + 8 * s, m + 8 * s, w - (m + 8 * s) * 2, h - (m + 8 * s) * 2);
+
+  // Triple metallic luxury frame
+  ctx.strokeStyle = mg;
+  ctx.lineWidth = 4.2 * s;
+  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
+
+  ctx.strokeStyle = hexA(t.accent, 0.65);
+  ctx.lineWidth = 1.6 * s;
+  ctx.strokeRect(m + 14 * s, m + 14 * s, w - (m + 14 * s) * 2, h - (m + 14 * s) * 2);
+
+  ctx.strokeStyle = mg;
+  ctx.lineWidth = 1.2 * s;
+  ctx.strokeRect(m + 24 * s, m + 24 * s, w - (m + 24 * s) * 2, h - (m + 24 * s) * 2);
+
+  // Ornate scalloped baroque corner reliefs (4 corners)
   const corners: [number, number, number, number][] = [
     [m, m, 1, 1],
     [w - m, m, -1, 1],
@@ -517,71 +574,164 @@ const drawRoyalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(sx, sy);
+    ctx.shadowColor = hexA(t.ink, 0.16);
+    ctx.shadowBlur = 10 * s;
+
+    // Corner fan fill
+    const cg = ctx.createRadialGradient(0, 0, 0, 0, 0, 175 * s);
+    cg.addColorStop(0, hexA(t.gold, 0.34));
+    cg.addColorStop(0.55, hexA(t.accent, 0.16));
+    cg.addColorStop(1, hexA(t.gold, 0));
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(175 * s, 0);
+    ctx.quadraticCurveTo(52 * s, 52 * s, 0, 175 * s);
+    ctx.closePath();
+    ctx.fill();
+
+    // Sweeping golden baroque acanthus curves
+    ctx.strokeStyle = goldGrad(ctx, 0, 0, 160 * s, 160 * s, t);
+    ctx.lineWidth = 3 * s;
+    ctx.beginPath();
+    ctx.moveTo(0, 165 * s);
+    ctx.bezierCurveTo(18 * s, 95 * s, 95 * s, 18 * s, 165 * s, 0);
+    ctx.stroke();
+
+    ctx.lineWidth = 1.8 * s;
+    ctx.strokeStyle = hexA(t.accent, 0.8);
+    ctx.beginPath();
+    ctx.moveTo(12 * s, 130 * s);
+    ctx.bezierCurveTo(32 * s, 72 * s, 72 * s, 32 * s, 130 * s, 12 * s);
+    ctx.stroke();
+
+    // Scroll volutes
+    [
+      [58 * s, 26 * s, 0],
+      [26 * s, 58 * s, Math.PI / 2],
+    ].forEach(([vx, vy, rot]) => {
+      ctx.save();
+      ctx.translate(vx, vy);
+      ctx.rotate(rot);
+      ctx.strokeStyle = t.gold;
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.arc(0, 0, 14 * s, 0, Math.PI * 1.55);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, 0, 5 * s, 0, TAU);
+      ctx.fillStyle = t.gold;
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Layered golden lotus medallion in corner
+    ctx.save();
+    ctx.translate(46 * s, 46 * s);
+    ctx.rotate(Math.PI / 4);
+    for (let i = 0; i < 8; i++) {
+      ctx.save();
+      ctx.rotate((i * TAU) / 8);
+      ctx.beginPath();
+      ctx.ellipse(0, -18 * s, 6 * s, 14 * s, 0, 0, TAU);
+      ctx.fillStyle = i % 2 === 0 ? hexA(t.gold, 0.85) : hexA(t.accent, 0.6);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, 8 * s, 0, TAU);
+    ctx.fillStyle = "#FFF7D6";
+    ctx.fill();
     ctx.strokeStyle = t.gold;
-    ctx.lineWidth = 2.4 * s;
-    ctx.beginPath();
-    ctx.moveTo(0, 110 * s);
-    ctx.quadraticCurveTo(22 * s, 22 * s, 110 * s, 0);
+    ctx.lineWidth = 1.5 * s;
     ctx.stroke();
-    ctx.strokeStyle = hexA(t.accent, 0.65);
-    ctx.lineWidth = 1.4 * s;
-    ctx.beginPath();
-    ctx.moveTo(14 * s, 86 * s);
-    ctx.quadraticCurveTo(30 * s, 30 * s, 86 * s, 14 * s);
-    ctx.stroke();
-    drawDiamond(ctx, 34 * s, 34 * s, 10 * s, t.gold);
-    drawDiamond(ctx, 34 * s, 34 * s, 5 * s, t.accent);
+    ctx.restore();
+
     ctx.restore();
   });
 
-  // Top & bottom royal crown flourish
-  [m + 6 * s, h - m - 6 * s].forEach((y) => {
-    drawDiamond(ctx, w / 2, y, 12 * s, t.gold);
-    drawDiamond(ctx, w / 2, y, 6 * s, t.paper[0]);
-    [-1, 1].forEach((d) => {
-      drawDiamond(ctx, w / 2 + d * 34 * s, y, 5 * s, t.accent);
-      drawDiamond(ctx, w / 2 + d * 56 * s, y, 3 * s, t.gold);
+  // Grand Top & Bottom Royal Crown Crest (Tajuk)
+  [
+    [m, 1],
+    [h - m, -1],
+  ].forEach(([y, dir]) => {
+    ctx.save();
+    ctx.translate(cx, y);
+    ctx.scale(1, dir);
+    ctx.fillStyle = t.paper[0];
+    ctx.fillRect(-130 * s, -16 * s, 260 * s, 32 * s);
+
+    // Ornate symmetrical crest wings
+    [-1, 1].forEach((side) => {
+      ctx.save();
+      ctx.scale(side, 1);
+      ctx.strokeStyle = mg;
+      ctx.lineWidth = 2.4 * s;
+      ctx.beginPath();
+      ctx.moveTo(16 * s, 0);
+      ctx.bezierCurveTo(44 * s, -22 * s, 82 * s, 22 * s, 124 * s, 0);
+      ctx.stroke();
+
+      ctx.fillStyle = hexA(t.accent, 0.72);
+      ctx.beginPath();
+      ctx.ellipse(54 * s, 6 * s, 18 * s, 6 * s, 0.2, 0, TAU);
+      ctx.fill();
+
+      drawDiamond(ctx, 94 * s, 0, 5.5 * s, t.gold);
+      ctx.restore();
     });
+
+    // Center royal jewel
+    drawDiamond(ctx, 0, 0, 17 * s, t.gold);
+    drawDiamond(ctx, 0, 0, 10 * s, t.accent);
+    drawDiamond(ctx, 0, 0, 4.5 * s, "#FFF8DC");
+    ctx.restore();
   });
+
   ctx.restore();
 };
 
-/* Islamic Kubah & Arabesque decorative frame */
+/* Islamic Kubah & Arabesque — gaya manuskrip emas (illuminated mihrab & shamseh) */
 const drawIslamicDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
   const s = w / 1240;
-  const m = 48 * s;
+  const m = 44 * s;
   const cx = w / 2;
+  const mg = goldGrad(ctx, 0, 0, w, h, t);
+
   ctx.save();
 
-  // Outer fine frame
-  ctx.strokeStyle = hexA(t.gold, 0.7);
-  ctx.lineWidth = 2 * s;
+  // Outer illuminated golden border with corner spandrel tint
+  ctx.strokeStyle = mg;
+  ctx.lineWidth = 3.6 * s;
   ctx.strokeRect(m, m, w - m * 2, h - m * 2);
+  ctx.strokeStyle = hexA(t.accent, 0.55);
+  ctx.lineWidth = 1.2 * s;
+  ctx.strokeRect(m + 12 * s, m + 12 * s, w - (m + 12 * s) * 2, h - (m + 12 * s) * 2);
 
-  // Pointed Islamic Arch framing top & sides
-  const ax = m + 28 * s;
+  // Mihrab Archway geometry
+  const ax = m + 30 * s;
   const aw = w - ax * 2;
-  const topY = m + 32 * s;
-  const shoulderY = m + 220 * s;
-  const botY = h - m - 28 * s;
+  const topY = m + 46 * s;
+  const shoulderY = m + 250 * s;
+  const botY = h - m - 30 * s;
 
-  const drawArchPath = (inset: number) => {
+  const traceArch = (inset: number) => {
     ctx.beginPath();
     ctx.moveTo(ax + inset, botY - inset);
     ctx.lineTo(ax + inset, shoulderY);
     ctx.bezierCurveTo(
       ax + inset,
-      topY + 60 * s + inset,
-      cx - 80 * s,
-      topY + 28 * s + inset,
+      topY + 95 * s + inset,
+      cx - 110 * s,
+      topY + 46 * s + inset,
       cx,
       topY + inset
     );
     ctx.bezierCurveTo(
-      cx + 80 * s,
-      topY + 28 * s + inset,
+      cx + 110 * s,
+      topY + 46 * s + inset,
       ax + aw - inset,
-      topY + 60 * s + inset,
+      topY + 95 * s + inset,
       ax + aw - inset,
       shoulderY
     );
@@ -589,59 +739,247 @@ const drawIslamicDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) =>
     ctx.closePath();
   };
 
-  ctx.strokeStyle = hexA(t.accent, 0.65);
-  ctx.lineWidth = 2.4 * s;
-  drawArchPath(0);
+  // Fill upper spandrels (the triangular illuminated areas outside the arch!)
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(ax, topY, aw, shoulderY - topY + 20 * s);
+  traceArch(0);
+  ctx.clip("evenodd");
+  const spGrad = ctx.createLinearGradient(0, topY, 0, shoulderY);
+  spGrad.addColorStop(0, hexA(t.accent, 0.2));
+  spGrad.addColorStop(0.6, hexA(t.gold, 0.16));
+  spGrad.addColorStop(1, hexA(t.accent, 0.04));
+  ctx.fillStyle = spGrad;
+  ctx.fillRect(ax, topY, aw, shoulderY - topY + 20 * s);
+
+  // Subtle geometric lattice lines inside the spandrels
+  ctx.strokeStyle = hexA(t.gold, 0.22);
+  ctx.lineWidth = 1 * s;
+  const step = 36 * s;
+  for (let gx = ax - 200 * s; gx < ax + aw + 200 * s; gx += step) {
+    ctx.beginPath();
+    ctx.moveTo(gx, topY);
+    ctx.lineTo(gx + 240 * s, shoulderY + 40 * s);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(gx + 240 * s, topY);
+    ctx.lineTo(gx, shoulderY + 40 * s);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Arch strokes (outer gold + inner accent + dotted pearl arch)
+  ctx.save();
+  ctx.shadowColor = hexA(t.ink, 0.14);
+  ctx.shadowBlur = 12 * s;
+  ctx.strokeStyle = mg;
+  ctx.lineWidth = 3.8 * s;
+  traceArch(0);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.strokeStyle = hexA(t.accent, 0.72);
+  ctx.lineWidth = 1.6 * s;
+  traceArch(12 * s);
   ctx.stroke();
 
   ctx.strokeStyle = hexA(t.gold, 0.55);
-  ctx.lineWidth = 1.1 * s;
-  drawArchPath(10 * s);
+  ctx.lineWidth = 1.2 * s;
+  ctx.setLineDash([3 * s, 7 * s]);
+  traceArch(22 * s);
   ctx.stroke();
+  ctx.setLineDash([]);
 
-  // 8-point geometric Rub el Hizb stars in 4 corners
-  const drawStar8 = (x: number, y: number, r: number) => {
+  // Illuminated 12-point Shamseh Rosette helper
+  const drawShamseh = (x: number, y: number, r: number) => {
     ctx.save();
     ctx.translate(x, y);
-    ctx.strokeStyle = hexA(t.gold, 0.65);
-    ctx.fillStyle = hexA(t.accent, 0.12);
-    ctx.lineWidth = 1.4 * s;
+    ctx.shadowColor = hexA(t.gold, 0.25);
+    ctx.shadowBlur = 10 * s;
+
+    // Outer scalloped petals
+    for (let i = 0; i < 12; i++) {
+      ctx.save();
+      ctx.rotate((i * TAU) / 12);
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.45);
+      ctx.quadraticCurveTo(r * 0.28, -r * 0.75, 0, -r);
+      ctx.quadraticCurveTo(-r * 0.28, -r * 0.75, 0, -r * 0.45);
+      ctx.fillStyle = i % 2 === 0 ? hexA(t.gold, 0.72) : hexA(t.accent, 0.55);
+      ctx.fill();
+      ctx.strokeStyle = hexA(t.gold, 0.9);
+      ctx.lineWidth = 0.9 * s;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Inner 8-point Rub el Hizb star
     [0, Math.PI / 4].forEach((rot) => {
       ctx.save();
       ctx.rotate(rot);
-      ctx.fillRect(-r, -r, r * 2, r * 2);
-      ctx.strokeRect(-r, -r, r * 2, r * 2);
+      ctx.fillStyle = hexA(t.paper[0], 0.9);
+      ctx.strokeStyle = t.gold;
+      ctx.lineWidth = 1.3 * s;
+      ctx.fillRect(-r * 0.34, -r * 0.34, r * 0.68, r * 0.68);
+      ctx.strokeRect(-r * 0.34, -r * 0.34, r * 0.68, r * 0.68);
       ctx.restore();
     });
+
     ctx.beginPath();
-    ctx.arc(0, 0, r * 0.35, 0, TAU);
-    ctx.fillStyle = hexA(t.gold, 0.7);
+    ctx.arc(0, 0, r * 0.16, 0, TAU);
+    ctx.fillStyle = t.accent;
     ctx.fill();
     ctx.restore();
   };
 
-  drawStar8(m + 42 * s, m + 42 * s, 26 * s);
-  drawStar8(w - m - 42 * s, m + 42 * s, 26 * s);
-  drawStar8(m + 42 * s, h - m - 42 * s, 20 * s);
-  drawStar8(w - m - 42 * s, h - m - 42 * s, 20 * s);
+  // Crown Shamseh at arch apex + ornate spandrel rosettes + bottom corner stars
+  drawShamseh(cx, topY + 2 * s, 44 * s);
+  drawShamseh(ax + 68 * s, topY + 62 * s, 36 * s);
+  drawShamseh(ax + aw - 68 * s, topY + 62 * s, 36 * s);
+  drawShamseh(ax + 34 * s, botY - 34 * s, 26 * s);
+  drawShamseh(ax + aw - 34 * s, botY - 34 * s, 26 * s);
 
-  drawDiamond(ctx, cx, topY, 9 * s, t.gold);
+  // Bottom center arabesque diamond crest
+  drawDiamond(ctx, cx, botY, 12 * s, t.gold);
+  drawDiamond(ctx, cx, botY, 6 * s, t.accent);
   ctx.restore();
 };
 
-/* Minimalist clean hairline frame */
+/* Mewah Art Deco & Mutiara — kipas emas sunburst, bingkai bertingkat & kilau mutiara */
 const drawMinimalDecor = (ctx: Ctx, w: number, h: number, t: StationeryTheme) => {
   const s = w / 1240;
-  const m = 54 * s;
+  const m = 48 * s;
+  const cx = w / 2;
+  const mg = goldGrad(ctx, 0, 0, w, h, t);
+
   ctx.save();
-  ctx.strokeStyle = hexA(t.ink, 0.25);
-  ctx.lineWidth = 1.6 * s;
-  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
-  ctx.strokeStyle = hexA(t.gold, 0.45);
-  ctx.lineWidth = 0.9 * s;
-  ctx.strokeRect(m + 10 * s, m + 10 * s, w - (m + 10 * s) * 2, h - (m + 10 * s) * 2);
-  drawDiamond(ctx, w / 2, m, 6 * s, t.gold);
-  drawDiamond(ctx, w / 2, h - m, 6 * s, t.gold);
+
+  // Soft silk sheen gradient across page
+  const sheen = ctx.createRadialGradient(cx, h * 0.28, 0, cx, h * 0.28, w * 0.72);
+  sheen.addColorStop(0, hexA("#ffffff", 0.55));
+  sheen.addColorStop(0.55, hexA(t.gold, 0.08));
+  sheen.addColorStop(1, hexA(t.accent, 0.05));
+  ctx.fillStyle = sheen;
+  ctx.fillRect(0, 0, w, h);
+
+  // Stepped Art Deco chamfered double border
+  const drawSteppedFrame = (inset: number, cut: number) => {
+    const x1 = m + inset;
+    const y1 = m + inset;
+    const x2 = w - m - inset;
+    const y2 = h - m - inset;
+    ctx.beginPath();
+    ctx.moveTo(x1 + cut, y1);
+    ctx.lineTo(x2 - cut, y1);
+    ctx.lineTo(x2 - cut, y1 + cut * 0.5);
+    ctx.lineTo(x2 - cut * 0.5, y1 + cut * 0.5);
+    ctx.lineTo(x2 - cut * 0.5, y1 + cut);
+    ctx.lineTo(x2, y1 + cut);
+    ctx.lineTo(x2, y2 - cut);
+    ctx.lineTo(x2 - cut * 0.5, y2 - cut);
+    ctx.lineTo(x2 - cut * 0.5, y2 - cut * 0.5);
+    ctx.lineTo(x2 - cut, y2 - cut * 0.5);
+    ctx.lineTo(x2 - cut, y2);
+    ctx.lineTo(x1 + cut, y2);
+    ctx.lineTo(x1 + cut, y2 - cut * 0.5);
+    ctx.lineTo(x1 + cut * 0.5, y2 - cut * 0.5);
+    ctx.lineTo(x1 + cut * 0.5, y2 - cut);
+    ctx.lineTo(x1, y2 - cut);
+    ctx.lineTo(x1, y1 + cut);
+    ctx.lineTo(x1 + cut * 0.5, y1 + cut);
+    ctx.lineTo(x1 + cut * 0.5, y1 + cut * 0.5);
+    ctx.lineTo(x1 + cut, y1 + cut * 0.5);
+    ctx.closePath();
+  };
+
+  ctx.strokeStyle = mg;
+  ctx.lineWidth = 3.2 * s;
+  drawSteppedFrame(0, 74 * s);
+  ctx.stroke();
+
+  ctx.strokeStyle = hexA(t.accent, 0.65);
+  ctx.lineWidth = 1.4 * s;
+  drawSteppedFrame(14 * s, 66 * s);
+  ctx.stroke();
+
+  // Golden Sunburst Art Deco Fans in all 4 corners
+  const corners: [number, number, number, number][] = [
+    [m, m, 1, 1],
+    [w - m, m, -1, 1],
+    [w - m, h - m, -1, -1],
+    [m, h - m, 1, -1],
+  ];
+  corners.forEach(([x, y, sx, sy]) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+
+    // Sunburst rays
+    const rayCount = 9;
+    for (let i = 0; i <= rayCount; i++) {
+      const a = (i / rayCount) * (Math.PI / 2);
+      const len = i % 2 === 0 ? 128 * s : 96 * s;
+      ctx.strokeStyle = i % 2 === 0 ? hexA(t.gold, 0.8) : hexA(t.accent, 0.45);
+      ctx.lineWidth = (i % 2 === 0 ? 2 : 1.1) * s;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len);
+      ctx.stroke();
+    }
+
+    // Concentric quarter arcs
+    [48 * s, 82 * s, 114 * s].forEach((r, idx) => {
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI / 2);
+      ctx.strokeStyle = idx === 1 ? hexA(t.accent, 0.7) : hexA(t.gold, 0.75);
+      ctx.lineWidth = (idx === 1 ? 1.8 : 1.2) * s;
+      ctx.stroke();
+    });
+
+    // Luminous pearl stud at corner origin
+    ctx.beginPath();
+    ctx.arc(16 * s, 16 * s, 7 * s, 0, TAU);
+    ctx.fillStyle = "#FFF8E1";
+    ctx.fill();
+    ctx.strokeStyle = t.gold;
+    ctx.lineWidth = 1.8 * s;
+    ctx.stroke();
+
+    ctx.restore();
+  });
+
+  // Top & Bottom Art Deco Chevron + Pearl Medallion
+  [
+    [m, 1],
+    [h - m, -1],
+  ].forEach(([y, dir]) => {
+    ctx.save();
+    ctx.translate(cx, y);
+    ctx.scale(1, dir);
+    ctx.fillStyle = t.paper[0];
+    ctx.fillRect(-110 * s, -12 * s, 220 * s, 24 * s);
+
+    ctx.strokeStyle = mg;
+    ctx.lineWidth = 2.2 * s;
+    ctx.beginPath();
+    ctx.moveTo(-105 * s, 0);
+    ctx.lineTo(-34 * s, 0);
+    ctx.lineTo(0, 22 * s);
+    ctx.lineTo(34 * s, 0);
+    ctx.lineTo(105 * s, 0);
+    ctx.stroke();
+
+    drawDiamond(ctx, 0, 0, 14 * s, t.gold);
+    drawDiamond(ctx, 0, 0, 7 * s, "#FFFDF5");
+    [-58 * s, 58 * s].forEach((px) => {
+      ctx.beginPath();
+      ctx.arc(px, 0, 4.5 * s, 0, TAU);
+      ctx.fillStyle = t.accent;
+      ctx.fill();
+    });
+    ctx.restore();
+  });
+
   ctx.restore();
 };
 
