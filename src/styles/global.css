@@ -178,6 +178,34 @@
   background-color: var(--color-darkBg);
 }
 
+/* Eased multi-stop bottom dissolve untuk Hero (menghilangkan garis patah / Mach band) */
+.hero-bottom-fade {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-secondary) 0%, transparent) 0%,
+    color-mix(in srgb, var(--color-secondary) 3%, transparent) 18%,
+    color-mix(in srgb, var(--color-secondary) 11%, transparent) 34%,
+    color-mix(in srgb, var(--color-secondary) 26%, transparent) 50%,
+    color-mix(in srgb, var(--color-secondary) 48%, transparent) 66%,
+    color-mix(in srgb, var(--color-secondary) 74%, transparent) 80%,
+    color-mix(in srgb, var(--color-secondary) 92%, transparent) 92%,
+    var(--color-secondary) 100%
+  );
+}
+.dark .hero-bottom-fade {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-darkBg) 0%, transparent) 0%,
+    color-mix(in srgb, var(--color-darkBg) 4%, transparent) 18%,
+    color-mix(in srgb, var(--color-darkBg) 13%, transparent) 34%,
+    color-mix(in srgb, var(--color-darkBg) 28%, transparent) 50%,
+    color-mix(in srgb, var(--color-darkBg) 52%, transparent) 66%,
+    color-mix(in srgb, var(--color-darkBg) 76%, transparent) 80%,
+    color-mix(in srgb, var(--color-darkBg) 93%, transparent) 92%,
+    var(--color-darkBg) 100%
+  );
+}
+
 /* Transisi lembut antar seksi tanpa garis potong tajam */
 .wedding-section-glow {
   position: relative;

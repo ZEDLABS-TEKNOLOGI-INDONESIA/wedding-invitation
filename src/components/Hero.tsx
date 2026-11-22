@@ -62,10 +62,10 @@ const Hero: React.FC<{ config: AppConfig }> = ({ config }) => {
           className="animate-subtle-zoom h-full w-full object-cover"
           alt="Latar Belakang Undangan Pernikahan"
         />
-        <div className="bg-darkBg/45 absolute inset-0 dark:bg-darkBg/55" />
-        <div className="from-darkBg/65 via-darkBg/20 to-darkBg/75 absolute inset-0 bg-gradient-to-b" />
-        {/* Seamless dissolve into page background (zero harsh horizontal seam) */}
-        <div className="from-transparent via-secondary/75 to-secondary dark:via-darkBg/75 dark:to-darkBg pointer-events-none absolute right-0 bottom-0 left-0 h-40 bg-gradient-to-b md:h-52" />
+        <div className="bg-darkBg/40 absolute inset-0 dark:bg-darkBg/50" />
+        <div className="from-darkBg/55 via-darkBg/15 to-transparent absolute inset-0 bg-gradient-to-b" />
+        {/* Seamless eased dissolve into page background */}
+        <div className="hero-bottom-fade pointer-events-none absolute right-0 bottom-0 left-0 h-60 md:h-80" />
       </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center pb-10 text-center">
