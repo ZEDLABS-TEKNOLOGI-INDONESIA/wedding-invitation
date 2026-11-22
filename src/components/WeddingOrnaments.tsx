@@ -46,10 +46,10 @@ export const BotanicalWatermark: React.FC<{
     aria-hidden="true"
     viewBox="0 0 220 260"
     fill="none"
-    className={`text-accentDark/[0.06] dark:text-accent/[0.06] pointer-events-none absolute h-52 w-44 select-none md:h-72 md:w-60 ${
+    className={`text-accentDark/[0.055] dark:text-accent/[0.055] pointer-events-none absolute top-1/2 h-52 w-44 -translate-y-1/2 select-none md:h-72 md:w-60 ${
       side === "left"
-        ? "top-8 -left-10 -scale-x-100 md:left-0"
-        : "bottom-8 -right-10 md:right-0"
+        ? "-left-12 -scale-x-100 md:-left-4"
+        : "-right-12 md:-right-4"
     } ${className}`}
   >
     <path

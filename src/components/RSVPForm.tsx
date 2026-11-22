@@ -111,7 +111,7 @@ const RSVPForm: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="rsvp"
-      className="relative overflow-hidden py-20 transition-colors duration-700 md:py-28"
+      className="relative overflow-x-clip py-20 transition-colors duration-700 md:py-28"
     >
       <BotanicalWatermark side="right" />
       <div className="container mx-auto max-w-6xl px-5 md:px-6">

@@ -1,5 +1,6 @@
 import type { AppConfig } from "../types";
 import {
+  normalizePublicAnimation,
   normalizePublicDefaultMode,
   normalizePublicTheme,
 } from "./publicThemes.ts";
@@ -118,6 +119,7 @@ export function parseConfig(raw: Record<string, string>): AppConfig {
       theme: normalizePublicTheme(raw.PUBLIC_THEME),
       defaultMode: normalizePublicDefaultMode(raw.PUBLIC_DEFAULT_MODE),
       allowGuestThemeSwitch: raw.PUBLIC_ALLOW_THEME_SWITCH !== "false",
+      animation: normalizePublicAnimation(raw.PUBLIC_ANIMATION),
     },
     bankAccounts: parseArrayJson(
       raw.BANK_ACCOUNTS,

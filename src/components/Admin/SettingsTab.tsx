@@ -43,10 +43,13 @@ import {
   parseIsoToSchedule,
 } from "../../utils/formHelpers";
 import {
+  PUBLIC_ANIMATIONS,
   PUBLIC_THEMES,
+  normalizePublicAnimation,
   normalizePublicDefaultMode,
   normalizePublicTheme,
 } from "../../utils/publicThemes";
+import { AnimationPreviewMini } from "../FloatingPetals";
 import type { ToastState } from "./AdminFeedback";
 import CsvImportModal from "./CsvImportModal";
 
@@ -109,6 +112,7 @@ const EXPORTABLE_CONFIG_KEYS = [
   "PUBLIC_THEME",
   "PUBLIC_DEFAULT_MODE",
   "PUBLIC_ALLOW_THEME_SWITCH",
+  "PUBLIC_ANIMATION",
   "RSVP_MAX_GUESTS",
   "TEXT_SALAM_OPENING",
   "TEXT_QUOTE_AR_RUM",
@@ -1170,6 +1174,73 @@ const SettingsTab: React.FC<{ onNotify: (toast: ToastState) => void }> = ({
                 }
                 className="mt-0.5 h-4 w-4 accent-(--adm-accent)"
               />
+            </div>
+          </div>
+
+          {/* Pilihan Animasi Latar dengan Pratinjau Langsung */}
+          <div className="border-t border-(--adm-border) pt-3.5">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="adm-label mb-0">
+                Animasi Latar Undangan (Pratinjau Langsung)
+              </span>
+              <span className="adm-hint">
+                Aktif:{" "}
+                <strong className="text-(--adm-text-primary)">
+                  {
+                    PUBLIC_ANIMATIONS.find(
+                      (a) =>
+                        a.id ===
+                        normalizePublicAnimation(rawConfig.PUBLIC_ANIMATION)
+                    )?.name
+                  }
+                </strong>
+              </span>
+            </div>
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {PUBLIC_ANIMATIONS.map((anim) => {
+                const isSelected =
+                  normalizePublicAnimation(rawConfig.PUBLIC_ANIMATION) ===
+                  anim.id;
+                const activeThemeObj =
+                  PUBLIC_THEMES.find(
+                    (t) =>
+                      t.id === normalizePublicTheme(rawConfig.PUBLIC_THEME)
+                  ) || PUBLIC_THEMES[0];
+                return (
+                  <button
+                    key={anim.id}
+                    type="button"
+                    onClick={() => handleChange("PUBLIC_ANIMATION", anim.id)}
+                    className={`flex flex-col gap-2 rounded-lg border p-2.5 text-left transition-all ${
+                      isSelected
+                        ? "border-(--adm-accent) bg-(--adm-accent-soft) ring-1 ring-(--adm-accent)"
+                        : "border-(--adm-border) bg-(--adm-bg-primary) hover:border-(--adm-accent)/60"
+                    }`}
+                  >
+                    <AnimationPreviewMini
+                      variant={anim.id}
+                      accent={activeThemeObj.colors.accent}
+                      accentDark={activeThemeObj.colors.accentDark}
+                      bg={activeThemeObj.colors.secondary}
+                    />
+                    <div className="flex items-start justify-between gap-2 px-0.5">
+                      <div className="min-w-0">
+                        <div className="text-[12.5px] font-semibold text-(--adm-text-primary)">
+                          {anim.name}
+                        </div>
+                        <p className="adm-hint mt-0.5 leading-snug">
+                          {anim.tagline}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-(--adm-accent) text-white">
+                          <Check className="h-3 w-3" />
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -8,6 +8,65 @@ export type PublicThemeId =
 
 export type PublicDefaultMode = "system" | "light" | "dark";
 
+export type PublicAnimationId =
+  | "doves"
+  | "petals"
+  | "butterflies"
+  | "lanterns"
+  | "sparkles"
+  | "none";
+
+export interface PublicAnimationDefinition {
+  id: PublicAnimationId;
+  name: string;
+  tagline: string;
+}
+
+export const PUBLIC_ANIMATIONS: PublicAnimationDefinition[] = [
+  {
+    id: "doves",
+    name: "Merpati & Kilau",
+    tagline: "Burung merpati putih terbang & kilau perayaan",
+  },
+  {
+    id: "petals",
+    name: "Kelopak Bunga",
+    tagline: "Kelopak bunga romantis melayang lembut",
+  },
+  {
+    id: "butterflies",
+    name: "Kupu-Kupu",
+    tagline: "Kupu-kupu cantik mengepak melintasi layar",
+  },
+  {
+    id: "lanterns",
+    name: "Lentera Cahaya",
+    tagline: "Lentera hangat & kunang-kunang naik perlahan",
+  },
+  {
+    id: "sparkles",
+    name: "Kilau Bintang",
+    tagline: "Taburan cahaya bintang lembut nan mewah",
+  },
+  {
+    id: "none",
+    name: "Tanpa Animasi",
+    tagline: "Tampilan tenang & minimalis tanpa partikel",
+  },
+];
+
+export const PUBLIC_ANIMATION_IDS = new Set<string>(
+  PUBLIC_ANIMATIONS.map((a) => a.id)
+);
+
+export const normalizePublicAnimation = (value?: string): PublicAnimationId => {
+  const candidate = (value || "").trim().toLowerCase();
+  if (PUBLIC_ANIMATION_IDS.has(candidate)) {
+    return candidate as PublicAnimationId;
+  }
+  return "doves";
+};
+
 export interface PublicThemeDefinition {
   id: PublicThemeId;
   name: string;

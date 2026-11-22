@@ -81,6 +81,15 @@ const validateConfigEntry = (key: string, value: string): string | null => {
     return "PUBLIC_DEFAULT_MODE harus berupa system, light, atau dark.";
   }
 
+  if (
+    key === "PUBLIC_ANIMATION" &&
+    !["doves", "petals", "butterflies", "lanterns", "sparkles", "none"].includes(
+      value.trim().toLowerCase()
+    )
+  ) {
+    return "PUBLIC_ANIMATION tidak dikenali.";
+  }
+
   if (key === "BANK_ACCOUNTS") {
     try {
       const parsed = JSON.parse(value);

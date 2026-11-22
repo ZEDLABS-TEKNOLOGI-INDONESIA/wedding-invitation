@@ -74,7 +74,7 @@ const EventDetails: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="event"
-      className="relative overflow-hidden px-5 py-20 transition-colors duration-700 md:px-6 md:py-28"
+      className="relative overflow-x-clip px-5 py-20 transition-colors duration-700 md:px-6 md:py-28"
     >
       <BotanicalWatermark side="left" />
       <div className="container mx-auto max-w-5xl">

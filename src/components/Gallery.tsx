@@ -71,7 +71,7 @@ const Gallery: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="gallery"
-      className="wedding-section-soft py-20 transition-colors duration-700 md:py-28"
+      className="wedding-section-glow py-20 transition-colors duration-700 md:py-28"
     >
       <div className="container mx-auto max-w-6xl px-5 md:px-6">
         <div className="mb-14 space-y-3 text-center md:mb-18">

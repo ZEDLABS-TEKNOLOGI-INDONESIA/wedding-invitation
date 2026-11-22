@@ -53,7 +53,7 @@ const CoupleProfile: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="couple"
-      className="relative overflow-hidden py-20 transition-colors duration-700 md:py-28"
+      className="relative overflow-x-clip py-20 transition-colors duration-700 md:py-28"
     >
       <BotanicalWatermark side="left" />
       <BotanicalWatermark side="right" />

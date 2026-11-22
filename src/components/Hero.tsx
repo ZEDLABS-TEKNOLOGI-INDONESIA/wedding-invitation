@@ -65,7 +65,7 @@ const Hero: React.FC<{ config: AppConfig }> = ({ config }) => {
         <div className="bg-darkBg/45 absolute inset-0 dark:bg-darkBg/55" />
         <div className="from-darkBg/65 via-darkBg/20 to-darkBg/75 absolute inset-0 bg-gradient-to-b" />
         {/* Seamless dissolve into page background (zero harsh horizontal seam) */}
-        <div className="from-transparent via-secondary/40 to-secondary dark:via-darkBg/50 dark:to-darkBg pointer-events-none absolute right-0 bottom-0 left-0 h-32 bg-gradient-to-b md:h-44" />
+        <div className="from-transparent via-secondary/75 to-secondary dark:via-darkBg/75 dark:to-darkBg pointer-events-none absolute right-0 bottom-0 left-0 h-40 bg-gradient-to-b md:h-52" />
       </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center pb-10 text-center">

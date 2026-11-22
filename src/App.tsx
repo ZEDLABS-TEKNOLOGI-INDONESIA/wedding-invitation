@@ -177,7 +177,7 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
       {!isOpened && <Envelope onOpen={handleOpenInvitation} config={config} />}
 
       <InstallPrompt />
-      <FloatingPetals />
+      <FloatingPetals variant={config.appearance.animation} />
       <Hero config={config} />
 
       <main className="relative z-10 space-y-0">
@@ -201,7 +201,7 @@ const App: React.FC<AppProps> = ({ initialRawConfig }) => {
         onResetColorTheme={handleResetColorTheme}
       />
 
-      <footer className="wedding-section-soft relative w-full overflow-hidden px-5 py-20 pb-32 transition-colors duration-700 md:py-28 md:pb-36">
+      <footer className="wedding-section-glow relative w-full overflow-x-clip px-5 py-20 pb-32 transition-colors duration-700 md:py-28 md:pb-36">
         <BotanicalWatermark side="left" />
         <BotanicalWatermark side="right" />
         <div className="relative z-10 container mx-auto flex max-w-3xl flex-col items-center gap-10 text-center">

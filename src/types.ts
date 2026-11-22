@@ -67,6 +67,7 @@ export interface AppConfig {
     theme: "ocean" | "sage" | "blush" | "maroon" | "gold" | "lavender";
     defaultMode: "system" | "light" | "dark";
     allowGuestThemeSwitch: boolean;
+    animation: "doves" | "petals" | "butterflies" | "lanterns" | "sparkles" | "none";
   };
   bankAccounts: { bank: string; number: string; name: string }[];
   loveStory: { date: string; title: string; desc: string }[];

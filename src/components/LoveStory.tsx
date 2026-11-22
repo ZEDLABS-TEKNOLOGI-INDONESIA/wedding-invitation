@@ -9,7 +9,7 @@ const LoveStory: React.FC<{ config: AppConfig }> = ({ config }) => {
   return (
     <section
       id="story"
-      className="wedding-section-soft relative overflow-hidden py-20 transition-colors duration-700 md:py-28"
+      className="wedding-section-glow relative overflow-x-clip py-20 transition-colors duration-700 md:py-28"
     >
       <BotanicalWatermark side="right" />
       <div className="relative z-10 container mx-auto max-w-5xl px-5 md:px-6">
