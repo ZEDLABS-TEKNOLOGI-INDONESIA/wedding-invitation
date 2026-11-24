@@ -10,6 +10,9 @@ import {
   Users,
 } from "lucide-react";
 import HeroPreviewIsland from "../components/public/HeroPreviewIsland";
+import SliderPasangan, {
+  type PasanganSlider,
+} from "../components/public/SliderPasangan.astro";
 import PublicLayout from "../layouts/PublicLayout.astro";
 import { getAuthSession } from "../lib/auth";
 import {
@@ -26,11 +29,38 @@ const platformCfg = getPlatformConfig();
 const platformName = platformCfg.PLATFORM_NAME || "Wedding Management";
 const dashboardHref = session?.role === "superadmin" ? "/superadmin" : "/admin";
 
+const activeWeddingRows = db
+  .prepare(
+    "SELECT id, slug, is_demo FROM weddings WHERE status = 'active' ORDER BY is_demo ASC, id DESC LIMIT 24",
+  )
+  .all() as { id: number; slug: string; is_demo: number }[];
+
 const totalActiveWeddings = (
   db
     .prepare("SELECT COUNT(*) as c FROM weddings WHERE status = 'active'")
     .get() as { c: number }
 ).c;
+
+const coupleConfigStmt = db.prepare(
+  "SELECT key, value FROM wedding_config WHERE wedding_id = ? AND key IN ('BRIDE_NICKNAME', 'GROOM_NICKNAME', 'BRIDE_IMAGE', 'GROOM_IMAGE')",
+);
+
+const allActiveCouples: PasanganSlider[] = activeWeddingRows.map((w) => {
+  const cfgRows = coupleConfigStmt.all(w.id) as { key: string; value: string }[];
+  const cfg = Object.fromEntries(cfgRows.map((r) => [r.key, r.value]));
+  return {
+    id: w.id,
+    slug: w.slug,
+    isDemo: w.is_demo === 1,
+    brideName: (cfg.BRIDE_NICKNAME || "Mempelai Wanita").trim(),
+    groomName: (cfg.GROOM_NICKNAME || "Mempelai Pria").trim(),
+    brideImage: (cfg.BRIDE_IMAGE || "").trim(),
+    groomImage: (cfg.GROOM_IMAGE || "").trim(),
+  };
+});
+
+const nonDemoCouples = allActiveCouples.filter((c) => !c.isDemo);
+const pasanganSlider = nonDemoCouples.length > 0 ? nonDemoCouples : allActiveCouples;
 
 const langkah = [
   {
@@ -239,6 +269,9 @@ const jsonLd = {
       </dl>
     </div>
   </section>
+
+  {/* Pasangan Aktif dengan Foto Circle Bertumpuk (1:1 posisi SliderInstansi whatsapp-service) */}
+  <SliderPasangan pasangan={pasanganSlider} />
 
   {/* Asymmetric 6-Column Bento Feature Grid (1:1 gaya whatsapp-service) */}
   <section

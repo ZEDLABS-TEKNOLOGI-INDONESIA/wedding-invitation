@@ -1,0 +1,206 @@
+---
+export interface PasanganSlider {
+  id: number;
+  slug: string;
+  isDemo: boolean;
+  brideName: string;
+  groomName: string;
+  brideImage: string;
+  groomImage: string;
+}
+
+interface Props {
+  pasangan: PasanganSlider[];
+}
+
+const { pasangan } = Astro.props;
+
+const inisial = (nama: string) => {
+  const bersih = nama.trim();
+  return bersih ? bersih[0].toUpperCase() : "?";
+};
+
+const punyaFotoAsli = (url: string) => {
+  const v = url.trim();
+  if (!v) return false;
+  if (v.endsWith("-placeholder.svg")) return false;
+  return v.startsWith("/") || v.startsWith("http://") || v.startsWith("https://");
+};
+
+// Dua salinan agar gulir tampak tanpa putus; salinan kedua disembunyikan dari pembaca layar.
+const gulir = pasangan.length > 4;
+---
+
+{pasangan.length > 0 && (
+  <section
+    class="border-b border-(--adm-border) bg-(--adm-bg-primary)"
+    aria-label="Pasangan yang menggunakan platform ini"
+  >
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <h2 class="mb-5 text-center text-xs font-semibold tracking-wider text-(--adm-text-muted) uppercase">
+        Digunakan secara aktif oleh pasangan
+      </h2>
+      <div class="slider-pasangan overflow-hidden py-1" data-gulir={gulir ? "1" : undefined}>
+        <ul class="slider-trek flex w-max items-center gap-3">
+          {(gulir ? [0, 1] : [0]).map((salinan) =>
+            pasangan.map((p) => {
+              const href = p.isDemo ? "/demo" : `/u/${encodeURIComponent(p.slug)}`;
+              const labelPasangan = `${p.brideName} & ${p.groomName}`;
+              const fotoWanita = punyaFotoAsli(p.brideImage);
+              const fotoPria = punyaFotoAsli(p.groomImage);
+              return (
+                <li class="shrink-0" aria-hidden={salinan === 1 ? "true" : undefined}>
+                  <a
+                    href={href}
+                    tabindex={salinan === 1 ? -1 : undefined}
+                    class="couple-pill group flex shrink-0 items-center gap-3 rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary) px-3.5 py-2 no-underline"
+                  >
+                    <span class="couple-stack relative flex shrink-0 items-center" aria-hidden="true">
+                      {/* Circle 1: Mempelai Wanita */}
+                      <span class="couple-circle couple-circle-left relative z-10 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-(--adm-border) bg-(--adm-accent-soft) text-xs font-semibold text-(--adm-accent) ring-2 ring-(--adm-bg-secondary)">
+                        {fotoWanita ? (
+                          <img
+                            src={p.brideImage}
+                            alt=""
+                            width="32"
+                            height="32"
+                            loading="lazy"
+                            decoding="async"
+                            data-fallback-inisial={inisial(p.brideName)}
+                            class="h-full w-full object-cover object-top"
+                          />
+                        ) : (
+                          <span>{inisial(p.brideName)}</span>
+                        )}
+                      </span>
+
+                      {/* Circle 2: Mempelai Pria (bertumpuk) */}
+                      <span class="couple-circle couple-circle-right relative z-20 -ml-2.5 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-(--adm-border) bg-(--adm-bg-tertiary) text-xs font-semibold text-(--adm-text-primary) ring-2 ring-(--adm-bg-secondary)">
+                        {fotoPria ? (
+                          <img
+                            src={p.groomImage}
+                            alt=""
+                            width="32"
+                            height="32"
+                            loading="lazy"
+                            decoding="async"
+                            data-fallback-inisial={inisial(p.groomName)}
+                            class="h-full w-full object-cover object-top"
+                          />
+                        ) : (
+                          <span>{inisial(p.groomName)}</span>
+                        )}
+                      </span>
+                    </span>
+
+                    <span class="couple-name text-sm font-medium whitespace-nowrap text-(--adm-text-primary) transition-colors duration-200">
+                      {labelPasangan}
+                    </span>
+                  </a>
+                </li>
+              );
+            }),
+          )}
+        </ul>
+      </div>
+    </div>
+  </section>
+)}
+
+<script>
+  document.addEventListener(
+    "error",
+    (e) => {
+      const el = e.target;
+      if (!(el instanceof HTMLImageElement)) return;
+      const inisial = el.dataset.fallbackInisial;
+      if (inisial) {
+        const span = document.createElement("span");
+        span.textContent = inisial;
+        el.replaceWith(span);
+      }
+    },
+    true,
+  );
+</script>
+
+<style>
+  .slider-pasangan:not([data-gulir]) .slider-trek {
+    margin-inline: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: auto;
+  }
+
+  .slider-pasangan[data-gulir] .slider-trek {
+    animation: gulir-pasangan 40s linear infinite;
+  }
+
+  .slider-pasangan[data-gulir]:hover .slider-trek,
+  .slider-pasangan[data-gulir]:focus-within .slider-trek {
+    animation-play-state: paused;
+  }
+
+  @keyframes gulir-pasangan {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  .couple-pill {
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 220ms ease,
+      box-shadow 220ms ease;
+  }
+
+  .couple-pill:hover,
+  .couple-pill:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--adm-accent);
+    box-shadow: 0 8px 20px -10px var(--adm-accent);
+    outline: none;
+  }
+
+  .couple-pill:hover .couple-name,
+  .couple-pill:focus-visible .couple-name {
+    color: var(--adm-accent);
+  }
+
+  .couple-circle {
+    transition:
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 220ms ease,
+      box-shadow 220ms ease;
+    will-change: transform;
+  }
+
+  .couple-pill:hover .couple-circle-left,
+  .couple-pill:focus-visible .couple-circle-left {
+    transform: translateX(-3px) scale(1.08) rotate(-6deg);
+    border-color: var(--adm-accent);
+  }
+
+  .couple-pill:hover .couple-circle-right,
+  .couple-pill:focus-visible .couple-circle-right {
+    transform: translateX(3px) scale(1.08) rotate(6deg);
+    border-color: var(--adm-accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slider-pasangan[data-gulir] .slider-trek {
+      animation: none;
+    }
+    .slider-pasangan[data-gulir] {
+      overflow-x: auto;
+    }
+    .couple-pill:hover,
+    .couple-pill:focus-visible,
+    .couple-pill:hover .couple-circle-left,
+    .couple-pill:focus-visible .couple-circle-left,
+    .couple-pill:hover .couple-circle-right,
+    .couple-pill:focus-visible .couple-circle-right {
+      transform: none;
+    }
+  }
+</style>
