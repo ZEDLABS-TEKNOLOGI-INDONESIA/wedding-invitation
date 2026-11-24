@@ -539,11 +539,11 @@ const WhatsAppManager: React.FC<{
         templateFilename="template_undangan_whatsapp.csv"
         templateHeaders={["Nama Tamu", "No WhatsApp", "Alamat (Opsional)"]}
         templateRows={[
-          ["Bapak Ahmad & Ibu Siti", "081234567890", "Jakarta"],
-          ["Rina Kusuma", "6289876543210", "Di Tempat"],
+          ["Nama Tamu 1", "0812xxxxxxxx", "Jakarta"],
+          ["Keluarga Tamu 2", "62813xxxxxxxx", "Di Tempat"],
         ]}
         pastePlaceholder={
-          "Bapak Ahmad & Ibu Siti,081234567890,Jakarta\nRina Kusuma,089876543210,Di Tempat"
+          "Nama Tamu 1,0812xxxxxxxx,Jakarta\nKeluarga Tamu 2,0813xxxxxxxx,Di Tempat"
         }
         parseText={parseGuestsText}
         columns={[
@@ -766,7 +766,7 @@ const WhatsAppManager: React.FC<{
                 onChange={(e) =>
                   setSingleForm({ ...singleForm, name: e.target.value })
                 }
-                placeholder="Contoh: Bpk. Ahmad & Ibu Siti"
+                placeholder="Nama tamu undangan"
                 className="adm-input bg-(--adm-bg-secondary)"
               />
             </div>
@@ -784,7 +784,7 @@ const WhatsAppManager: React.FC<{
                 onChange={(e) =>
                   setSingleForm({ ...singleForm, phone: e.target.value })
                 }
-                placeholder="081234567890 atau 6281234567890"
+                placeholder="0812xxxxxxxx atau 62812xxxxxxxx"
                 className="adm-input bg-(--adm-bg-secondary)"
               />
             </div>

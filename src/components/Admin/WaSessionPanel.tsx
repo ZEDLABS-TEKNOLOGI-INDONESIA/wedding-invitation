@@ -642,7 +642,7 @@ const WaSessionPanel: React.FC<WaSessionPanelProps> = ({
                 inputMode="tel"
                 value={pairingPhone}
                 onChange={(e) => setPairingPhone(e.target.value)}
-                placeholder="081234567890"
+                placeholder="0812xxxxxxxx"
                 className="adm-input bg-(--adm-bg-secondary)"
               />
             </div>
