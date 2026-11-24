@@ -735,13 +735,27 @@
   --adm-text-2xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
   --adm-text-hero: clamp(1.875rem, 1.4rem + 2.2vw, 3rem);
 
-  background-color: var(--adm-bg-primary);
+  background-color: var(--adm-bg-secondary);
   color: var(--adm-text-primary);
   font-family: "Lexend", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.admin-shell.is-public {
+  background-color: var(--adm-bg-primary);
+  font-size: 1rem;
+}
+
+@media (max-width: 767px) {
+  .admin-shell.is-public input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .admin-shell.is-public select,
+  .admin-shell.is-public textarea {
+    font-size: 16px;
+    min-height: 44px;
+  }
 }
 
 .dark .admin-shell,

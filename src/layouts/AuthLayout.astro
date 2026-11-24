@@ -1,5 +1,5 @@
 ---
-import { ArrowLeft, Check, Moon, Sun } from "lucide-react";
+import { Check, Moon, Sun } from "lucide-react";
 import PublicFooter from "../components/public/PublicFooter.astro";
 import { getPlatformConfig } from "../lib/db";
 import Layout from "./Layout.astro";
@@ -24,7 +24,7 @@ const platformName = platformCfg.PLATFORM_NAME || "Wedding Management";
 const fitur = [
   {
     judul: "Terisolasi penuh per pasangan",
-    isi: "Setiap pasangan memiliki URL unik (/u/slug) beserta tamu, RSVP, ucapan, dan sesi WhatsApp yang tidak pernah bercampur.",
+    isi: "Setiap pasangan memiliki alamat unik (/u/nama-pasangan) beserta daftar tamu, RSVP, ucapan, dan sesi WhatsApp sendiri.",
   },
   {
     judul: "Kolaborasi akun berdua (suami & istri)",
@@ -32,13 +32,13 @@ const fitur = [
   },
   {
     judul: "WhatsApp Gateway, PDF 4 halaman & QR Check-In",
-    isi: "Kirim undangan personal otomatis beserta PDF A5 & kartu QR, notifikasi RSVP real-time, hingga scanner kamera Hari H.",
+    isi: "Kirim undangan personal otomatis beserta PDF A5 & kartu QR, notifikasi RSVP, hingga scanner kamera Hari H.",
   },
 ];
 ---
 
 <Layout title={`${title} | ${platformName}`} noindex={true}>
-  <div class="admin-shell min-h-dvh bg-(--adm-bg-primary) text-(--adm-text-primary)">
+  <div class="admin-shell is-public min-h-dvh bg-(--adm-bg-primary) text-(--adm-text-primary)">
     <a href="#konten-utama" class="skip-link">
       Lewati ke konten utama
     </a>
@@ -64,9 +64,6 @@ const fitur = [
                   {platformName}
                 </span>
               </a>
-              <span class="hidden items-center rounded-full border border-(--adm-info-border) bg-(--adm-accent-soft) px-2 py-0.5 font-mono text-[11px] font-medium text-(--adm-accent) sm:inline-flex">
-                Multi-Pasangan
-              </span>
             </div>
 
             <div class="flex shrink-0 items-center gap-2">
@@ -116,28 +113,19 @@ const fitur = [
       </div>
     ) : (
       <div class="auth-grid min-h-dvh bg-(--adm-bg-primary) text-(--adm-text-primary)">
-        <div class="auth-kiri flex min-w-0 flex-col">
-          <div class="flex items-center justify-between px-4 py-3 sm:px-6">
-            <a
-              href="/"
-              class="inline-flex items-center gap-1.5 text-xs font-medium text-(--adm-text-secondary) transition-colors hover:text-(--adm-accent)"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-              Kembali ke Beranda
-            </a>
-            <button
-              id="auth-theme-toggle"
-              type="button"
-              aria-label="Ganti tema terang/gelap"
-              title="Ganti Tema"
-              class="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)"
-            >
-              <Moon className="h-4 w-4 dark:hidden" />
-              <Sun className="hidden h-4 w-4 dark:inline" />
-            </button>
-          </div>
+        <div class="auth-kiri relative flex min-w-0 flex-col">
+          <button
+            id="auth-theme-toggle"
+            type="button"
+            aria-label="Ganti tema terang/gelap"
+            title="Ganti Tema"
+            class="absolute top-4 right-4 z-10 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)"
+          >
+            <Moon className="h-4 w-4 dark:hidden" />
+            <Sun className="hidden h-4 w-4 dark:inline" />
+          </button>
 
-          <main id="konten-utama" tabindex="-1" class="flex flex-1 px-4 pb-6 sm:px-6 focus:outline-none">
+          <main id="konten-utama" tabindex="-1" class="flex flex-1 p-4 sm:p-6 focus:outline-none">
             <div class="m-auto w-full max-w-[416px] overflow-hidden rounded-lg border border-(--adm-border) bg-(--adm-bg-secondary)">
               <div class="flex flex-col items-center gap-2 border-b border-(--adm-border) px-5 pt-6 pb-5 text-center">
                 <a href="/" class="flex items-center gap-2 text-(--adm-text-primary) no-underline">
@@ -152,9 +140,7 @@ const fitur = [
                 </a>
                 <h1 class="text-xl font-semibold text-(--adm-text-primary)">{title}</h1>
                 {description && (
-                  <p class="text-xs leading-relaxed text-(--adm-text-secondary) sm:text-sm">
-                    {description}
-                  </p>
+                  <p class="text-sm text-(--adm-text-secondary)">{description}</p>
                 )}
               </div>
               <div class="p-6 sm:p-7">
@@ -167,7 +153,7 @@ const fitur = [
         </div>
 
         <div
-          class="auth-kanan relative flex-col justify-center overflow-hidden px-14 xl:px-24"
+          class="auth-kanan relative flex-col justify-center overflow-hidden px-24"
           aria-hidden="true"
         >
           <img
@@ -177,7 +163,7 @@ const fitur = [
             height="640"
             class="pointer-events-none absolute top-1/2 -right-40 h-[640px] w-[640px] -translate-y-1/2 opacity-5"
           />
-          <div class="pointer-events-none absolute inset-x-0 -bottom-12 text-center text-[200px] leading-none font-bold tracking-[-4px] whitespace-nowrap uppercase opacity-5 select-none">
+          <div class="pointer-events-none absolute inset-x-0 -bottom-12 text-center text-[220px] leading-none font-bold tracking-[-4px] whitespace-nowrap uppercase opacity-5 select-none">
             Wedding
           </div>
 
@@ -186,12 +172,12 @@ const fitur = [
               <span class="h-px w-5 bg-(--adm-accent)"></span>
               {platformName}
             </div>
-            <h2 class="mt-4 text-3xl leading-tight font-semibold text-(--adm-text-primary) xl:text-4xl">
+            <h2 class="mt-4 text-4xl leading-tight font-semibold text-(--adm-text-primary)">
               Undangan digital dan persiapan nikah, dikelola berdua dari satu panel.
             </h2>
-            <p class="mt-4 text-[15px] leading-relaxed text-(--adm-text-secondary)">
-              Undangan ber-URL unik, 6 modul manajemen nikah, pengiriman WhatsApp, dan QR Check-In
-              tersedia terisolasi untuk tiap pasangan.
+            <p class="mt-4 text-[15px] text-(--adm-text-secondary)">
+              Ruang undangan, 6 modul persiapan nikah, pengiriman WhatsApp, dan QR Check-In
+              dikelola terpisah untuk tiap pasangan.
             </p>
 
             <div class="mt-8 flex flex-col gap-5">
@@ -202,9 +188,7 @@ const fitur = [
                   </span>
                   <div>
                     <div class="text-sm font-semibold text-(--adm-text-primary)">{f.judul}</div>
-                    <div class="mt-0.5 text-xs leading-relaxed text-(--adm-text-secondary)">
-                      {f.isi}
-                    </div>
+                    <div class="mt-0.5 text-xs text-(--adm-text-secondary)">{f.isi}</div>
                   </div>
                 </div>
               ))}

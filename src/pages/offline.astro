@@ -1,57 +1,40 @@
 ---
-import { RefreshCw, WifiOff } from "lucide-react";
-import PublicLayout from "../layouts/PublicLayout.astro";
+import Layout from "../layouts/Layout.astro";
 ---
 
-<PublicLayout
-  title="Sedang Offline | Wedding Management"
+<Layout
+  title="Sedang offline | Wedding Management"
   description="Koneksi internet tidak tersedia. Sambungkan kembali perangkat Anda untuk memuat halaman."
   noindex={true}
 >
-  <section class="pub-offline-bg flex min-h-[calc(100dvh-16rem)] items-center justify-center px-4 py-16 sm:px-6">
-    <div class="w-full max-w-md rounded-2xl border border-(--adm-border) bg-(--adm-bg-secondary) p-8 text-center">
-      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-(--adm-info-border) bg-(--adm-accent-soft) text-(--adm-accent)">
-        <WifiOff className="h-6 w-6" aria-hidden="true" />
-      </div>
-
-      <span class="adm-badge mt-4">Mode Offline</span>
-      <h1 class="mt-3 text-xl font-bold tracking-tight text-(--adm-text-primary) sm:text-2xl">
+  <main class="admin-shell is-public flex min-h-dvh items-center justify-center bg-(--adm-bg-primary) px-6">
+    <div class="max-w-md text-center">
+      <p class="font-mono text-sm font-semibold tracking-wider text-(--adm-accent) uppercase">
+        Offline
+      </p>
+      <h1 class="mt-3 text-xl font-semibold text-(--adm-text-primary)">
         Koneksi internet terputus
       </h1>
-      <p class="mt-2 text-sm leading-relaxed text-(--adm-text-secondary)">
-        Halaman ini belum tersimpan di perangkat Anda. Periksa koneksi Wi-Fi atau data seluler,
-        lalu muat ulang halaman.
+      <p class="mt-2 text-sm text-(--adm-text-secondary)">
+        Halaman ini belum tersimpan di perangkat Anda. Periksa koneksi lalu muat ulang halaman.
       </p>
-
-      <div class="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+      <div class="mt-6 flex flex-wrap justify-center gap-2">
         <button id="btn-retry-offline" type="button" class="adm-btn adm-btn-primary">
-          <RefreshCw className="h-4 w-4" aria-hidden="true" />
-          Coba Muat Ulang
+          Muat ulang
         </button>
         <a href="/" class="adm-btn adm-btn-secondary">
-          Ke Beranda
+          Ke beranda
         </a>
       </div>
     </div>
-  </section>
-</PublicLayout>
+  </main>
 
-<style>
-  .pub-offline-bg {
-    background-image:
-      radial-gradient(ellipse 60% 50% at 50% 0%, var(--adm-accent-soft), transparent 70%),
-      radial-gradient(var(--adm-border) 1px, transparent 1px);
-    background-size:
-      100% 100%,
-      24px 24px;
-  }
-</style>
-
-<script>
-  document.getElementById("btn-retry-offline")?.addEventListener("click", () => {
-    window.location.reload();
-  });
-  window.addEventListener("online", () => {
-    window.location.reload();
-  });
-</script>
+  <script>
+    document.getElementById("btn-retry-offline")?.addEventListener("click", () => {
+      window.location.reload();
+    });
+    window.addEventListener("online", () => {
+      window.location.reload();
+    });
+  </script>
+</Layout>

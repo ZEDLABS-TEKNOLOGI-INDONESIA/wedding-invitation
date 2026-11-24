@@ -61,7 +61,7 @@ if (session) {
     </ol>
 
     {/* Step 1: Data Pendaftaran + Ringkasan Ruang */}
-    <form id="register-step1" class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_310px]">
+    <form id="register-step1" class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div class="space-y-6">
         <fieldset class="space-y-4">
           <legend class="mb-1 text-base font-semibold text-(--adm-text-primary)">
@@ -81,7 +81,7 @@ if (session) {
                 name="brideNickname"
                 type="text"
                 required
-                placeholder="Contoh: Fera"
+                placeholder="Nama panggilan wanita"
                 class="adm-input"
               />
             </div>
@@ -94,7 +94,7 @@ if (session) {
                 name="groomNickname"
                 type="text"
                 required
-                placeholder="Contoh: Yahya"
+                placeholder="Nama panggilan pria"
                 class="adm-input"
               />
             </div>
@@ -111,7 +111,7 @@ if (session) {
                 name="slug"
                 type="text"
                 required
-                placeholder="fera-yahya"
+                placeholder="nama-pasangan"
                 class="w-full bg-transparent px-3 py-2 text-sm text-(--adm-text-primary) focus:outline-none"
               />
             </div>
@@ -153,7 +153,7 @@ if (session) {
                 inputmode="tel"
                 required
                 autocomplete="tel"
-                placeholder="081234567890"
+                placeholder="0812xxxxxxxx"
                 class="adm-input"
               />
             </div>
@@ -165,7 +165,7 @@ if (session) {
                 type="text"
                 required
                 autocomplete="username"
-                placeholder="contoh: fera_oktapia"
+                placeholder="username_akun"
                 class="adm-input"
               />
             </div>
@@ -180,7 +180,7 @@ if (session) {
                 required
                 minlength="6"
                 autocomplete="new-password"
-                placeholder="••••••••"
+                placeholder="Minimal 6 karakter"
                 class="adm-input"
               />
             </div>
@@ -289,7 +289,7 @@ if (session) {
           inputmode="numeric"
           maxlength="6"
           required
-          placeholder="123456"
+          placeholder="000000"
           class="adm-input text-center font-mono text-2xl tracking-[0.4em]"
         />
       </div>

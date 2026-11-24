@@ -1,56 +1,37 @@
 ---
-import { ArrowLeft, BookOpen, ExternalLink, LifeBuoy } from "lucide-react";
-import PublicLayout from "../layouts/PublicLayout.astro";
+import Layout from "../layouts/Layout.astro";
+import { getAuthSession } from "../lib/auth";
+
+Astro.response.status = 404;
+const session = getAuthSession(Astro.cookies);
+const tujuan = !session ? "/" : session.role === "superadmin" ? "/superadmin" : "/admin";
+const labelTujuan = session ? "Kembali ke dashboard" : "Ke beranda";
 ---
 
-<PublicLayout
-  title="Halaman Tidak Ditemukan | Wedding Management"
-  description="Halaman yang Anda cari tidak ditemukan atau sudah dipindahkan."
+<Layout
+  title="Halaman tidak ditemukan | Wedding Management"
+  description="Alamat yang Anda buka tidak ditemukan atau sudah dipindahkan."
   noindex={true}
 >
-  <section class="pub-404-bg flex min-h-[calc(100dvh-16rem)] items-center justify-center px-4 py-16 sm:px-6">
-    <div class="w-full max-w-lg rounded-2xl border border-(--adm-border) bg-(--adm-bg-secondary) p-8 text-center">
-      <span class="adm-badge adm-badge-accent font-mono">Error 404</span>
-      <h1 class="mt-4 text-2xl font-bold tracking-tight text-(--adm-text-primary) sm:text-3xl">
+  <main class="admin-shell is-public flex min-h-dvh items-center justify-center bg-(--adm-bg-primary) px-6">
+    <div class="max-w-md text-center">
+      <p class="text-6xl font-semibold text-(--adm-accent) tabular-nums">404</p>
+      <h1 class="mt-4 text-xl font-semibold text-(--adm-text-primary)">
         Halaman tidak ditemukan
       </h1>
-      <p class="mt-2.5 text-sm leading-relaxed text-(--adm-text-secondary)">
-        Tautan yang Anda buka mungkin sudah berubah, salah ketik, atau alamat undangan{" "}
-        <code class="adm-kbd-code">/u/slug</code> belum terdaftar.
+      <p class="mt-2 text-sm text-(--adm-text-secondary)">
+        Alamat yang Anda buka tidak tersedia atau slug undangan belum terdaftar.
       </p>
-
-      <div class="mt-7 flex flex-wrap items-center justify-center gap-2.5">
-        <a href="/" class="adm-btn adm-btn-primary">
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Kembali ke Beranda
+      <div class="mt-6 flex flex-wrap justify-center gap-2">
+        <a href={tujuan} class="adm-btn adm-btn-primary">
+          {labelTujuan}
         </a>
-        <a href="/demo" class="adm-btn adm-btn-secondary">
-          <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          Lihat Demo
-        </a>
-      </div>
-
-      <div class="mt-6 flex flex-wrap items-center justify-center gap-4 border-t border-(--adm-border) pt-5 text-xs text-(--adm-text-secondary)">
-        <a href="/dokumentasi" class="inline-flex items-center gap-1.5 hover:text-(--adm-accent)">
-          <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
-          Dokumentasi
-        </a>
-        <a href="/bantuan" class="inline-flex items-center gap-1.5 hover:text-(--adm-accent)">
-          <LifeBuoy className="h-3.5 w-3.5" aria-hidden="true" />
-          Hubungi Bantuan
-        </a>
+        {!session && (
+          <a href="/masuk" class="adm-btn adm-btn-secondary">
+            Masuk
+          </a>
+        )}
       </div>
     </div>
-  </section>
-</PublicLayout>
-
-<style>
-  .pub-404-bg {
-    background-image:
-      radial-gradient(ellipse 60% 50% at 50% 0%, var(--adm-accent-soft), transparent 70%),
-      radial-gradient(var(--adm-border) 1px, transparent 1px);
-    background-size:
-      100% 100%,
-      24px 24px;
-  }
-</style>
+  </main>
+</Layout>

@@ -220,7 +220,7 @@ export default function BantuanIsland({
               id="bantuan-slug"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              placeholder="contoh: fera-yahya"
+              placeholder="nama-pasangan"
               className="adm-input"
               maxLength={80}
             />
