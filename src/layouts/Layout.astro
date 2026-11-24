@@ -15,12 +15,16 @@ import "@fontsource/outfit/300.css";
 import "@fontsource/outfit/400.css";
 import "@fontsource/outfit/500.css";
 import "@fontsource/outfit/600.css";
+import lexend400 from "@fontsource/lexend/files/lexend-latin-400-normal.woff2?url";
+import lexend500 from "@fontsource/lexend/files/lexend-latin-500-normal.woff2?url";
+import lexend600 from "@fontsource/lexend/files/lexend-latin-600-normal.woff2?url";
 import "../styles/global.css";
 
 interface Props {
   title?: string;
   description?: string;
   image?: string;
+  imageAlt?: string;
   noindex?: boolean;
   weddingTheme?: string;
   defaultColorMode?: "system" | "light" | "dark";
@@ -31,6 +35,7 @@ const {
   title = "Wedding Management",
   description = "Platform Undangan Pernikahan Digital, RSVP, Check-In QR & Manajemen Persiapan Nikah.",
   image = "/thumbnail.png",
+  imageAlt = title,
   noindex = false,
   weddingTheme = "ocean",
   defaultColorMode = "system",
@@ -38,7 +43,9 @@ const {
 } = Astro.props;
 
 const siteBase = Astro.site || "https://wedding.zedlabs.id";
-const canonicalURL = new URL(Astro.url.pathname, siteBase);
+const normalizedPath =
+  Astro.url.pathname === "/" ? "/" : Astro.url.pathname.replace(/\/+$/, "");
+const canonicalURL = new URL(normalizedPath, siteBase);
 const ogImageURL = image.startsWith("http")
   ? image
   : new URL(image, siteBase).toString();
@@ -54,39 +61,53 @@ const ogImageURL = image.startsWith("http")
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" sizes="any" href="/favicon.ico" />
     <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="generator" content={Astro.generator} />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
 
     <title>{title}</title>
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
 
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Wedding Management — ZEDLABS" />
+    <meta property="og:locale" content="id_ID" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImageURL} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={imageAlt} />
 
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={canonicalURL} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={ogImageURL} />
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalURL} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+    <meta name="twitter:image:alt" content={imageAlt} />
 
-    <meta name="theme-color" content="#0d1117" />
-
+    <!-- PWA & Browser Chrome -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f8fa" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1117" />
     <link rel="manifest" href="/manifest.webmanifest" />
-
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="apple-mobile-web-app-title" content="Wedding Management" />
+    <meta name="apple-mobile-web-app-title" content="Wedding" />
+
+    <!-- Preload bobot utama font UI agar mencegah FOUT & CLS -->
+    <link rel="preload" href={lexend400} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={lexend500} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={lexend600} as="font" type="font/woff2" crossorigin />
 
     <script is:inline define:vars={{ defaultColorMode, weddingTheme, allowGuestThemeSwitch }}>
       (function () {
@@ -124,5 +145,15 @@ const ogImageURL = image.startsWith("http")
   </head>
   <body>
     <slot />
+
+    <script is:inline>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker
+            .register("/sw.js", { scope: "/" })
+            .catch(function () {});
+        });
+      }
+    </script>
   </body>
 </html>

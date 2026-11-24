@@ -1,31 +1,50 @@
 import React, { useEffect, useState } from "react";
-import { Download, X, Smartphone } from "lucide-react";
+import { Download, Smartphone, X } from "lucide-react";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
 
 const InstallPrompt: React.FC = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+    if (isStandalone) return;
+
     const isDismissed = sessionStorage.getItem("pwa-prompt-dismissed");
     if (isDismissed) return;
+
     let showTimer: number | null = null;
-    const handler = (e: any) => {
+    const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       showTimer = window.setTimeout(() => setShowPrompt(true), 3000);
     };
 
+    const onInstalled = () => {
+      setDeferredPrompt(null);
+      setShowPrompt(false);
+    };
+
     window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", onInstalled);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", onInstalled);
       if (showTimer) window.clearTimeout(showTimer);
     };
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-    deferredPrompt.prompt();
+    await deferredPrompt.prompt();
     await deferredPrompt.userChoice;
     setDeferredPrompt(null);
     setShowPrompt(false);
@@ -35,6 +54,7 @@ const InstallPrompt: React.FC = () => {
     setShowPrompt(false);
     sessionStorage.setItem("pwa-prompt-dismissed", "true");
   };
+
   if (!showPrompt) return null;
 
   return (
@@ -77,7 +97,7 @@ const InstallPrompt: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={handleInstallClick}
+            onClick={() => void handleInstallClick()}
             className="bg-primary dark:bg-accentDark flex-1 rounded-xl py-3 text-xs font-bold tracking-widest text-white uppercase shadow-lg transition-transform active:scale-95"
           >
             <span className="flex items-center justify-center gap-2">

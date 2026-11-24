@@ -1,0 +1,17 @@
+# Wedding Management — ZEDLABS
+> Platform undangan pernikahan digital, RSVP, check-in QR, dan manajemen persiapan nikah terisolasi per pasangan dari ZEDLABS Teknologi Indonesia. Setiap pasangan memperoleh alamat URL unik (/u/nama-pasangan), 6 tema warna publik dengan mode terang/gelap, 2 akun pengelola (Pemilik Utama + 1 Akun Pasangan), 6 modul manajemen pernikahan (To-Do List, Anggaran & Vendor, Tabungan Menuju Halal, Mahar/Seserahan/Berkas KUA mengacu PMA No. 30 Tahun 2024, Jurnal Menikah, dan Fikih Munakahat), generator PDF A5 4 halaman, scanner kamera QR Check-In, serta integrasi WhatsApp Gateway ZEDLABS (HMAC-SHA256 v2). Gratis hingga 200 kontak/tamu; tambahan di atas 200 tamu dikenakan biaya Rp200 per tamu (minimum transaksi Rp50.000 untuk +250 kuota).
+
+Kata kunci terkait: undangan pernikahan digital Indonesia, website undangan nikah gratis, manajemen persiapan pernikahan, aplikasi wedding planner Indonesia, undangan digital RSVP WhatsApp, undangan pernikahan QR check-in, undangan digital PDF 4 halaman, buku tamu digital QR, checklist berkas KUA PMA 30 2024, anggaran pernikahan online, tabungan menikah, undangan nikah multi pasangan, ZEDLABS Wedding Management.
+
+## Halaman Publik
+- [Beranda](https://wedding.zedlabs.id/): Ringkasan platform Wedding Management, pratinjau kapabilitas, spesifikasi platform, fitur utama, kalkulator biaya kuota tamu transparan, dan alur 3 langkah memulai.
+- [Demo Undangan](https://wedding.zedlabs.id/demo): Pratinjau interaktif tampilan undangan pernikahan digital untuk tamu (sampul amplop, profil mempelai, jadwal acara, peta lokasi, kisah cinta, galeri, RSVP, ucapan, dan rekening tanda kasih).
+- [Dokumentasi Fitur](https://wedding.zedlabs.id/dokumentasi): Panduan lengkap seluruh fitur platform — 6 tema undangan, akun berdua & isolasi wedding_id, 6 modul manajemen pernikahan, WhatsApp Gateway & pengingat H-1, PDF A5 4 halaman, QR Check-In, dan skema kuota tamu.
+- [Panduan Layanan Mandiri](https://wedding.zedlabs.id/layanan-mandiri): Langkah mandiri mendaftar via OTP WhatsApp, menambahkan akun pasangan, format impor tamu CSV, hingga upgrade kuota tamu di atas 200 kontak.
+- [Pertanyaan Umum (FAQ)](https://wedding.zedlabs.id/faq): Jawaban ringkas dan terklasifikasi seputar kuota gratis 200 tamu, isolasi data antar pasangan, tema, 6 modul manajemen nikah, WhatsApp Gateway, QR Check-In, dan reset kata sandi OTP.
+- [Bantuan & Hubungi Kami](https://wedding.zedlabs.id/bantuan): Kanal dukungan resmi ZEDLABS Teknologi Indonesia untuk bantuan pendaftaran, konfirmasi tagihan kuota tamu, atau kendala teknis integrasi WhatsApp.
+- [Syarat dan Ketentuan](https://wedding.zedlabs.id/syarat-ketentuan): Ketentuan penggunaan layanan berversi mencakup ruang lingkup, isolasi ruang, kuota & pembayaran, kebijakan anti-spam WhatsApp, serta konten pengguna.
+- [Kebijakan Privasi](https://wedding.zedlabs.id/kebijakan-privasi): Kebijakan perlindungan data berversi mencakup kelompok data yang diproses, isolasi per wedding_id, keamanan scrypt & OTP SHA-256, serta hak subjek data.
+
+## Catatan Privasi & Indeksasi
+Halaman dashboard (`/admin`, `/superadmin`), operasional Hari H (`/qrcode`, `/checkin`), autentikasi (`/masuk`, `/daftar`, `/lupa-password`), dan endpoint `/api/*` bersifat privat dan tidak dimaksudkan untuk di-crawl atau diindeks oleh mesin pencari.

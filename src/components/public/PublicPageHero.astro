@@ -12,6 +12,30 @@ interface Props {
 }
 
 const { eyebrow, title, description, breadcrumbs = [] } = Astro.props;
+const siteBase = (Astro.site?.toString() || "https://wedding.zedlabs.id").replace(/\/$/, "");
+const breadcrumbJsonLd =
+  breadcrumbs.length > 0
+    ? JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Beranda",
+            item: `${siteBase}/`,
+          },
+          ...breadcrumbs.map((b, idx) => ({
+            "@type": "ListItem",
+            position: idx + 2,
+            name: b.label,
+            item: b.href
+              ? `${siteBase}${b.href}`
+              : `${siteBase}${Astro.url.pathname.replace(/\/+$/, "")}`,
+          })),
+        ],
+      }).replace(/</g, "\\u003c")
+    : null;
 ---
 
 <section class="pub-hero border-b border-(--adm-border) bg-(--adm-bg-secondary)">
@@ -65,6 +89,11 @@ const { eyebrow, title, description, breadcrumbs = [] } = Astro.props;
     )}
   </div>
 </section>
+
+{breadcrumbJsonLd && (
+  /* eslint-disable-next-line astro/no-set-html-directive */
+  <script type="application/ld+json" set:html={breadcrumbJsonLd} />
+)}
 
 <style>
   .pub-hero {

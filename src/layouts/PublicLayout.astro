@@ -4,6 +4,7 @@ import PublicFooter from "../components/public/PublicFooter.astro";
 import PublicMobileNav, {
   type PublicNavItem,
 } from "../components/public/PublicMobileNav";
+import PwaInstallToast from "../components/public/PwaInstallToast";
 import { getAuthSession } from "../lib/auth";
 import { getPlatformConfig } from "../lib/db";
 import Layout from "./Layout.astro";
@@ -11,12 +12,14 @@ import Layout from "./Layout.astro";
 interface Props {
   title: string;
   description?: string;
+  image?: string;
   noindex?: boolean;
 }
 
 const {
   title,
   description = "Platform undangan pernikahan digital & manajemen persiapan nikah terisolasi per pasangan dari ZEDLABS Teknologi Indonesia.",
+  image = "/og-default.png",
   noindex = false,
 } = Astro.props;
 
@@ -40,7 +43,7 @@ const cekAktif = (item: PublicNavItem) =>
   item.aktifDi ? item.aktifDi.includes(currentPath) : currentPath === item.href;
 ---
 
-<Layout title={title} description={description} noindex={noindex}>
+<Layout title={title} description={description} image={image} noindex={noindex}>
   <div class="admin-shell flex min-h-dvh flex-col bg-(--adm-bg-primary) text-(--adm-text-primary)">
     <a href="#konten-utama" class="skip-link">
       Lewati ke konten utama
@@ -146,6 +149,7 @@ const cekAktif = (item: PublicNavItem) =>
     </main>
 
     <PublicFooter varian="publik" platformName={platformName} />
+    <PwaInstallToast client:idle />
   </div>
 </Layout>
 

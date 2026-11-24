@@ -1,0 +1,59 @@
+{
+  "id": "/",
+  "name": "Wedding Management — ZEDLABS",
+  "short_name": "Wedding",
+  "description": "Platform Undangan Pernikahan Digital, RSVP, Check-In QR & Manajemen Persiapan Nikah terisolasi per pasangan.",
+  "lang": "id",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#0759bc",
+  "background_color": "#0d1117",
+  "categories": ["lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Masuk Dashboard",
+      "short_name": "Dashboard",
+      "description": "Kelola undangan, tamu, RSVP & persiapan nikah",
+      "url": "/masuk",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Scanner QR Check-In",
+      "short_name": "Check-In",
+      "description": "Pindai kode QR kehadiran tamu di Hari H",
+      "url": "/checkin",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Demo Undangan",
+      "short_name": "Demo",
+      "description": "Lihat pratinjau tampilan undangan digital",
+      "url": "/demo",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

@@ -1,9 +1,21 @@
 User-agent: *
-Allow: /
 Disallow: /admin
+Disallow: /superadmin
+Disallow: /masuk
+Disallow: /daftar
+Disallow: /lupa-password
 Disallow: /qrcode
 Disallow: /checkin
+Disallow: /offline
 Disallow: /api/
 
-# Ganti domain sesuai domain asli Anda
+Allow: /
+Allow: /demo
+Allow: /dokumentasi
+Allow: /layanan-mandiri
+Allow: /faq
+Allow: /bantuan
+Allow: /syarat-ketentuan
+Allow: /kebijakan-privasi
+
 Sitemap: https://wedding.zedlabs.id/sitemap-index.xml
