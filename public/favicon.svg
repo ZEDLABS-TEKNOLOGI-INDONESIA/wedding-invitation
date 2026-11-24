@@ -5,17 +5,22 @@
       <stop offset="52%" stop-color="#0759BC" />
       <stop offset="100%" stop-color="#043D87" />
     </linearGradient>
-    <linearGradient id="accent" x1="358" y1="98" x2="424" y2="164" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FDE047" />
+    <linearGradient id="goldRing" x1="212" y1="196" x2="404" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="48%" stop-color="#FBBF24" />
       <stop offset="100%" stop-color="#D97706" />
     </linearGradient>
-    <linearGradient id="flap" x1="140" y1="184" x2="372" y2="330" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0A63D1" />
-      <stop offset="100%" stop-color="#054696" />
+    <linearGradient id="whiteRing" x1="108" y1="196" x2="300" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#DBEAFE" />
     </linearGradient>
-    <linearGradient id="heart" x1="224" y1="204" x2="288" y2="276" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#F43F5E" />
-      <stop offset="100%" stop-color="#E11D48" />
+    <linearGradient id="diamondTop" x1="204" y1="106" x2="308" y2="188" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#BAE6FD" />
+    </linearGradient>
+    <linearGradient id="diamondSide" x1="256" y1="138" x2="314" y2="188" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E0F2FE" />
+      <stop offset="100%" stop-color="#7DD3FC" />
     </linearGradient>
   </defs>
 
@@ -23,38 +28,58 @@
   <rect x="0" y="0" width="512" height="512" rx="116" fill="url(#bg)" />
   <rect x="4" y="4" width="504" height="504" rx="112" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="6" />
 
-  <!-- Subtle invitation card peeking out of envelope -->
-  <rect x="148" y="122" width="216" height="148" rx="22" fill="#FFFFFF" fill-opacity="0.22" />
+  <!-- Right Wedding Ring (Champagne Gold) -->
+  <circle cx="308" cy="296" r="94" stroke="url(#goldRing)" stroke-width="34" />
 
-  <!-- Main crisp white invitation envelope body -->
-  <rect x="104" y="164" width="304" height="220" rx="34" fill="#FFFFFF" />
-
-  <!-- Envelope inner V-flap stroke (echoing clean geometric stroke weight) -->
+  <!-- Clean weave knockout at top intersection (left ring passes OVER right ring) -->
   <path
-    d="M126 192L242.8 279.6C250.6 285.5 261.4 285.5 269.2 279.6L386 192"
-    stroke="url(#flap)"
-    stroke-width="24"
+    d="M 236.15 207.67 A 94 94 0 0 1 271.62 230.70"
+    stroke="url(#bg)"
+    stroke-width="48"
     stroke-linecap="round"
+  />
+
+  <!-- Left Wedding Ring (Pure Platinum White) -->
+  <circle cx="204" cy="296" r="94" stroke="url(#whiteRing)" stroke-width="34" />
+
+  <!-- Clean weave knockout at bottom intersection (right ring passes OVER left ring) -->
+  <path
+    d="M 275.85 384.33 A 94 94 0 0 1 240.38 361.30"
+    stroke="url(#bg)"
+    stroke-width="48"
+    stroke-linecap="round"
+  />
+
+  <!-- Seamless gold foreground bridge arc overlapping the identical gold circle -->
+  <path
+    d="M 301.44 389.77 A 94 94 0 0 1 225.00 340.13"
+    stroke="url(#goldRing)"
+    stroke-width="34"
+    stroke-linecap="round"
+  />
+
+  <!-- Faceted Wedding Diamond crowning the interlocking rings -->
+  <polygon points="222,100 290,100 316,130 256,186 196,130" fill="url(#diamondTop)" />
+  <polygon points="256,130 316,130 256,186" fill="url(#diamondSide)" />
+  <polygon points="222,100 290,100 276,130 236,130" fill="#FFFFFF" />
+  <polygon points="236,130 276,130 256,186" fill="#E0F2FE" fill-opacity="0.7" />
+  <path
+    d="M 196 130 H 316 M 222 100 L 236 130 L 256 186 L 276 130 L 290 100"
+    stroke="#0759BC"
+    stroke-opacity="0.22"
+    stroke-width="4"
     stroke-linejoin="round"
   />
 
-  <!-- Interlocking twin subtle rings / bottom fold detail -->
+  <!-- Delicate 4-point wedding sparkles -->
   <path
-    d="M128 358L196 296M384 358L316 296"
-    stroke="url(#flap)"
-    stroke-opacity="0.22"
-    stroke-width="18"
-    stroke-linecap="round"
+    d="M 140 122 L 146 138 L 162 144 L 146 150 L 140 166 L 134 150 L 118 144 L 134 138 Z"
+    fill="#FEF08A"
+    fill-opacity="0.92"
   />
-
-  <!-- Center heart wax seal on envelope fold -->
-  <circle cx="256" cy="284" r="46" fill="#FFFFFF" />
   <path
-    d="M256 312.5C254.2 312.5 252.5 311.8 251.1 310.5C235.2 296.2 223 285.2 223 271.5C223 261 231.1 253 241.3 253C247.3 253 252.8 255.9 256 260.4C259.2 255.9 264.7 253 270.7 253C280.9 253 289 261 289 271.5C289 285.2 276.8 296.2 260.9 310.5C259.5 311.8 257.8 312.5 256 312.5Z"
-    fill="url(#heart)"
+    d="M 372 122 L 378 138 L 394 144 L 378 150 L 372 166 L 366 150 L 350 144 L 366 138 Z"
+    fill="#FFFFFF"
+    fill-opacity="0.88"
   />
-
-  <!-- Top-right sibling status/sparkle badge matching whatsapp-service geometry -->
-  <circle cx="390" cy="134" r="46" fill="url(#bg)" />
-  <circle cx="390" cy="134" r="29" fill="url(#accent)" />
 </svg>
