@@ -1,0 +1,142 @@
+---
+import PublicPageHero from "./PublicPageHero.astro";
+
+interface Bagian {
+  judul: string;
+  isi: string;
+}
+
+interface Riwayat {
+  versi: string;
+  tanggal: string;
+  ringkasan: string;
+}
+
+interface Props {
+  judul: string;
+  versi: string;
+  tanggalBerlakuTeks: string;
+  pengantar: string;
+  bagian: Bagian[];
+  riwayat: Riwayat[];
+}
+
+const { judul, versi, tanggalBerlakuTeks, pengantar, bagian, riwayat } = Astro.props;
+
+// Baris berawalan "- " dirender sebagai daftar; sisanya paragraf.
+function pecah(isi: string) {
+  const baris = isi.split("\n");
+  const hasil: { daftar: boolean; teks: string[] }[] = [];
+  for (const b of baris) {
+    const item = b.startsWith("- ");
+    const teks = item ? b.slice(2) : b;
+    const akhir = hasil[hasil.length - 1];
+    if (akhir && akhir.daftar === item) akhir.teks.push(teks);
+    else hasil.push({ daftar: item, teks: [teks] });
+  }
+  return hasil;
+}
+---
+
+<PublicPageHero
+  eyebrow="Dokumen Hukum"
+  title={judul}
+  description={pengantar}
+  breadcrumbs={[{ label: judul }]}
+>
+  <Fragment slot="meta">
+    <span class="adm-badge adm-badge-accent">Versi {versi}</span>
+    <span aria-hidden="true">&middot;</span>
+    <span>Berlaku sejak {tanggalBerlakuTeks}</span>
+    <span aria-hidden="true">&middot;</span>
+    <span>{bagian.length} pasal</span>
+  </Fragment>
+</PublicPageHero>
+
+<div class="mx-auto grid max-w-7xl items-start gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+  <nav
+    aria-label={`Daftar isi ${judul}`}
+    class="rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-4 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto"
+  >
+    <h2 class="mb-2.5 text-xs font-semibold tracking-wider text-(--adm-text-muted) uppercase">
+      Daftar isi
+    </h2>
+    <ol class="space-y-0.5 text-xs text-(--adm-text-secondary)">
+      {bagian.map((b, i) => (
+        <li>
+          <a
+            href={`#bagian-${i + 1}`}
+            class="-mx-2 flex items-start gap-2 rounded px-2 py-1 transition-colors hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)"
+          >
+            <span class="shrink-0 text-(--adm-text-muted) tabular-nums">{i + 1}.</span>
+            <span class="leading-snug">{b.judul}</span>
+          </a>
+        </li>
+      ))}
+      <li class="mt-1 border-t border-(--adm-border) pt-1">
+        <a
+          href="#riwayat-versi"
+          class="-mx-2 block rounded px-2 py-1 transition-colors hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)"
+        >
+          Riwayat versi
+        </a>
+      </li>
+    </ol>
+  </nav>
+
+  <div class="min-w-0 space-y-5">
+    {bagian.map((b, i) => (
+      <section id={`bagian-${i + 1}`} class="adm-card scroll-mt-20 space-y-2.5 p-5">
+        <h2 class="text-sm font-semibold text-(--adm-text-primary) sm:text-base">
+          <span class="mr-1.5 text-(--adm-accent) tabular-nums">{i + 1}.</span>
+          {b.judul}
+        </h2>
+        <div class="space-y-2">
+          {pecah(b.isi).map((p) =>
+            p.daftar ? (
+              <ul class="list-disc space-y-1.5 pl-5 text-xs leading-relaxed text-(--adm-text-secondary) sm:text-sm">
+                {p.teks.map((t) => (
+                  <li>{t}</li>
+                ))}
+              </ul>
+            ) : (
+              <p class="text-xs leading-relaxed text-(--adm-text-secondary) sm:text-sm">
+                {p.teks.join(" ")}
+              </p>
+            ),
+          )}
+        </div>
+      </section>
+    ))}
+
+    <section id="riwayat-versi" class="adm-card scroll-mt-20 p-5">
+      <h2 class="mb-3 text-sm font-semibold text-(--adm-text-primary) sm:text-base">
+        Riwayat versi
+      </h2>
+      <ul class="space-y-2 text-xs text-(--adm-text-secondary) sm:text-sm">
+        {riwayat.map((r) => (
+          <li class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span class="adm-badge">v{r.versi}</span>
+            <span class="text-xs text-(--adm-text-muted)">{r.tanggal}</span>
+            <span>{r.ringkasan}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <div class="adm-card flex flex-wrap items-center justify-between gap-3 p-4 text-xs text-(--adm-text-secondary)">
+      <span>Terakhir diperbarui: {tanggalBerlakuTeks}</span>
+      <div class="flex flex-wrap gap-3">
+        <a href="/syarat-ketentuan" class="adm-link inline-block py-1">
+          Syarat dan Ketentuan
+        </a>
+        <a href="/kebijakan-privasi" class="adm-link inline-block py-1">
+          Kebijakan Privasi
+        </a>
+        <a href="/layanan-mandiri" class="adm-link inline-block py-1">
+          Layanan Mandiri
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

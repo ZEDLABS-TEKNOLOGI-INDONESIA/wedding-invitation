@@ -1,34 +1,53 @@
 ---
+import DokumenHukum from "../components/public/DokumenHukum.astro";
 import PublicLayout from "../layouts/PublicLayout.astro";
+
+const bagian = [
+  {
+    judul: "Komitmen Perlindungan Data",
+    isi: "Privasi data pasangan dan tamu undangan merupakan prioritas utama ZEDLABS Teknologi Indonesia. Dokumen ini menjelaskan jenis data yang diproses, cara pengamanannya, serta hak pengguna dalam layanan Wedding Management.",
+  },
+  {
+    judul: "Data yang Kami Proses",
+    isi: "- Data akun pengelola: nama lengkap, username, nomor WhatsApp, dan hash kata sandi untuk Pemilik Utama maupun Akun Pasangan.\n- Data undangan & persiapan nikah: profil mempelai, jadwal acara, galeri, rekening tanda kasih, to-do list, anggaran, tabungan, berkas KUA, dan jurnal.\n- Data tamu: nama tamu, nomor WhatsApp (bila diisi), kategori, status RSVP, ucapan doa, dan catatan waktu QR Check-In.",
+  },
+  {
+    judul: "Isolasi Data Antar Pasangan",
+    isi: "Seluruh data konfigurasi undangan, daftar tamu, RSVP, ucapan, media, anggaran, tabungan, jurnal, dan sesi WhatsApp dipisahkan secara ketat berdasarkan wedding_id sehingga tidak pernah dapat diakses maupun dicampurkan dengan ruang undangan pasangan lain.",
+  },
+  {
+    judul: "Keamanan Kata Sandi & Verifikasi OTP",
+    isi: "- Kata sandi pengguna tidak pernah disimpan dalam teks polos, melainkan menggunakan hash kriptografi scrypt dengan salt acak.\n- Kode OTP 6 digit untuk pendaftaran dan pemulihan kata sandi disimpan dalam bentuk hash SHA-256 dengan masa berlaku terbatas 10 menit.\n- Komunikasi pengiriman notifikasi ke WhatsApp Gateway ZEDLABS dilindungi tanda tangan kriptografi HMAC-SHA256 v2.",
+  },
+  {
+    judul: "Penggunaan Nomor WhatsApp",
+    isi: "Nomor WhatsApp akun hanya digunakan untuk pengiriman kode OTP pendaftaran, reset kata sandi, notifikasi RSVP/ucapan sesuai pengaturan Anda, serta dukungan teknis bila Anda menghubungi kami. Kami tidak pernah menjual atau membagikan nomor pengguna maupun nomor tamu kepada pihak ketiga untuk keperluan pemasaran.",
+  },
+  {
+    judul: "Hak Pengguna & Retensi Data",
+    isi: "- Pasangan berhak memperbarui, mengekspor (format CSV), atau menghapus daftar tamu dan konten undangan kapan saja melalui dashboard.\n- Untuk permintaan penghapusan akun atau ruang undangan secara permanen, silakan ajukan melalui halaman Hubungi Kami dengan menyertakan username dan slug undangan Anda.",
+  },
+];
+
+const riwayat = [
+  {
+    versi: "1.0",
+    tanggal: "1 Januari 2026",
+    ringkasan: "Penerbitan awal Kebijakan Privasi platform Wedding Management.",
+  },
+];
 ---
 
-<PublicLayout title="Kebijakan Privasi | Wedding Management">
-  <div class="mx-auto max-w-3xl space-y-5 px-6 py-12">
-    <h1 class="text-2xl font-semibold text-(--adm-text-primary)">
-      Kebijakan Privasi
-    </h1>
-    <div class="adm-card space-y-4 p-6 text-[13px] leading-relaxed text-(--adm-text-secondary)">
-      <p>
-        Privasi data pasangan dan tamu undangan merupakan prioritas utama kami:
-      </p>
-      <ul class="list-disc space-y-2 pl-5">
-        <li>
-          <strong>Isolasi Data Antar Pasangan:</strong> Seluruh data konfigurasi
-          undangan, daftar tamu, RSVP, ucapan, anggaran, tabungan, dan jurnal
-          dipisahkan berdasarkan <code>wedding_id</code> sehingga tidak dapat
-          diakses oleh pasangan lain.
-        </li>
-        <li>
-          <strong>Keamanan Kata Sandi &amp; OTP:</strong> Password disimpan
-          menggunakan hash <code>scrypt</code> dengan salt acak; kode OTP
-          disimpan dalam bentuk hash SHA-256 dengan masa berlaku 10 menit.
-        </li>
-        <li>
-          <strong>Penggunaan Nomor WhatsApp:</strong> Nomor WhatsApp akun
-          digunakan semata-mata untuk pengiriman kode OTP pendaftaran, reset
-          password, dan notifikasi undangan sesuai pengaturan Anda.
-        </li>
-      </ul>
-    </div>
-  </div>
+<PublicLayout
+  title="Kebijakan Privasi | Wedding Management"
+  description="Kebijakan Privasi Wedding Management: isolasi data per pasangan, keamanan hash scrypt & OTP SHA-256, penggunaan nomor WhatsApp, dan hak subjek data."
+>
+  <DokumenHukum
+    judul="Kebijakan Privasi"
+    versi="1.0"
+    tanggalBerlakuTeks="1 Januari 2026"
+    pengantar="Penjelasan transparan mengenai data yang dikumpulkan, isolasi per pasangan, pengamanan kriptografi, dan hak pengguna di Wedding Management."
+    bagian={bagian}
+    riwayat={riwayat}
+  />
 </PublicLayout>

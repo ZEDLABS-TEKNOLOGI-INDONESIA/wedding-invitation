@@ -1,5 +1,9 @@
 ---
-import { Menu, Moon, Sun, X } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
+import PublicFooter from "../components/public/PublicFooter.astro";
+import PublicMobileNav, {
+  type PublicNavItem,
+} from "../components/public/PublicMobileNav";
 import { getAuthSession } from "../lib/auth";
 import { getPlatformConfig } from "../lib/db";
 import Layout from "./Layout.astro";
@@ -19,43 +23,75 @@ const {
 const session = getAuthSession(Astro.cookies);
 const platformCfg = getPlatformConfig();
 const platformName = platformCfg.PLATFORM_NAME || "Wedding Management";
-const tahunSekarang = new Date().getFullYear();
+const dashboardHref = session?.role === "superadmin" ? "/superadmin" : "/admin";
 
-const nav = [
+const nav: PublicNavItem[] = [
   { href: "/#fitur", label: "Fitur" },
   { href: "/#harga", label: "Harga" },
   { href: "/demo", label: "Demo" },
+  { href: "/layanan-mandiri", label: "Panduan", aktifDi: ["/layanan-mandiri"] },
   { href: "/dokumentasi", label: "Dokumentasi" },
   { href: "/faq", label: "FAQ" },
   { href: "/bantuan", label: "Bantuan" },
 ];
+
+const currentPath = Astro.url.pathname;
+const cekAktif = (item: PublicNavItem) =>
+  item.aktifDi ? item.aktifDi.includes(currentPath) : currentPath === item.href;
 ---
 
 <Layout title={title} description={description} noindex={noindex}>
   <div class="admin-shell flex min-h-dvh flex-col bg-(--adm-bg-primary) text-(--adm-text-primary)">
-    {/* Header identik gaya whatsapp-service */}
-    <header class="sticky top-0 z-40 border-b border-(--adm-border) bg-(--adm-bg-primary)/85 backdrop-blur-md">
-      <div class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-5 sm:px-6">
-        <a href="/" class="flex shrink-0 items-center gap-2.5">
-          <img
-            src="/logo.png"
-            alt={platformName}
-            class="h-7 w-7 rounded-md object-contain"
-          />
-          <span class="hidden text-sm font-semibold text-(--adm-text-primary) sm:inline">
-            {platformName}
-          </span>
-        </a>
+    <a href="#konten-utama" class="skip-link">
+      Lewati ke konten utama
+    </a>
 
-        <nav class="hidden items-center gap-1 text-sm md:flex">
-          {nav.map((item) => (
-            <a
-              href={item.href}
-              class="rounded-md px-3 py-1.5 text-[13px] text-(--adm-text-secondary) transition-colors hover:bg-(--adm-bg-tertiary) hover:text-(--adm-text-primary)"
-            >
-              {item.label}
-            </a>
-          ))}
+    {/* Header 1:1 struktur & gaya whatsapp-service */}
+    <header class="sticky top-0 z-40 border-b border-(--adm-border) bg-(--adm-bg-secondary)">
+      <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div class="flex shrink-0 items-center gap-2.5">
+          <a
+            href="/"
+            aria-label={`Beranda ${platformName}`}
+            class="flex min-h-[44px] items-center gap-2.5 no-underline"
+          >
+            <img
+              src="/favicon.svg"
+              alt=""
+              width="28"
+              height="28"
+              class="h-7 w-7 rounded-md"
+            />
+            <span class="hidden text-sm font-semibold tracking-tight text-(--adm-text-primary) sm:inline">
+              {platformName}
+            </span>
+          </a>
+          <a
+            href="/dokumentasi"
+            class="hidden items-center rounded-full border border-(--adm-info-border) bg-(--adm-accent-soft) px-2 py-0.5 font-mono text-[11px] font-medium text-(--adm-accent) transition-opacity hover:opacity-90 md:inline-flex"
+          >
+            Multi-Pasangan
+          </a>
+        </div>
+
+        <nav aria-label="Navigasi utama" class="hidden items-center gap-1 text-sm lg:flex">
+          {nav.map((item) => {
+            const aktif = cekAktif(item);
+            return (
+              <a
+                href={item.href}
+                aria-current={aktif ? "page" : undefined}
+                class:list={[
+                  "rounded-md px-3 py-1.5 whitespace-nowrap transition-colors duration-150",
+                  aktif
+                    ? "font-semibold text-(--adm-accent)"
+                    : "text-(--adm-text-secondary) hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)",
+                ]}
+              >
+                {item.label}
+              </a>
+            );
+          })}
         </nav>
 
         <div class="flex shrink-0 items-center gap-2">
@@ -64,7 +100,7 @@ const nav = [
             type="button"
             aria-label="Ganti tema terang/gelap"
             title="Ganti Tema"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-secondary) text-(--adm-text-secondary) transition hover:text-(--adm-text-primary)"
+            class="inline-flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-md border border-(--adm-border) bg-(--adm-bg-tertiary) text-(--adm-text-secondary) transition-colors hover:bg-(--adm-bg-overlay) hover:text-(--adm-text-primary)"
           >
             <Moon className="h-4 w-4 dark:hidden" />
             <Sun className="hidden h-4 w-4 dark:inline" />
@@ -72,8 +108,8 @@ const nav = [
 
           {session ? (
             <a
-              href={session.role === "superadmin" ? "/superadmin" : "/admin"}
-              class="adm-btn adm-btn-primary adm-btn-sm"
+              href={dashboardHref}
+              class="adm-btn adm-btn-primary hidden sm:inline-flex"
             >
               Dashboard
             </a>
@@ -81,94 +117,35 @@ const nav = [
             <>
               <a
                 href="/masuk"
-                class="adm-btn adm-btn-secondary adm-btn-sm hidden sm:inline-flex"
+                class="adm-btn adm-btn-ghost hidden sm:inline-flex"
               >
                 Masuk
               </a>
               <a
                 href="/daftar"
-                class="adm-btn adm-btn-primary adm-btn-sm hidden sm:inline-flex"
+                class="adm-btn adm-btn-primary hidden sm:inline-flex"
               >
                 Daftar
               </a>
             </>
           )}
 
-          <button
-            id="pub-mobile-toggle"
-            type="button"
-            aria-label="Buka menu navigasi"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-md text-(--adm-text-primary) hover:bg-(--adm-bg-tertiary) md:hidden"
-          >
-            <Menu className="h-5 w-5" id="pub-menu-open" />
-            <X className="hidden h-5 w-5" id="pub-menu-close" />
-          </button>
+          <PublicMobileNav
+            nav={nav}
+            currentPath={currentPath}
+            isLoggedIn={Boolean(session)}
+            dashboardHref={dashboardHref}
+            client:load
+          />
         </div>
       </div>
-
-      {/* Mobile menu */}
-      <nav
-        id="pub-mobile-menu"
-        class="hidden space-y-1 border-t border-(--adm-border) bg-(--adm-bg-secondary) px-4 py-3 md:hidden"
-      >
-        {nav.map((item) => (
-          <a
-            href={item.href}
-            class="block rounded-md px-3 py-2 text-sm text-(--adm-text-secondary) hover:bg-(--adm-bg-tertiary) hover:text-(--adm-text-primary)"
-          >
-            {item.label}
-          </a>
-        ))}
-        {!session && (
-          <div class="grid grid-cols-2 gap-2 pt-2 sm:hidden">
-            <a href="/masuk" class="adm-btn adm-btn-secondary justify-center">
-              Masuk
-            </a>
-            <a href="/daftar" class="adm-btn adm-btn-primary justify-center">
-              Daftar
-            </a>
-          </div>
-        )}
-      </nav>
     </header>
 
-    <main class="flex-1">
+    <main id="konten-utama" tabindex="-1" class="w-full flex-1 focus:outline-none">
       <slot />
     </main>
 
-    {/* Footer identik dengan whatsapp-service */}
-    <footer class="flex min-h-[44px] shrink-0 flex-col flex-wrap items-center justify-center gap-x-6 gap-y-1.5 border-t border-(--adm-border) bg-(--adm-bg-secondary) px-4 py-2.5 text-center text-[11px] text-(--adm-text-secondary) md:flex-row md:px-6">
-      <span class="whitespace-nowrap">
-        &copy; 2018 - {tahunSekarang}{" "}
-        <a
-          href="https://zedlabs.id"
-          target="_blank"
-          rel="noreferrer"
-          class="font-bold tracking-wide text-(--adm-text-secondary) uppercase hover:text-(--adm-accent)"
-        >
-          ZEDLABS TEKNOLOGI INDONESIA
-        </a>
-      </span>
-      <nav class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-        <a href="/dokumentasi" class="hover:text-(--adm-accent)">Dokumentasi</a>
-        <span class="opacity-40">|</span>
-        <a href="/bantuan" class="hover:text-(--adm-accent)">Hubungi Kami</a>
-        <span class="opacity-40">|</span>
-        <a href="/faq" class="hover:text-(--adm-accent)">FAQ</a>
-        <span class="opacity-40">|</span>
-        <a href="/syarat-ketentuan" class="hover:text-(--adm-accent)">
-          Syarat dan Ketentuan
-        </a>
-        <span class="opacity-40">|</span>
-        <a href="/kebijakan-privasi" class="hover:text-(--adm-accent)">
-          Kebijakan Privasi
-        </a>
-        <span class="opacity-40">|</span>
-        <a href="/layanan-mandiri" class="hover:text-(--adm-accent)">
-          Layanan Mandiri
-        </a>
-      </nav>
-    </footer>
+    <PublicFooter varian="publik" platformName={platformName} />
   </div>
 </Layout>
 
@@ -182,16 +159,5 @@ const nav = [
     } catch {
       // ignore
     }
-  });
-
-  const mobileToggle = document.getElementById("pub-mobile-toggle");
-  const mobileMenu = document.getElementById("pub-mobile-menu");
-  const iconOpen = document.getElementById("pub-menu-open");
-  const iconClose = document.getElementById("pub-menu-close");
-
-  mobileToggle?.addEventListener("click", () => {
-    const hidden = mobileMenu?.classList.toggle("hidden");
-    iconOpen?.classList.toggle("hidden", !hidden);
-    iconClose?.classList.toggle("hidden", hidden);
   });
 </script>

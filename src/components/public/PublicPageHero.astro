@@ -1,0 +1,78 @@
+---
+interface Breadcrumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  description: string;
+  breadcrumbs?: Breadcrumb[];
+}
+
+const { eyebrow, title, description, breadcrumbs = [] } = Astro.props;
+---
+
+<section class="pub-hero border-b border-(--adm-border) bg-(--adm-bg-secondary)">
+  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
+    {breadcrumbs.length > 0 && (
+      <nav aria-label="Breadcrumb" class="mb-3">
+        <ol class="flex flex-wrap items-center gap-1.5 text-xs text-(--adm-text-secondary)">
+          <li>
+            <a href="/" class="hover:text-(--adm-accent)">
+              Beranda
+            </a>
+          </li>
+          {breadcrumbs.map((b) => (
+            <li class="flex items-center gap-1.5">
+              <span aria-hidden="true">/</span>
+              {b.href ? (
+                <a href={b.href} class="hover:text-(--adm-accent)">
+                  {b.label}
+                </a>
+              ) : (
+                <span class="font-medium text-(--adm-text-primary)" aria-current="page">
+                  {b.label}
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )}
+
+    <p class="text-xs font-semibold tracking-wider text-(--adm-accent) uppercase">
+      {eyebrow}
+    </p>
+    <h1 class="mt-1.5 text-(length:--adm-text-2xl) font-bold tracking-tight text-(--adm-text-primary)">
+      {title}
+    </h1>
+    <p class="mt-2.5 max-w-2xl text-sm leading-relaxed text-(--adm-text-secondary) sm:text-base">
+      {description}
+    </p>
+
+    {Astro.slots.has("meta") && (
+      <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-(--adm-text-secondary)">
+        <slot name="meta" />
+      </div>
+    )}
+
+    {Astro.slots.has("actions") && (
+      <div class="mt-6 flex flex-wrap gap-2.5">
+        <slot name="actions" />
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .pub-hero {
+    background-image:
+      radial-gradient(ellipse 60% 80% at 85% 0%, var(--adm-accent-soft), transparent 70%),
+      radial-gradient(var(--adm-border) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      24px 24px;
+  }
+</style>

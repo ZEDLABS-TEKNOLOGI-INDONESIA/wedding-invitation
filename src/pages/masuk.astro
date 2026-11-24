@@ -12,7 +12,7 @@ if (session) {
 
 <AuthLayout
   title="Masuk"
-  description="Masuk dengan username & password akun Anda (Pemilik Undangan, Pasangan, atau Superadmin)."
+  description="Gunakan username dan kata sandi akun Anda (Pemilik Undangan, Pasangan, atau Superadmin)."
 >
   <form id="login-form" class="space-y-4">
     <div>
@@ -30,12 +30,9 @@ if (session) {
 
     <div>
       <div class="flex items-center justify-between">
-        <label for="password" class="adm-label">Password</label>
-        <a
-          href="/lupa-password"
-          class="text-xs font-medium text-(--adm-accent) hover:underline"
-        >
-          Lupa password?
+        <label for="password" class="adm-label">Kata sandi</label>
+        <a href="/lupa-password" class="adm-link text-xs">
+          Lupa kata sandi?
         </a>
       </div>
       <input
@@ -44,36 +41,41 @@ if (session) {
         type="password"
         required
         autocomplete="current-password"
-        placeholder="Masukkan password"
+        placeholder="Masukkan kata sandi"
         class="adm-input"
       />
     </div>
 
     <div
       id="login-error"
-      class="hidden rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-400"
+      role="alert"
+      class="adm-alert adm-alert-danger hidden text-xs"
     >
     </div>
 
-    <button id="login-submit" type="submit" class="adm-btn adm-btn-primary w-full">
-      Masuk
+    <button
+      id="login-submit"
+      type="submit"
+      class="adm-btn adm-btn-primary adm-btn-lg adm-btn-block"
+    >
+      Masuk ke panel
     </button>
   </form>
 
-  <p class="mt-5 text-center text-xs text-(--adm-text-secondary)">
+  <p class="mt-6 text-center text-sm text-(--adm-text-secondary)">
     Belum punya akun undangan?{" "}
-    <a href="/daftar" class="font-medium text-(--adm-accent) hover:underline">
+    <a href="/daftar" class="adm-link font-medium">
       Daftar gratis sekarang
     </a>
   </p>
 
-  <p class="mt-3 text-center text-[11px] text-(--adm-text-secondary)">
+  <p class="mt-4 text-center text-xs text-(--adm-text-secondary)">
     Dengan masuk, Anda menyetujui{" "}
-    <a href="/syarat-ketentuan" class="text-(--adm-accent) hover:underline">
+    <a href="/syarat-ketentuan" target="_blank" rel="noopener noreferrer" class="adm-link">
       Syarat dan Ketentuan
     </a>{" "}
     dan{" "}
-    <a href="/kebijakan-privasi" class="text-(--adm-accent) hover:underline">
+    <a href="/kebijakan-privasi" target="_blank" rel="noopener noreferrer" class="adm-link">
       Kebijakan Privasi
     </a>
     .
@@ -108,14 +110,14 @@ if (session) {
         window.location.href = data.redirectTo || "/admin";
         return;
       }
-      errBox.textContent = data.error || "Gagal masuk. Periksa username & password.";
+      errBox.textContent = data.error || "Gagal masuk. Periksa username & kata sandi.";
       errBox.classList.remove("hidden");
     } catch {
       errBox.textContent = "Gagal terhubung ke server.";
       errBox.classList.remove("hidden");
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = "Masuk";
+      submitBtn.textContent = "Masuk ke panel";
     }
   });
 </script>

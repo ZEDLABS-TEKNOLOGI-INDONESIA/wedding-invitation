@@ -1,38 +1,53 @@
 ---
+import DokumenHukum from "../components/public/DokumenHukum.astro";
 import PublicLayout from "../layouts/PublicLayout.astro";
+
+const bagian = [
+  {
+    judul: "Ruang Lingkup Layanan",
+    isi: "Wedding Management yang dikelola oleh ZEDLABS Teknologi Indonesia menyediakan platform undangan pernikahan digital, pengelolaan daftar tamu & RSVP, generator PDF & QR Check-In, modul persiapan nikah, serta integrasi WhatsApp Gateway.\nDengan mendaftar dan menggunakan layanan ini, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh ketentuan di halaman ini.",
+  },
+  {
+    judul: "Akun & Isolasi Ruang Undangan",
+    isi: "- Setiap pasangan berhak atas 1 (satu) ruang undangan terisolasi (/u/slug) dengan maksimal 2 akun pengelola (1 Pemilik Utama dan 1 Akun Pasangan).\n- Pengguna bertanggung jawab menjaga kerahasiaan username, kata sandi, serta kode OTP WhatsApp masing-masing akun.\n- Nama slug undangan yang sudah dipilih tidak boleh menyerupai merek pihak lain atau mengandung unsur yang melanggar hukum dan kesusilaan.",
+  },
+  {
+    judul: "Kuota Tamu & Ketentuan Pembayaran",
+    isi: "- Setiap ruang undangan memperoleh kuota gratis hingga 200 (dua ratus) kontak/tamu beserta seluruh fitur inti platform.\n- Penambahan di atas 200 tamu dikenakan biaya Rp200 per tamu dengan nominal transaksi minimum Rp50.000 (+250 kuota tamu tambahan).\n- Aktivasi kuota tambahan dilakukan setelah pembayaran terverifikasi. Pembayaran yang telah berhasil diaktifkan menjadi kuota tidak dapat dikembalikan kecuali terjadi kegagalan sistem dari pihak pengelola.",
+  },
+  {
+    judul: "Penggunaan Integrasi WhatsApp & Anti-Spam",
+    isi: "- Fitur pengiriman WhatsApp hanya boleh digunakan untuk mengirim undangan pernikahan, konfirmasi RSVP, dan pengingat acara kepada tamu yang relevan.\n- Pengguna dilarang keras memanfaatkan layanan untuk pengiriman pesan massal promosi komersial (spam), penipuan, atau konten yang melanggar ketentuan WhatsApp maupun hukum yang berlaku.\n- Risiko pembatasan nomor akibat pola pengiriman yang melanggar kebijakan pihak penyedia pesan berada pada tanggung jawab pemilik nomor.",
+  },
+  {
+    judul: "Konten Pengguna & Penonaktifan",
+    isi: "- Seluruh teks, foto, musik, dan data tamu yang diunggah sepenuhnya menjadi tanggung jawab pemilik ruang undangan.\n- ZEDLABS Teknologi Indonesia berhak menonaktifkan atau membatasi sementara ruang undangan apabila ditemukan penyalahgunaan sistem, konten ilegal, pelanggaran hak cipta, atau aktivitas spam.",
+  },
+  {
+    judul: "Perubahan Ketentuan & Kontak",
+    isi: "Pengelola dapat memperbarui Syarat dan Ketentuan ini sewaktu-waktu seiring pengembangan layanan. Perubahan akan dicatat pada bagian Riwayat Versi di bawah. Untuk pertanyaan atau keberatan, silakan hubungi kami melalui halaman Bantuan.",
+  },
+];
+
+const riwayat = [
+  {
+    versi: "1.0",
+    tanggal: "1 Januari 2026",
+    ringkasan: "Penerbitan awal Syarat dan Ketentuan platform Wedding Management multi-pasangan.",
+  },
+];
 ---
 
-<PublicLayout title="Syarat dan Ketentuan | Wedding Management">
-  <div class="mx-auto max-w-3xl space-y-5 px-6 py-12">
-    <h1 class="text-2xl font-semibold text-(--adm-text-primary)">
-      Syarat dan Ketentuan
-    </h1>
-    <div class="adm-card space-y-4 p-6 text-[13px] leading-relaxed text-(--adm-text-secondary)">
-      <p>
-        Dengan mendaftar dan menggunakan layanan Wedding Management milik
-        <strong>ZEDLABS Teknologi Indonesia</strong>, Anda menyetujui ketentuan
-        berikut:
-      </p>
-      <ul class="list-disc space-y-2 pl-5">
-        <li>
-          Setiap pasangan berhak atas 1 ruang undangan terisolasi (/u/slug)
-          dengan maksimal 2 akun pengelola (1 Pemilik Utama dan 1 Akun Pasangan).
-        </li>
-        <li>
-          Kuota gratis mencakup hingga 200 kontak/tamu. Penambahan di atas 200
-          tamu dikenakan biaya Rp200 per tamu dengan nominal transaksi minimum
-          Rp50.000 (+250 kuota tamu).
-        </li>
-        <li>
-          Penggunaan fitur integrasi WhatsApp wajib mematuhi kebijakan anti-spam
-          dan hanya digunakan untuk mengirim undangan, konfirmasi RSVP, dan
-          pengingat kepada tamu yang relevan.
-        </li>
-        <li>
-          Pengelola berhak menonaktifkan ruang undangan apabila ditemukan
-          penyalahgunaan, konten melanggar hukum, atau aktivitas spam.
-        </li>
-      </ul>
-    </div>
-  </div>
+<PublicLayout
+  title="Syarat dan Ketentuan | Wedding Management"
+  description="Syarat dan Ketentuan penggunaan platform Wedding Management milik ZEDLABS Teknologi Indonesia: akun pasangan, kuota tamu, integrasi WhatsApp, dan ketentuan konten."
+>
+  <DokumenHukum
+    judul="Syarat dan Ketentuan"
+    versi="1.0"
+    tanggalBerlakuTeks="1 Januari 2026"
+    pengantar="Ketentuan penggunaan layanan Wedding Management dari ZEDLABS Teknologi Indonesia untuk pemilik ruang undangan, akun pasangan, dan pengunjung."
+    bagian={bagian}
+    riwayat={riwayat}
+  />
 </PublicLayout>

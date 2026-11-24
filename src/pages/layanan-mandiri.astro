@@ -1,43 +1,181 @@
 ---
+import DocsShell, { type DocsTocItem } from "../components/public/DocsShell.astro";
 import PublicLayout from "../layouts/PublicLayout.astro";
+import { FREE_GUEST_QUOTA, MIN_PAYMENT_AMOUNT, PRICE_PER_GUEST } from "../lib/billing";
+
+const toc: DocsTocItem[] = [
+  { id: "alur-mandiri", label: "Langkah layanan mandiri" },
+  { id: "format-csv", label: "Format impor tamu CSV" },
+  { id: "privasi-keamanan", label: "Keamanan & tips" },
+  { id: "butuh-bantuan", label: "Butuh bantuan?" },
+];
+
+const langkah = [
+  {
+    judul: "Pendaftaran & Verifikasi OTP WhatsApp",
+    isi: "Buka halaman /daftar, lengkapi panggilan mempelai, pilih URL unik /u/nama-pasangan, buat username & password, lalu masukkan kode OTP 6 digit yang dikirim ke WhatsApp aktif Anda.",
+  },
+  {
+    judul: "Atur Tampilan Undangan & Tambahkan 1 Akun Pasangan",
+    isi: "Masuk ke /admin, pilih 1 dari 6 tema warna publik, lengkapi data acara dan lokasi peta. Buka Konfigurasi → Akun & Pasangan untuk membuat akun pendamping agar pasangan bisa ikut mengelola.",
+  },
+  {
+    judul: "Impor Daftar Tamu (Gratis hingga 200 Tamu)",
+    isi: "Tambahkan tamu satu per satu atau impor massal memakai berkas CSV/Excel. Sistem otomatis membuatkan tautan personal ?to=Nama+Tamu dan kode QR unik untuk tiap tamu.",
+  },
+  {
+    judul: "Penambahan Kuota Tamu (> 200 Kontak)",
+    isi: `Jika total tamu Anda melebihi ${FREE_GUEST_QUOTA} kontak, buka menu Kuota & Tagihan di panel admin. Tentukan kebutuhan kuota (Rp${PRICE_PER_GUEST}/tamu, min. Rp${MIN_PAYMENT_AMOUNT.toLocaleString("id-ID")}), transfer sesuai invoice, lalu unggah bukti bayar untuk verifikasi.`,
+  },
+  {
+    judul: "Tautkan WhatsApp Gateway, Kirim Undangan & Check-In Hari H",
+    isi: "Hubungkan nomor WhatsApp via QR/Pairing Code, kirim undangan personal (teks + opsi PDF 4 halaman & kartu QR), aktifkan pengingat H-1, dan gunakan halaman /checkin saat resepsi berlangsung.",
+  },
+];
+
+const kolomCsv = [
+  { kolom: "name", wajib: "Wajib", contoh: "Budi Santoso", ket: "Nama tamu yang tampil di sapaan undangan dan kartu QR." },
+  { kolom: "phone", wajib: "Opsional", contoh: "081234567890", ket: "Nomor WhatsApp tamu (format 08... atau 62...) untuk kirim otomatis." },
+  { kolom: "group / category", wajib: "Opsional", contoh: "Keluarga / Kantor", ket: "Pengelompokan tamu untuk memudahkan filter dan rekap." },
+];
 ---
 
-<PublicLayout title="Panduan Layanan Mandiri | Wedding Management">
-  <div class="mx-auto max-w-3xl space-y-5 px-6 py-12">
-    <div>
-      <h1 class="text-2xl font-semibold text-(--adm-text-primary)">
-        Panduan Layanan Mandiri
-      </h1>
-      <p class="mt-1.5 text-sm text-(--adm-text-secondary)">
-        Langkah cepat mendaftar, mengelola pasangan, hingga menambah kuota tamu secara mandiri.
-      </p>
-    </div>
+<PublicLayout
+  title="Panduan Layanan Mandiri | Wedding Management"
+  description="Langkah cepat mendaftar ruang undangan, menambahkan akun pasangan, impor daftar tamu CSV, hingga menambah kuota tamu secara mandiri."
+>
+  <DocsShell
+    eyebrow="Panduan Layanan Mandiri"
+    title="Panduan Layanan Mandiri Pasangan"
+    description="Alur praktis menyiapkan ruang undangan pernikahan dari pendaftaran OTP, kolaborasi akun berdua, impor tamu CSV, hingga upgrade kuota tamu tanpa menunggu admin."
+    currentPath="/layanan-mandiri"
+    toc={toc}
+    prev={{
+      href: "/dokumentasi",
+      title: "Dokumentasi Fitur",
+      description: "Penjelasan menyeluruh 6 tema, 6 modul manajemen nikah, WA Gateway, dan QR.",
+    }}
+    next={{
+      href: "/faq",
+      title: "Pertanyaan Umum (FAQ)",
+      description: "Jawaban cepat seputar kuota gratis, isolasi data, dan pemulihan kata sandi.",
+    }}
+  >
+    <Fragment slot="header-meta">
+      <span class="adm-badge adm-badge-accent">Aktivasi Mandiri via OTP</span>
+      <span aria-hidden="true">&middot;</span>
+      <span>Gratis hingga {FREE_GUEST_QUOTA} tamu</span>
+    </Fragment>
 
-    <ol class="space-y-3">
-      <li class="adm-card p-5 text-[13px]">
-        <strong class="text-(--adm-text-primary)">1. Pendaftaran &amp; Verifikasi OTP</strong>
-        <p class="mt-1 text-(--adm-text-secondary)">
-          Buka <a href="/daftar" class="text-(--adm-accent) underline">/daftar</a>,
-          isi nama mempelai, URL unik <code>/u/slug</code>, username, password,
-          dan nomor WhatsApp aktif. Masukkan 6 digit OTP dari WhatsApp.
+    <section id="alur-mandiri" class="scroll-mt-20 space-y-4">
+      <h2 class="text-lg font-semibold text-(--adm-text-primary)">
+        Tahapan layanan mandiri
+      </h2>
+      <ol class="relative ml-3 space-y-6 border-l border-(--adm-border) pl-6">
+        {langkah.map((l, idx) => (
+          <li class="relative">
+            <span
+              class="absolute top-0.5 -left-[37px] flex h-6 w-6 items-center justify-center rounded-full border border-(--adm-info-border) bg-(--adm-bg-secondary) text-xs font-semibold text-(--adm-accent) tabular-nums"
+              aria-hidden="true"
+            >
+              {idx + 1}
+            </span>
+            <h3 class="text-sm font-semibold text-(--adm-text-primary)">{l.judul}</h3>
+            <p class="mt-1 min-w-0 text-sm leading-relaxed text-(--adm-text-secondary)">
+              {l.isi}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section id="format-csv" class="scroll-mt-20 space-y-3 border-t border-(--adm-border) pt-6">
+      <h2 class="text-lg font-semibold text-(--adm-text-primary)">Format impor daftar tamu CSV</h2>
+      <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+        Untuk mempercepat input tamu dalam jumlah banyak, siapkan berkas CSV dengan kolom berikut
+        lalu unggah dari menu <strong>Daftar Tamu</strong> di dashboard.
+      </p>
+      <div class="adm-table-wrap adm-card">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Kolom</th>
+              <th>Status</th>
+              <th>Contoh</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {kolomCsv.map((c) => (
+              <tr>
+                <td>
+                  <code class="adm-kbd-code">{c.kolom}</code>
+                </td>
+                <td class="whitespace-nowrap">
+                  <span
+                    class={`adm-badge ${c.wajib === "Wajib" ? "adm-badge-accent" : ""}`}
+                  >
+                    {c.wajib}
+                  </span>
+                </td>
+                <td class="font-mono text-xs whitespace-nowrap text-(--adm-text-secondary)">
+                  {c.contoh}
+                </td>
+                <td class="text-xs text-(--adm-text-secondary)">{c.ket}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="privasi-keamanan" class="grid scroll-mt-20 gap-4 border-t border-(--adm-border) pt-6 sm:grid-cols-2">
+      <div class="space-y-2 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-5">
+        <h2 class="text-sm font-semibold text-(--adm-text-primary)">
+          Bila lupa password akun
+        </h2>
+        <p class="text-xs leading-relaxed text-(--adm-text-secondary) sm:text-sm">
+          Gunakan menu <a href="/lupa-password" class="adm-link">Reset Password</a> dengan
+          memasukkan username atau nomor WhatsApp yang terdaftar. Kode OTP 6 digit akan dikirim ke
+          WhatsApp akun bersangkutan — baik untuk Pemilik Utama maupun Akun Pasangan.
         </p>
-      </li>
-      <li class="adm-card p-5 text-[13px]">
-        <strong class="text-(--adm-text-primary)">2. Daftarkan 1 Akun Pasangan</strong>
-        <p class="mt-1 text-(--adm-text-secondary)">
-          Masuk ke <code>/admin</code> → <strong>Konfigurasi → Akun &amp; Pasangan</strong>,
-          lalu buat username &amp; password untuk pasangan Anda agar dapat
-          berkolaborasi menyusun acara.
+      </div>
+
+      <div class="space-y-2 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-5">
+        <h2 class="text-sm font-semibold text-(--adm-text-primary)">Privasi &amp; anti-spam</h2>
+        <ul class="list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-(--adm-text-secondary) sm:text-sm">
+          <li>Jangan membagikan kode OTP 6 digit kepada siapa pun.</li>
+          <li>Kirim pesan WhatsApp hanya kepada daftar tamu yang relevan dengan acara Anda.</li>
+          <li>Data undangan Anda terisolasi penuh dan tidak dapat dilihat pasangan lain.</li>
+        </ul>
+        <p class="pt-1 text-xs text-(--adm-text-secondary)">
+          Rincian pengolahan data tersedia di{" "}
+          <a href="/kebijakan-privasi" class="adm-link">
+            Kebijakan Privasi
+          </a>
+          .
         </p>
-      </li>
-      <li class="adm-card p-5 text-[13px]">
-        <strong class="text-(--adm-text-primary)">3. Impor Tamu &amp; Upgrade Kuota (&gt; 200 Tamu)</strong>
-        <p class="mt-1 text-(--adm-text-secondary)">
-          Impor hingga 200 tamu secara gratis. Bila tamu Anda lebih dari 200,
-          buka menu <strong>Kuota &amp; Tagihan</strong> untuk menghitung biaya
-          (Rp200/tamu, min. Rp50.000), transfer, dan unggah bukti pembayaran.
+      </div>
+    </section>
+
+    <section
+      id="butuh-bantuan"
+      class="flex scroll-mt-20 flex-col justify-between gap-4 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-5 sm:flex-row sm:items-center"
+    >
+      <div>
+        <h2 class="text-sm font-semibold text-(--adm-text-primary)">Masih ada kendala?</h2>
+        <p class="mt-1 text-xs text-(--adm-text-secondary) sm:text-sm">
+          Lihat jawaban cepat di FAQ atau hubungi tim dukungan kami untuk bantuan langsung.
         </p>
-      </li>
-    </ol>
-  </div>
+      </div>
+      <div class="flex shrink-0 flex-wrap gap-2">
+        <a href="/faq" class="adm-btn adm-btn-secondary adm-btn-sm">
+          Baca FAQ
+        </a>
+        <a href="/bantuan" class="adm-btn adm-btn-primary adm-btn-sm">
+          Hubungi bantuan
+        </a>
+      </div>
+    </section>
+  </DocsShell>
 </PublicLayout>

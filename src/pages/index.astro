@@ -1,11 +1,21 @@
 ---
-import { Check, ExternalLink } from "lucide-react";
+import {
+  Check,
+  ClipboardList,
+  ExternalLink,
+  MessageSquare,
+  Palette,
+  QrCode,
+  Shield,
+  Users,
+} from "lucide-react";
+import HeroPreviewIsland from "../components/public/HeroPreviewIsland";
 import PublicLayout from "../layouts/PublicLayout.astro";
 import { getAuthSession } from "../lib/auth";
 import {
-FREE_GUEST_QUOTA,
-MIN_PAYMENT_AMOUNT,
-PRICE_PER_GUEST,
+  FREE_GUEST_QUOTA,
+  MIN_PAYMENT_AMOUNT,
+  PRICE_PER_GUEST,
 } from "../lib/billing";
 import db, { getPlatformConfig } from "../lib/db";
 import { ensureReminderSchedulerStarted } from "../lib/reminderScheduler";
@@ -14,219 +24,486 @@ ensureReminderSchedulerStarted();
 const session = getAuthSession(Astro.cookies);
 const platformCfg = getPlatformConfig();
 const platformName = platformCfg.PLATFORM_NAME || "Wedding Management";
+const dashboardHref = session?.role === "superadmin" ? "/superadmin" : "/admin";
 
-// Data akurat langsung dari database & spesifikasi project
 const totalActiveWeddings = (
   db
     .prepare("SELECT COUNT(*) as c FROM weddings WHERE status = 'active'")
     .get() as { c: number }
 ).c;
 
-const fitur = [
-  {
-    judul: "Terpisah penuh per pasangan",
-    isi: "Setiap pasangan mendapat URL unik (/u/nama-pasangan). Daftar tamu, RSVP, ucapan, tema, manajemen nikah, dan sesi WhatsApp terisolasi ketat tanpa pernah bercampur.",
-  },
-  {
-    judul: "Akun berdua (suami & istri)",
-    isi: "Pendaftar utama bisa mendaftarkan 1 akun pasangannya dengan username, password, dan nomor WhatsApp masing-masing untuk mengelola persiapan bersama.",
-  },
-  {
-    judul: "6 modul manajemen pernikahan & fikih",
-    isi: "To-Do List bertahap, Anggaran & Vendor, Tabungan Menuju Halal, Mahar/Seserahan/KUA (mengacu PMA No. 30 Tahun 2024), Jurnal Menikah, dan Tuntunan Fikih Munakahat.",
-  },
-  {
-    judul: "WhatsApp Gateway, PDF 4 halaman & QR Check-In",
-    isi: "Kirim undangan personal otomatis (teks + PDF A5 4 halaman + kartu QR), notifikasi RSVP real-time, pengingat H-1, OTP keamanan, serta scanner kamera QR Hari H.",
-  },
-];
-
 const langkah = [
   {
+    nomor: "01",
     judul: "Daftar & verifikasi OTP WhatsApp",
-    isi: "Pilih alamat URL unik (/u/nama-pasangan), buat username & password, lalu masukkan kode OTP 6 digit dari WhatsApp.",
+    isi: "Pilih alamat URL unik (/u/nama-pasangan), buat username & password, lalu verifikasi kode OTP 6 digit yang dikirim langsung ke WhatsApp Anda.",
+    tautan: session
+      ? { href: dashboardHref, label: "Buka dashboard" }
+      : { href: "/daftar", label: "Mulai pendaftaran" },
   },
   {
+    nomor: "02",
     judul: "Atur undangan & undang pasangan",
-    isi: "Pilih 1 dari 6 tema publik, lengkapi jadwal & lokasi peta, tambahkan 1 akun pasangan, dan susun persiapan nikah bersama.",
+    isi: "Pilih 1 dari 6 tema publik, lengkapi jadwal & lokasi peta, daftarkan 1 akun pendamping untuk pasangan, dan susun persiapan nikah bersama.",
+    tautan: { href: "/dokumentasi", label: "Baca dokumentasi fitur" },
   },
   {
+    nomor: "03",
     judul: "Impor tamu, kirim WA & check-in Hari H",
-    isi: "Gratis hingga 200 tamu pertama. Kirim undangan personal via WhatsApp Gateway dan pindai QR tamu secara real-time saat acara.",
+    isi: "Gratis hingga 200 tamu pertama. Kirim undangan personal (teks + PDF 4 halaman + QR) lewat WhatsApp Gateway dan pindai kehadiran tamu di Hari H.",
+    tautan: { href: "/layanan-mandiri", label: "Lihat panduan mandiri" },
   },
 ];
 
-const spesifikasi = [
-  { angka: "6 Tema", label: "Ocean, Sage, Blush, Maroon, Gold, Lavender + Mode Gelap" },
-  { angka: "6 Modul", label: "To-Do, Anggaran, Tabungan, Mahar/KUA, Jurnal, Fikih Nikah" },
-  { angka: "200 Tamu", label: "Gratis per undangan · Rp200/tamu tambahan (min. Rp50rb)" },
-  { angka: String(totalActiveWeddings), label: "Ruang undangan aktif di platform saat ini" },
+const tautanPanduan = [
+  {
+    href: "/dokumentasi",
+    judul: "Dokumentasi Fitur",
+    ket: "Undangan, 6 modul nikah, WA Gateway & QR",
+  },
+  {
+    href: "/layanan-mandiri",
+    judul: "Panduan Layanan Mandiri",
+    ket: "Alur daftar, akun pasangan & upgrade kuota",
+  },
+  {
+    href: "/demo",
+    judul: "Demo Undangan (Fey & Yaya)",
+    ket: "Pratinjau langsung tampilan undangan tamu",
+  },
+  {
+    href: "/faq",
+    judul: "Pertanyaan Umum (FAQ)",
+    ket: "Jawaban cepat isolasi data, kuota & OTP",
+  },
 ];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      name: "ZEDLABS Teknologi Indonesia",
+      url: "https://zedlabs.id",
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: `${platformName} — ZEDLABS`,
+      applicationCategory: "LifestyleApplication",
+      operatingSystem: "Web",
+      url: "https://wedding.zedlabs.id/",
+      description:
+        "Platform undangan pernikahan digital, RSVP, check-in QR, dan manajemen persiapan nikah terisolasi per pasangan dengan integrasi WhatsApp Gateway.",
+      provider: {
+        "@type": "Organization",
+        name: "ZEDLABS Teknologi Indonesia",
+        url: "https://zedlabs.id",
+      },
+    },
+  ],
+};
 ---
 
 <PublicLayout title={platformName}>
-  {/* Hero | gaya whatsapp-service */}
-  <section class="mx-auto max-w-5xl px-6 pt-16 pb-12 text-center">
-    <span class="adm-badge adm-badge-accent">
-      Platform Undangan Digital &amp; Manajemen Pernikahan
-    </span>
-    <h1 class="mt-5 text-3xl leading-tight font-semibold text-(--adm-text-primary) md:text-5xl">
-      Undangan digital dan persiapan nikah, dikelola berdua dari satu tempat.
-    </h1>
-    <p class="mx-auto mt-5 max-w-2xl text-[15px] leading-relaxed text-(--adm-text-secondary)">
-      Buat undangan pernikahan ber-URL unik, rencanakan anggaran hingga
-      administrasi KUA bersama pasangan, kirim undangan lewat WhatsApp Gateway,
-      dan catat kehadiran tamu dengan QR Check-In.
-    </p>
-    <div class="mt-8 flex flex-wrap justify-center gap-3">
-      {session ? (
+  {/* Centered Editorial Hero (1:1 gaya whatsapp-service) */}
+  <section class="pub-hero-main border-b border-(--adm-border) bg-(--adm-bg-primary)">
+    <div class="mx-auto max-w-7xl px-4 pt-14 pb-16 sm:px-6 sm:pt-20 sm:pb-20">
+      <div class="mx-auto max-w-3xl text-center">
         <a
-          href={session.role === "superadmin" ? "/superadmin" : "/admin"}
-          class="adm-btn adm-btn-primary px-5 py-2.5 text-sm"
+          href="/dokumentasi"
+          class="inline-flex items-center gap-2 rounded-full border border-(--adm-info-border) bg-(--adm-bg-secondary) px-3.5 py-1 text-xs font-medium text-(--adm-accent) transition-colors hover:bg-(--adm-accent-soft)"
         >
-          Masuk ke Dashboard
+          <span class="h-1.5 w-1.5 rounded-full bg-(--adm-accent)" aria-hidden="true"></span>
+          <span>Platform Undangan Digital &amp; Manajemen Pernikahan</span>
+          <span aria-hidden="true">&rarr;</span>
         </a>
-      ) : (
-        <a href="/daftar" class="adm-btn adm-btn-primary px-5 py-2.5 text-sm">
-          Buat Undangan Gratis
-        </a>
-      )}
-      <a href="/demo" class="adm-btn adm-btn-secondary px-5 py-2.5 text-sm">
-        <ExternalLink className="h-4 w-4" />
-        Lihat Demo Undangan (Fey &amp; Yaya)
-      </a>
+
+        <h1 class="mt-5 text-(length:--adm-text-hero) leading-[1.1] font-bold tracking-tight text-(--adm-text-primary)">
+          Undangan digital &amp; persiapan nikah,{" "}
+          <span class="text-(--adm-accent)">dikelola berdua dari satu tempat.</span>
+        </h1>
+
+        <p class="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-(--adm-text-secondary) sm:text-lg">
+          Buat undangan ber-URL unik terisolasi per pasangan, rencanakan anggaran hingga berkas KUA
+          bersama, kirim undangan lewat WhatsApp Gateway, dan catat kehadiran tamu dengan QR
+          Check-In.
+        </p>
+
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {session ? (
+            <a href={dashboardHref} class="adm-btn adm-btn-primary adm-btn-lg">
+              Masuk ke Dashboard
+            </a>
+          ) : (
+            <a href="/daftar" class="adm-btn adm-btn-primary adm-btn-lg">
+              Buat Undangan Gratis
+            </a>
+          )}
+          <a href="/demo" class="adm-btn adm-btn-secondary adm-btn-lg">
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            Lihat Demo Undangan
+          </a>
+        </div>
+
+        <ul class="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-(--adm-text-secondary)">
+          <li class="inline-flex items-center gap-1.5">
+            <Check className="h-3.5 w-3.5 text-(--adm-accent)" aria-hidden="true" />
+            Gratis hingga {FREE_GUEST_QUOTA} tamu
+          </li>
+          <li class="inline-flex items-center gap-1.5">
+            <Check className="h-3.5 w-3.5 text-(--adm-accent)" aria-hidden="true" />
+            Isolasi penuh per pasangan
+          </li>
+          <li class="inline-flex items-center gap-1.5">
+            <Check className="h-3.5 w-3.5 text-(--adm-accent)" aria-hidden="true" />
+            Terintegrasi WhatsApp Gateway
+          </li>
+        </ul>
+      </div>
+
+      <div class="mx-auto mt-10 max-w-4xl">
+        <HeroPreviewIsland client:load />
+      </div>
     </div>
   </section>
 
-  {/* Ringkasan Spesifikasi Akurat */}
-  <section class="border-y border-(--adm-border) bg-(--adm-bg-secondary)">
-    <div class="mx-auto grid max-w-5xl grid-cols-2 gap-4 px-6 py-8 md:grid-cols-4">
-      {spesifikasi.map((s) => (
-        <div>
-          <div class="text-xl font-semibold text-(--adm-text-primary) tabular-nums">
-            {s.angka}
-          </div>
-          <p class="mt-1 text-xs leading-relaxed text-(--adm-text-secondary)">
-            {s.label}
+  {/* Ringkasan Metrik & Spesifikasi Platform (1:1 gaya StatistikPublik whatsapp-service) */}
+  <section
+    class="border-b border-(--adm-border) bg-(--adm-bg-secondary)"
+    aria-labelledby="judul-spesifikasi"
+  >
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <div class="mb-5 flex flex-wrap items-center justify-between gap-2">
+        <h2
+          id="judul-spesifikasi"
+          class="text-xs font-semibold tracking-wider text-(--adm-text-secondary) uppercase"
+        >
+          Spesifikasi &amp; statistik platform
+        </h2>
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-(--adm-border) bg-(--adm-bg-primary) px-2.5 py-0.5 text-[11px] font-medium text-(--adm-text-secondary)">
+          <span class="h-1.5 w-1.5 rounded-full bg-(--adm-accent)" aria-hidden="true"></span>
+          Data aktual database server
+        </span>
+      </div>
+
+      <dl class="grid grid-cols-2 divide-y divide-(--adm-border) overflow-hidden rounded-xl border border-(--adm-border) bg-(--adm-bg-primary) lg:grid-cols-4 lg:divide-x lg:divide-y-0">
+        <div class="flex flex-col gap-1 p-5">
+          <dt class="text-xs font-medium text-(--adm-text-secondary)">Ruang undangan aktif</dt>
+          <dd class="text-2xl font-bold tracking-tight text-(--adm-text-primary) tabular-nums sm:text-3xl">
+            {totalActiveWeddings.toLocaleString("id-ID")}
+          </dd>
+          <p class="text-[11px] text-(--adm-text-muted)">Terisolasi penuh per pasangan</p>
+        </div>
+
+        <div class="flex flex-col gap-1 p-5">
+          <dt class="text-xs font-medium text-(--adm-text-secondary)">Kuota tamu gratis</dt>
+          <dd class="text-2xl font-bold tracking-tight text-(--adm-accent) tabular-nums sm:text-3xl">
+            {FREE_GUEST_QUOTA}
+          </dd>
+          <p class="text-[11px] text-(--adm-text-muted)">
+            Rp{PRICE_PER_GUEST}/tamu tambahan (min. Rp{(MIN_PAYMENT_AMOUNT / 1000).toLocaleString("id-ID")}rb)
           </p>
         </div>
-      ))}
+
+        <div class="flex flex-col gap-1 p-5">
+          <dt class="text-xs font-medium text-(--adm-text-secondary)">Tema undangan</dt>
+          <dd class="text-2xl font-bold tracking-tight text-(--adm-text-primary) tabular-nums sm:text-3xl">
+            6 Tema
+          </dd>
+          <p class="text-[11px] text-(--adm-text-muted)">
+            Ocean, Sage, Blush, Maroon, Gold, Lavender
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-1 p-5">
+          <dt class="text-xs font-medium text-(--adm-text-secondary)">Modul manajemen nikah</dt>
+          <dd class="text-2xl font-bold tracking-tight text-(--adm-accent) tabular-nums sm:text-3xl">
+            6 Modul
+          </dd>
+          <p class="text-[11px] text-(--adm-text-muted)">
+            To-Do, Anggaran, Tabungan, KUA, Jurnal, Fikih
+          </p>
+        </div>
+      </dl>
     </div>
   </section>
 
-  {/* 4 Kartu Fitur Utama | 2x2 gaya whatsapp-service */}
-  <section id="fitur" class="mx-auto max-w-5xl scroll-mt-14 px-6 py-16">
-    <div class="mb-8 text-center">
-      <h2 class="text-2xl font-semibold text-(--adm-text-primary)">
-        Dirancang untuk calon pengantin
+  {/* Asymmetric 6-Column Bento Feature Grid (1:1 gaya whatsapp-service) */}
+  <section
+    id="fitur"
+    class="mx-auto max-w-7xl scroll-mt-16 px-4 py-16 sm:px-6 sm:py-20"
+    aria-labelledby="judul-fitur"
+  >
+    <div class="mx-auto mb-12 max-w-2xl text-center">
+      <p class="text-xs font-semibold tracking-wider text-(--adm-accent) uppercase">
+        Kapabilitas platform
+      </p>
+      <h2
+        id="judul-fitur"
+        class="mt-1.5 text-(length:--adm-text-2xl) font-bold tracking-tight text-(--adm-text-primary)"
+      >
+        Dirancang untuk calon pengantin yang rapi dan terencana
       </h2>
-      <p class="mt-2 text-sm text-(--adm-text-secondary)">
-        Seluruh fitur yang benar-benar terpasang dan siap pakai begitu Anda mendaftar.
+      <p class="mt-2.5 text-sm leading-relaxed text-(--adm-text-secondary) sm:text-base">
+        Seluruh fitur langsung aktif begitu Anda mendaftar — dari tampilan undangan hingga
+        manajemen persiapan nikah dan check-in Hari H.
       </p>
     </div>
-    <div class="grid gap-4 sm:grid-cols-2">
-      {fitur.map((f) => (
-        <div class="adm-card p-5">
-          <h3 class="text-sm font-semibold text-(--adm-text-primary)">
-            {f.judul}
+
+    <div class="grid gap-4 md:grid-cols-6">
+      {/* Bento 1 (wide): Undangan Digital & 6 Tema */}
+      <article class="flex flex-col justify-between gap-5 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-6 md:col-span-4">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 text-xs font-semibold text-(--adm-accent)">
+            <Palette className="h-4 w-4" aria-hidden="true" />
+            Undangan Digital Responsif
+          </div>
+          <h3 class="text-base font-semibold text-(--adm-text-primary)">
+            6 Tema Warna Publik, Mode Gelap &amp; Animasi Latar Pilihan
           </h3>
-          <p class="mt-2 text-[13px] leading-relaxed text-(--adm-text-secondary)">
-            {f.isi}
+          <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+            Halaman undangan khusus di <code class="adm-kbd-code">/u/nama-pasangan</code> lengkap
+            dengan sampul personal, profil mempelai, hitung mundur, jadwal akad/resepsi, peta
+            lokasi, galeri foto, kisah cinta, musik latar, amplop tanda kasih, RSVP, dan buku
+            ucapan.
           </p>
         </div>
-      ))}
+        <div class="flex flex-wrap gap-2 border-t border-(--adm-border) pt-3">
+          {["Ocean", "Sage", "Blush", "Maroon", "Gold", "Lavender"].map((t) => (
+            <code class="adm-kbd-code">{t}</code>
+          ))}
+        </div>
+      </article>
+
+      {/* Bento 2 (narrow): Isolasi Data */}
+      <article class="flex flex-col justify-between gap-5 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-6 md:col-span-2">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 text-xs font-semibold text-(--adm-accent)">
+            <Shield className="h-4 w-4" aria-hidden="true" />
+            Isolasi Data
+          </div>
+          <h3 class="text-base font-semibold text-(--adm-text-primary)">
+            Terpisah Penuh per Pasangan
+          </h3>
+          <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+            Daftar tamu, RSVP, ucapan, anggaran, tabungan, hingga sesi WhatsApp difilter ketat
+            berdasarkan <code class="adm-kbd-code">wedding_id</code>.
+          </p>
+        </div>
+        <div class="rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) px-3 py-2 font-mono text-[11px] text-(--adm-text-secondary)">
+          WHERE wedding_id = $session
+        </div>
+      </article>
+
+      {/* Bento 3 (narrow): Akun Berdua */}
+      <article class="flex flex-col justify-between gap-5 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-6 md:col-span-2">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 text-xs font-semibold text-(--adm-accent)">
+            <Users className="h-4 w-4" aria-hidden="true" />
+            Kolaborasi Pasangan
+          </div>
+          <h3 class="text-base font-semibold text-(--adm-text-primary)">
+            Akun Berdua (Suami &amp; Istri)
+          </h3>
+          <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+            Pemilik utama dapat mendaftarkan 1 akun pendamping dengan username, password, dan nomor
+            WhatsApp OTP masing-masing.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="adm-badge adm-badge-accent">Pemilik Utama</span>
+          <span class="adm-badge adm-badge-success">Akun Pasangan</span>
+        </div>
+      </article>
+
+      {/* Bento 4 (wide): 6 Modul Manajemen Pernikahan */}
+      <article class="flex flex-col justify-between gap-5 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-6 md:col-span-4">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 text-xs font-semibold text-(--adm-accent)">
+            <ClipboardList className="h-4 w-4" aria-hidden="true" />
+            Manajemen Pernikahan
+          </div>
+          <h3 class="text-base font-semibold text-(--adm-text-primary)">
+            6 Modul Persiapan Nikah, Berkas KUA &amp; Fikih Munakahat
+          </h3>
+          <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+            Susun persiapan nikah secara terstruktur bersama pasangan tanpa spreadsheet terpisah —
+            termasuk daftar berkas KUA mengacu PMA No. 30 Tahun 2024, SIMKAH, dan Elsimil.
+          </p>
+        </div>
+        <div class="grid gap-2 border-t border-(--adm-border) pt-3 text-xs sm:grid-cols-3">
+          <div class="rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-3 py-2">
+            <span class="block font-semibold text-(--adm-text-primary)">To-Do &amp; Jurnal</span>
+            <span class="text-(--adm-text-muted)">H-12 bulan s.d. Hari H</span>
+          </div>
+          <div class="rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-3 py-2">
+            <span class="block font-semibold text-(--adm-text-primary)">Anggaran &amp; Tabungan</span>
+            <span class="text-(--adm-text-muted)">Vendor, DP &amp; target halal</span>
+          </div>
+          <div class="rounded-md border border-(--adm-border) bg-(--adm-bg-primary) px-3 py-2">
+            <span class="block font-semibold text-(--adm-text-primary)">KUA &amp; Fikih Nikah</span>
+            <span class="text-(--adm-text-muted)">Mahar, seserahan &amp; berkas</span>
+          </div>
+        </div>
+      </article>
+
+      {/* Bento 5 (half): WhatsApp Gateway & PDF 4 Halaman */}
+      <article class="flex flex-col justify-between gap-4 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-6 md:col-span-3">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 text-xs font-semibold text-(--adm-accent)">
+            <MessageSquare className="h-4 w-4" aria-hidden="true" />
+            WhatsApp Gateway &amp; Stationery
+          </div>
+          <h3 class="text-base font-semibold text-(--adm-text-primary)">
+            Kirim Undangan WA, PDF A5 4 Halaman &amp; Pengingat H-1
+          </h3>
+          <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+            Tautkan nomor WhatsApp lewat QR/Pairing Code, impor tamu CSV, kirim undangan personal
+            beserta PDF 4 halaman &amp; kartu QR, serta terima notifikasi RSVP secara real-time.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-(--adm-border) pt-3">
+          <div class="flex flex-wrap gap-1.5">
+            <code class="adm-kbd-code">PDF A5 4 Hal</code>
+            <code class="adm-kbd-code">Pengingat H-1</code>
+          </div>
+          <a href="/dokumentasi#whatsapp-gateway" class="adm-link text-xs font-medium">
+            Pelajari detail &rarr;
+          </a>
+        </div>
+      </article>
+
+      {/* Bento 6 (half): QR Check-In & Ekspor */}
+      <article class="flex flex-col justify-between gap-4 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-6 md:col-span-3">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 text-xs font-semibold text-(--adm-accent)">
+            <QrCode className="h-4 w-4" aria-hidden="true" />
+            Buku Tamu Digital Hari H
+          </div>
+          <h3 class="text-base font-semibold text-(--adm-text-primary)">
+            Scanner Kamera QR Check-In &amp; Ekspor Data Lengkap
+          </h3>
+          <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+            Setiap tamu memiliki kode QR unik. Panitia cukup membuka{" "}
+            <code class="adm-kbd-code">/checkin</code> di ponsel untuk memindai kehadiran tamu dan
+            mengekspor rekap daftar tamu, RSVP, maupun ucapan kapan saja.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 border-t border-(--adm-border) pt-3 text-xs text-(--adm-text-secondary)">
+          <span class="adm-badge">Scanner Kamera /checkin</span>
+          <span class="adm-badge">Ekspor CSV Tamu &amp; RSVP</span>
+          <span class="adm-badge">OTP SHA-256</span>
+        </div>
+      </article>
     </div>
   </section>
 
-  {/* Harga & Kalkulator Kuota Tamu | gaya whatsapp-service */}
+  {/* Harga & Kalkulator Kuota Tamu */}
   <section
     id="harga"
-    class="scroll-mt-14 border-y border-(--adm-border) bg-(--adm-bg-secondary)"
+    class="scroll-mt-16 border-y border-(--adm-border) bg-(--adm-bg-secondary)"
+    aria-labelledby="judul-harga"
   >
-    <div class="mx-auto max-w-5xl px-6 py-16">
-      <div class="mb-8 text-center">
-        <h2 class="text-2xl font-semibold text-(--adm-text-primary)">
-          Harga transparan berdasarkan jumlah tamu
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
+      <div class="mx-auto mb-10 max-w-2xl text-center">
+        <p class="text-xs font-semibold tracking-wider text-(--adm-accent) uppercase">
+          Skema biaya transparan
+        </p>
+        <h2
+          id="judul-harga"
+          class="mt-1.5 text-(length:--adm-text-2xl) font-bold tracking-tight text-(--adm-text-primary)"
+        >
+          Gratis hingga {FREE_GUEST_QUOTA} tamu, bayar hanya saat butuh lebih
         </h2>
-        <p class="mt-2 text-sm text-(--adm-text-secondary)">
-          Gratis hingga {FREE_GUEST_QUOTA} tamu/kontak. Hanya bayar saat impor
-          tamu melebihi {FREE_GUEST_QUOTA} kontak: Rp{PRICE_PER_GUEST}/tamu
-          (minimal Rp{(MIN_PAYMENT_AMOUNT / 1000).toLocaleString("id-ID")}rb).
+        <p class="mt-2.5 text-sm leading-relaxed text-(--adm-text-secondary) sm:text-base">
+          Seluruh fitur utama aktif sejak awal. Penambahan di atas {FREE_GUEST_QUOTA} kontak tamu
+          dikenakan biaya Rp{PRICE_PER_GUEST}/tamu (minimal Rp
+          {(MIN_PAYMENT_AMOUNT / 1000).toLocaleString("id-ID")}rb untuk +250 kuota).
         </p>
       </div>
 
-      <div class="grid gap-4 md:grid-cols-2">
+      <div class="mx-auto grid max-w-5xl gap-5 md:grid-cols-2">
         {/* Paket Gratis */}
-        <div class="adm-card flex flex-col justify-between p-6">
+        <div class="flex flex-col justify-between rounded-xl border border-(--adm-border) bg-(--adm-bg-primary) p-6">
           <div>
-            <div class="flex items-center justify-between">
-              <h3 class="text-base font-semibold text-(--adm-text-primary)">
-                Gratis
-              </h3>
-              <span class="adm-badge adm-badge-success">0 – 200 Tamu</span>
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-base font-semibold text-(--adm-text-primary)">Paket Gratis</h3>
+              <span class="adm-badge adm-badge-success">0 – {FREE_GUEST_QUOTA} Tamu</span>
             </div>
-            <div class="mt-3 text-3xl font-bold text-(--adm-text-primary) tabular-nums">
-              Rp0
+            <div class="mt-4 flex items-baseline gap-1.5">
+              <span class="text-3xl font-bold tracking-tight text-(--adm-text-primary) tabular-nums">
+                Rp0
+              </span>
+              <span class="text-xs text-(--adm-text-secondary)">selamanya</span>
             </div>
-            <p class="mt-1 text-xs text-(--adm-text-secondary)">
+            <p class="mt-1.5 text-xs text-(--adm-text-secondary)">
               Tanpa biaya pendaftaran &amp; tanpa kartu kredit.
             </p>
-            <ul class="mt-5 space-y-2 text-[13px] text-(--adm-text-secondary)">
-              <li class="flex items-center gap-2">
-                <Check className="h-4 w-4 shrink-0 text-(--adm-green)" />
-                Hingga 200 kontak/tamu impor &amp; QR Check-In
+
+            <ul class="mt-5 space-y-2.5 border-t border-(--adm-border) pt-5 text-[13px] text-(--adm-text-secondary)">
+              <li class="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-(--adm-green)" aria-hidden="true" />
+                <span>Hingga {FREE_GUEST_QUOTA} kontak/tamu impor &amp; QR Check-In</span>
               </li>
-              <li class="flex items-center gap-2">
-                <Check className="h-4 w-4 shrink-0 text-(--adm-green)" />
-                URL undangan unik (/u/nama-pasangan) + 6 tema
+              <li class="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-(--adm-green)" aria-hidden="true" />
+                <span>URL undangan unik (/u/nama-pasangan) + 6 tema warna</span>
               </li>
-              <li class="flex items-center gap-2">
-                <Check className="h-4 w-4 shrink-0 text-(--adm-green)" />
-                2 akun login terpisah (Pemilik + 1 Pasangan)
+              <li class="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-(--adm-green)" aria-hidden="true" />
+                <span>2 akun login terpisah (Pemilik Utama + 1 Pasangan)</span>
               </li>
-              <li class="flex items-center gap-2">
-                <Check className="h-4 w-4 shrink-0 text-(--adm-green)" />
-                6 modul Manajemen Pernikahan &amp; Fikih Nikah
+              <li class="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-(--adm-green)" aria-hidden="true" />
+                <span>6 modul Manajemen Pernikahan &amp; Fikih Nikah lengkap</span>
               </li>
-              <li class="flex items-center gap-2">
-                <Check className="h-4 w-4 shrink-0 text-(--adm-green)" />
-                Integrasi WhatsApp Gateway &amp; desain PDF 4 halaman
+              <li class="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-(--adm-green)" aria-hidden="true" />
+                <span>Integrasi WhatsApp Gateway &amp; desain PDF A5 4 halaman</span>
               </li>
             </ul>
           </div>
-          <a href="/daftar" class="adm-btn adm-btn-secondary mt-6 w-full justify-center">
+
+          <a href="/daftar" class="adm-btn adm-btn-secondary adm-btn-lg adm-btn-block mt-6">
             Mulai Gratis
           </a>
         </div>
 
         {/* Paket Skala Fleksibel (> 200 tamu) + Kalkulator */}
-        <div class="adm-card flex flex-col justify-between border-(--adm-accent)/50 p-6">
+        <div class="flex flex-col justify-between rounded-xl border-2 border-(--adm-accent) bg-(--adm-bg-primary) p-6">
           <div>
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between gap-2">
               <h3 class="text-base font-semibold text-(--adm-text-primary)">
                 Penambahan Kuota Tamu
               </h3>
-              <span class="adm-badge adm-badge-accent">&gt; 200 Tamu</span>
+              <span class="adm-badge adm-badge-accent">&gt; {FREE_GUEST_QUOTA} Tamu</span>
             </div>
-            <div class="mt-3 flex items-baseline gap-2">
-              <span class="text-3xl font-bold text-(--adm-accent) tabular-nums" id="calc-price">
+            <div class="mt-4 flex flex-wrap items-baseline gap-2">
+              <span
+                class="text-3xl font-bold tracking-tight text-(--adm-accent) tabular-nums"
+                id="calc-price"
+              >
                 Rp50.000
               </span>
               <span class="text-xs text-(--adm-text-secondary)">
-                (Rp200 / tamu · min. Rp50.000)
+                (Rp{PRICE_PER_GUEST}/tamu &middot; min. Rp
+                {MIN_PAYMENT_AMOUNT.toLocaleString("id-ID")})
               </span>
             </div>
-            <p class="mt-1 text-xs text-(--adm-text-secondary)" id="calc-desc">
-              Untuk total 450 tamu (200 gratis + 250 tamu tambahan).
+            <p class="mt-1.5 text-xs text-(--adm-text-secondary)" id="calc-desc">
+              200 tamu gratis + 250 kuota tambahan (total 450 tamu).
             </p>
 
             {/* Kalkulator Interaktif */}
-            <div class="mt-5 space-y-3 rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) p-4">
+            <div class="mt-5 space-y-3 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-4">
               <div class="flex items-center justify-between text-xs">
                 <label for="calc-slider" class="font-medium text-(--adm-text-primary)">
                   Simulasi jumlah total tamu:
                 </label>
-                <span class="font-mono font-semibold text-(--adm-accent)" id="calc-count-label">
+                <span
+                  class="font-mono font-semibold text-(--adm-accent) tabular-nums"
+                  id="calc-count-label"
+                >
                   450 tamu
                 </span>
               </div>
@@ -237,19 +514,28 @@ const spesifikasi = [
                 max="3000"
                 step="50"
                 value="450"
-                class="w-full accent-(--adm-accent)"
+                class="w-full cursor-pointer accent-(--adm-accent)"
               />
               <div class="flex flex-wrap gap-1.5">
-                <button type="button" class="adm-btn adm-btn-secondary adm-btn-sm calc-preset" data-val="200">200</button>
-                <button type="button" class="adm-btn adm-btn-secondary adm-btn-sm calc-preset" data-val="450">450</button>
-                <button type="button" class="adm-btn adm-btn-secondary adm-btn-sm calc-preset" data-val="700">700</button>
-                <button type="button" class="adm-btn adm-btn-secondary adm-btn-sm calc-preset" data-val="1200">1.200</button>
-                <button type="button" class="adm-btn adm-btn-secondary adm-btn-sm calc-preset" data-val="2200">2.200</button>
+                {[200, 450, 700, 1200, 2200].map((v) => (
+                  <button
+                    type="button"
+                    class="adm-btn adm-btn-secondary adm-btn-sm calc-preset"
+                    data-val={String(v)}
+                  >
+                    {v.toLocaleString("id-ID")}
+                  </button>
+                ))}
               </div>
             </div>
+
+            <p class="mt-4 text-xs leading-relaxed text-(--adm-text-secondary)">
+              Semua fitur paket gratis tetap termasuk. Pembayaran cukup sekali saat menambah kuota
+              dari menu <strong>Kuota &amp; Tagihan</strong> di dalam panel.
+            </p>
           </div>
 
-          <a href="/daftar" class="adm-btn adm-btn-primary mt-6 w-full justify-center">
+          <a href="/daftar" class="adm-btn adm-btn-primary adm-btn-lg adm-btn-block mt-6">
             Daftar &amp; Atur Kuota
           </a>
         </div>
@@ -257,28 +543,110 @@ const spesifikasi = [
     </div>
   </section>
 
-  {/* Mulai dalam tiga langkah | gaya whatsapp-service */}
-  <section class="mx-auto max-w-5xl px-6 py-16">
-    <h2 class="mb-8 text-center text-xl font-semibold text-(--adm-text-primary)">
-      Mulai dalam tiga langkah
-    </h2>
+  {/* 3-Step Onboarding Workflow (1:1 gaya whatsapp-service) */}
+  <section
+    class="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20"
+    aria-labelledby="judul-langkah"
+  >
+    <div class="mx-auto mb-12 max-w-2xl text-center">
+      <p class="text-xs font-semibold tracking-wider text-(--adm-accent) uppercase">
+        Alur memulai
+      </p>
+      <h2
+        id="judul-langkah"
+        class="mt-1.5 text-(length:--adm-text-2xl) font-bold tracking-tight text-(--adm-text-primary)"
+      >
+        Mulai dalam tiga langkah terstruktur
+      </h2>
+    </div>
+
     <ol class="grid gap-4 md:grid-cols-3">
-      {langkah.map((l, i) => (
-        <li class="adm-card p-5">
-          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-(--adm-accent-soft) text-sm font-semibold text-(--adm-accent)">
-            {i + 1}
+      {langkah.map((l) => (
+        <li class="flex flex-col rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-6">
+          <span
+            class="inline-flex w-fit items-center rounded-md border border-(--adm-info-border) bg-(--adm-accent-soft) px-2.5 py-0.5 font-mono text-xs font-semibold text-(--adm-accent)"
+            aria-hidden="true"
+          >
+            {l.nomor}
           </span>
-          <p class="mt-3 text-sm font-semibold text-(--adm-text-primary)">
-            {l.judul}
-          </p>
-          <p class="mt-1 text-[13px] leading-relaxed text-(--adm-text-secondary)">
-            {l.isi}
-          </p>
+          <h3 class="mt-4 text-base font-semibold text-(--adm-text-primary)">{l.judul}</h3>
+          <p class="mt-2 flex-1 text-sm leading-relaxed text-(--adm-text-secondary)">{l.isi}</p>
+          <a href={l.tautan.href} class="adm-link mt-5 inline-block w-fit text-xs font-semibold">
+            {l.tautan.label} &rarr;
+          </a>
         </li>
       ))}
     </ol>
   </section>
+
+  {/* Closing CTA Banner + Quick Guide Grid (1:1 gaya nuxt-cta whatsapp-service) */}
+  <section class="mx-auto max-w-7xl px-4 pb-16 sm:px-6 sm:pb-20" aria-labelledby="judul-sumber">
+    <div class="pub-cta-card grid items-center gap-8 rounded-2xl border border-(--adm-border) bg-(--adm-bg-secondary) p-6 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+      <div>
+        <p class="text-xs font-semibold tracking-wider text-(--adm-accent) uppercase">
+          Mulai sekarang
+        </p>
+        <h2
+          id="judul-sumber"
+          class="mt-1.5 text-(length:--adm-text-2xl) font-bold tracking-tight text-(--adm-text-primary)"
+        >
+          Siap menyiapkan hari bahagia bersama pasangan?
+        </h2>
+        <p class="mt-2.5 text-sm leading-relaxed text-(--adm-text-secondary) sm:text-base">
+          Pelajari dokumentasi fitur, coba pratinjau demo undangan, atau langsung buat ruang
+          undangan gratis hingga 200 tamu.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          {session ? (
+            <a href={dashboardHref} class="adm-btn adm-btn-primary adm-btn-lg">
+              Masuk ke Dashboard
+            </a>
+          ) : (
+            <a href="/daftar" class="adm-btn adm-btn-primary adm-btn-lg">
+              Buat Undangan Gratis
+            </a>
+          )}
+          <a href="/bantuan" class="adm-btn adm-btn-secondary adm-btn-lg">
+            Hubungi tim bantuan
+          </a>
+        </div>
+      </div>
+
+      <div class="grid gap-2.5 sm:grid-cols-2">
+        {tautanPanduan.map((p) => (
+          <a
+            href={p.href}
+            class="block rounded-lg border border-(--adm-border) bg-(--adm-bg-primary) px-4 py-3 transition-colors hover:border-(--adm-accent)"
+          >
+            <span class="block text-xs font-semibold text-(--adm-text-primary)">{p.judul}</span>
+            <span class="mt-0.5 block text-[11px] text-(--adm-text-secondary)">{p.ket}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* eslint-disable-next-line astro/no-set-html-directive */}
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, "\\u003c")} />
 </PublicLayout>
+
+<style>
+  .pub-hero-main {
+    background-image:
+      radial-gradient(ellipse 70% 50% at 50% -10%, var(--adm-accent-soft), transparent 70%),
+      radial-gradient(var(--adm-border) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      24px 24px;
+  }
+  .pub-cta-card {
+    background-image: radial-gradient(
+      ellipse 60% 90% at 0% 0%,
+      var(--adm-accent-soft),
+      transparent 65%
+    );
+  }
+</style>
 
 <script>
   const slider = document.getElementById("calc-slider") as HTMLInputElement | null;

@@ -1,50 +1,93 @@
 ---
+import BantuanIsland, {
+  type SumberBantuan,
+  type TopikBantuan,
+} from "../components/public/BantuanIsland";
+import PublicPageHero from "../components/public/PublicPageHero.astro";
 import PublicLayout from "../layouts/PublicLayout.astro";
 import { getPlatformConfig } from "../lib/db";
 
 const cfg = getPlatformConfig();
-const waConfirm = cfg.PAYMENT_WHATSAPP_CONFIRM || "";
+const waRaw = cfg.PAYMENT_WHATSAPP_CONFIRM || "";
+const waClean = waRaw.replace(/\D/g, "").replace(/^0/, "62");
+
+const TOPIK: TopikBantuan[] = [
+  {
+    id: "akun",
+    judul: "Pendaftaran & Akun Pasangan",
+    isi: "Kendala verifikasi OTP WhatsApp, pemilihan slug, atau penambahan akun pendamping.",
+  },
+  {
+    id: "kuota",
+    judul: "Kuota Tamu & Pembayaran",
+    isi: "Perhitungan kuota > 200 tamu, konfirmasi bukti transfer, atau pengecekan invoice.",
+  },
+  {
+    id: "teknis",
+    judul: "WhatsApp Gateway, PDF & QR",
+    isi: "Penautan QR/Pairing Code WhatsApp, kirim undangan massal CSV, atau scanner /checkin.",
+  },
+  {
+    id: "lainnya",
+    judul: "Masukan & Pertanyaan Umum",
+    isi: "Saran pengembangan fitur, permintaan penghapusan ruang, atau pertanyaan lainnya.",
+  },
+];
+
+const SUMBER: SumberBantuan[] = [
+  {
+    href: "/dokumentasi",
+    judul: "Dokumentasi Fitur",
+    isi: "Penjelasan lengkap 6 tema, 6 modul nikah, WA Gateway, dan QR.",
+  },
+  {
+    href: "/faq",
+    judul: "Pertanyaan Umum (FAQ)",
+    isi: "Jawaban cepat seputar kuota gratis, isolasi pasangan, dan OTP.",
+  },
+  {
+    href: "/layanan-mandiri",
+    judul: "Panduan Layanan Mandiri",
+    isi: "Langkah mandiri dari pendaftaran sampai Hari H resepsi.",
+  },
+];
 ---
 
-<PublicLayout title="Hubungi Kami | Wedding Management">
-  <div class="mx-auto max-w-3xl space-y-6 px-6 py-12">
-    <div>
-      <h1 class="text-2xl font-semibold text-(--adm-text-primary)">Hubungi Kami</h1>
-      <p class="mt-1.5 text-sm text-(--adm-text-secondary)">
-        Butuh bantuan pendaftaran, konfirmasi pembayaran kuota tamu, atau
-        kendala integrasi WhatsApp Gateway?
-      </p>
-    </div>
-
-    <div class="adm-card space-y-4 p-6 text-sm">
-      <div>
-        <div class="text-xs text-(--adm-text-secondary)">Pengelola Layanan</div>
-        <div class="mt-0.5 font-semibold">ZEDLABS Teknologi Indonesia</div>
-      </div>
-      <div>
-        <div class="text-xs text-(--adm-text-secondary)">Website Resmi</div>
+<PublicLayout
+  title="Bantuan & Hubungi Kami | Wedding Management"
+  description="Hubungi tim Wedding Management ZEDLABS untuk bantuan pendaftaran, konfirmasi kuota tamu, atau kendala integrasi WhatsApp Gateway."
+>
+  <PublicPageHero
+    eyebrow="Bantuan & Dukungan"
+    title="Ada yang bisa kami bantu?"
+    description="Pilih topik kendala agar pesan Anda langsung terstruktur. Sertakan nama dan slug undangan (/u/slug) agar penanganan oleh tim kami lebih cepat."
+    breadcrumbs={[{ label: "Bantuan" }]}
+  >
+    <Fragment slot="actions">
+      {waClean && (
         <a
-          href="https://zedlabs.id"
+          href={`https://wa.me/${waClean}`}
           target="_blank"
-          rel="noreferrer"
-          class="text-(--adm-accent) hover:underline"
+          rel="noopener noreferrer"
+          class="adm-btn adm-btn-primary"
         >
-          https://zedlabs.id
+          Chat WhatsApp ({waRaw})
         </a>
-      </div>
-      {waConfirm && (
-        <div>
-          <div class="text-xs text-(--adm-text-secondary)">WhatsApp Bantuan &amp; Konfirmasi</div>
-          <a
-            href={`https://wa.me/${waConfirm.replace(/\D/g, "")}`}
-            target="_blank"
-            rel="noreferrer"
-            class="adm-btn adm-btn-primary adm-btn-sm mt-2"
-          >
-            Chat WhatsApp ({waConfirm})
-          </a>
-        </div>
       )}
-    </div>
-  </div>
+      <a href="/dokumentasi" class="adm-btn adm-btn-secondary">
+        Baca dokumentasi
+      </a>
+      <a href="/faq" class="adm-btn adm-btn-secondary">
+        Lihat FAQ
+      </a>
+    </Fragment>
+  </PublicPageHero>
+
+  <BantuanIsland
+    topik={TOPIK}
+    sumber={SUMBER}
+    kontakWhatsapp={waClean}
+    kontakWhatsappDisplay={waRaw}
+    client:load
+  />
 </PublicLayout>

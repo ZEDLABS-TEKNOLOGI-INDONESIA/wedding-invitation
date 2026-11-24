@@ -1,0 +1,152 @@
+---
+import { getPlatformConfig } from "../../lib/db";
+
+interface Props {
+  /**
+   * "publik": footer terstruktur gaya whatsapp-service (kolom sekunder & hukum).
+   * "aplikasi": footer ringkas satu baris untuk halaman auth & dashboard.
+   */
+  varian?: "aplikasi" | "publik";
+  platformName?: string;
+}
+
+const { varian = "aplikasi", platformName: propName } = Astro.props;
+const platformName = propName || getPlatformConfig().PLATFORM_NAME || "Wedding Management";
+const tahunSekarang = new Date().getFullYear();
+
+const kolomPublik = [
+  {
+    judul: "Panduan & Fitur",
+    tautan: [
+      { href: "/dokumentasi", label: "Dokumentasi Fitur" },
+      { href: "/layanan-mandiri", label: "Panduan Layanan Mandiri" },
+      { href: "/demo", label: "Demo Undangan" },
+      { href: "/faq", label: "Pertanyaan Umum (FAQ)" },
+    ],
+  },
+  {
+    judul: "Hukum & Kepatuhan",
+    tautan: [
+      { href: "/syarat-ketentuan", label: "Syarat dan Ketentuan" },
+      { href: "/kebijakan-privasi", label: "Kebijakan Privasi" },
+      { href: "/bantuan", label: "Hubungi Kami" },
+    ],
+  },
+  {
+    judul: "Akses & Ekosistem",
+    tautan: [
+      { href: "/masuk", label: "Masuk Panel Pasangan" },
+      { href: "/daftar", label: "Buat Undangan Gratis" },
+      { href: "https://zedlabs.id", label: "ZEDLABS Indonesia", eksternal: true },
+    ],
+  },
+];
+
+const tautanAplikasi = [
+  { href: "/dokumentasi", label: "Dokumentasi" },
+  { href: "/bantuan", label: "Bantuan" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/layanan-mandiri", label: "Layanan Mandiri" },
+  { href: "/syarat-ketentuan", label: "Syarat dan Ketentuan" },
+  { href: "/kebijakan-privasi", label: "Kebijakan Privasi" },
+];
+---
+
+{varian === "publik" ? (
+  <footer class="shrink-0 border-t border-(--adm-border) bg-(--adm-bg-secondary) text-xs text-(--adm-text-secondary)">
+    <div class="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))]">
+      <div class="space-y-3">
+        <a href="/" class="inline-flex items-center gap-2 no-underline">
+          <img
+            src="/favicon.svg"
+            alt=""
+            width="24"
+            height="24"
+            class="h-6 w-6 rounded"
+          />
+          <span class="text-sm font-semibold text-(--adm-text-primary)">
+            {platformName}
+          </span>
+        </a>
+        <p class="max-w-xs text-xs leading-relaxed text-(--adm-text-secondary)">
+          Platform undangan pernikahan digital, RSVP, check-in QR, dan manajemen persiapan nikah
+          terisolasi per pasangan dalam ekosistem ZEDLABS.
+        </p>
+        <p class="font-mono text-[11px] text-(--adm-text-muted)">
+          https://wedding.zedlabs.id/u/nama-pasangan
+        </p>
+      </div>
+
+      {kolomPublik.map((kol) => (
+        <nav aria-label={kol.judul} class="space-y-2.5">
+          <p class="text-xs font-semibold text-(--adm-text-primary)">{kol.judul}</p>
+          <ul class="space-y-1">
+            {kol.tautan.map((t) => (
+              <li>
+                <a
+                  href={t.href}
+                  target={t.eksternal ? "_blank" : undefined}
+                  rel={t.eksternal ? "noopener noreferrer" : undefined}
+                  class="inline-flex min-h-[24px] items-center py-0.5 text-(--adm-text-secondary) transition-colors hover:text-(--adm-accent)"
+                >
+                  {t.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))}
+    </div>
+
+    <div class="border-t border-(--adm-border)">
+      <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-center sm:flex-row sm:px-6 sm:text-left">
+        <span>
+          &copy; 2018–{tahunSekarang}{" "}
+          <a
+            href="https://zedlabs.id"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex min-h-[24px] items-center py-0.5 font-semibold tracking-wide text-(--adm-text-secondary) uppercase hover:text-(--adm-accent)"
+          >
+            ZEDLABS Teknologi Indonesia
+          </a>
+        </span>
+        <span class="text-[11px] text-(--adm-text-muted)">
+          Isolasi Per Pasangan &middot; Integrasi WhatsApp Gateway
+        </span>
+      </div>
+    </div>
+  </footer>
+) : (
+  <footer class="min-h-[44px] shrink-0 border-t border-(--adm-border) bg-(--adm-bg-secondary) text-xs text-(--adm-text-secondary)">
+    <div class="flex flex-col flex-wrap items-center justify-center gap-x-6 gap-y-1.5 px-4 py-2.5 text-center sm:px-6 md:flex-row">
+      <span>
+        &copy; 2018–{tahunSekarang}{" "}
+        <a
+          href="https://zedlabs.id"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex min-h-[24px] items-center py-0.5 font-semibold tracking-wide text-(--adm-text-secondary) uppercase hover:text-(--adm-accent)"
+        >
+          ZEDLABS Teknologi Indonesia
+        </a>
+      </span>
+      <nav
+        aria-label="Tautan kaki halaman"
+        class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5"
+      >
+        {tautanAplikasi.map((item, idx) => (
+          <>
+            {idx > 0 && <span aria-hidden="true" class="opacity-40">|</span>}
+            <a
+              href={item.href}
+              class="inline-flex min-h-[24px] items-center py-0.5 hover:text-(--adm-accent)"
+            >
+              {item.label}
+            </a>
+          </>
+        ))}
+      </nav>
+    </div>
+  </footer>
+)}

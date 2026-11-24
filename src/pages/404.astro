@@ -1,34 +1,56 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { Heart } from "lucide-react";
+import { ArrowLeft, BookOpen, ExternalLink, LifeBuoy } from "lucide-react";
+import PublicLayout from "../layouts/PublicLayout.astro";
 ---
 
-<Layout title="Page Not Found">
-  <main
-    class="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-slate-950 px-6 text-center text-white"
-  >
-    <div class="pointer-events-none absolute inset-0 opacity-20">
-      <Heart
-        className="absolute top-1/2 left-1/2 h-[120vw] w-[120vw] -translate-x-1/2 -translate-y-1/2 stroke-[0.1]"
-      />
-    </div>
-
-    <div class="relative z-10 space-y-6">
-      <h1 class="font-serif text-9xl text-white/20 italic">404</h1>
-      <h2 class="font-serif text-4xl italic md:text-6xl">
-        Halaman Tidak Ditemukan
-      </h2>
-      <p class="mx-auto max-w-md font-light text-white/60">
-        Maaf, sepertinya Anda tersesat. Silakan kembali ke halaman utama
-        undangan kami.
+<PublicLayout
+  title="Halaman Tidak Ditemukan | Wedding Management"
+  description="Halaman yang Anda cari tidak ditemukan atau sudah dipindahkan."
+  noindex={true}
+>
+  <section class="pub-404-bg flex min-h-[calc(100dvh-16rem)] items-center justify-center px-4 py-16 sm:px-6">
+    <div class="w-full max-w-lg rounded-2xl border border-(--adm-border) bg-(--adm-bg-secondary) p-8 text-center">
+      <span class="adm-badge adm-badge-accent font-mono">Error 404</span>
+      <h1 class="mt-4 text-2xl font-bold tracking-tight text-(--adm-text-primary) sm:text-3xl">
+        Halaman tidak ditemukan
+      </h1>
+      <p class="mt-2.5 text-sm leading-relaxed text-(--adm-text-secondary)">
+        Tautan yang Anda buka mungkin sudah berubah, salah ketik, atau alamat undangan{" "}
+        <code class="adm-kbd-code">/u/slug</code> belum terdaftar.
       </p>
 
-      <a
-        href="/"
-        class="mt-8 inline-block rounded-full bg-white px-10 py-4 text-xs font-bold tracking-widest text-slate-950 uppercase transition-colors hover:bg-slate-200"
-      >
-        Kembali ke Undangan
-      </a>
+      <div class="mt-7 flex flex-wrap items-center justify-center gap-2.5">
+        <a href="/" class="adm-btn adm-btn-primary">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Kembali ke Beranda
+        </a>
+        <a href="/demo" class="adm-btn adm-btn-secondary">
+          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          Lihat Demo
+        </a>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-4 border-t border-(--adm-border) pt-5 text-xs text-(--adm-text-secondary)">
+        <a href="/dokumentasi" class="inline-flex items-center gap-1.5 hover:text-(--adm-accent)">
+          <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+          Dokumentasi
+        </a>
+        <a href="/bantuan" class="inline-flex items-center gap-1.5 hover:text-(--adm-accent)">
+          <LifeBuoy className="h-3.5 w-3.5" aria-hidden="true" />
+          Hubungi Bantuan
+        </a>
+      </div>
     </div>
-  </main>
-</Layout>
+  </section>
+</PublicLayout>
+
+<style>
+  .pub-404-bg {
+    background-image:
+      radial-gradient(ellipse 60% 50% at 50% 0%, var(--adm-accent-soft), transparent 70%),
+      radial-gradient(var(--adm-border) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      24px 24px;
+  }
+</style>

@@ -1,52 +1,338 @@
 ---
+import DocsShell, { type DocsTocItem } from "../components/public/DocsShell.astro";
 import PublicLayout from "../layouts/PublicLayout.astro";
+import {
+  FREE_GUEST_QUOTA,
+  MIN_PAYMENT_AMOUNT,
+  PRICE_PER_GUEST,
+} from "../lib/billing";
+
+const toc: DocsTocItem[] = [
+  { id: "mulai-cepat", label: "Mulai cepat" },
+  { id: "undangan-digital", label: "Undangan Digital & Tema" },
+  { id: "akun-pasangan", label: "Akun Berdua & Isolasi" },
+  { id: "manajemen-nikah", label: "6 Modul Manajemen Nikah" },
+  { id: "whatsapp-gateway", label: "WhatsApp Gateway & OTP" },
+  { id: "pdf-checkin", label: "PDF 4 Halaman & QR Check-In" },
+  { id: "kuota-tagihan", label: "Kuota Tamu & Biaya" },
+];
+
+const temaDaftar = [
+  { nama: "Ocean", nuansa: "Biru laut editorial & bersih", mode: "Terang & Gelap" },
+  { nama: "Sage", nuansa: "Hijau botani lembut & alami", mode: "Terang & Gelap" },
+  { nama: "Blush", nuansa: "Merah muda romantis pastel", mode: "Terang & Gelap" },
+  { nama: "Maroon", nuansa: "Merah anggur klasik & tegas", mode: "Terang & Gelap" },
+  { nama: "Gold", nuansa: "Emas sampanye hangat & elegan", mode: "Terang & Gelap" },
+  { nama: "Lavender", nuansa: "Ungu lembut modern & tenang", mode: "Terang & Gelap" },
+];
+
+const modulNikah = [
+  {
+    nama: "1. To-Do List Bertahap",
+    ringkas: "Checklist terstruktur mulai dari H-12 bulan, H-6 bulan, H-3 bulan, H-1 bulan, hingga Hari H.",
+  },
+  {
+    nama: "2. Anggaran & Vendor",
+    ringkas: "Pencatatan estimasi biaya, realisasi, DP, sisa pelunasan, serta daftar kontak vendor.",
+  },
+  {
+    nama: "3. Tabungan Menuju Halal",
+    ringkas: "Target tabungan nikah bersama, riwayat setoran, dan persentase progres otomatis.",
+  },
+  {
+    nama: "4. Mahar, Seserahan & Berkas KUA",
+    ringkas: "Daftar mahar, seserahan, serta kelengkapan administrasi KUA mengacu PMA No. 30 Tahun 2024, SIMKAH, dan Elsimil.",
+  },
+  {
+    nama: "5. Jurnal Menikah",
+    ringkas: "Catatan diskusi bersama pasangan, keputusan penting, dan arsip persiapan keluarga.",
+  },
+  {
+    nama: "6. Tuntunan Fikih Munakahat",
+    ringkas: "Rujukan ringkas rukun nikah, adab walimah, dan persiapan ilmu rumah tangga.",
+  },
+];
+
+const simulasiKuota = [
+  { total: "≤ 200 tamu", tambahan: "0 tamu", biaya: "Rp0 (Gratis)", keterangan: "Kuota bawaan setiap ruang undangan" },
+  { total: "201 – 450 tamu", tambahan: "+250 kuota", biaya: "Rp50.000", keterangan: "Nominal transaksi minimum (+250 kuota)" },
+  { total: "700 tamu", tambahan: "+500 kuota", biaya: "Rp100.000", keterangan: "500 × Rp200" },
+  { total: "1.000 tamu", tambahan: "+800 kuota", biaya: "Rp160.000", keterangan: "800 × Rp200" },
+  { total: "2.200 tamu", tambahan: "+2.000 kuota", biaya: "Rp400.000", keterangan: "2.000 × Rp200" },
+];
 ---
 
-<PublicLayout title="Dokumentasi | Wedding Management">
-  <div class="mx-auto max-w-4xl space-y-6 px-6 py-12">
-    <div>
-      <h1 class="text-2xl font-semibold text-(--adm-text-primary)">Dokumentasi Fitur</h1>
-      <p class="mt-1.5 text-sm text-(--adm-text-secondary)">
-        Panduan ringkas seluruh fitur yang tersedia di dalam Wedding Management.
-      </p>
-    </div>
+<PublicLayout
+  title="Dokumentasi Fitur | Wedding Management"
+  description="Panduan lengkap seluruh fitur Wedding Management: undangan digital 6 tema, akun berdua, 6 modul manajemen pernikahan, WhatsApp Gateway, PDF 4 halaman, QR Check-In, dan kuota tamu."
+>
+  <DocsShell
+    eyebrow="Dokumentasi Platform"
+    title="Dokumentasi Fitur Wedding Management"
+    description="Panduan ringkas dan terstruktur seluruh kapabilitas yang tersedia di dalam ruang undangan pasangan Anda — dari pengaturan tampilan hingga Hari H."
+    currentPath="/dokumentasi"
+    toc={toc}
+    prev={{
+      href: "/layanan-mandiri",
+      title: "Panduan Layanan Mandiri",
+      description: "Langkah praktis mendaftar, menambah akun pasangan, dan upgrade kuota tamu.",
+    }}
+    next={{
+      href: "/faq",
+      title: "Pertanyaan Umum (FAQ)",
+      description: "Jawaban cepat seputar kuota gratis, isolasi pasangan, OTP, dan WhatsApp Gateway.",
+    }}
+  >
+    <Fragment slot="header-meta">
+      <span class="adm-badge adm-badge-accent">Isolasi Per Pasangan</span>
+      <code class="adm-kbd-code">https://wedding.zedlabs.id/u/slug</code>
+    </Fragment>
 
-    <div class="grid gap-4 sm:grid-cols-2">
-      <div class="adm-card space-y-2 p-5">
-        <h2 class="text-sm font-semibold">1. Undangan Digital (/u/slug)</h2>
-        <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
-          Tersedia 6 tema warna (Ocean, Sage, Blush, Maroon, Gold, Lavender),
-          mode terang/gelap, animasi latar (merpati, kelopak bunga, kupu-kupu,
-          lentera, bintang), musik latar, galeri foto, kisah cinta, peta lokasi,
-          rekening tanda kasih, RSVP, dan buku ucapan.
+    <Fragment slot="sidebar-top">
+      <label class="block">
+        <span class="sr-only">Cari topik dokumentasi</span>
+        <input
+          id="dok-cari"
+          type="search"
+          class="adm-input adm-input-sm"
+          placeholder="Cari bagian…"
+        />
+      </label>
+    </Fragment>
+
+    <Fragment slot="sidebar-extra">
+      <div>
+        <p class="mb-2 text-[11px] font-semibold tracking-wider text-(--adm-text-muted) uppercase">
+          Bagian halaman
         </p>
+        <ul class="ml-1.5 space-y-0.5 border-l border-(--adm-border)">
+          {toc.map((item) => (
+            <li>
+              <a
+                href={`#${item.id}`}
+                class="dok-side-link -ml-px block border-l border-transparent py-1 pl-3 text-[12.5px] text-(--adm-text-secondary) transition-colors hover:border-(--adm-text-muted) hover:text-(--adm-text-primary)"
+                data-cari={item.label.toLowerCase()}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
-      <div class="adm-card space-y-2 p-5">
-        <h2 class="text-sm font-semibold">2. Akun Berdua (Pemilik &amp; Pasangan)</h2>
-        <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
-          Pendaftar utama dapat mendaftarkan 1 akun pasangan melalui menu
-          <strong>Konfigurasi → Akun &amp; Pasangan</strong>. Masing-masing
-          memiliki username, password, dan nomor WhatsApp sendiri untuk reset
-          password OTP.
-        </p>
+    </Fragment>
+
+    {/* 1. Mulai cepat */}
+    <section id="mulai-cepat" class="scroll-mt-20 space-y-4">
+      <h2 class="text-lg font-semibold text-(--adm-text-primary)">Mulai cepat</h2>
+      <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+        Setiap pasangan yang mendaftar langsung memperoleh satu ruang undangan terisolasi di bawah
+        alamat <code class="adm-kbd-code">/u/nama-pasangan</code> beserta panel pengelola di{" "}
+        <code class="adm-kbd-code">/admin</code>.
+      </p>
+      <div class="grid gap-3 sm:grid-cols-3">
+        <a
+          href="/daftar"
+          class="flex flex-col gap-1 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-4 transition-colors hover:border-(--adm-accent)"
+        >
+          <span class="text-sm font-semibold text-(--adm-text-primary)">1. Daftar via OTP</span>
+          <span class="text-xs text-(--adm-text-secondary)">
+            Tentukan slug unik dan verifikasi 6 digit kode WhatsApp.
+          </span>
+        </a>
+        <a
+          href="#undangan-digital"
+          class="flex flex-col gap-1 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-4 transition-colors hover:border-(--adm-accent)"
+        >
+          <span class="text-sm font-semibold text-(--adm-text-primary)">2. Lengkapi Undangan</span>
+          <span class="text-xs text-(--adm-text-secondary)">
+            Pilih 1 dari 6 tema, isi jadwal, peta, dan undang akun pasangan.
+          </span>
+        </a>
+        <a
+          href="#whatsapp-gateway"
+          class="flex flex-col gap-1 rounded-xl border border-(--adm-border) bg-(--adm-bg-secondary) p-4 transition-colors hover:border-(--adm-accent)"
+        >
+          <span class="text-sm font-semibold text-(--adm-text-primary)">3. Kirim WA &amp; QR</span>
+          <span class="text-xs text-(--adm-text-secondary)">
+            Impor daftar tamu CSV, kirim undangan otomatis, dan scan Hari H.
+          </span>
+        </a>
       </div>
-      <div class="adm-card space-y-2 p-5">
-        <h2 class="text-sm font-semibold">3. Manajemen Pernikahan (6 Modul)</h2>
-        <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
-          Kelola To-Do List bertahap (H-12 bulan s.d. Hari H), Anggaran &amp;
-          Vendor, Tabungan Menuju Halal, Mahar/Seserahan/Berkas KUA (mengacu PMA
-          No. 30 Tahun 2024, SIMKAH, &amp; Elsimil), Jurnal Menikah, serta
-          Tuntunan Fikih Munakahat.
-        </p>
+      <div class="adm-code-box">
+        <div class="adm-code-title">Format Tautan Undangan Personal</div>
+        <pre tabindex="0"><code>https://wedding.zedlabs.id/u/fera-yahya?to=Nama+Tamu</code></pre>
       </div>
-      <div class="adm-card space-y-2 p-5">
-        <h2 class="text-sm font-semibold">4. WhatsApp Gateway, PDF &amp; QR Check-In</h2>
-        <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
-          Tautkan nomor WhatsApp langsung lewat QR Code / Pairing Code, kirim
-          undangan otomatis beserta lampiran PDF 4 halaman &amp; kartu QR, aktifkan
-          pengingat H-1, dan gunakan scanner kamera QR di <code>/checkin</code>.
-        </p>
+    </section>
+
+    {/* 2. Undangan Digital & Tema */}
+    <section id="undangan-digital" class="scroll-mt-20 space-y-4 border-t border-(--adm-border) pt-6">
+      <h2 class="text-lg font-semibold text-(--adm-text-primary)">
+        1. Undangan Digital (<code class="adm-kbd-code">/u/slug</code>) &amp; 6 Tema
+      </h2>
+      <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+        Tampilan undangan publik mendukung sampul amplop interaktif, profil mempelai, hitung mundur
+        acara, lokasi Google Maps, kisah cinta, galeri foto, musik latar, rekening tanda kasih,
+        formulir RSVP, buku ucapan, serta animasi latar (merpati, kelopak bunga, kupu-kupu,
+        lentera, bintang).
+      </p>
+
+      <div class="adm-table-wrap adm-card">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Tema</th>
+              <th>Karakter Visual</th>
+              <th>Dukungan Mode</th>
+            </tr>
+          </thead>
+          <tbody>
+            {temaDaftar.map((t) => (
+              <tr>
+                <td class="font-semibold">{t.nama}</td>
+                <td class="text-(--adm-text-secondary)">{t.nuansa}</td>
+                <td>
+                  <span class="adm-badge adm-badge-accent">{t.mode}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </div>
-  </div>
+    </section>
+
+    {/* 3. Akun Berdua & Isolasi */}
+    <section id="akun-pasangan" class="scroll-mt-20 space-y-4 border-t border-(--adm-border) pt-6">
+      <h2 class="text-lg font-semibold text-(--adm-text-primary)">
+        2. Akun Berdua (Pemilik &amp; Pasangan) &amp; Isolasi Data
+      </h2>
+      <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+        Pendaftar utama dapat menambahkan <strong>1 akun pendamping</strong> untuk pasangan melalui
+        menu <strong>Konfigurasi &rarr; Akun &amp; Pasangan</strong>. Masing-masing login memakai
+        username, password, dan nomor WhatsApp sendiri untuk reset password OTP.
+      </p>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="adm-card space-y-1.5 p-4">
+          <h3 class="text-sm font-semibold text-(--adm-text-primary)">Isolasi per wedding_id</h3>
+          <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
+            Seluruh data tamu, RSVP, ucapan, unggahan media, anggaran, tabungan, jurnal, dan sesi
+            WhatsApp terisolasi ketat berdasarkan ID undangan masing-masing pasangan.
+          </p>
+        </div>
+        <div class="adm-card space-y-1.5 p-4">
+          <h3 class="text-sm font-semibold text-(--adm-text-primary)">Keamanan Kredensial</h3>
+          <p class="text-xs leading-relaxed text-(--adm-text-secondary)">
+            Kata sandi di-hash menggunakan <code class="adm-kbd-code">scrypt</code> dengan salt
+            acak; kode OTP 6 digit disimpan dalam hash SHA-256 dan kedaluwarsa otomatis dalam 10
+            menit.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* 4. 6 Modul Manajemen Nikah */}
+    <section id="manajemen-nikah" class="scroll-mt-20 space-y-4 border-t border-(--adm-border) pt-6">
+      <h2 class="text-lg font-semibold text-(--adm-text-primary)">
+        3. Manajemen Pernikahan (6 Modul)
+      </h2>
+      <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+        Semua modul persiapan nikah tersedia langsung di dalam panel admin dan tersinkronisasi
+        antara akun pemilik utama dan akun pasangan.
+      </p>
+      <div class="grid gap-3 sm:grid-cols-2">
+        {modulNikah.map((m) => (
+          <div class="adm-card space-y-1.5 p-4">
+            <h3 class="text-sm font-semibold text-(--adm-text-primary)">{m.nama}</h3>
+            <p class="text-xs leading-relaxed text-(--adm-text-secondary)">{m.ringkas}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* 5. WhatsApp Gateway & OTP */}
+    <section id="whatsapp-gateway" class="scroll-mt-20 space-y-4 border-t border-(--adm-border) pt-6">
+      <h2 class="text-lg font-semibold text-(--adm-text-primary)">
+        4. WhatsApp Gateway, Pengingat H-1 &amp; Notifikasi
+      </h2>
+      <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+        Platform terintegrasi penuh dengan WhatsApp Gateway ZEDLABS (protokol HMAC-SHA256 v2).
+        Pasangan dapat menautkan nomor WhatsApp sendiri langsung dari dashboard lewat{" "}
+        <strong>QR Code</strong> maupun <strong>Pairing Code</strong>.
+      </p>
+      <ul class="list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-(--adm-text-secondary)">
+        <li>Kirim undangan satuan atau massal hasil impor CSV dengan nama tamu personal otomatis.</li>
+        <li>Opsi lampiran otomatis PDF undangan A5 4 halaman dan/atau kartu QR Check-In.</li>
+        <li>Notifikasi RSVP &amp; ucapan baru langsung masuk ke WhatsApp mempelai/admin.</li>
+        <li>Konfirmasi otomatis kepada tamu sesaat setelah mengisi formulir RSVP.</li>
+        <li>Penjadwal pengingat otomatis H-1 acara untuk tamu yang mengonfirmasi hadir.</li>
+      </ul>
+    </section>
+
+    {/* 6. PDF 4 Halaman & QR Check-In */}
+    <section id="pdf-checkin" class="scroll-mt-20 space-y-4 border-t border-(--adm-border) pt-6">
+      <h2 class="text-lg font-semibold text-(--adm-text-primary)">
+        5. Undangan PDF 4 Halaman &amp; QR Check-In Hari H
+      </h2>
+      <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+        Selain tautan web, sistem menyediakan generator PDF stationery A5 4 halaman (sampul, detail
+        mempelai, jadwal &amp; peta, serta halaman QR personal) dan halaman pemindai kehadiran
+        kamera langsung di <code class="adm-kbd-code">/checkin</code>.
+      </p>
+      <div class="adm-code-box">
+        <div class="adm-code-title">Rute Operasional Hari H</div>
+        <pre tabindex="0"><code>/admin     → Panel manajemen tamu, RSVP, ucapan, WA &amp; planner
+/qrcode    → Generator &amp; unduh massal kartu QR tamu
+/checkin   → Scanner kamera QR check-in panitia penerima tamu</code></pre>
+      </div>
+    </section>
+
+    {/* 7. Kuota & Tagihan */}
+    <section id="kuota-tagihan" class="scroll-mt-20 space-y-4 border-t border-(--adm-border) pt-6">
+      <h2 class="text-lg font-semibold text-(--adm-text-primary)">
+        6. Kuota Tamu &amp; Skema Biaya Transparan
+      </h2>
+      <p class="text-sm leading-relaxed text-(--adm-text-secondary)">
+        Setiap ruang undangan mendapat kuota gratis hingga <strong>{FREE_GUEST_QUOTA} tamu</strong>.
+        Bila daftar tamu Anda melebihi {FREE_GUEST_QUOTA} kontak, biaya tambahannya adalah{" "}
+        <strong>Rp{PRICE_PER_GUEST}/tamu</strong> dengan nominal transaksi minimum{" "}
+        <strong>Rp{MIN_PAYMENT_AMOUNT.toLocaleString("id-ID")}</strong> (+250 kuota).
+      </p>
+      <div class="adm-table-wrap adm-card">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Total Tamu</th>
+              <th>Kuota Tambahan</th>
+              <th>Estimasi Biaya</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {simulasiKuota.map((row) => (
+              <tr>
+                <td class="font-medium whitespace-nowrap">{row.total}</td>
+                <td class="whitespace-nowrap text-(--adm-text-secondary)">{row.tambahan}</td>
+                <td class="font-mono text-xs font-semibold whitespace-nowrap text-(--adm-accent)">
+                  {row.biaya}
+                </td>
+                <td class="text-xs text-(--adm-text-secondary)">{row.keterangan}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </DocsShell>
 </PublicLayout>
+
+<script>
+  const cari = document.getElementById("dok-cari") as HTMLInputElement | null;
+  cari?.addEventListener("input", () => {
+    const q = cari.value.trim().toLowerCase();
+    document.querySelectorAll<HTMLAnchorElement>(".dok-side-link").forEach((a) => {
+      const li = a.parentElement;
+      if (li) {
+        li.hidden = Boolean(q) && !(a.dataset.cari ?? "").includes(q);
+      }
+    });
+  });
+</script>

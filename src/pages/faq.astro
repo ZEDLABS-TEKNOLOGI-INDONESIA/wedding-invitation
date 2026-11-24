@@ -1,50 +1,142 @@
 ---
+import FaqExplorerIsland, { type ItemFaq } from "../components/public/FaqExplorerIsland";
+import PublicPageHero from "../components/public/PublicPageHero.astro";
 import PublicLayout from "../layouts/PublicLayout.astro";
 
-const faqs = [
+const faqs: ItemFaq[] = [
   {
-    q: "Apakah benar-benar gratis untuk membuat undangan?",
-    a: "Ya. Setiap pasangan mendapat kuota gratis hingga 200 kontak/tamu beserta seluruh fitur undangan digital, 6 modul manajemen pernikahan, 2 akun (suami & istri), QR Check-In, dan desain PDF 4 halaman.",
+    kategori: "umum",
+    pertanyaan: "Apakah benar-benar gratis untuk membuat undangan?",
+    jawaban:
+      "Ya. Setiap pasangan mendapat kuota gratis hingga 200 kontak/tamu beserta seluruh fitur undangan digital, 6 tema warna, 6 modul manajemen pernikahan, 2 akun (suami & istri), QR Check-In, dan desain PDF A5 4 halaman.",
   },
   {
-    q: "Bagaimana hitungan biaya jika tamu melebihi 200 kontak?",
-    a: "Jika total kontak/tamu yang Anda tambah atau impor melebihi 200, biaya penambahan kuota adalah Rp200 per tamu dengan minimum pembayaran Rp50.000 (langsung mendapat minimal +250 kuota, sehingga total menjadi 450 tamu). Misalnya untuk 1.000 tamu (tambahan 800 tamu), biayanya 800 × Rp200 = Rp160.000.",
+    kategori: "umum",
+    pertanyaan: "Apakah data undangan saya bisa terlihat oleh pasangan lain?",
+    jawaban:
+      "Tidak. Setiap pasangan memiliki alamat unik (/u/nama-pasangan) dan seluruh data tamu, RSVP, ucapan, anggaran, tabungan, jurnal, hingga sesi WhatsApp terisolasi ketat per wedding_id di database.",
   },
   {
-    q: "Apakah data undangan saya bisa terlihat oleh pasangan lain?",
-    a: "Tidak. Setiap pasangan memiliki alamat unik (/u/nama-pasangan) dan seluruh data tamu, RSVP, ucapan, anggaran, tabungan, hingga sesi WhatsApp terisolasi per pasangan di database.",
+    kategori: "kuota",
+    pertanyaan: "Bagaimana hitungan biaya jika tamu melebihi 200 kontak?",
+    jawaban:
+      "Jika total kontak/tamu yang Anda tambah atau impor melebihi 200, biaya penambahan kuota adalah Rp200 per tamu dengan minimum pembayaran Rp50.000 (langsung mendapat minimal +250 kuota, sehingga total menjadi 450 tamu). Misalnya untuk 1.000 tamu (tambahan 800 tamu), biayanya 800 × Rp200 = Rp160.000.",
   },
   {
-    q: "Bagaimana cara menambahkan akun untuk pasangan saya?",
-    a: "Setelah login ke /admin, buka menu Konfigurasi → Akun & Pasangan. Anda dapat mendaftarkan 1 akun pendamping dengan username, password, dan nomor WhatsApp masing-masing.",
+    kategori: "kuota",
+    pertanyaan: "Bagaimana cara menambah kuota tamu dan mendapatkan invoice?",
+    jawaban:
+      "Masuk ke /admin lalu buka menu Kuota & Tagihan. Masukkan jumlah kuota tambahan yang dibutuhkan, sistem akan menghitung total tagihan secara transparan, lalu Anda dapat melakukan transfer dan mengunggah bukti pembayaran untuk diverifikasi.",
   },
   {
-    q: "Bagaimana jika saya atau pasangan lupa password?",
-    a: "Klik 'Lupa password?' di halaman /masuk, masukkan username atau nomor WhatsApp terdaftar, lalu verifikasi kode OTP 6 digit yang dikirim ke WhatsApp untuk membuat password baru.",
+    kategori: "undangan",
+    pertanyaan: "Tema apa saja yang tersedia untuk halaman undangan tamu?",
+    jawaban:
+      "Tersedia 6 tema publik: Ocean, Sage, Blush, Maroon, Gold, dan Lavender. Seluruh tema mendukung mode terang/gelap serta animasi latar pilihan (merpati, kelopak bunga, kupu-kupu, lentera, dan bintang).",
+  },
+  {
+    kategori: "undangan",
+    pertanyaan: "Bagaimana cara menampilkan nama tamu secara personal di sampul undangan?",
+    jawaban:
+      "Cukup tambahkan parameter ?to=Nama+Tamu di akhir URL undangan Anda (contoh: /u/fera-yahya?to=Budi+Santoso). Tautan personal ini juga dibuat otomatis untuk setiap kontak di menu Daftar Tamu dan saat dikirim via WhatsApp.",
+  },
+  {
+    kategori: "manajemen",
+    pertanyaan: "Apa saja 6 modul yang ada di fitur Manajemen Pernikahan?",
+    jawaban:
+      "Enam modul yang tersedia adalah: (1) To-Do List bertahap H-12 bulan s.d. Hari H, (2) Anggaran & Vendor, (3) Tabungan Menuju Halal, (4) Mahar, Seserahan & Berkas KUA mengacu PMA No. 30 Tahun 2024, SIMKAH, & Elsimil, (5) Jurnal Menikah, dan (6) Tuntunan Fikih Munakahat.",
+  },
+  {
+    kategori: "whatsapp",
+    pertanyaan: "Bagaimana cara kerja integrasi WhatsApp Gateway di platform ini?",
+    jawaban:
+      "Anda dapat menautkan nomor WhatsApp langsung dari panel admin menggunakan QR Code atau Pairing Code. Setelah tersambung, Anda bisa mengirim undangan satuan/massal dari CSV (teks + opsi lampiran PDF 4 halaman & kartu QR), mengaktifkan pengingat H-1, dan menerima notifikasi RSVP otomatis.",
+  },
+  {
+    kategori: "whatsapp",
+    pertanyaan: "Bagaimana cara panitia melakukan QR Check-In di Hari H?",
+    jawaban:
+      "Panitia cukup login dan membuka halaman /checkin dari ponsel atau tablet yang memiliki kamera. Arahkan kamera ke kartu QR tamu untuk mencatat kehadiran secara real-time beserta waktu check-in.",
+  },
+  {
+    kategori: "akun",
+    pertanyaan: "Bagaimana cara menambahkan akun untuk pasangan saya?",
+    jawaban:
+      "Setelah login ke /admin, buka menu Konfigurasi → Akun & Pasangan. Pemilik utama dapat mendaftarkan 1 akun pendamping dengan username, password, dan nomor WhatsApp masing-masing agar kalian bisa berkolaborasi bersama.",
+  },
+  {
+    kategori: "akun",
+    pertanyaan: "Bagaimana jika saya atau pasangan lupa password?",
+    jawaban:
+      "Klik 'Lupa password?' di halaman /masuk, masukkan username atau nomor WhatsApp terdaftar, lalu verifikasi kode OTP 6 digit yang dikirim ke WhatsApp untuk membuat password baru.",
   },
 ];
+const faqJsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((item) => ({
+    "@type": "Question",
+    name: item.pertanyaan,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.jawaban,
+    },
+  })),
+}).replace(/</g, "\\u003c");
 ---
 
-<PublicLayout title="FAQ | Wedding Management">
-  <div class="mx-auto max-w-3xl space-y-6 px-6 py-12">
-    <div>
-      <h1 class="text-2xl font-semibold text-(--adm-text-primary)">
-        Pertanyaan yang Sering Diajukan (FAQ)
-      </h1>
-      <p class="mt-1.5 text-sm text-(--adm-text-secondary)">
-        Jawaban cepat seputar pendaftaran, isolasi akun pasangan, dan perhitungan kuota tamu.
-      </p>
-    </div>
+<PublicLayout
+  title="FAQ | Wedding Management"
+  description="Jawaban lengkap seputar pendaftaran ruang undangan, kuota gratis 200 tamu, akun berdua suami & istri, 6 modul manajemen nikah, WhatsApp Gateway, dan QR Check-In."
+>
+  <PublicPageHero
+    eyebrow="Pusat Bantuan"
+    title="Pertanyaan yang Sering Diajukan"
+    description="Jawaban ringkas mengenai cara kerja ruang undangan terisolasi, perhitungan kuota tamu, kolaborasi akun pasangan, WhatsApp Gateway, dan QR Check-In."
+    breadcrumbs={[{ label: "FAQ" }]}
+  >
+    <Fragment slot="meta">
+      <span class="adm-badge">{faqs.length} pertanyaan terjawab</span>
+      <span aria-hidden="true">&middot;</span>
+      <span>6 kategori topik</span>
+    </Fragment>
+    <Fragment slot="actions">
+      <a href="/bantuan" class="adm-btn adm-btn-primary">
+        Hubungi dukungan
+      </a>
+      <a href="/dokumentasi" class="adm-btn adm-btn-secondary">
+        Dokumentasi fitur
+      </a>
+    </Fragment>
+  </PublicPageHero>
 
-    <div class="space-y-3">
-      {faqs.map((item) => (
-        <div class="adm-card space-y-1.5 p-5">
-          <h2 class="text-sm font-semibold text-(--adm-text-primary)">{item.q}</h2>
-          <p class="text-[13px] leading-relaxed text-(--adm-text-secondary)">
-            {item.a}
-          </p>
-        </div>
-      ))}
-    </div>
+  <div class="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6">
+    <FaqExplorerIsland client:load items={faqs} />
+
+    <section class="adm-card flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+      <div>
+        <h2 class="text-base font-semibold text-(--adm-text-primary)">
+          Belum menemukan jawaban yang dicari?
+        </h2>
+        <p class="mt-1 text-xs text-(--adm-text-secondary) sm:text-sm">
+          Pelajari dokumentasi fitur lengkap atau sampaikan pertanyaan Anda langsung ke tim
+          dukungan kami.
+        </p>
+      </div>
+      <div class="flex shrink-0 flex-wrap gap-2">
+        <a href="/dokumentasi" class="adm-btn adm-btn-secondary adm-btn-sm">
+          Dokumentasi
+        </a>
+        <a href="/layanan-mandiri" class="adm-btn adm-btn-secondary adm-btn-sm">
+          Layanan Mandiri
+        </a>
+        <a href="/bantuan" class="adm-btn adm-btn-primary adm-btn-sm">
+          Hubungi kami
+        </a>
+      </div>
+    </section>
   </div>
+
+  {/* eslint-disable-next-line astro/no-set-html-directive */}
+  <script type="application/ld+json" set:html={faqJsonLd} />
 </PublicLayout>

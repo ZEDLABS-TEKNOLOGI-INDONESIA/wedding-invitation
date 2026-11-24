@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="32" y1="24" x2="480" y2="488" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0E6FE8" />
+      <stop offset="52%" stop-color="#0759BC" />
+      <stop offset="100%" stop-color="#043D87" />
+    </linearGradient>
+    <linearGradient id="accent" x1="358" y1="98" x2="424" y2="164" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="flap" x1="140" y1="184" x2="372" y2="330" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0A63D1" />
+      <stop offset="100%" stop-color="#054696" />
+    </linearGradient>
+    <linearGradient id="heart" x1="224" y1="204" x2="288" y2="276" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F43F5E" />
+      <stop offset="100%" stop-color="#E11D48" />
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle background matching ZEDLABS sibling ecosystem -->
+  <rect x="0" y="0" width="512" height="512" rx="116" fill="url(#bg)" />
+  <rect x="4" y="4" width="504" height="504" rx="112" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="6" />
+
+  <!-- Subtle invitation card peeking out of envelope -->
+  <rect x="148" y="122" width="216" height="148" rx="22" fill="#FFFFFF" fill-opacity="0.22" />
+
+  <!-- Main crisp white invitation envelope body -->
+  <rect x="104" y="164" width="304" height="220" rx="34" fill="#FFFFFF" />
+
+  <!-- Envelope inner V-flap stroke (echoing clean geometric stroke weight) -->
+  <path
+    d="M126 192L242.8 279.6C250.6 285.5 261.4 285.5 269.2 279.6L386 192"
+    stroke="url(#flap)"
+    stroke-width="24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Interlocking twin subtle rings / bottom fold detail -->
+  <path
+    d="M128 358L196 296M384 358L316 296"
+    stroke="url(#flap)"
+    stroke-opacity="0.22"
+    stroke-width="18"
+    stroke-linecap="round"
+  />
+
+  <!-- Center heart wax seal on envelope fold -->
+  <circle cx="256" cy="284" r="46" fill="#FFFFFF" />
+  <path
+    d="M256 312.5C254.2 312.5 252.5 311.8 251.1 310.5C235.2 296.2 223 285.2 223 271.5C223 261 231.1 253 241.3 253C247.3 253 252.8 255.9 256 260.4C259.2 255.9 264.7 253 270.7 253C280.9 253 289 261 289 271.5C289 285.2 276.8 296.2 260.9 310.5C259.5 311.8 257.8 312.5 256 312.5Z"
+    fill="url(#heart)"
+  />
+
+  <!-- Top-right sibling status/sparkle badge matching whatsapp-service geometry -->
+  <circle cx="390" cy="134" r="46" fill="url(#bg)" />
+  <circle cx="390" cy="134" r="29" fill="url(#accent)" />
+</svg>

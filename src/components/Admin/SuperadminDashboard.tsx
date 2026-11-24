@@ -569,7 +569,7 @@ const SuperadminDashboard: React.FC = () => {
             title="Superadmin Platform"
           >
             <img
-              src="/logo.png"
+              src="/favicon.svg"
               alt="Wedding Management"
               className="h-7 w-7 shrink-0 rounded-md object-contain"
             />

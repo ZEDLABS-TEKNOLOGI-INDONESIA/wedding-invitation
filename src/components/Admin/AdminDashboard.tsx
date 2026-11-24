@@ -965,7 +965,7 @@ const AdminDashboard = ({
             title={coupleLabel}
           >
             <img
-              src="/logo.png"
+              src="/favicon.svg"
               alt={coupleLabel}
               className="h-7 w-7 shrink-0 rounded-md object-contain"
             />
