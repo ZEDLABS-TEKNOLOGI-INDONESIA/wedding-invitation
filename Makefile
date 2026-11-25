@@ -1,5 +1,7 @@
 .PHONY: help dev build preview lint typecheck test check format \
-	install update clean backup pull up up-local rebuild rebuild-local down restart logs ps sync push
+	install update clean backup pull deploy cek-deploy cek-deploy-publik sync push
+
+INFRA_DIR ?= $(abspath ../infra-server)
 
 help: ## Tampilkan daftar perintah
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -45,35 +47,14 @@ backup: ## Backup database SQLite dan folder uploads ke ./backups
 pull: ## Tarik perubahan terbaru dari GitHub tanpa stash tersembunyi
 	git pull --ff-only
 
-up: pull ## Tarik update terbaru lalu build & jalankan via Docker Compose
-	@mkdir -p database/uploads
-	docker compose up -d --build
+deploy: ## Deploy ke CT 204 (zl-wedding) lewat infra-server: make deploy [VERSI=HEAD] [DRY_RUN=1]
+	@REPO_WEDDING="$(CURDIR)" bash "$(INFRA_DIR)/layanan/zl-wedding/deploy.sh" $(VERSI)
 
-up-local: ## Build & jalankan via Docker Compose tanpa git pull
-	@mkdir -p database/uploads
-	docker compose up -d --build
+cek-deploy: ## Periksa layanan zl-wedding di CT 204 lewat IP
+	@bash "$(INFRA_DIR)/layanan/zl-wedding/cek.sh"
 
-rebuild: pull ## Tarik update terbaru lalu build ulang Docker tanpa cache
-	@mkdir -p database/uploads
-	docker compose build --no-cache
-	docker compose up -d --force-recreate
-
-rebuild-local: ## Build ulang Docker tanpa cache dan tanpa git pull
-	@mkdir -p database/uploads
-	docker compose build --no-cache
-	docker compose up -d --force-recreate
-
-down: ## Hentikan container Docker Compose
-	docker compose down
-
-restart: ## Restart container aplikasi
-	docker compose restart
-
-logs: ## Pantau log container aplikasi secara live
-	docker compose logs -f app
-
-ps: ## Lihat status container
-	docker compose ps
+cek-deploy-publik: ## Periksa layanan zl-wedding lewat domain publik
+	@bash "$(INFRA_DIR)/layanan/zl-wedding/cek.sh" publik
 
 sync: ## Samakan persis dengan GitHub (buang perubahan lokal terlacak)
 	git fetch origin
