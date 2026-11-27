@@ -1,0 +1,118 @@
+openapi: 3.1.0
+info:
+  title: API Wedding Management Multi-Tenant ZEDLABS
+  version: 2.0.0
+  description: Kontrak API Go + PostgreSQL 17 FORCE RLS untuk wedding.zedlabs.id dan domain kustom klien.
+servers:
+  - url: https://wedding.zedlabs.id
+paths:
+  /healthz:
+    get:
+      summary: Status kesehatan layanan
+      responses:
+        "200": { description: Layanan sehat }
+  /statistik/publik:
+    get:
+      summary: Statistik publik terautentikasi HMAC-SHA256 v2 (slug wedding)
+      responses:
+        "200": { description: Metrik agregat non-PII }
+        "401": { description: Tanda tangan HMAC v2 tidak valid }
+  /api/v1/publik/domain:
+    get:
+      summary: Resolusi host permintaan (domain utama vs domain kustom klien)
+      responses:
+        "200": { description: Informasi domain }
+        "404": { description: Domain kustom tidak terdaftar }
+  /api/v1/publik/undangan/{slug}:
+    get:
+      summary: Ambil konfigurasi publik undangan (tanpa kredensial WA) beserta ucapan
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Data publik undangan }
+        "404": { description: Undangan tidak ditemukan }
+  /api/v1/publik/undangan/{slug}/rsvp:
+    post:
+      summary: Kirim konfirmasi kehadiran (RSVP) tamu + masukkan outbox notifikasi WA
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "201": { description: RSVP tersimpan }
+  /api/v1/publik/undangan/{slug}/ucapan:
+    post:
+      summary: Kirim ucapan dan doa untuk mempelai
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "201": { description: Ucapan tersimpan }
+  /api/v1/auth/masuk:
+    post:
+      summary: Masuk admin/pasangan/superadmin (Argon2id + lazy rehash scrypt + isolasi domain kustom)
+      responses:
+        "200": { description: Token JWT EdDSA }
+        "401": { description: Kredensial salah }
+        "403": { description: Lintas domain undangan }
+  /api/v1/auth/saya:
+    get:
+      summary: Profil sesi aktif
+      responses:
+        "200": { description: Data pengguna aktif }
+  /api/v1/admin/tamu:
+    get:
+      summary: Daftar tamu undangan tenant aktif
+      responses:
+        "200": { description: Daftar tamu }
+    post:
+      summary: Tambah tamu undangan (memeriksa batas kuota guest_quota_limit)
+      responses:
+        "201": { description: Tamu ditambahkan }
+        "402": { description: Kuota tamu tercapai }
+  /api/v1/admin/checkin:
+    post:
+      summary: Check-in tamu berbasis kode QR undangan
+      responses:
+        "200": { description: Kehadiran tamu tercatat }
+  /api/v1/admin/tagihan:
+    get:
+      summary: Daftar tagihan kuota tamu tenant aktif
+      responses:
+        "200": { description: Riwayat tagihan }
+    post:
+      summary: Buat tagihan penambahan kuota tamu
+      responses:
+        "201": { description: Tagihan diterbitkan }
+  /api/v1/superadmin/undangan:
+    get:
+      summary: Daftar seluruh undangan SaaS (khusus Superadmin)
+      responses:
+        "200": { description: Daftar undangan }
+  /api/v1/superadmin/undangan/{id}/domain:
+    put:
+      summary: Atur atau hapus domain kustom klien (DomainInstansi)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Domain kustom diperbarui }
+  /api/v1/superadmin/tagihan/{id}/setujui:
+    post:
+      summary: Setujui tagihan kuota tamu secara atomik dengan optimistic locking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Tagihan lunas dan kuota diperbesar }
+        "409": { description: Konflik versi atau tagihan sudah diproses }

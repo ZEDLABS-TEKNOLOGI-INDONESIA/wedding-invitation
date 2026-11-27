@@ -34,3 +34,6 @@ pnpm-debug.log*
 !SECURITY.md
 !docs/konsep-multi-tenant.md
 logs/*
+
+backend/dist/
+!docs/konsep-migrasi-go-postgres.md
