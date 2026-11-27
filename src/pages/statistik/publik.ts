@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import db from "../../lib/db";
+import { pakaiGoApi, teruskanKeGo } from "../../lib/goApi";
 import { verifikasiHMACv2 } from "../../lib/statistikHmac";
 
 interface CountRow {
@@ -7,6 +8,9 @@ interface CountRow {
 }
 
 export const GET: APIRoute = async ({ request }) => {
+  if (pakaiGoApi()) {
+    return teruskanKeGo(request, "/statistik/publik");
+  }
   const keyID = (process.env.STATISTIK_PUBLIK_KEY_ID ?? "").trim();
   const secret = (process.env.STATISTIK_PUBLIK_SECRET ?? "").trim();
   if (!keyID || !secret) {

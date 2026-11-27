@@ -1,8 +1,12 @@
 import type { APIRoute } from "astro";
 import { getPublicConfig } from "../../../lib/db";
 import { DOMAIN_UTAMA, resolusiHostUndangan } from "../../../lib/domain";
+import { pakaiGoApi, teruskanKeGo } from "../../../lib/goApi";
 
 export const GET: APIRoute = async ({ request, url }) => {
+  if (pakaiGoApi()) {
+    return teruskanKeGo(request, "/api/v1/publik/domain");
+  }
   const info = resolusiHostUndangan(request, url);
   if (info.mode === "utama") {
     return new Response(
