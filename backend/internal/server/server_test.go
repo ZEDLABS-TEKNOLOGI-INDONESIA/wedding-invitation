@@ -180,6 +180,36 @@ func TestWeddingV2_DomainKustom_ScryptRehash_Kuota_OptimisticLock_DanForceRLS(t 
 		t.Fatalf("tamu 2 pasca upgrade kuota gagal: %d", rec.Code)
 	}
 
+	// 3b. Uji Konfigurasi, Planner (todos/budget), & Superadmin Impersonasi
+	if rec := kirim(http.MethodPut, "/api/v1/admin/konfigurasi", "ani-budi.pasangan.id", tokA.TokenAkses, map[string]string{
+		"BRIDE_NICKNAME": "Ani", "GROOM_NICKNAME": "Budi",
+	}); rec.Code != http.StatusOK {
+		t.Fatalf("simpan konfigurasi gagal: %d %s", rec.Code, rec.Body.String())
+	}
+	if rec := kirim(http.MethodPost, "/api/v1/admin/planner/todos", "ani-budi.pasangan.id", tokA.TokenAkses, map[string]string{
+		"title": "Booking KUA", "phase": "H-3 Bulan",
+	}); rec.Code != http.StatusCreated {
+		t.Fatalf("tambah planner todo gagal: %d %s", rec.Code, rec.Body.String())
+	}
+	if rec := kirim(http.MethodGet, "/api/v1/admin/planner", "ani-budi.pasangan.id", tokA.TokenAkses, nil); rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Booking KUA") {
+		t.Fatalf("ambil planner gagal: %d %s", rec.Code, rec.Body.String())
+	}
+	recImp := kirim(http.MethodPost, "/api/v1/superadmin/impersonate", "wedding.zedlabs.id", tokSup.TokenAkses, map[string]string{"wedding_id": wedA})
+	if recImp.Code != http.StatusOK || !strings.Contains(recImp.Body.String(), `"impersonating":true`) {
+		t.Fatalf("impersonasi superadmin gagal: %d %s", recImp.Code, recImp.Body.String())
+	}
+	var impTok struct {
+		TokenAkses string `json:"token_akses"`
+	}
+	_ = json.Unmarshal(recImp.Body.Bytes(), &impTok)
+	if rec := kirim(http.MethodGet, "/api/v1/admin/tamu", "wedding.zedlabs.id", impTok.TokenAkses, nil); rec.Code != http.StatusOK {
+		t.Fatalf("akses tamu via token impersonasi gagal: %d", rec.Code)
+	}
+	// Token impersonasi tidak boleh memicu impersonasi lagi (403)
+	if rec := kirim(http.MethodPost, "/api/v1/superadmin/impersonate", "wedding.zedlabs.id", impTok.TokenAkses, map[string]string{"wedding_id": wedB}); rec.Code != http.StatusForbidden {
+		t.Fatalf("impersonasi berantai wajib 403, dapat %d", rec.Code)
+	}
+
 	// 4. HMAC-SHA256 v2 GET /statistik/publik
 	ts := fmt.Sprintf("%d", time.Now().Unix())
 	nonce := "nonce-wedding-v2-12345678"

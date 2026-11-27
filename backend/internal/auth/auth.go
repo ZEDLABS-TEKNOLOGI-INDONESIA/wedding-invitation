@@ -102,10 +102,12 @@ func PerluRehashArgon2id(encoded string) bool {
 }
 
 type Klaim struct {
-	UserID    string `json:"sub"`
-	WeddingID string `json:"wedding_id,omitempty"`
-	Role      string `json:"role"`
-	Username  string `json:"username"`
+	UserID         string `json:"sub"`
+	WeddingID      string `json:"wedding_id,omitempty"`
+	Role           string `json:"role"`
+	Username       string `json:"username"`
+	Impersonating  bool   `json:"impersonating,omitempty"`
+	ImpersonatorID string `json:"impersonator_id,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -130,6 +132,25 @@ func (ts *TokenService) Terbitkan(userID, weddingID, role, username string) (str
 			Subject:   userID,
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(24 * time.Hour)),
+		},
+	}
+	return jwt.NewWithClaims(jwt.SigningMethodEdDSA, k).SignedString(ts.priv)
+}
+
+func (ts *TokenService) TerbitkanImpersonasi(superadminID, superadminUsername, targetWeddingID string) (string, error) {
+	now := time.Now()
+	k := Klaim{
+		UserID:         superadminID,
+		WeddingID:      targetWeddingID,
+		Role:           "couple_owner",
+		Username:       superadminUsername,
+		Impersonating:  true,
+		ImpersonatorID: superadminID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "wedding.zedlabs.id",
+			Subject:   superadminID,
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(1 * time.Hour)),
 		},
 	}
 	return jwt.NewWithClaims(jwt.SigningMethodEdDSA, k).SignedString(ts.priv)

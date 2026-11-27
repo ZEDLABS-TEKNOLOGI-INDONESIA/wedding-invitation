@@ -68,6 +68,19 @@ type DumpSQLite struct {
 		Name      string `json:"name"`
 		Message   string `json:"message"`
 	} `json:"wishes"`
+	BillingOrders []struct {
+		WeddingID           int    `json:"wedding_id"`
+		InvoiceCode         string `json:"invoice_code"`
+		CurrentQuota        int    `json:"current_quota"`
+		RequestedTotalQuota int    `json:"requested_total_quota"`
+		AddedGuests         int    `json:"added_guests"`
+		Amount              int    `json:"amount"`
+		Status              string `json:"status"`
+		PaymentMethod       string `json:"payment_method"`
+		PaymentNote         string `json:"payment_note"`
+		ProofURL            string `json:"proof_url"`
+		AdminNote           string `json:"admin_note"`
+	} `json:"billing_orders"`
 }
 
 func main() {
@@ -193,11 +206,29 @@ func main() {
 					return err
 				}
 			}
+			for _, bo := range dump.BillingOrders {
+				if bo.WeddingID != oldID || bo.InvoiceCode == "" {
+					continue
+				}
+				st := bo.Status
+				switch st {
+				case "unpaid", "pending", "review", "paid", "rejected", "cancelled":
+				default:
+					st = "unpaid"
+				}
+				if _, err := tx.Exec(ctx, `
+					INSERT INTO billing_orders (wedding_id, invoice_code, current_quota, requested_total_quota, added_guests, amount, status, payment_method, payment_note, proof_url, admin_note)
+					VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+					ON CONFLICT (invoice_code) DO NOTHING
+				`, uuid, bo.InvoiceCode, bo.CurrentQuota, bo.RequestedTotalQuota, bo.AddedGuests, bo.Amount, st, bo.PaymentMethod, bo.PaymentNote, bo.ProofURL, bo.AdminNote); err != nil {
+					return err
+				}
+			}
 			return nil
 		}); err != nil {
 			log.Fatalf("impor tenant %d: %v", oldID, err)
 		}
 	}
-	log.Printf("impor SQLite -> PostgreSQL 17 selesai: %d undangan, %d pengguna, %d tamu, %d RSVP, %d ucapan",
-		len(dump.Weddings), len(dump.Users), len(dump.Guests), len(dump.RSVPs), len(dump.Wishes))
+	log.Printf("impor SQLite -> PostgreSQL 17 selesai: %d undangan, %d pengguna, %d tamu, %d RSVP, %d ucapan, %d tagihan",
+		len(dump.Weddings), len(dump.Users), len(dump.Guests), len(dump.RSVPs), len(dump.Wishes), len(dump.BillingOrders))
 }
