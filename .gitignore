@@ -32,4 +32,5 @@ pnpm-debug.log*
 !README.md
 !CHANGELOG.md
 !SECURITY.md
+!docs/konsep-multi-tenant.md
 logs/*
