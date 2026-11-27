@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { authenticateUser, createUserSession } from "../../../lib/auth";
 import { DEFAULT_WEDDING_ID } from "../../../lib/db";
+import { resolusiHostUndangan } from "../../../lib/domain";
 import { checkRateLimit, getClientIp } from "../../../lib/rateLimit";
 
 const JSON_HEADERS = {
@@ -8,7 +9,12 @@ const JSON_HEADERS = {
   "Cache-Control": "no-store",
 };
 
-export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
+export const POST: APIRoute = async ({
+  request,
+  cookies,
+  clientAddress,
+  url,
+}) => {
   const ip = getClientIp(request, clientAddress);
   if (!checkRateLimit(`auth-login:${ip}`, 10, 15 * 60 * 1000)) {
     return new Response(
@@ -49,11 +55,34 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
   }
 
   const isSuper = user.role === "superadmin";
+  const hostInfo = resolusiHostUndangan(request, url);
+  if (
+    hostInfo.mode === "kustom" &&
+    hostInfo.wedding &&
+    !isSuper &&
+    user.wedding_id !== hostInfo.wedding.id
+  ) {
+    return new Response(
+      JSON.stringify({
+        error: "Akun ini tidak terdaftar pada domain undangan ini.",
+      }),
+      { status: 403, headers: JSON_HEADERS }
+    );
+  }
+  if (hostInfo.mode === "tidak_dikenal" && !isSuper) {
+    return new Response(
+      JSON.stringify({
+        error: "Domain ini belum terdaftar pada layanan.",
+      }),
+      { status: 403, headers: JSON_HEADERS }
+    );
+  }
+
   createUserSession(
     cookies,
     request,
     user.id,
-    isSuper ? DEFAULT_WEDDING_ID : null
+    isSuper ? (hostInfo.wedding?.id ?? DEFAULT_WEDDING_ID) : null
   );
 
   return new Response(

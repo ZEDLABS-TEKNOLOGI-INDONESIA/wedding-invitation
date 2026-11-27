@@ -375,6 +375,19 @@ for (const sql of [
   }
 }
 
+try {
+  db.exec("ALTER TABLE weddings ADD COLUMN custom_domain TEXT DEFAULT ''");
+} catch {
+  // Kolom custom_domain sudah ada
+}
+try {
+  db.exec(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_weddings_custom_domain ON weddings(LOWER(custom_domain)) WHERE custom_domain IS NOT NULL AND custom_domain != ''"
+  );
+} catch {
+  // Indeks custom_domain sudah ada
+}
+
 export const DEFAULT_WEDDING_ID = 1;
 
 export interface WeddingRecord {
@@ -384,6 +397,7 @@ export interface WeddingRecord {
   status: "active" | "suspended";
   is_demo: number;
   guest_quota_limit?: number;
+  custom_domain?: string | null;
   created_at: string;
 }
 
@@ -557,6 +571,31 @@ export const getWeddingById = (id: number): WeddingRecord | undefined => {
   return db.prepare("SELECT * FROM weddings WHERE id = ? LIMIT 1").get(id) as
     | WeddingRecord
     | undefined;
+};
+
+export const getWeddingByCustomDomain = (
+  domain: string
+): WeddingRecord | undefined => {
+  const clean = String(domain || "")
+    .trim()
+    .toLowerCase();
+  if (!clean) return undefined;
+  return db
+    .prepare(
+      "SELECT * FROM weddings WHERE LOWER(custom_domain) = ? AND custom_domain != '' LIMIT 1"
+    )
+    .get(clean) as WeddingRecord | undefined;
+};
+
+export const setWeddingCustomDomain = (
+  weddingId: number,
+  domain: string | null
+): void => {
+  const clean = domain ? domain.trim().toLowerCase() : "";
+  db.prepare("UPDATE weddings SET custom_domain = ? WHERE id = ?").run(
+    clean,
+    weddingId
+  );
 };
 
 export const getConfig = (

@@ -52,6 +52,7 @@ interface WeddingRow {
   status: "active" | "suspended";
   is_demo: number;
   guest_quota_limit?: number;
+  custom_domain?: string | null;
   created_at: string;
   publicUrl: string;
   rsvpCount: number;
@@ -163,6 +164,8 @@ const SuperadminDashboard: React.FC = () => {
     message: string;
   } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [editingDomainId, setEditingDomainId] = useState<number | null>(null);
+  const [domainInput, setDomainInput] = useState("");
 
   // Proof review modal state
   const [reviewOrder, setReviewOrder] = useState<BillingOrderAdminRow | null>(
@@ -1032,6 +1035,80 @@ const SuperadminDashboard: React.FC = () => {
                               {w.publicUrl}
                               <ExternalLink className="h-3 w-3" />
                             </a>
+                            {w.is_demo !== 1 && (
+                              <div className="mt-1.5">
+                                {editingDomainId === w.id ? (
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <input
+                                      type="text"
+                                      value={domainInput}
+                                      onChange={(e) =>
+                                        setDomainInput(e.target.value)
+                                      }
+                                      placeholder="undangan.pasangan.id"
+                                      className="adm-input h-7 w-48 font-mono text-[11px]"
+                                    />
+                                    <button
+                                      type="button"
+                                      disabled={busy !== null}
+                                      onClick={async () => {
+                                        const res = await callAction(
+                                          `dom-${w.id}`,
+                                          {
+                                            action: "set_custom_domain",
+                                            weddingId: w.id,
+                                            customDomain: domainInput,
+                                          },
+                                          "Domain kustom diperbarui."
+                                        );
+                                        if (res) {
+                                          setEditingDomainId(null);
+                                          await loadData();
+                                        }
+                                      }}
+                                      className="adm-btn adm-btn-primary adm-btn-sm"
+                                    >
+                                      Simpan
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingDomainId(null)}
+                                      className="adm-btn adm-btn-secondary adm-btn-sm"
+                                    >
+                                      Batal
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2 text-[11px]">
+                                    {w.custom_domain ? (
+                                      <a
+                                        href={`https://${w.custom_domain}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 font-mono text-(--adm-text-secondary) hover:text-(--adm-accent) hover:underline"
+                                      >
+                                        <Globe className="h-3 w-3" />
+                                        {w.custom_domain}
+                                      </a>
+                                    ) : (
+                                      <span className="text-(--adm-text-secondary)">
+                                        Tanpa domain kustom
+                                      </span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingDomainId(w.id);
+                                        setDomainInput(w.custom_domain || "");
+                                      }}
+                                      className="text-(--adm-accent) hover:underline"
+                                    >
+                                      Atur domain
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             {w.members.length === 0 ? (

@@ -5,10 +5,13 @@ import {
 } from "../../lib/auth";
 import db, {
   getPlatformConfig,
+  getWeddingByCustomDomain,
   setPlatformConfig,
+  setWeddingCustomDomain,
   type UserRecord,
   type WeddingRecord,
 } from "../../lib/db";
+import { validasiDomainKustom } from "../../lib/domain";
 import {
   hashPassword,
   isValidUsername,
@@ -71,6 +74,7 @@ export const GET: APIRoute = async ({ cookies }) => {
 
   const enrichedWeddings = weddings.map((w) => ({
     ...w,
+    custom_domain: w.custom_domain || null,
     publicUrl: w.is_demo ? "/demo" : `/u/${w.slug}`,
     rsvpCount: rsvpCounts[w.id] || 0,
     guestCount: guestCounts[w.id] || 0,
@@ -330,6 +334,52 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     setSessionImpersonation(cookies, weddingId);
     return new Response(
       JSON.stringify({ success: true, redirectTo: "/admin" }),
+      { status: 200, headers: JSON_HEADERS }
+    );
+  }
+
+  if (action === "set_custom_domain") {
+    const weddingId = Number(body.weddingId || 0);
+    const wedding = db
+      .prepare("SELECT * FROM weddings WHERE id = ? LIMIT 1")
+      .get(weddingId) as WeddingRecord | undefined;
+    if (!wedding) {
+      return new Response(
+        JSON.stringify({ error: "Undangan tidak ditemukan." }),
+        { status: 404, headers: JSON_HEADERS }
+      );
+    }
+    if (wedding.is_demo) {
+      return new Response(
+        JSON.stringify({
+          error: "Undangan demo tidak dapat dipasangkan domain kustom.",
+        }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+    const { domain, error } = validasiDomainKustom(
+      String(body.customDomain || "")
+    );
+    if (error) {
+      return new Response(JSON.stringify({ error }), {
+        status: 400,
+        headers: JSON_HEADERS,
+      });
+    }
+    if (domain) {
+      const existing = getWeddingByCustomDomain(domain);
+      if (existing && existing.id !== wedding.id) {
+        return new Response(
+          JSON.stringify({
+            error: `Domain "${domain}" sudah dipakai oleh undangan lain.`,
+          }),
+          { status: 409, headers: JSON_HEADERS }
+        );
+      }
+    }
+    setWeddingCustomDomain(wedding.id, domain);
+    return new Response(
+      JSON.stringify({ success: true, custom_domain: domain }),
       { status: 200, headers: JSON_HEADERS }
     );
   }

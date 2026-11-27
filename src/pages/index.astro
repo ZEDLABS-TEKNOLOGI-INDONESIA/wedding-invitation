@@ -21,9 +21,19 @@ import {
   PRICE_PER_GUEST,
 } from "../lib/billing";
 import db, { getPlatformConfig } from "../lib/db";
+import { resolusiHostUndangan } from "../lib/domain";
 import { ensureReminderSchedulerStarted } from "../lib/reminderScheduler";
 
 ensureReminderSchedulerStarted();
+const hostInfo = resolusiHostUndangan(Astro.request, Astro.url);
+if (hostInfo.mode === "kustom" && hostInfo.wedding) {
+  return Astro.rewrite(
+    new URL(`/u/${hostInfo.wedding.slug}${Astro.url.search}`, Astro.url)
+  );
+}
+if (hostInfo.mode === "tidak_dikenal") {
+  return new Response(null, { status: 404, statusText: "Domain Tidak Terdaftar" });
+}
 const session = getAuthSession(Astro.cookies);
 const platformCfg = getPlatformConfig();
 const platformName = platformCfg.PLATFORM_NAME || "Wedding Management";
