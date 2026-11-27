@@ -210,7 +210,7 @@ func TestWeddingV2_DomainKustom_ScryptRehash_Kuota_OptimisticLock_DanForceRLS(t 
 		t.Fatalf("impersonasi berantai wajib 403, dapat %d", rec.Code)
 	}
 
-	// 4. HMAC-SHA256 v2 GET /statistik/publik
+	// 4. HMAC-SHA256 v2 GET /statistik/publik (header standar ZEDLABS X-API-Key/X-Signature)
 	ts := fmt.Sprintf("%d", time.Now().Unix())
 	nonce := "nonce-wedding-v2-12345678"
 	emptySum := sha256.Sum256(nil)
@@ -218,11 +218,11 @@ func TestWeddingV2_DomainKustom_ScryptRehash_Kuota_OptimisticLock_DanForceRLS(t 
 	mac := hmac.New(sha256.New, []byte("rahasia-wedding-hmac-minimal-32-kar"))
 	mac.Write([]byte(canonical))
 	reqStat := httptest.NewRequest(http.MethodGet, "/statistik/publik", nil)
-	reqStat.Header.Set("X-Zedlabs-Signature-Version", "2")
-	reqStat.Header.Set("X-Zedlabs-Key-Id", "k-wed")
-	reqStat.Header.Set("X-Zedlabs-Timestamp", ts)
-	reqStat.Header.Set("X-Zedlabs-Nonce", nonce)
-	reqStat.Header.Set("X-Zedlabs-Signature", hex.EncodeToString(mac.Sum(nil)))
+	reqStat.Header.Set("X-Signature-Version", "2")
+	reqStat.Header.Set("X-API-Key", "k-wed")
+	reqStat.Header.Set("X-Timestamp", ts)
+	reqStat.Header.Set("X-Nonce", nonce)
+	reqStat.Header.Set("X-Signature", hex.EncodeToString(mac.Sum(nil)))
 	recStat := httptest.NewRecorder()
 	srv.ServeHTTP(recStat, reqStat)
 	if recStat.Code != http.StatusOK || !strings.Contains(recStat.Body.String(), `"produk":"wedding"`) {

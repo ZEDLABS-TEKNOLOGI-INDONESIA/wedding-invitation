@@ -221,17 +221,26 @@ func (h *Handler) KirimUcapan(w http.ResponseWriter, r *http.Request) {
 	tulisJSON(w, http.StatusCreated, map[string]any{"id": id, "status": "tersimpan"})
 }
 
+func ambilHeaderPertama(r *http.Request, nama ...string) string {
+	for _, k := range nama {
+		if v := strings.TrimSpace(r.Header.Get(k)); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
 func (h *Handler) StatistikPublik(w http.ResponseWriter, r *http.Request) {
 	if h.statistikKeyID == "" || h.statistikSecret == "" {
 		tulisJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "endpoint statistik publik belum dikonfigurasi"})
 		return
 	}
-	versi := r.Header.Get("X-Zedlabs-Signature-Version")
-	keyID := r.Header.Get("X-Zedlabs-Key-Id")
-	tsStr := r.Header.Get("X-Zedlabs-Timestamp")
-	nonce := r.Header.Get("X-Zedlabs-Nonce")
-	sig := r.Header.Get("X-Zedlabs-Signature")
-	if versi != "2" || !hmac.Equal([]byte(keyID), []byte(h.statistikKeyID)) || len(nonce) < 16 {
+	versi := ambilHeaderPertama(r, "X-Signature-Version", "X-Zedlabs-Signature-Version")
+	keyID := ambilHeaderPertama(r, "X-API-Key", "X-Zedlabs-Key-Id")
+	tsStr := ambilHeaderPertama(r, "X-Timestamp", "X-Zedlabs-Timestamp")
+	nonce := ambilHeaderPertama(r, "X-Nonce", "X-Zedlabs-Nonce")
+	sig := ambilHeaderPertama(r, "X-Signature", "X-Zedlabs-Signature")
+	if versi != "2" || !hmac.Equal([]byte(keyID), []byte(h.statistikKeyID)) || len(nonce) < 8 || len(nonce) > 64 {
 		tulisJSON(w, http.StatusUnauthorized, map[string]string{"error": "autentikasi HMAC v2 tidak sah"})
 		return
 	}
@@ -252,9 +261,31 @@ func (h *Handler) StatistikPublik(w http.ResponseWriter, r *http.Request) {
 
 	var undanganAktif, tamuTotal, rsvpTotal, ucapanTotal int64
 	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM weddings WHERE status = 'active' AND is_demo = false`).Scan(&undanganAktif)
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM guests`).Scan(&tamuTotal)
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM rsvps`).Scan(&rsvpTotal)
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM wishes`).Scan(&ucapanTotal)
+
+	// Hitung agregat lintas ruang melalui DenganTenantTx agar patuh pada FORCE RLS peran aplikasi.
+	rows, err := h.pool.Query(r.Context(), `SELECT id::text FROM weddings`)
+	if err == nil {
+		var ids []string
+		for rows.Next() {
+			var id string
+			if err := rows.Scan(&id); err == nil {
+				ids = append(ids, id)
+			}
+		}
+		rows.Close()
+		for _, wid := range ids {
+			_ = db.DenganTenantTx(r.Context(), h.pool, wid, func(tx pgx.Tx) error {
+				var g, rv, ws int64
+				_ = tx.QueryRow(r.Context(), `SELECT COUNT(*) FROM guests`).Scan(&g)
+				_ = tx.QueryRow(r.Context(), `SELECT COUNT(*) FROM rsvps`).Scan(&rv)
+				_ = tx.QueryRow(r.Context(), `SELECT COUNT(*) FROM wishes`).Scan(&ws)
+				tamuTotal += g
+				rsvpTotal += rv
+				ucapanTotal += ws
+				return nil
+			})
+		}
+	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	tulisJSON(w, http.StatusOK, map[string]any{
